@@ -118,7 +118,7 @@ export default async function DashboardPage() {
     supabase
       .from("jobs")
       .select(
-        "id, display_number, title, status, start_time, end_time, team_id, clients(name), locations(address, lat, lng)"
+        "id, display_number, title, status, start_time, end_time, team_id, clients(name), locations(address, lat, lng), job_assignments(profiles(full_name))"
       )
       .eq("organization_id", organization.id)
       .eq("scheduled_date", today)
@@ -126,13 +126,13 @@ export default async function DashboardPage() {
     supabase
       .from("jobs")
       .select(
-        "id, display_number, title, status, team_id, clients(name), teams(name), locations(lat, lng)"
+        "id, display_number, title, status, team_id, clients(name), teams(name, team_members(profiles(full_name))), locations(lat, lng)"
       )
       .eq("organization_id", organization.id)
       .in("status", ACTIVE_STATUSES),
     supabase
       .from("expenses")
-      .select("amount")
+      .select("id, amount, vendor, created_at, jobs(display_number)")
       .eq("organization_id", organization.id)
       .eq("expense_date", today),
     supabase
@@ -191,38 +191,26 @@ export default async function DashboardPage() {
     activeJobsList.filter((j) => j.team_id).map((j) => [j.team_id as string, j])
   );
 
-  const teamIds = [...teamsInField.keys()];
-  const { data: teamMembersRows } =
-    teamIds.length > 0
-      ? await supabase
-          .from("team_members")
-          .select("team_id, profiles(full_name)")
-          .in("team_id", teamIds)
-      : { data: [] };
+  // Both were nested straight into the queries above (job_assignments on
+  // jobsToday, teams.team_members on activeJobs) instead of separate
+  // round trips — the dashboard was doing three extra sequential Supabase
+  // calls after its main batch, which is exactly the kind of thing that
+  // makes a page feel sluggish.
   const teamMemberNames = new Map<string, string[]>();
-  for (const row of teamMembersRows ?? []) {
-    const name = row.profiles?.full_name;
-    if (!name) continue;
-    const list = teamMemberNames.get(row.team_id) ?? [];
-    list.push(name);
-    teamMemberNames.set(row.team_id, list);
+  for (const job of activeJobsList) {
+    if (!job.team_id || teamMemberNames.has(job.team_id)) continue;
+    const names = (job.teams?.team_members ?? [])
+      .map((tm) => tm.profiles?.full_name)
+      .filter((n): n is string => Boolean(n));
+    teamMemberNames.set(job.team_id, names);
   }
 
-  const jobIdsToday = (jobsToday ?? []).map((j) => j.id);
-  const { data: assignmentRows } =
-    jobIdsToday.length > 0
-      ? await supabase
-          .from("job_assignments")
-          .select("job_id, profiles(full_name)")
-          .in("job_id", jobIdsToday)
-      : { data: [] };
   const assignedNames = new Map<string, string[]>();
-  for (const row of assignmentRows ?? []) {
-    const name = row.profiles?.full_name;
-    if (!name) continue;
-    const list = assignedNames.get(row.job_id) ?? [];
-    list.push(name);
-    assignedNames.set(row.job_id, list);
+  for (const job of jobsToday ?? []) {
+    const names = (job.job_assignments ?? [])
+      .map((a) => a.profiles?.full_name)
+      .filter((n): n is string => Boolean(n));
+    if (names.length > 0) assignedNames.set(job.id, names);
   }
 
   // KPIs
@@ -320,14 +308,7 @@ export default async function DashboardPage() {
     });
   }
 
-  const expenseDetails = await supabase
-    .from("expenses")
-    .select("id, amount, vendor, created_at, jobs(display_number), profiles!expenses_submitted_by_fkey(full_name)")
-    .eq("organization_id", organization.id)
-    .eq("expense_date", today)
-    .order("created_at", { ascending: false })
-    .limit(10);
-  for (const e of expenseDetails.data ?? []) {
+  for (const e of expensesTodayRows ?? []) {
     const jobRef = e.jobs ? `#${e.jobs.display_number}` : "";
     activity.push({
       key: `e-${e.id}`,
