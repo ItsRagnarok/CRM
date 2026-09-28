@@ -91,7 +91,7 @@ export default function DashboardMap({
               <div style={{ marginTop: 4, fontWeight: 600 }}>
                 {marker.statusLabel}
               </div>
-              <a href={marker.href} style={{ color: "#2f6fed", fontWeight: 600 }}>
+              <a href={marker.href} style={{ color: "#3b82f6", fontWeight: 600 }}>
                 Deschide lucrarea →
               </a>
             </div>

@@ -10,9 +10,10 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      <div className="hidden lg:flex w-[46%] flex-col justify-between bg-gradient-to-br from-[#0b1530] via-[#132349] to-[#173064] p-14 text-white">
+      <div className="hidden lg:flex w-[46%] flex-col justify-between bg-gradient-to-br from-[#1c1c22] via-[#202027] to-[#26262e] p-14 text-white">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-electric">
+          {/* Placeholder mark — swap for the real logo file once provided */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-gradient-to-br from-electric to-amber">
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="text-xl font-extrabold tracking-tight">ElectroField</span>
@@ -22,7 +23,7 @@ export default function LoginPage() {
           <h1 className="max-w-md text-4xl font-extrabold leading-tight tracking-tight">
             Echipă. Lucrări. Control.
           </h1>
-          <p className="mt-4 max-w-sm text-[15px] text-[#aebbda]">
+          <p className="mt-4 max-w-sm text-[15px] text-[#b4b6be]">
             Sistemul central de operare pentru firmele cu echipe pe teren:
             electricieni, CCTV, securitate, mentenanță.
           </p>
@@ -37,13 +38,13 @@ export default function LoginPage() {
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
                   <Icon className="h-4 w-4" />
                 </div>
-                <p className="text-sm text-[#dce3f5]">{text}</p>
+                <p className="text-sm text-[#dcdde1]">{text}</p>
               </div>
             ))}
           </div>
         </div>
 
-        <p className="text-xs text-[#7c8bb5]">© 2026 ElectroField</p>
+        <p className="text-xs text-[#9da0a8]">© 2026 ElectroField</p>
       </div>
 
       <div className="flex flex-1 items-center justify-center bg-background p-6">
@@ -86,7 +87,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={pending}
-              className="mt-1 rounded-[10px] bg-electric py-3 text-[15px] font-bold text-white shadow-[0_4px_10px_rgba(47,111,237,0.28)] disabled:opacity-60"
+              className="mt-1 rounded-[10px] bg-electric py-3 text-[15px] font-bold text-white shadow-[0_4px_10px_rgba(59,130,246,0.28)] disabled:opacity-60"
             >
               {pending ? "Se conectează…" : "Intră în cont"}
             </button>

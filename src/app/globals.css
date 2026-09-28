@@ -1,14 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f7fa;
-  --foreground: #101828;
+  --background: #f7f7f8;
+  --foreground: #1f2024;
 
-  --color-navy: #0b1530;
-  --color-navy-active: #17264a;
-  --color-navy-border: #1b2748;
-  --color-electric: #2f6fed;
-  --color-electric-soft: #eff4ff;
+  /* "Faza" theme (Concept 03) — graphite base + electric blue / amber accent.
+     Tokens keep their old navy/electric names since ~15 files reference the
+     Tailwind classes; only the hex values change. */
+  --color-navy: #1c1c22;
+  --color-navy-active: #26262e;
+  --color-navy-border: #2e2e38;
+  --color-electric: #3b82f6;
+  --color-electric-soft: #eff6ff;
+  --color-amber: #f5a623;
+  --color-amber-soft: #fdf1df;
 
   --color-success: #15803d;
   --color-success-bg: #dcfce7;
@@ -21,7 +26,7 @@
   --color-neutral: #475467;
   --color-neutral-bg: #f2f4f7;
 
-  --color-border: #eaecf0;
+  --color-border: #e9e9ec;
   --color-muted: #667085;
   --color-muted-2: #98a2b3;
 
@@ -44,6 +49,8 @@
   --color-navy-border: var(--color-navy-border);
   --color-electric: var(--color-electric);
   --color-electric-soft: var(--color-electric-soft);
+  --color-amber: var(--color-amber);
+  --color-amber-soft: var(--color-amber-soft);
 
   --color-success: var(--color-success);
   --color-success-bg: var(--color-success-bg);

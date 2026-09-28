@@ -51,14 +51,15 @@ export function Sidebar({
   return (
     <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-5">
       <Link href="/dashboard" prefetch={false} className="flex items-center gap-2.5 px-2 pb-5 pt-1.5">
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-electric">
+        {/* Placeholder mark — swap for the real logo file once provided */}
+        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-gradient-to-br from-electric to-amber">
           <Zap className="h-[18px] w-[18px] text-white" />
         </div>
         <div>
           <div className="text-[15px] font-bold tracking-tight text-white">
             ElectroField
           </div>
-          <div className="text-[10.5px] text-[#8592b0]">
+          <div className="text-[10.5px] text-[#9da0a8]">
             Echipă. Lucrări. Control.
           </div>
         </div>
@@ -75,7 +76,7 @@ export function Sidebar({
               className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
                 isActive
                   ? "bg-navy-active font-semibold text-white"
-                  : "text-[#a9b4cc] hover:bg-white/5 hover:text-white"
+                  : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
               }`}
             >
               <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
@@ -93,7 +94,7 @@ export function Sidebar({
           <div className="truncate text-[13px] font-semibold text-white">
             {fullName}
           </div>
-          <div className="text-[11.5px] text-[#8592b0]">{roleLabel}</div>
+          <div className="text-[11.5px] text-[#9da0a8]">{roleLabel}</div>
         </div>
       </div>
     </aside>

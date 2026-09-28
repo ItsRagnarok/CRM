@@ -12,7 +12,8 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="w-full max-w-[440px] rounded-2xl border border-border bg-white p-10 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-electric">
+          {/* Placeholder mark — swap for the real logo file once provided */}
+          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-gradient-to-br from-electric to-amber">
             <Zap className="h-5 w-5 text-white" />
           </div>
           <span className="text-lg font-extrabold tracking-tight text-foreground">
@@ -81,7 +82,7 @@ export default function SignupPage() {
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 rounded-[10px] bg-electric py-3 text-[15px] font-bold text-white shadow-[0_4px_10px_rgba(47,111,237,0.28)] disabled:opacity-60"
+            className="mt-1 rounded-[10px] bg-electric py-3 text-[15px] font-bold text-white shadow-[0_4px_10px_rgba(59,130,246,0.28)] disabled:opacity-60"
           >
             {pending ? "Se creează…" : "Creează contul"}
           </button>
