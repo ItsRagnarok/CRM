@@ -51,10 +51,38 @@ export async function consumeMaterial(formData: FormData) {
 
 export async function reportShortage(formData: FormData) {
   const stockId = String(formData.get("stockId") ?? "");
+  const materialId = String(formData.get("materialId") ?? "");
+  const vehicleId = String(formData.get("vehicleId") ?? "");
   if (!stockId) return;
+
+  const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
   await supabase.from("material_stock").update({ quantity: 0 }).eq("id", stockId);
+
+  // Log it against the active job so the office sees a real shortage record
+  // instead of the stock silently going to zero with no explanation.
+  if (materialId && vehicleId) {
+    const { data: assignments } = await supabase
+      .from("job_assignments")
+      .select("jobs(id, status)")
+      .eq("profile_id", userId);
+    const activeJob = (assignments ?? [])
+      .map((a) => a.jobs)
+      .find((j) => j && (j.status === "in_lucru" || j.status === "pauza"));
+
+    if (activeJob) {
+      await supabase.from("material_usage").insert({
+        organization_id: organization.id,
+        material_id: materialId,
+        job_id: activeJob.id,
+        quantity: 0,
+        source_vehicle_id: vehicleId,
+        used_by: userId,
+        is_shortage: true,
+      });
+    }
+  }
 
   revalidatePath("/mobil/materiale");
 }

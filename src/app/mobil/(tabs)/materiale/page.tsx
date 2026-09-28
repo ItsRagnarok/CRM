@@ -25,7 +25,12 @@ export default async function MobileMaterialsPage() {
     : { data: null };
 
   const rows = (stock ?? []).filter((s) => s.materials);
-  const criticalCount = rows.filter((s) => s.quantity < (s.materials?.min_stock ?? 0) * 0.5).length;
+  // min_stock is a warehouse reorder threshold, not a van par level — a van always
+  // carries a small fraction of it. Items a van holds "one of" (min_stock <= 3, e.g.
+  // hand tools) are only critical when actually out; bulk consumables (cable, doze,
+  // etc.) are critical only when the van itself is nearly empty of them.
+  const isCritical = (qty: number, minStock: number) => (minStock <= 3 ? qty === 0 : qty < minStock * 0.15);
+  const criticalCount = rows.filter((s) => isCritical(s.quantity, s.materials?.min_stock ?? 0)).length;
 
   if (!vehicle) {
     return (
@@ -69,12 +74,12 @@ export default async function MobileMaterialsPage() {
           <div className="flex flex-col gap-2.5">
             {rows.map((s) => {
               const m = s.materials!;
-              const isCritical = s.quantity < m.min_stock * 0.5;
+              const critical = isCritical(s.quantity, m.min_stock);
               return (
                 <div
                   key={s.id}
                   className={`rounded-[13px] bg-white p-3.5 ${
-                    isCritical ? "border-[1.5px] border-danger-bg" : "border border-[#eaecf0]"
+                    critical ? "border-[1.5px] border-danger-bg" : "border border-[#eaecf0]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -82,9 +87,9 @@ export default async function MobileMaterialsPage() {
                       <div className="text-[14px] font-bold">{m.name}</div>
                       <div className="text-[11.5px] text-muted-2">{m.category ?? "—"}</div>
                     </div>
-                    <div className={`text-[15px] font-extrabold ${isCritical ? "text-danger" : ""}`}>
+                    <div className={`text-[15px] font-extrabold ${critical ? "text-danger" : ""}`}>
                       {s.quantity} {m.unit}
-                      {isCritical ? " 🔴" : ""}
+                      {critical ? " 🔴" : ""}
                     </div>
                   </div>
                   <div className="mt-2.5 flex gap-2">
@@ -108,6 +113,8 @@ export default async function MobileMaterialsPage() {
                     </form>
                     <form action={reportShortage} className="flex-1">
                       <input type="hidden" name="stockId" value={s.id} />
+                      <input type="hidden" name="materialId" value={m.id} />
+                      <input type="hidden" name="vehicleId" value={vehicle.id} />
                       <button
                         type="submit"
                         className="w-full rounded-[8px] bg-danger-bg py-2 text-[12px] font-bold text-danger"
