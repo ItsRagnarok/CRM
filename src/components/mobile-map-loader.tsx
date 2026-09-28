@@ -12,6 +12,6 @@ const MobileMap = dynamic(() => import("@/components/mobile-map").then((m) => m.
   ),
 });
 
-export function MobileMapLoader({ jobs }: { jobs: MobileMapJob[] }) {
-  return <MobileMap jobs={jobs} />;
+export function MobileMapLoader({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: MobileMapJob }) {
+  return <MobileMap jobs={jobs} routeTo={routeTo} />;
 }

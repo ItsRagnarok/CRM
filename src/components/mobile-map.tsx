@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -53,8 +53,12 @@ function FitBounds({ points }: { points: [number, number][] }) {
   return null;
 }
 
-export function MobileMap({ jobs }: { jobs: MobileMapJob[] }) {
+type RouteInfo = { coords: [number, number][]; distanceM: number; durationS: number };
+
+export function MobileMap({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: MobileMapJob }) {
   const [selfPos, setSelfPos] = useState<[number, number] | null>(null);
+  const [route, setRoute] = useState<RouteInfo | null>(null);
+  const [routeError, setRouteError] = useState(false);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -65,6 +69,35 @@ export function MobileMap({ jobs }: { jobs: MobileMapJob[] }) {
     );
   }, []);
 
+  useEffect(() => {
+    if (!selfPos || !routeTo) {
+      setRoute(null);
+      return;
+    }
+    let cancelled = false;
+    setRouteError(false);
+    const url = `https://router.project-osrm.org/route/v1/driving/${selfPos[1]},${selfPos[0]};${routeTo.lng},${routeTo.lat}?overview=full&geometries=geojson`;
+    fetch(url)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled) return;
+        const r = data?.routes?.[0];
+        if (!r) {
+          setRouteError(true);
+          return;
+        }
+        setRoute({
+          coords: r.geometry.coordinates.map(([lng, lat]: [number, number]) => [lat, lng]),
+          distanceM: r.distance,
+          durationS: r.duration,
+        });
+      })
+      .catch(() => !cancelled && setRouteError(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [selfPos, routeTo]);
+
   const points: [number, number][] = [
     ...(selfPos ? [selfPos] : []),
     ...jobs.map((j) => [j.lat, j.lng] as [number, number]),
@@ -72,30 +105,65 @@ export function MobileMap({ jobs }: { jobs: MobileMapJob[] }) {
   const center = points[0] ?? FALLBACK_CENTER;
 
   return (
-    <MapContainer center={center} zoom={points.length > 0 ? 13 : 6.5} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <FitBounds points={points} />
-      {selfPos && (
-        <Marker position={selfPos} icon={selfIcon}>
-          <Popup>Poziția ta</Popup>
-        </Marker>
+    <>
+      <MapContainer center={center} zoom={points.length > 0 ? 13 : 6.5} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitBounds points={route ? [...route.coords, ...points] : points} />
+        {route && <Polyline positions={route.coords} pathOptions={{ color: "#2F6FED", weight: 5, opacity: 0.85 }} />}
+        {selfPos && (
+          <Marker position={selfPos} icon={selfIcon}>
+            <Popup>Poziția ta</Popup>
+          </Marker>
+        )}
+        {jobs.map((j) => (
+          <Marker key={j.id} position={[j.lat, j.lng]} icon={jobIcon(j.label)}>
+            <Popup>
+              <div style={{ fontSize: 13 }}>
+                <div style={{ fontWeight: 700 }}>{j.label}</div>
+                <div style={{ color: "#667085" }}>{j.sublabel}</div>
+                <a href={j.href} style={{ color: "#2f6fed", fontWeight: 600 }}>
+                  Deschide lucrarea →
+                </a>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+      {routeTo && (
+        <div
+          style={{
+            position: "absolute",
+            top: 12,
+            left: 12,
+            right: 12,
+            background: "#fff",
+            borderRadius: 12,
+            padding: "10px 14px",
+            boxShadow: "0 4px 14px rgba(16,24,40,0.12)",
+            fontSize: 12.5,
+            display: "flex",
+            gap: 10,
+            alignItems: "center",
+          }}
+        >
+          {route ? (
+            <>
+              <span style={{ fontWeight: 800, color: "#101828" }}>{(route.distanceM / 1000).toFixed(1)} km</span>
+              <span style={{ color: "#98A2B3" }}>·</span>
+              <span style={{ color: "#475467" }}>{Math.round(route.durationS / 60)} min cu mașina</span>
+            </>
+          ) : routeError ? (
+            <span style={{ color: "#98A2B3" }}>Traseul nu a putut fi calculat</span>
+          ) : !selfPos ? (
+            <span style={{ color: "#98A2B3" }}>Se așteaptă locația ta…</span>
+          ) : (
+            <span style={{ color: "#98A2B3" }}>Se calculează traseul…</span>
+          )}
+        </div>
       )}
-      {jobs.map((j) => (
-        <Marker key={j.id} position={[j.lat, j.lng]} icon={jobIcon(j.label)}>
-          <Popup>
-            <div style={{ fontSize: 13 }}>
-              <div style={{ fontWeight: 700 }}>{j.label}</div>
-              <div style={{ color: "#667085" }}>{j.sublabel}</div>
-              <a href={j.href} style={{ color: "#2f6fed", fontWeight: 600 }}>
-                Deschide lucrarea →
-              </a>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    </>
   );
 }

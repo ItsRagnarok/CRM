@@ -38,6 +38,7 @@ export default async function MobileMapPage() {
     }));
 
   const nextJob = jobs[0] ?? null;
+  const routeTo = nextJob ? mapJobs.find((j) => j.id === nextJob.id) : undefined;
 
   return (
     <div className="flex h-full flex-col">
@@ -48,7 +49,7 @@ export default async function MobileMapPage() {
 
       <div className="relative flex-1">
         {mapJobs.length > 0 ? (
-          <MobileMapLoader jobs={mapJobs} />
+          <MobileMapLoader jobs={mapJobs} routeTo={routeTo} />
         ) : (
           <EmptyState icon={MapPin} title="Nimic de afișat" description="Nu ai lucrări cu adresă GPS azi." />
         )}
