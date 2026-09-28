@@ -37,7 +37,7 @@ const MONTHS = [
 
 const HOUR_START = 7;
 const HOUR_END = 19;
-const PX_PER_HOUR = 60;
+const PX_PER_HOUR = 37.5;
 const GRID_HEIGHT = (HOUR_END - HOUR_START) * PX_PER_HOUR;
 
 function dateParts(iso: string) {
@@ -329,7 +329,7 @@ export function CalendarGrid({
                       height: GRID_HEIGHT,
                       backgroundImage: isDragOver
                         ? undefined
-                        : `repeating-linear-gradient(180deg, transparent, transparent ${PX_PER_HOUR - 1}px, #f2f4f7 ${PX_PER_HOUR}px)`,
+                        : `repeating-linear-gradient(180deg, transparent, transparent ${PX_PER_HOUR * 2 - 1}px, #f2f4f7 ${PX_PER_HOUR * 2}px)`,
                     }}
                   >
                     {positionedTimedJobs.map(({ job, top, height, col, cols }) => (
@@ -338,7 +338,7 @@ export function CalendarGrid({
                         className="absolute"
                         style={{
                           top,
-                          height,
+                          height: Math.max(height, 44),
                           left: `calc(${(col / cols) * 100}% + 2px)`,
                           width: `calc(${100 / cols}% - 4px)`,
                         }}
