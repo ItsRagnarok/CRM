@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
@@ -57,13 +58,16 @@ export async function requireAdminContext(): Promise<AdminContext> {
  * login if the user just confirmed their email (signup couldn't call the RPC
  * yet because there was no session at signUp() time).
  *
- * Deliberately NOT wrapped in React's `cache()`: it call redirect() internally,
- * and cache() would memoize (and replay) that thrown redirect across what
- * should be independent calls — including later Server Actions — which
- * produced spurious "you're logged out" redirects for a fully valid session.
- * Race protection for the one-time signup RPC is handled below instead.
+ * Wrapped in React's `cache()` below: both (app)/layout.tsx and every page
+ * under it call this, and without caching that was two extra DB round trips
+ * (profiles, organizations) duplicated on every single navigation. `cache()`
+ * scopes to one request, so a Server Action invocation — a separate request —
+ * always re-runs this fresh; it never sees a stale value from an earlier page
+ * load. A thrown redirect() is cached and replayed the same way a resolved
+ * value is, which is correct here: two calls in the same request that would
+ * both redirect should redirect to the same place, not diverge.
  */
-export async function requireSessionContext(): Promise<SessionContext> {
+async function requireSessionContextUncached(): Promise<SessionContext> {
   const supabase = await createClient();
   // getSession() decodes the already-validated cookie locally (no network
   // round trip); middleware is the one place that calls the slower
@@ -146,6 +150,8 @@ export async function requireSessionContext(): Promise<SessionContext> {
     organization,
   };
 }
+
+export const requireSessionContext = cache(requireSessionContextUncached);
 
 export const ROLE_LABELS: Record<Profile["role"], string> = {
   admin: "Administrator companie",
