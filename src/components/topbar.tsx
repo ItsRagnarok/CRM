@@ -1,16 +1,6 @@
-import { Search, Bell, Plus } from "lucide-react";
-import Link from "next/link";
+import { Search, Bell } from "lucide-react";
 
-const TODAY_LABEL = new Intl.DateTimeFormat("ro-RO", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-}).format(new Date());
-
-export function Topbar({ newJobHref = "/lucrari/nou" }: { newJobHref?: string }) {
-  const label = TODAY_LABEL.charAt(0).toUpperCase() + TODAY_LABEL.slice(1);
-
+export function Topbar() {
   return (
     <header className="flex h-[66px] shrink-0 items-center gap-4 border-b border-border bg-white px-6">
       <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
@@ -30,19 +20,6 @@ export function Topbar({ newJobHref = "/lucrari/nou" }: { newJobHref?: string })
       >
         <Bell className="h-[17px] w-[17px]" strokeWidth={1.9} />
       </button>
-
-      <div className="hidden text-right text-[13px] font-semibold text-foreground md:block">
-        {label}
-      </div>
-
-      <Link
-        href={newJobHref}
-        prefetch={false}
-        className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white shadow-[0_3px_8px_rgba(59,130,246,0.28)]"
-      >
-        <Plus className="h-[15px] w-[15px]" strokeWidth={2.4} />
-        Lucrare nouă
-      </Link>
     </header>
   );
 }
