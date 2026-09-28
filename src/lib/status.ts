@@ -24,6 +24,20 @@ export const JOB_STATUS_STYLES: Record<JobStatus, string> = {
   anulata: "bg-[#f3f4f6] text-[#6b7280]",
 };
 
+// Hex fills for map markers — JOB_STATUS_STYLES above is Tailwind classes,
+// which Leaflet's divIcon can't resolve (it renders outside the app's CSS
+// build via innerHTML), so marker colors are kept as plain hex here.
+export const JOB_STATUS_MARKER_COLOR: Record<JobStatus, string> = {
+  programata: "#475467",
+  in_drum: "#b45309",
+  ajunsa: "#1d4ed8",
+  in_lucru: "#1d4ed8",
+  pauza: "#6d28d9",
+  finalizata: "#15803d",
+  necesita_atentie: "#b91c1c",
+  anulata: "#6b7280",
+};
+
 export const JOB_TYPE_LABELS: Record<
   Database["public"]["Enums"]["job_type"],
   string

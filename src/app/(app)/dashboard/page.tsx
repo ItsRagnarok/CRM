@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
+import { DashboardMapLoader } from "@/components/dashboard-map-loader";
+import type { DashboardMapJob } from "@/components/dashboard-map";
 import {
   Briefcase,
   UsersRound,
@@ -13,6 +15,7 @@ import {
   Package,
   Plus,
   Activity,
+  MapPin,
 } from "lucide-react";
 
 function greeting() {
@@ -38,14 +41,16 @@ export default async function DashboardPage() {
     supabase
       .from("jobs")
       .select(
-        "id, display_number, title, job_type, status, start_time, end_time, clients(name), locations(address), teams(name)"
+        "id, display_number, title, job_type, status, start_time, end_time, clients(name), locations(address, lat, lng), teams(name)"
       )
       .eq("organization_id", organization.id)
       .eq("scheduled_date", today)
       .order("start_time", { ascending: true, nullsFirst: true }),
     supabase
       .from("jobs")
-      .select("id, display_number, status, team_id, clients(name), teams(name)")
+      .select(
+        "id, display_number, title, status, team_id, clients(name), teams(name), locations(lat, lng)"
+      )
       .eq("organization_id", organization.id)
       .in("status", ["in_lucru", "in_drum", "ajunsa", "pauza"]),
     supabase
@@ -77,6 +82,27 @@ export default async function DashboardPage() {
     (sum, e) => sum + Number(e.amount),
     0
   );
+
+  // Prefer jobs currently in motion; fall back to the rest of today's
+  // schedule so the map isn't empty on a quiet day with nothing active yet.
+  const mapCandidates = [...activeJobsList, ...(jobsToday ?? [])];
+  const seenMapJobIds = new Set<string>();
+  const mapJobs: DashboardMapJob[] = [];
+  for (const job of mapCandidates) {
+    const lat = job.locations?.lat;
+    const lng = job.locations?.lng;
+    if (seenMapJobIds.has(job.id) || lat == null || lng == null) continue;
+    seenMapJobIds.add(job.id);
+    mapJobs.push({
+      id: job.id,
+      displayNumber: job.display_number,
+      title: job.title,
+      clientName: job.clients?.name ?? "Client necunoscut",
+      status: job.status,
+      lat,
+      lng,
+    });
+  }
 
   // RLS already scopes this to the current organization via the jobs join.
   const { data: recentHistory } = await supabase
@@ -139,6 +165,31 @@ export default async function DashboardPage() {
           iconBg="bg-electric-soft"
           iconColor="text-electric"
         />
+      </div>
+
+      <div className="rounded-[13px] border border-border bg-white">
+        <div className="flex items-center justify-between border-b border-[#f2f4f7] px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-[15px] font-bold text-foreground">
+            <MapPin className="h-4 w-4 text-muted" /> Hartă live — lucrări active
+          </h2>
+          <Link href="/harta" className="text-[12.5px] font-semibold text-electric">
+            Vezi harta completă →
+          </Link>
+        </div>
+        <div className="h-[320px] p-3">
+          {mapJobs.length > 0 ? (
+            <DashboardMapLoader jobs={mapJobs} />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-1 rounded-[10px] bg-[#f9fafb] text-center">
+              <p className="text-[13px] font-semibold text-foreground">
+                Nicio locație de afișat încă
+              </p>
+              <p className="max-w-xs text-[12.5px] text-muted">
+                Adaugă adrese cu coordonate la clienți pentru a vedea lucrările pe hartă.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
