@@ -24,6 +24,14 @@
   --color-border: #eaecf0;
   --color-muted: #667085;
   --color-muted-2: #98a2b3;
+
+  /* Admin (ElectroField platform owner) — distinct from the tenant navy/electric
+     identity, so nobody mistakes one for the other at a glance. */
+  --color-graphite: #17151f;
+  --color-graphite-active: #242032;
+  --color-graphite-border: #2b273a;
+  --color-purple: #7c5cfc;
+  --color-purple-soft: #f1edff;
 }
 
 @theme inline {
@@ -51,6 +59,12 @@
   --color-border: var(--color-border);
   --color-muted: var(--color-muted);
   --color-muted-2: var(--color-muted-2);
+
+  --color-graphite: var(--color-graphite);
+  --color-graphite-active: var(--color-graphite-active);
+  --color-graphite-border: var(--color-graphite-border);
+  --color-purple: var(--color-purple);
+  --color-purple-soft: var(--color-purple-soft);
 }
 
 body {

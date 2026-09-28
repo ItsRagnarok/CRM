@@ -7,5 +7,15 @@ export default async function RootPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  redirect(user ? "/dashboard" : "/login");
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: platformAdmin } = await supabase
+    .from("platform_admins")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  redirect(platformAdmin ? "/admin" : "/dashboard");
 }

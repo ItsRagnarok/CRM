@@ -12,6 +12,46 @@ export type SessionContext = {
   organization: Organization;
 };
 
+export type AdminContext = {
+  userId: string;
+  email: string | null;
+  fullName: string;
+};
+
+/**
+ * Loads the platform owner's context. A platform admin (ElectroField itself,
+ * e.g. info@alpora.ro) is deliberately NOT a row in public.profiles — every
+ * profile is scoped to one tenant organization_id, and a platform admin
+ * manages every tenant, not one of them. See public.platform_admins.
+ */
+export async function requireAdminContext(): Promise<AdminContext> {
+  const supabase = await createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
+
+  if (!user) {
+    redirect("/login");
+  }
+
+  const { data: admin } = await supabase
+    .from("platform_admins")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!admin) {
+    redirect("/dashboard");
+  }
+
+  return {
+    userId: user.id,
+    email: user.email ?? null,
+    fullName: admin.full_name,
+  };
+}
+
 /**
  * Loads the signed-in user's profile + organization, creating them on first
  * login if the user just confirmed their email (signup couldn't call the RPC
@@ -45,6 +85,16 @@ export async function requireSessionContext(): Promise<SessionContext> {
     .maybeSingle();
 
   if (!profile) {
+    const { data: platformAdmin } = await supabase
+      .from("platform_admins")
+      .select("id")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (platformAdmin) {
+      redirect("/admin");
+    }
+
     const orgName =
       (user.user_metadata?.org_name as string | undefined) || "Compania mea";
     const fullName =
@@ -98,7 +148,7 @@ export async function requireSessionContext(): Promise<SessionContext> {
 }
 
 export const ROLE_LABELS: Record<Profile["role"], string> = {
-  admin: "Administrator",
+  admin: "Administrator companie",
   manager: "Manager / Dispatcher",
   team_leader: "Team Leader",
   technician: "Tehnician",

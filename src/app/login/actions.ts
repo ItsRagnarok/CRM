@@ -12,11 +12,17 @@ export async function login(_prevState: { error?: string } | undefined, formData
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
     return { error: "Email sau parolă incorectă." };
   }
 
-  redirect("/dashboard");
+  const { data: platformAdmin } = await supabase
+    .from("platform_admins")
+    .select("id")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  redirect(platformAdmin ? "/admin" : "/dashboard");
 }
