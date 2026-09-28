@@ -14,7 +14,16 @@ export default function LoginPage() {
       <div className="hidden lg:flex w-[46%] flex-col justify-between bg-gradient-to-br from-[#1c1c22] via-[#202027] to-[#26262e] p-14 text-white">
         <div className="flex items-center gap-3">
           <Image src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" priority />
-          <span className="text-xl font-extrabold tracking-tight">ElectroField</span>
+          <span className="flex items-baseline text-xl font-extrabold tracking-tight">
+            Electro
+            <Image
+              src="/logo-wordmark-field.png"
+              alt="Field"
+              width={496}
+              height={173}
+              className="h-[20px] w-auto translate-y-[1px] object-contain"
+            />
+          </span>
         </div>
 
         <div>

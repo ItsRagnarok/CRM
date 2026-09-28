@@ -13,8 +13,15 @@ export default function SignupPage() {
       <div className="w-full max-w-[440px] rounded-2xl border border-border bg-white p-10 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
           <Image src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" priority />
-          <span className="text-lg font-extrabold tracking-tight text-foreground">
-            ElectroField
+          <span className="flex items-baseline text-lg font-extrabold tracking-tight text-foreground">
+            Electro
+            <Image
+              src="/logo-wordmark-field.png"
+              alt="Field"
+              width={496}
+              height={173}
+              className="h-[18px] w-auto translate-y-[1px] object-contain"
+            />
           </span>
         </div>
 

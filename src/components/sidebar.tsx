@@ -60,8 +60,15 @@ export function Sidebar({
           priority
         />
         <div>
-          <div className="text-[15px] font-bold tracking-tight text-white">
-            ElectroField
+          <div className="flex items-baseline text-[15px] font-bold tracking-tight text-white">
+            Electro
+            <Image
+              src="/logo-wordmark-field.png"
+              alt="Field"
+              width={496}
+              height={173}
+              className="h-[15px] w-auto translate-y-[1px] object-contain"
+            />
           </div>
           <div className="text-[10.5px] text-[#9da0a8]">
             Echipă. Lucrări. Control.
