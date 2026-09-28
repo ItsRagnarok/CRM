@@ -1,6 +1,5 @@
-import { Search, Bell, Plus, LogOut } from "lucide-react";
+import { Search, Bell, Plus } from "lucide-react";
 import Link from "next/link";
-import { signOut } from "@/app/(app)/actions";
 
 const TODAY_LABEL = new Intl.DateTimeFormat("ro-RO", {
   weekday: "long",
@@ -44,16 +43,6 @@ export function Topbar({ newJobHref = "/lucrari/nou" }: { newJobHref?: string })
         <Plus className="h-[15px] w-[15px]" strokeWidth={2.4} />
         Lucrare nouă
       </Link>
-
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="flex h-[34px] w-[34px] items-center justify-center rounded-[9px] text-neutral hover:bg-neutral-bg"
-          aria-label="Deconectare"
-        >
-          <LogOut className="h-[17px] w-[17px]" strokeWidth={1.9} />
-        </button>
-      </form>
     </header>
   );
 }

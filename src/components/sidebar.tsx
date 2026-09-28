@@ -16,7 +16,9 @@ import {
   BarChart3,
   FileText,
   Settings,
+  LogOut,
 } from "lucide-react";
+import { signOut } from "@/app/(app)/actions";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -101,12 +103,21 @@ export function Sidebar({
         <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-electric text-[13px] font-bold text-white">
           {initials || "?"}
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-semibold text-white">
             {fullName}
           </div>
           <div className="text-[11.5px] text-[#9da0a8]">{roleLabel}</div>
         </div>
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] text-[#9da0a8] hover:bg-white/5 hover:text-white"
+            aria-label="Deconectare"
+          >
+            <LogOut className="h-[16px] w-[16px]" strokeWidth={1.9} />
+          </button>
+        </form>
       </div>
     </aside>
   );

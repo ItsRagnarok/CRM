@@ -5,38 +5,94 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
 import {
+  addChecklistItem,
+  addExpense,
+  deleteChecklistItem,
+  deleteDocument,
+  toggleChecklistItem,
+  uploadDocument,
+} from "./actions";
+import {
   JOB_STATUS_LABELS,
   JOB_STATUS_STYLES,
   JOB_TYPE_LABELS,
-  JOB_PRIORITY_LABELS,
 } from "@/lib/status";
-import { ArrowLeft, MapPin, UsersRound, Calendar } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  UsersRound,
+  Calendar,
+  Pencil,
+  FileDown,
+  Plus,
+  Trash2,
+  FileText,
+  Image as ImageIcon,
+  Check,
+} from "lucide-react";
 
 const TABS = [
-  "Rezumat",
-  "Materiale",
-  "Fotografii",
-  "Cheltuieli",
-  "Pontaj",
-  "Checklist",
-  "Raport",
+  { id: "rezumat", label: "Rezumat" },
+  { id: "materiale", label: "Materiale" },
+  { id: "fotografii", label: "Fotografii" },
+  { id: "cheltuieli", label: "Cheltuieli" },
+  { id: "pontaj", label: "Pontaj" },
+  { id: "checklist", label: "Checklist" },
+  { id: "raport", label: "Raport" },
+  { id: "documente", label: "Documente" },
 ] as const;
+
+const PHOTO_CATEGORY_LABELS: Record<string, string> = {
+  before: "ÎNAINTE",
+  during: "ÎN TIMPUL LUCRĂRII",
+  after: "DUPĂ",
+};
+
+const TIME_EVENT_LABELS: Record<string, string> = {
+  travel_start: "Plecare spre locație",
+  arrival: "Sosire la locație",
+  work_start: "Început lucrare",
+  pauza_start: "Pauză",
+  work_resume: "Continuare lucrare",
+  work_end: "Finalizare lucrare",
+};
+
+function formatDateRo(dateStr: string) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  return new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+}
+
+function formatDuration(start: string | null, end: string | null) {
+  if (!start || !end) return "—";
+  const ms = new Date(end).getTime() - new Date(start).getTime();
+  if (ms <= 0) return "—";
+  const h = Math.floor(ms / 3_600_000);
+  const m = Math.round((ms % 3_600_000) / 60_000);
+  return `${h}h ${m}m`;
+}
+
+function formatTime(iso: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+}
 
 export default async function JobDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }) {
   const { id } = await params;
-  const { organization } = await requireSessionContext();
+  const { tab: tabParam } = await searchParams;
+  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "rezumat";
+  const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
-  // job_status_history is a to-many FK on job_id, so it comes back nested
-  // on the same query instead of a second round trip.
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "*, clients(id, name), locations(address), teams(id, name), job_status_history(id, status, created_at, profiles(full_name))"
+      "*, clients(id, name), locations(address), teams(id, name), job_status_history(id, status, created_at, profiles(full_name)), job_assignments(profiles(full_name))"
     )
     .eq("organization_id", organization.id)
     .eq("id", id)
@@ -45,37 +101,72 @@ export default async function JobDetailPage({
 
   if (!job) notFound();
 
+  const [
+    { data: photos },
+    { data: expenses },
+    { data: timeEntries },
+    { data: checklist },
+    { data: materialUsage },
+    { data: documents },
+    { data: signature },
+  ] = await Promise.all([
+    supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
+    supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date").eq("job_id", id).order("created_at"),
+    supabase.from("time_entries").select("id, event_type, occurred_at").eq("job_id", id).order("occurred_at"),
+    supabase
+      .from("job_checklists")
+      .select("id, job_checklist_items(id, label, is_checked, sort_order)")
+      .eq("job_id", id)
+      .eq("phase", "after")
+      .order("sort_order", { ascending: true, foreignTable: "job_checklist_items" })
+      .maybeSingle(),
+    supabase
+      .from("material_usage")
+      .select("id, quantity, materials(name, unit)")
+      .eq("job_id", id),
+    supabase.from("documents").select("id, name, doc_type, storage_path, created_at").eq("job_id", id).order("created_at"),
+    supabase.from("signatures").select("signer_name, storage_path, signed_at").eq("job_id", id).maybeSingle(),
+  ]);
+
   const history = job.job_status_history;
+  const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
+  const totalExpenses = (expenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
+  const checklistItems = checklist?.job_checklist_items ?? [];
+  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const tabHref = (t: string) => `/lucrari/${id}?tab=${t}`;
 
   return (
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-border bg-white px-7 py-4.5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link
-            href="/lucrari"
-            prefetch={false}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-neutral-bg"
-          >
+          <Link href="/lucrari" prefetch={false} className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-neutral-bg">
             <ArrowLeft className="h-[15px] w-[15px] text-[#344054]" />
           </Link>
           <h1 className="text-[17px] font-extrabold text-foreground">
             Lucrare #{job.display_number} — {job.title}
           </h1>
-          <StatusBadge
-            label={JOB_STATUS_LABELS[job.status]}
-            className={JOB_STATUS_STYLES[job.status]}
-          />
+          <StatusBadge label={JOB_STATUS_LABELS[job.status]} className={JOB_STATUS_STYLES[job.status]} />
           <div className="flex-1" />
+          <Link
+            href={`/lucrari/${id}/editeaza`}
+            prefetch={false}
+            className="flex items-center gap-1.5 rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
+          >
+            <Pencil className="h-3.5 w-3.5" /> Editează
+          </Link>
+          <Link
+            href={`/rapoarte-lucrare/${id}`}
+            target="_blank"
+            className="flex items-center gap-1.5 rounded-[9px] bg-[#101828] px-3.5 py-2 text-[12.5px] font-bold text-white"
+          >
+            <FileDown className="h-3.5 w-3.5" /> Descarcă raport PDF
+          </Link>
           <StatusActions jobId={job.id} status={job.status} />
         </div>
 
         <div className="mt-3 flex flex-wrap gap-6 text-[13px] text-[#475467]">
           {job.clients && (
-            <Link
-              href={`/clienti/${job.clients.id}`}
-              prefetch={false}
-              className="flex items-center gap-1.5 font-semibold"
-            >
+            <Link href={`/clienti/${job.clients.id}`} prefetch={false} className="flex items-center gap-1.5 font-semibold">
               <UsersRound className="h-3.5 w-3.5 text-muted" /> {job.clients.name}
             </Link>
           )}
@@ -85,107 +176,219 @@ export default async function JobDetailPage({
             </span>
           )}
           <span className="flex items-center gap-1.5">
-            <Calendar className="h-3.5 w-3.5 text-muted" /> {job.scheduled_date}
-            {job.start_time ? ` · ${job.start_time.slice(0, 5)}` : ""}
+            <UsersRound className="h-3.5 w-3.5 text-muted" />{" "}
+            {assignees.length > 0 ? assignees.join(" + ") : (job.teams?.name ?? "neasignată")}
           </span>
           <span className="flex items-center gap-1.5">
-            <UsersRound className="h-3.5 w-3.5 text-muted" />{" "}
-            {job.teams?.name ?? "echipă neasignată"}
+            <Calendar className="h-3.5 w-3.5 text-muted" /> {formatDateRo(job.scheduled_date)}
           </span>
         </div>
 
         <div className="mt-4 flex gap-1 overflow-x-auto">
-          {TABS.map((tab, i) => (
-            <div
-              key={tab}
+          {TABS.map((t) => (
+            <Link
+              key={t.id}
+              href={tabHref(t.id)}
+              prefetch={false}
               className={`whitespace-nowrap px-3.5 py-2.5 text-[13px] font-semibold ${
-                i === 0
-                  ? "border-b-2 border-electric text-electric"
-                  : "text-muted"
+                tab === t.id ? "border-b-2 border-electric text-electric" : "text-muted"
               }`}
             >
-              {tab}
-            </div>
+              {t.label}
+            </Link>
           ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 p-7 xl:grid-cols-[1.3fr_1fr]">
-        <div className="flex flex-col gap-4">
-          <div className="rounded-[13px] border border-border bg-white p-5">
-            <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">
-              Informații generale
-            </h2>
-            <div className="grid grid-cols-3 gap-4">
-              <InfoField label="DATA" value={job.scheduled_date} />
-              <InfoField label="TIP LUCRARE" value={JOB_TYPE_LABELS[job.job_type]} />
-              <InfoField
-                label="PRIORITATE"
-                value={JOB_PRIORITY_LABELS[job.priority]}
-              />
-              <InfoField
-                label="ORA SOSIRII"
-                value={job.arrived_at ? new Date(job.arrived_at).toLocaleTimeString("ro-RO") : "—"}
-              />
-              <InfoField
-                label="ÎNCEPUT LUCRU"
-                value={job.work_started_at ? new Date(job.work_started_at).toLocaleTimeString("ro-RO") : "—"}
-              />
-              <InfoField
-                label="FINALIZARE"
-                value={job.work_ended_at ? new Date(job.work_ended_at).toLocaleTimeString("ro-RO") : "—"}
-              />
-            </div>
-            {job.description && (
-              <div className="mt-4 border-t border-[#f2f4f7] pt-4">
-                <div className="text-[11.5px] font-semibold text-muted-2">
-                  DESCRIERE
+      <div className="p-7">
+        {tab === "rezumat" && (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
+            <div className="flex flex-col gap-4">
+              <Card title="Informații generale">
+                <div className="grid grid-cols-3 gap-4">
+                  <InfoField label="DATA" value={job.scheduled_date} />
+                  <InfoField label="DURATĂ" value={formatDuration(job.work_started_at, job.work_ended_at)} />
+                  <InfoField label="DISTANȚĂ" value={job.distance_km != null ? `${job.distance_km} km` : "—"} />
+                  <InfoField label="ORA SOSIRII" value={formatTime(job.arrived_at)} />
+                  <InfoField label="ORA PLECĂRII" value={formatTime(job.work_ended_at)} />
+                  <InfoField label="TIP LUCRARE" value={JOB_TYPE_LABELS[job.job_type]} />
                 </div>
-                <p className="mt-1 text-[13px] leading-relaxed text-[#344054]">
-                  {job.description}
-                </p>
-              </div>
-            )}
+                <div className="mt-4 border-t border-[#f2f4f7] pt-4">
+                  <div className="text-[11.5px] font-semibold text-muted-2">DESCRIERE</div>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[#344054]">
+                    {job.description || "Fără descriere adăugată încă."}
+                  </p>
+                </div>
+              </Card>
+
+              <PhotosCard photos={photos ?? []} publicUrl={publicUrl} jobId={id} />
+
+              <Card title="Pontaj">
+                <TimeEntriesList entries={timeEntries ?? []} />
+              </Card>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <ReportCard jobId={id} />
+              <SignatureCard signature={signature ?? null} publicUrl={publicUrl} />
+              <Card title="Cheltuieli lucrare">
+                <ExpensesList expenses={expenses ?? []} total={totalExpenses} />
+              </Card>
+              <Card title="Checklist final">
+                <ChecklistPreview items={checklistItems} jobId={id} />
+              </Card>
+            </div>
           </div>
+        )}
 
-          {(["Materiale", "Fotografii", "Cheltuieli", "Checklist", "Raport"] as const).map(
-            (label) => (
-              <div key={label} className="rounded-[13px] border border-dashed border-border bg-white p-5">
-                <h2 className="text-[14.5px] font-bold text-foreground">{label}</h2>
-                <p className="mt-1.5 text-[13px] text-muted">
-                  Vine în etapa următoare — deocamdată doar fluxul lucrării (status, client, echipă).
-                </p>
-              </div>
-            )
-          )}
-        </div>
-
-        <div className="rounded-[13px] border border-border bg-white p-5">
-          <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">
-            Istoric status
-          </h2>
-          {history && history.length > 0 ? (
-            <div className="flex flex-col gap-3.5">
-              {history.map((h) => (
-                <div key={h.id} className="flex gap-3">
-                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-electric" />
-                  <div>
-                    <div className="text-[13px] font-semibold text-foreground">
-                      {JOB_STATUS_LABELS[h.status]}
-                    </div>
-                    <div className="text-[11.5px] text-muted-2">
-                      {h.profiles?.full_name ?? "Sistem"} ·{" "}
-                      {new Date(h.created_at).toLocaleString("ro-RO")}
-                    </div>
+        {tab === "materiale" && (
+          <Card title="Materiale folosite">
+            {materialUsage && materialUsage.length > 0 ? (
+              <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                {materialUsage.map((mu) => (
+                  <div key={mu.id} className="flex items-center justify-between py-2.5 text-[13px]">
+                    <span className="text-foreground">{mu.materials?.name}</span>
+                    <span className="font-bold text-[#344054]">
+                      {mu.quantity} {mu.materials?.unit}
+                    </span>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-[13px] text-muted">Niciun eveniment încă.</p>
-          )}
-        </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted">
+                Niciun material înregistrat încă. Catalogul de materiale al companiei e gol —
+                completează-l din{" "}
+                <Link href="/materiale" prefetch={false} className="font-semibold text-electric">
+                  secțiunea Materiale
+                </Link>{" "}
+                pentru a putea înregistra consum pe lucrare.
+              </p>
+            )}
+          </Card>
+        )}
+
+        {tab === "fotografii" && (
+          <PhotosCard photos={photos ?? []} publicUrl={publicUrl} jobId={id} full />
+        )}
+
+        {tab === "cheltuieli" && (
+          <Card title="Cheltuieli lucrare">
+            <ExpensesList expenses={expenses ?? []} total={totalExpenses} />
+            <form action={addExpense} className="mt-4 flex flex-col gap-2 border-t border-[#f2f4f7] pt-4">
+              <input type="hidden" name="jobId" value={id} />
+              <div className="grid grid-cols-3 gap-2">
+                <input name="category" required placeholder="Categorie (materiale, combustibil…)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+                <input name="vendor" placeholder="Furnizor (opțional)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+                <input name="amount" type="number" step="0.01" min="0.01" required placeholder="Sumă (RON)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+              </div>
+              <button type="submit" className="flex items-center justify-center gap-1.5 self-start rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
+                <Plus className="h-3.5 w-3.5" /> Adaugă cheltuială
+              </button>
+            </form>
+          </Card>
+        )}
+
+        {tab === "pontaj" && (
+          <Card title="Pontaj">
+            <TimeEntriesList entries={timeEntries ?? []} />
+          </Card>
+        )}
+
+        {tab === "checklist" && (
+          <Card title="Checklist lucrare">
+            {checklistItems.length > 0 ? (
+              <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                {checklistItems.map((item) => (
+                  <div key={item.id} className="flex items-center gap-2.5 py-2.5">
+                    <form action={toggleChecklistItem}>
+                      <input type="hidden" name="itemId" value={item.id} />
+                      <input type="hidden" name="jobId" value={id} />
+                      <input type="hidden" name="isChecked" value={String(item.is_checked)} />
+                      <button
+                        type="submit"
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
+                          item.is_checked ? "border-success bg-success text-white" : "border-[#d0d5dd]"
+                        }`}
+                        aria-label="Bifează"
+                      >
+                        {item.is_checked && <Check className="h-3 w-3" strokeWidth={3} />}
+                      </button>
+                    </form>
+                    <span className={`flex-1 text-[13px] ${item.is_checked ? "text-[#344054]" : "text-muted"}`}>
+                      {item.label}
+                    </span>
+                    <form action={deleteChecklistItem}>
+                      <input type="hidden" name="itemId" value={item.id} />
+                      <input type="hidden" name="jobId" value={id} />
+                      <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[8px] text-muted-2 hover:bg-danger-bg hover:text-danger" aria-label="Șterge">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted">Niciun element în checklist încă.</p>
+            )}
+            <form action={addChecklistItem} className="mt-4 flex items-center gap-2 border-t border-[#f2f4f7] pt-4">
+              <input type="hidden" name="jobId" value={id} />
+              <input name="label" required placeholder="Element checklist nou…" className="w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+              <button type="submit" className="flex shrink-0 items-center gap-1.5 rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
+                <Plus className="h-3.5 w-3.5" /> Adaugă
+              </button>
+            </form>
+          </Card>
+        )}
+
+        {tab === "raport" && <ReportCard jobId={id} full />}
+
+        {tab === "documente" && (
+          <Card title="Documente">
+            {documents && documents.length > 0 ? (
+              <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center gap-3 py-2.5">
+                    <FileText className="h-4 w-4 shrink-0 text-muted" />
+                    <div className="min-w-0 flex-1">
+                      <a href={publicUrl(doc.storage_path)} target="_blank" rel="noreferrer" className="truncate text-[13px] font-semibold text-electric">
+                        {doc.name}
+                      </a>
+                      <div className="text-[11.5px] text-muted-2">{doc.doc_type ?? "Document"}</div>
+                    </div>
+                    <form action={deleteDocument}>
+                      <input type="hidden" name="documentId" value={doc.id} />
+                      <input type="hidden" name="storagePath" value={doc.storage_path} />
+                      <input type="hidden" name="jobId" value={id} />
+                      <button type="submit" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted-2 hover:bg-danger-bg hover:text-danger" aria-label="Șterge documentul">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[13px] text-muted">Niciun document încă.</p>
+            )}
+            <form action={uploadDocument} className="mt-4 flex items-center gap-2 border-t border-[#f2f4f7] pt-4">
+              <input type="hidden" name="jobId" value={id} />
+              <input name="docType" placeholder="Tip (opțional)" className="w-40 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+              <input name="file" type="file" required className="flex-1 text-[13px]" />
+              <button type="submit" className="flex shrink-0 items-center gap-1.5 rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
+                <Plus className="h-3.5 w-3.5" /> Încarcă
+              </button>
+            </form>
+          </Card>
+        )}
       </div>
+    </div>
+  );
+}
+
+function Card({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-[13px] border border-border bg-white p-5">
+      <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">{title}</h2>
+      {children}
     </div>
   );
 }
@@ -196,5 +399,183 @@ function InfoField({ label, value }: { label: string; value: string }) {
       <div className="text-[11.5px] font-semibold text-muted-2">{label}</div>
       <div className="mt-1 text-[13.5px] font-bold text-foreground">{value}</div>
     </div>
+  );
+}
+
+function PhotosCard({
+  photos,
+  publicUrl,
+  jobId,
+  full,
+}: {
+  photos: { id: string; category: string; storage_path: string; taken_at: string }[];
+  publicUrl: (path: string) => string;
+  jobId: string;
+  full?: boolean;
+}) {
+  const shown = full ? photos : photos.slice(0, 6);
+  return (
+    <Card title="Fotografii">
+      {!full && photos.length > 0 && (
+        <Link href={`/lucrari/${jobId}?tab=fotografii`} prefetch={false} className="mb-3 -mt-2 block text-right text-[12px] font-semibold text-electric">
+          Vezi toate ({photos.length}) →
+        </Link>
+      )}
+      {shown.length > 0 ? (
+        <div className="grid grid-cols-3 gap-3.5">
+          {shown.map((p) => (
+            <a key={p.id} href={publicUrl(p.storage_path)} target="_blank" rel="noreferrer" className="block">
+              <div className="mb-1.5 text-[10.5px] font-bold text-muted-2">
+                {PHOTO_CATEGORY_LABELS[p.category] ?? p.category.toUpperCase()}
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={publicUrl(p.storage_path)} alt="" className="h-[100px] w-full rounded-[9px] object-cover" />
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="flex items-center gap-2 text-[13px] text-muted">
+          <ImageIcon className="h-4 w-4" /> Nicio fotografie încărcată încă.
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function TimeEntriesList({ entries }: { entries: { id: string; event_type: string; occurred_at: string }[] }) {
+  if (entries.length === 0) {
+    return <p className="text-[13px] text-muted">Niciun eveniment de pontaj încă.</p>;
+  }
+  return (
+    <div className="flex flex-col">
+      {entries.map((e, i) => (
+        <div key={e.id} className={`flex gap-3.5 py-2.5 ${i < entries.length - 1 ? "border-b border-[#f2f4f7]" : ""}`}>
+          <div className="w-[52px] shrink-0 text-[13px] font-bold text-foreground">
+            {new Date(e.occurred_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+          </div>
+          <div className="text-[13px] text-[#344054]">{TIME_EVENT_LABELS[e.event_type] ?? e.event_type}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ExpensesList({
+  expenses,
+  total,
+}: {
+  expenses: { id: string; category: string; vendor: string | null; amount: number; currency: string }[];
+  total: number;
+}) {
+  if (expenses.length === 0) {
+    return <p className="text-[13px] text-muted">Nicio cheltuială înregistrată încă.</p>;
+  }
+  return (
+    <>
+      {expenses.map((e) => (
+        <div key={e.id} className="flex items-center justify-between border-b border-[#f2f4f7] py-2 text-[13px] last:border-b-0">
+          <span className="text-foreground">{e.vendor ? `${e.vendor} — ${e.category}` : e.category}</span>
+          <span className="font-bold text-[#344054]">
+            {Number(e.amount).toFixed(2)} {e.currency}
+          </span>
+        </div>
+      ))}
+      <div className="mt-1.5 flex items-center justify-between border-t border-[#f2f4f7] pt-2.5">
+        <span className="text-[13px] font-bold text-foreground">Total</span>
+        <span className="text-[14px] font-extrabold text-foreground">{total.toFixed(2)} RON</span>
+      </div>
+    </>
+  );
+}
+
+function ChecklistPreview({
+  items,
+  jobId,
+}: {
+  items: { id: string; label: string; is_checked: boolean }[];
+  jobId: string;
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="text-[13px] text-muted">
+        Fără checklist încă.{" "}
+        <Link href={`/lucrari/${jobId}?tab=checklist`} prefetch={false} className="font-semibold text-electric">
+          Adaugă elemente →
+        </Link>
+      </p>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      {items.slice(0, 6).map((item) => (
+        <div key={item.id} className="flex items-center gap-2.5 text-[13px]">
+          <div className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${item.is_checked ? "bg-success text-white" : "border-2 border-[#d0d5dd]"}`}>
+            {item.is_checked && <Check className="h-2.5 w-2.5" strokeWidth={3} />}
+          </div>
+          <span className={item.is_checked ? "text-[#344054]" : "text-muted"}>{item.label}</span>
+        </div>
+      ))}
+      {items.length > 6 && (
+        <Link href={`/lucrari/${jobId}?tab=checklist`} prefetch={false} className="text-[12px] font-semibold text-electric">
+          Vezi toate ({items.length}) →
+        </Link>
+      )}
+    </div>
+  );
+}
+
+function ReportCard({ jobId, full }: { jobId: string; full?: boolean }) {
+  return (
+    <Card title="Raport automat">
+      <div className="flex items-center gap-3 rounded-[10px] border border-[#eaecf0] bg-[#f9fafb] p-3.5">
+        <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[9px] bg-danger-bg">
+          <FileText className="h-[18px] w-[18px] text-danger" />
+        </div>
+        <div className="flex-1">
+          <div className="text-[13px] font-bold text-foreground">Raport de intervenție</div>
+          <div className="text-[11.5px] text-muted-2">Generat automat pe baza datelor completate</div>
+        </div>
+      </div>
+      <Link
+        href={`/rapoarte-lucrare/${jobId}`}
+        target="_blank"
+        className="mt-3 flex items-center justify-center rounded-[10px] bg-electric py-3 text-[13.5px] font-bold text-white"
+      >
+        Descarcă PDF
+      </Link>
+      {full && (
+        <p className="mt-3 text-[12px] text-muted">
+          Raportul se deschide într-o pagină nouă, gata de printat sau salvat ca PDF (Ctrl/Cmd+P → „Salvează ca PDF").
+        </p>
+      )}
+    </Card>
+  );
+}
+
+function SignatureCard({
+  signature,
+  publicUrl,
+}: {
+  signature: { signer_name: string; storage_path: string; signed_at: string } | null;
+  publicUrl: (path: string) => string;
+}) {
+  return (
+    <Card title="Semnătură client">
+      {signature ? (
+        <>
+          <div className="flex h-[90px] items-center justify-center rounded-[10px] border border-[#f2f4f7] bg-white">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={publicUrl(signature.storage_path)} alt="Semnătură client" className="h-full object-contain" />
+          </div>
+          <div className="mt-2 text-[12px] text-muted-2">
+            Semnat de {signature.signer_name}, {new Date(signature.signed_at).toLocaleString("ro-RO")}
+          </div>
+        </>
+      ) : (
+        <div className="flex h-[90px] items-center justify-center rounded-[10px] border-[1.5px] border-dashed border-[#d0d5dd] text-[12.5px] text-muted">
+          Fără semnătură încă
+        </div>
+      )}
+    </Card>
   );
 }
