@@ -82,13 +82,15 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
     redirect("/login");
   }
 
-  let { data: profile } = await supabase
+  // profiles.organization_id is a to-one FK, so this embed fetches both
+  // rows in a single round trip instead of two sequential ones.
+  let { data: profileRow } = await supabase
     .from("profiles")
-    .select("*")
+    .select("*, organizations(*)")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (!profile) {
+  if (!profileRow) {
     const { data: platformAdmin } = await supabase
       .from("platform_admins")
       .select("id")
@@ -121,32 +123,24 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
       throw rpcError;
     }
 
-    const { data: createdProfile } = await supabase
+    const { data: createdProfileRow } = await supabase
       .from("profiles")
-      .select("*")
+      .select("*, organizations(*)")
       .eq("id", user.id)
       .single();
-    profile = createdProfile;
+    profileRow = createdProfileRow;
   }
 
-  if (!profile) {
+  if (!profileRow || !profileRow.organizations) {
     redirect("/login");
   }
 
-  const { data: organization } = await supabase
-    .from("organizations")
-    .select("*")
-    .eq("id", profile.organization_id)
-    .single();
-
-  if (!organization) {
-    redirect("/login");
-  }
+  const { organizations: organization, ...profile } = profileRow;
 
   return {
     userId: user.id,
     email: user.email ?? null,
-    profile,
+    profile: profile as Profile,
     organization,
   };
 }
