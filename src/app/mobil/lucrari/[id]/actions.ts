@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 
@@ -107,6 +108,7 @@ export async function finalizeJob(formData: FormData) {
 
   paths(jobId);
   revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
+  redirect(`/mobil/lucrari/${jobId}/semnatura`);
 }
 
 export async function uploadJobPhoto(formData: FormData) {

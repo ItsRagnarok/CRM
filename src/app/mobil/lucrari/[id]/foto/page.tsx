@@ -79,8 +79,17 @@ export default async function MobilePhotoPage({
         </div>
       </div>
 
-      <div className="flex flex-shrink-0 items-center justify-center gap-10 px-4 pb-8 pt-2">
+      <div className="flex flex-shrink-0 items-center justify-center gap-10 px-4 pt-2">
         <PhotoCapture jobId={id} category={category} />
+      </div>
+
+      <div className="flex-shrink-0 px-4 pb-8 pt-4">
+        <Link
+          href={`/mobil/lucrari/${id}/cheltuiala`}
+          className="block rounded-[12px] bg-electric py-[14px] text-center text-[14.5px] font-extrabold text-white"
+        >
+          CONTINUĂ
+        </Link>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardList, Camera, Receipt, CheckCircle2, PenLine } from "lucide-react";
+import { ArrowLeft, ClipboardList, ChevronRight } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
@@ -32,6 +32,14 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const maps = mapsHref(job.locations?.address ?? null, job.locations?.lat ?? null, job.locations?.lng ?? null);
   const isTraveling = job.status === "programata" || job.status === "in_drum";
   const isDone = job.status === "finalizata";
+  const isWorking = job.status === "in_lucru" || job.status === "pauza";
+
+  const [{ count: photoCount }, { count: expenseCount }] = isWorking
+    ? await Promise.all([
+        supabase.from("photos").select("id", { count: "exact", head: true }).eq("job_id", id),
+        supabase.from("expenses").select("id", { count: "exact", head: true }).eq("job_id", id),
+      ])
+    : [{ count: 0 }, { count: 0 }];
 
   return (
     <div className="flex h-full flex-col">
@@ -106,6 +114,16 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                   </div>
                 )}
               </div>
+              <Link
+                href={`/mobil/lucrari/${job.id}/checklist`}
+                className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
+                  <ClipboardList className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+                </div>
+                <div className="flex-1 text-[13.5px] font-bold">Checklist înainte de start</div>
+                <ChevronRight className="h-4 w-4 text-muted-2" />
+              </Link>
               <form action={startWork.bind(null, job.id)}>
                 <button
                   type="submit"
@@ -114,11 +132,22 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                   PORNEȘTE LUCRUL
                 </button>
               </form>
-              <HubLink jobId={job.id} />
             </>
           )}
 
-          {(job.status === "in_lucru" || job.status === "pauza") && <HubLink jobId={job.id} full />}
+          {isWorking && (
+            <>
+              <Link
+                href={`/mobil/lucrari/${job.id}/foto`}
+                className="block rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
+              >
+                CONTINUĂ LUCRAREA
+              </Link>
+              <div className="text-center text-[12px] text-muted-2">
+                Fotografii ({photoCount ?? 0}) → Cheltuieli ({expenseCount ?? 0}) → Finalizare → Semnătură
+              </div>
+            </>
+          )}
 
           {isDone && (
             <div className="rounded-[13px] border border-[#eaecf0] bg-white p-4">
@@ -137,29 +166,3 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   );
 }
 
-function HubLink({ jobId, full }: { jobId: string; full?: boolean }) {
-  const items = [
-    { href: `/mobil/lucrari/${jobId}/checklist`, label: "Checklist înainte de start", icon: ClipboardList },
-    { href: `/mobil/lucrari/${jobId}/foto`, label: "Fotografii", icon: Camera },
-    { href: `/mobil/lucrari/${jobId}/cheltuiala`, label: "Adaugă o cheltuială", icon: Receipt },
-    { href: `/mobil/lucrari/${jobId}/finalizare`, label: "Finalizare & checklist final", icon: CheckCircle2 },
-    { href: `/mobil/lucrari/${jobId}/semnatura`, label: "Semnătură client", icon: PenLine },
-  ];
-  return (
-    <div className={`flex flex-col gap-2 ${full ? "" : "mt-1"}`}>
-      {items.map(({ href, label, icon: Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
-            <Icon className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
-          </div>
-          <div className="flex-1 text-[13.5px] font-bold">{label}</div>
-          <div className="text-muted-2">›</div>
-        </Link>
-      ))}
-    </div>
-  );
-}

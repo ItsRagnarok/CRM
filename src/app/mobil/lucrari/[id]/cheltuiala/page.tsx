@@ -84,6 +84,16 @@ export default async function MobileExpensePage({ params }: { params: Promise<{ 
           SALVEAZĂ CHELTUIALA
         </button>
       </form>
+
+      <div className="flex-shrink-0 border-t border-[#eaecf0] p-4">
+        <div className="mb-2 text-center text-[11.5px] text-muted-2">Cheltuiala e opțională — poți continua fără</div>
+        <Link
+          href={`/mobil/lucrari/${id}/finalizare`}
+          className="block rounded-[12px] bg-neutral-bg py-[14px] text-center text-[14.5px] font-extrabold text-[#344054]"
+        >
+          CONTINUĂ
+        </Link>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveSignature } from "../actions";
 
@@ -13,18 +13,41 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  // The canvas's drawing-buffer size must match its actual on-screen CSS size
+  // (in device pixels) or touch coordinates drift from the drawn line — the
+  // exact "can't sign" symptom on a real phone, since a fixed width/height
+  // attribute here never matches the CSS-stretched (w-full) rendered size.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      const ctx = canvas.getContext("2d");
+      ctx?.scale(ratio, ratio);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
   function getPoint(e: React.PointerEvent<HTMLCanvasElement>) {
     const rect = canvasRef.current!.getBoundingClientRect();
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
   function handlePointerDown(e: React.PointerEvent<HTMLCanvasElement>) {
+    e.preventDefault();
+    canvasRef.current?.setPointerCapture(e.pointerId);
     drawing.current = true;
     lastPoint.current = getPoint(e);
   }
 
   function handlePointerMove(e: React.PointerEvent<HTMLCanvasElement>) {
     if (!drawing.current) return;
+    e.preventDefault();
     const ctx = canvasRef.current!.getContext("2d");
     const point = getPoint(e);
     if (ctx && lastPoint.current) {
@@ -40,7 +63,8 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
     if (!hasDrawn) setHasDrawn(true);
   }
 
-  function handlePointerUp() {
+  function handlePointerUp(e: React.PointerEvent<HTMLCanvasElement>) {
+    canvasRef.current?.releasePointerCapture(e.pointerId);
     drawing.current = false;
     lastPoint.current = null;
   }
@@ -60,6 +84,13 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
     formData.set("dataUrl", dataUrl);
     startTransition(async () => {
       await saveSignature(formData);
+      router.push(`/mobil/lucrari/${jobId}`);
+      router.refresh();
+    });
+  }
+
+  function skip() {
+    startTransition(() => {
       router.push(`/mobil/lucrari/${jobId}`);
       router.refresh();
     });
@@ -87,13 +118,12 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
         </div>
         <canvas
           ref={canvasRef}
-          width={360}
-          height={220}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          className="w-full touch-none rounded-[14px] border-2 border-dashed border-[#d0d5dd] bg-[#fcfcfd]"
+          style={{ touchAction: "none", WebkitUserSelect: "none", WebkitTouchCallout: "none" }}
+          className="h-[220px] w-full select-none rounded-[14px] border-2 border-dashed border-[#d0d5dd] bg-[#fcfcfd]"
         />
         {!hasDrawn && (
           <div className="-mt-8 text-center text-[11px] text-muted-2">Atinge aici pentru a semna</div>
@@ -113,6 +143,14 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
         className="mt-4 block w-full rounded-[12px] bg-success py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(21,128,61,0.28)] disabled:opacity-50"
       >
         {pending ? "Se salvează…" : "CONFIRMĂ ȘI FINALIZEAZĂ"}
+      </button>
+      <button
+        type="button"
+        onClick={skip}
+        disabled={pending}
+        className="mt-2.5 block w-full py-2 text-center text-[13px] font-bold text-muted disabled:opacity-50"
+      >
+        Clientul nu este disponibil — continuă fără semnătură
       </button>
     </div>
   );
