@@ -192,8 +192,12 @@ export default async function ClientDetailPage({
           </div>
 
           <div className="rounded-[13px] border border-border bg-white">
-            <div className="border-b border-[#f2f4f7] px-5 py-3.5 text-[14.5px] font-bold text-foreground">
-              Puncte de lucru
+            <div className="border-b border-[#f2f4f7] px-5 py-3.5">
+              <div className="text-[14.5px] font-bold text-foreground">Puncte de lucru</div>
+              <p className="mt-0.5 text-[12px] text-muted-2">
+                Adresele unde acest client are instalații (sediu, depozit, șantier). Fiecare lucrare nouă
+                se leagă de unul din aceste puncte.
+              </p>
             </div>
             <div className="flex flex-col gap-2 p-5">
               {locationError && (
@@ -254,7 +258,11 @@ export default async function ClientDetailPage({
 
       {tab === "documente" && (
         <div className="rounded-[13px] border border-border bg-white p-5">
-          <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">Documente</h2>
+          <h2 className="text-[14.5px] font-bold text-foreground">Documente</h2>
+          <p className="mb-3.5 mt-0.5 text-[12px] text-muted-2">
+            Contracte, oferte, procese verbale de recepție, avize sau certificate legate de acest client —
+            nu de o lucrare anume.
+          </p>
           {documents && documents.length > 0 ? (
             <div className="flex flex-col divide-y divide-[#f2f4f7]">
               {documents.map((doc) => (
@@ -368,7 +376,11 @@ export default async function ClientDetailPage({
 
       {tab === "contacte" && (
         <div className="rounded-[13px] border border-border bg-white p-5">
-          <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">Persoane de contact</h2>
+          <h2 className="text-[14.5px] font-bold text-foreground">Persoane de contact</h2>
+          <p className="mb-3.5 mt-0.5 text-[12px] text-muted-2">
+            Oameni de legătură la acest client (administrator, responsabil tehnic, paznic) — diferiți de
+            datele principale ale clientului, utili când suni pe cineva de la fața locului.
+          </p>
           {contacts.length > 0 ? (
             <div className="flex flex-col divide-y divide-[#f2f4f7]">
               {contacts.map((contact) => (
