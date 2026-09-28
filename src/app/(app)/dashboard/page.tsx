@@ -9,6 +9,8 @@ import {
   UsersRound,
   Receipt,
   CalendarClock,
+  AlertTriangle,
+  Package,
   Plus,
   Activity,
 } from "lucide-react";
@@ -26,32 +28,51 @@ export default async function DashboardPage() {
   const firstName = profile.full_name.split(" ")[0];
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: jobsToday }, activeJobsCount, expensesTodayAgg] =
-    await Promise.all([
-      supabase
-        .from("jobs")
-        .select(
-          "id, display_number, title, job_type, status, start_time, end_time, clients(name), locations(address), teams(name)"
-        )
-        .eq("organization_id", organization.id)
-        .eq("scheduled_date", today)
-        .order("start_time", { ascending: true, nullsFirst: true }),
-      supabase
-        .from("jobs")
-        .select("id, team_id", { count: "exact" })
-        .eq("organization_id", organization.id)
-        .in("status", ["in_lucru", "in_drum", "ajunsa", "pauza"]),
-      supabase
-        .from("expenses")
-        .select("amount")
-        .eq("organization_id", organization.id)
-        .eq("expense_date", today),
-    ]);
+  const [
+    { data: jobsToday },
+    { data: activeJobs },
+    expensesTodayAgg,
+    { count: overdueCount },
+    { count: materialUsageTodayCount },
+  ] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select(
+        "id, display_number, title, job_type, status, start_time, end_time, clients(name), locations(address), teams(name)"
+      )
+      .eq("organization_id", organization.id)
+      .eq("scheduled_date", today)
+      .order("start_time", { ascending: true, nullsFirst: true }),
+    supabase
+      .from("jobs")
+      .select("id, display_number, status, team_id, clients(name), teams(name)")
+      .eq("organization_id", organization.id)
+      .in("status", ["in_lucru", "in_drum", "ajunsa", "pauza"]),
+    supabase
+      .from("expenses")
+      .select("amount")
+      .eq("organization_id", organization.id)
+      .eq("expense_date", today),
+    supabase
+      .from("jobs")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organization.id)
+      .lt("scheduled_date", today)
+      .not("status", "in", "(finalizata,anulata)"),
+    supabase
+      .from("material_usage")
+      .select("id", { count: "exact", head: true })
+      .eq("organization_id", organization.id)
+      .gte("used_at", `${today}T00:00:00`)
+      .lte("used_at", `${today}T23:59:59`),
+  ]);
 
-  const activeJobs = activeJobsCount.data ?? [];
-  const teamsInField = new Set(
-    activeJobs.map((j) => j.team_id).filter(Boolean)
-  ).size;
+  const activeJobsList = activeJobs ?? [];
+  const teamsInField = new Map(
+    activeJobsList
+      .filter((j) => j.team_id)
+      .map((j) => [j.team_id as string, j])
+  );
   const expensesToday = (expensesTodayAgg.data ?? []).reduce(
     (sum, e) => sum + Number(e.amount),
     0
@@ -75,17 +96,17 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
         <KpiCard
           label="Lucrări active"
-          value={activeJobs.length}
+          value={activeJobsList.length}
           icon={Briefcase}
           iconBg="bg-electric-soft"
           iconColor="text-electric"
         />
         <KpiCard
           label="Echipe în teren"
-          value={teamsInField}
+          value={teamsInField.size}
           icon={UsersRound}
           iconBg="bg-success-bg"
           iconColor="text-success"
@@ -103,6 +124,20 @@ export default async function DashboardPage() {
           icon={Receipt}
           iconBg="bg-danger-bg"
           iconColor="text-danger"
+        />
+        <KpiCard
+          label="Lucrări întârziate"
+          value={overdueCount ?? 0}
+          icon={AlertTriangle}
+          iconBg="bg-danger-bg"
+          iconColor="text-danger"
+        />
+        <KpiCard
+          label="Materiale consumate azi"
+          value={materialUsageTodayCount ?? 0}
+          icon={Package}
+          iconBg="bg-electric-soft"
+          iconColor="text-electric"
         />
       </div>
 
@@ -162,6 +197,43 @@ export default async function DashboardPage() {
           )}
         </div>
 
+        <div className="flex flex-col gap-4">
+        <div className="rounded-[13px] border border-border bg-white p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-[14.5px] font-bold text-foreground">
+            <UsersRound className="h-4 w-4 text-muted" /> Echipe active acum
+          </h2>
+
+          {teamsInField.size > 0 ? (
+            <div className="flex flex-col divide-y divide-[#f2f4f7]">
+              {[...teamsInField.values()].map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/lucrari/${job.id}`}
+                  className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0"
+                >
+                  <div className="h-2 w-2 shrink-0 rounded-full bg-electric" />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13px] font-bold text-foreground">
+                      {job.teams?.name ?? "Echipă"}
+                    </div>
+                    <div className="truncate text-[11.5px] text-muted-2">
+                      #{job.display_number} · {job.clients?.name ?? "—"}
+                    </div>
+                  </div>
+                  <StatusBadge
+                    label={JOB_STATUS_LABELS[job.status]}
+                    className={`${JOB_STATUS_STYLES[job.status]} shrink-0`}
+                  />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted">
+              Nicio echipă nu are o lucrare activă chiar acum.
+            </p>
+          )}
+        </div>
+
         <div className="rounded-[13px] border border-border bg-white p-5">
           <h2 className="mb-3 flex items-center gap-2 text-[14.5px] font-bold text-foreground">
             <Activity className="h-4 w-4 text-muted" /> Activitate recentă
@@ -185,6 +257,7 @@ export default async function DashboardPage() {
               și lucrări finalizate.
             </p>
           )}
+        </div>
         </div>
       </div>
     </div>

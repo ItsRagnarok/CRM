@@ -25,9 +25,14 @@ export type SessionContext = {
  */
 export async function requireSessionContext(): Promise<SessionContext> {
   const supabase = await createClient();
+  // getSession() decodes the already-validated cookie locally (no network
+  // round trip); middleware is the one place that calls the slower
+  // getUser() (which re-checks the token with Supabase) on every request,
+  // so re-doing that check here would just double the latency of every page.
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
+  const user = session?.user ?? null;
 
   if (!user) {
     redirect("/login");
