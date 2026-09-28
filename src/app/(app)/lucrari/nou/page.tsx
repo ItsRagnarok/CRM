@@ -11,7 +11,7 @@ export default async function NewJobPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const [{ data: clients }, { data: teams }] = await Promise.all([
+  const [{ data: clients }, { data: teams }, { data: locations }] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name")
@@ -22,12 +22,23 @@ export default async function NewJobPage({
       .select("id, name")
       .eq("organization_id", organization.id)
       .order("name"),
+    supabase
+      .from("locations")
+      .select("id, client_id, address, label")
+      .eq("organization_id", organization.id)
+      .order("created_at"),
   ]);
+
+  const locationsByClient: Record<string, { id: string; address: string; label: string | null }[]> = {};
+  for (const loc of locations ?? []) {
+    (locationsByClient[loc.client_id] ??= []).push(loc);
+  }
 
   return (
     <NewJobForm
       clients={clients ?? []}
       teams={teams ?? []}
+      locationsByClient={locationsByClient}
       defaultClientId={clientId}
     />
   );

@@ -1,21 +1,33 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createJob } from "../actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 
+const NEW_LOCATION = "__new__";
+
+type Location = { id: string; address: string; label: string | null };
+
 export function NewJobForm({
   clients,
   teams,
+  locationsByClient,
   defaultClientId,
 }: {
   clients: { id: string; name: string }[];
   teams: { id: string; name: string }[];
+  locationsByClient: Record<string, Location[]>;
   defaultClientId?: string;
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
+  const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
+  const defaultLocations = locationsByClient[defaultClientId ?? ""] ?? [];
+  const [locationChoice, setLocationChoice] = useState(
+    defaultLocations.length > 0 ? defaultLocations[0].id : NEW_LOCATION
+  );
+  const clientLocations = locationsByClient[selectedClientId] ?? [];
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-5 p-7">
@@ -45,7 +57,15 @@ export function NewJobForm({
             <select
               name="clientId"
               required
-              defaultValue={defaultClientId ?? ""}
+              value={selectedClientId}
+              onChange={(e) => {
+                const nextClientId = e.target.value;
+                setSelectedClientId(nextClientId);
+                const nextLocations = locationsByClient[nextClientId] ?? [];
+                setLocationChoice(
+                  nextLocations.length > 0 ? nextLocations[0].id : NEW_LOCATION
+                );
+              }}
               className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
             >
               <option value="" disabled>
@@ -68,13 +88,34 @@ export function NewJobForm({
             />
           </Field>
 
-          <Field label="Adresă intervenție">
-            <input
-              name="address"
-              placeholder="Str. Fabricii 12, București"
-              className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
-            />
-          </Field>
+          {clientLocations.length > 0 && (
+            <Field label="Punct de lucru">
+              <select
+                value={locationChoice}
+                onChange={(e) => setLocationChoice(e.target.value)}
+                className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+              >
+                {clientLocations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.label ? `${loc.label} — ${loc.address}` : loc.address}
+                  </option>
+                ))}
+                <option value={NEW_LOCATION}>+ Adresă nouă…</option>
+              </select>
+            </Field>
+          )}
+
+          {locationChoice === NEW_LOCATION ? (
+            <Field label="Adresă intervenție">
+              <input
+                name="address"
+                placeholder="Str. Fabricii 12, București"
+                className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+              />
+            </Field>
+          ) : (
+            <input type="hidden" name="locationId" value={locationChoice} />
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <Field label="Tip lucrare">

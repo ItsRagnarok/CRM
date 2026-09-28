@@ -27,13 +27,26 @@ export async function createJob(
   const startTime = String(formData.get("startTime") ?? "") || null;
   const endTime = String(formData.get("endTime") ?? "") || null;
   const address = String(formData.get("address") ?? "").trim();
+  const existingLocationId = String(formData.get("locationId") ?? "").trim() || null;
 
   if (!clientId || !title || !scheduledDate) {
     return { error: "Client, titlu și dată sunt obligatorii." };
   }
 
   let locationId: string | null = null;
-  if (address) {
+  if (existingLocationId) {
+    // Trust nothing from the client past this check: confirm the location
+    // actually belongs to this org and this client before attaching it.
+    const { data: ownedLocation } = await supabase
+      .from("locations")
+      .select("id")
+      .eq("id", existingLocationId)
+      .eq("organization_id", organization.id)
+      .eq("client_id", clientId)
+      .maybeSingle();
+    locationId = ownedLocation?.id ?? null;
+  }
+  if (!locationId && address) {
     const { data: location } = await supabase
       .from("locations")
       .insert({
