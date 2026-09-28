@@ -35,32 +35,25 @@ export default async function ClientDetailPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
+  // One round trip instead of four: jobs/locations/client_contacts are all
+  // to-many FKs on client_id, so they come back nested on the same query.
   const { data: client } = await supabase
     .from("clients")
-    .select("*")
+    .select(
+      "*, jobs(id, display_number, title, status, scheduled_date), locations(id, address, label), client_contacts(id, name, role, phone, email)"
+    )
     .eq("organization_id", organization.id)
     .eq("id", id)
+    .order("scheduled_date", { ascending: false, foreignTable: "jobs" })
+    .order("created_at", { ascending: true, foreignTable: "locations" })
+    .order("created_at", { ascending: true, foreignTable: "client_contacts" })
     .maybeSingle();
 
   if (!client) notFound();
 
-  const [{ data: jobs }, { data: locations }, { data: contacts }] = await Promise.all([
-    supabase
-      .from("jobs")
-      .select("id, display_number, title, status, scheduled_date")
-      .eq("client_id", client.id)
-      .order("scheduled_date", { ascending: false }),
-    supabase
-      .from("locations")
-      .select("id, address, label")
-      .eq("client_id", client.id)
-      .order("created_at", { ascending: true }),
-    supabase
-      .from("client_contacts")
-      .select("id, name, role, phone, email")
-      .eq("client_id", client.id)
-      .order("created_at", { ascending: true }),
-  ]);
+  const jobs = client.jobs;
+  const locations = client.locations;
+  const contacts = client.client_contacts;
 
   const initials = client.name
     .split(" ")

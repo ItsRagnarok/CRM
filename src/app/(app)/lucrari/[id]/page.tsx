@@ -31,22 +31,21 @@ export default async function JobDetailPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
+  // job_status_history is a to-many FK on job_id, so it comes back nested
+  // on the same query instead of a second round trip.
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "*, clients(id, name), locations(address), teams(id, name)"
+      "*, clients(id, name), locations(address), teams(id, name), job_status_history(id, status, created_at, profiles(full_name))"
     )
     .eq("organization_id", organization.id)
     .eq("id", id)
+    .order("created_at", { ascending: true, foreignTable: "job_status_history" })
     .maybeSingle();
 
   if (!job) notFound();
 
-  const { data: history } = await supabase
-    .from("job_status_history")
-    .select("id, status, created_at, profiles(full_name)")
-    .eq("job_id", job.id)
-    .order("created_at", { ascending: true });
+  const history = job.job_status_history;
 
   return (
     <div className="flex flex-col">
