@@ -1,0 +1,220 @@
+import Link from "next/link";
+import { requireSessionContext } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { StatusBadge } from "@/components/status-badge";
+import { EmptyState } from "@/components/empty-state";
+import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
+import {
+  Briefcase,
+  UsersRound,
+  Receipt,
+  CalendarClock,
+  Plus,
+  Activity,
+} from "lucide-react";
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Bună dimineața";
+  if (hour < 18) return "Bună ziua";
+  return "Bună seara";
+}
+
+export default async function DashboardPage() {
+  const { profile, organization } = await requireSessionContext();
+  const supabase = await createClient();
+  const firstName = profile.full_name.split(" ")[0];
+  const today = new Date().toISOString().slice(0, 10);
+
+  const [{ data: jobsToday }, activeJobsCount, expensesTodayAgg] =
+    await Promise.all([
+      supabase
+        .from("jobs")
+        .select(
+          "id, display_number, title, job_type, status, start_time, end_time, clients(name), locations(address), teams(name)"
+        )
+        .eq("organization_id", organization.id)
+        .eq("scheduled_date", today)
+        .order("start_time", { ascending: true, nullsFirst: true }),
+      supabase
+        .from("jobs")
+        .select("id, team_id", { count: "exact" })
+        .eq("organization_id", organization.id)
+        .in("status", ["in_lucru", "in_drum", "ajunsa", "pauza"]),
+      supabase
+        .from("expenses")
+        .select("amount")
+        .eq("organization_id", organization.id)
+        .eq("expense_date", today),
+    ]);
+
+  const activeJobs = activeJobsCount.data ?? [];
+  const teamsInField = new Set(
+    activeJobs.map((j) => j.team_id).filter(Boolean)
+  ).size;
+  const expensesToday = (expensesTodayAgg.data ?? []).reduce(
+    (sum, e) => sum + Number(e.amount),
+    0
+  );
+
+  // RLS already scopes this to the current organization via the jobs join.
+  const { data: recentHistory } = await supabase
+    .from("job_status_history")
+    .select("id, status, created_at, jobs(display_number, title)")
+    .order("created_at", { ascending: false })
+    .limit(6);
+
+  return (
+    <div className="flex flex-col gap-5 p-7">
+      <div>
+        <h1 className="text-[22px] font-extrabold text-foreground">
+          {greeting()}, {firstName} 👋
+        </h1>
+        <p className="mt-1 text-sm text-muted">
+          Iată ce se întâmplă astăzi în echipele tale.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <KpiCard
+          label="Lucrări active"
+          value={activeJobs.length}
+          icon={Briefcase}
+          iconBg="bg-electric-soft"
+          iconColor="text-electric"
+        />
+        <KpiCard
+          label="Echipe în teren"
+          value={teamsInField}
+          icon={UsersRound}
+          iconBg="bg-success-bg"
+          iconColor="text-success"
+        />
+        <KpiCard
+          label="Lucrări programate azi"
+          value={jobsToday?.length ?? 0}
+          icon={CalendarClock}
+          iconBg="bg-warning-bg"
+          iconColor="text-warning"
+        />
+        <KpiCard
+          label="Cheltuieli azi"
+          value={`${expensesToday.toFixed(2)} RON`}
+          icon={Receipt}
+          iconBg="bg-danger-bg"
+          iconColor="text-danger"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
+        <div className="rounded-[13px] border border-border bg-white">
+          <div className="flex items-center justify-between border-b border-[#f2f4f7] px-5 py-3.5">
+            <h2 className="text-[15px] font-bold text-foreground">
+              Lucrări programate astăzi
+            </h2>
+            <Link href="/lucrari" className="text-[12.5px] font-semibold text-electric">
+              Vezi toate lucrările →
+            </Link>
+          </div>
+
+          {jobsToday && jobsToday.length > 0 ? (
+            <div className="flex flex-col divide-y divide-[#f2f4f7]">
+              {jobsToday.map((job) => (
+                <Link
+                  key={job.id}
+                  href={`/lucrari/${job.id}`}
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#f9fafb]"
+                >
+                  <div className="w-14 shrink-0 text-[13px] font-bold text-foreground">
+                    {job.start_time?.slice(0, 5) ?? "—"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-[13.5px] font-bold text-foreground">
+                      {job.clients?.name ?? "Client necunoscut"}
+                    </div>
+                    <div className="truncate text-[12.5px] text-muted">
+                      {job.title} · {job.locations?.address ?? "fără adresă"}
+                    </div>
+                  </div>
+                  <StatusBadge
+                    label={JOB_STATUS_LABELS[job.status]}
+                    className={JOB_STATUS_STYLES[job.status]}
+                  />
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="p-5">
+              <EmptyState
+                icon={Briefcase}
+                title="Nicio lucrare programată astăzi"
+                description="Creează prima lucrare pentru a o vedea aici și în calendarul echipei."
+                action={
+                  <Link
+                    href="/lucrari/nou"
+                    className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
+                  >
+                    <Plus className="h-4 w-4" /> Lucrare nouă
+                  </Link>
+                }
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-[13px] border border-border bg-white p-5">
+          <h2 className="mb-3 flex items-center gap-2 text-[14.5px] font-bold text-foreground">
+            <Activity className="h-4 w-4 text-muted" /> Activitate recentă
+          </h2>
+
+          {recentHistory && recentHistory.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {recentHistory.map((h) => (
+                <div key={h.id} className="text-[12.5px] leading-relaxed text-[#344054]">
+                  Lucrarea <b>#{h.jobs?.display_number}</b> —{" "}
+                  {JOB_STATUS_LABELS[h.status]}
+                  <div className="text-[11px] text-muted-2">
+                    {new Date(h.created_at).toLocaleString("ro-RO")}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[13px] text-muted">
+              Aici vor apărea evenimentele echipei: sosiri, fotografii, cheltuieli
+              și lucrări finalizate.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KpiCard({
+  label,
+  value,
+  icon: Icon,
+  iconBg,
+  iconColor,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  iconBg: string;
+  iconColor: string;
+}) {
+  return (
+    <div className="rounded-[13px] border border-border bg-white p-[18px] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
+      <div className="flex items-start justify-between">
+        <div className="text-[13px] font-semibold text-muted">{label}</div>
+        <div className={`flex h-8 w-8 items-center justify-center rounded-[9px] ${iconBg}`}>
+          <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
+        </div>
+      </div>
+      <div className="mt-2.5 text-[28px] font-extrabold text-foreground">
+        {value}
+      </div>
+    </div>
+  );
+}

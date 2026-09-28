@@ -1,0 +1,105 @@
+"use client";
+
+import { useActionState } from "react";
+import Link from "next/link";
+import { login } from "./actions";
+import { Zap, Users, Camera, FileText } from "lucide-react";
+
+export default function LoginPage() {
+  const [state, formAction, pending] = useActionState(login, undefined);
+
+  return (
+    <div className="flex min-h-screen">
+      <div className="hidden lg:flex w-[46%] flex-col justify-between bg-gradient-to-br from-[#0b1530] via-[#132349] to-[#173064] p-14 text-white">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-electric">
+            <Zap className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-xl font-extrabold tracking-tight">ElectroField</span>
+        </div>
+
+        <div>
+          <h1 className="max-w-md text-4xl font-extrabold leading-tight tracking-tight">
+            Echipă. Lucrări. Control.
+          </h1>
+          <p className="mt-4 max-w-sm text-[15px] text-[#aebbda]">
+            Sistemul central de operare pentru firmele cu echipe pe teren:
+            electricieni, CCTV, securitate, mentenanță.
+          </p>
+
+          <div className="mt-9 flex flex-col gap-4">
+            {[
+              { icon: Users, text: "Vezi în timp real unde sunt echipele și la ce lucrare" },
+              { icon: Camera, text: "Fotografii, checklist-uri și semnătură client pentru fiecare lucrare" },
+              { icon: FileText, text: "Raport PDF automat la finalizarea fiecărei lucrări" },
+            ].map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <p className="text-sm text-[#dce3f5]">{text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <p className="text-xs text-[#7c8bb5]">© 2026 ElectroField</p>
+      </div>
+
+      <div className="flex flex-1 items-center justify-center bg-background p-6">
+        <div className="w-full max-w-[400px] rounded-2xl border border-border bg-white p-10 shadow-sm">
+          <h2 className="text-[22px] font-bold text-foreground">Bine ai revenit</h2>
+          <p className="mt-1.5 text-sm text-muted">
+            Autentifică-te în contul ElectroField
+          </p>
+
+          <form action={formAction} className="mt-7 flex flex-col gap-4">
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-[#344054]">
+                Email
+              </label>
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="tu@companie.ro"
+                className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[13px] font-semibold text-[#344054]">
+                Parolă
+              </label>
+              <input
+                name="password"
+                type="password"
+                required
+                placeholder="••••••••"
+                className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+              />
+            </div>
+
+            {state?.error && (
+              <p className="text-sm font-medium text-danger">{state.error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={pending}
+              className="mt-1 rounded-[10px] bg-electric py-3 text-[15px] font-bold text-white shadow-[0_4px_10px_rgba(47,111,237,0.28)] disabled:opacity-60"
+            >
+              {pending ? "Se conectează…" : "Intră în cont"}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-muted">
+            Nu ai cont?{" "}
+            <Link href="/signup" className="font-semibold text-electric">
+              Creează organizația ta
+            </Link>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
