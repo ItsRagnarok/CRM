@@ -3,33 +3,107 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
-import { JOB_STATUS_LABELS, JOB_STATUS_STYLES, JOB_TYPE_LABELS } from "@/lib/status";
-import { Briefcase, Plus } from "lucide-react";
+import {
+  JOB_STATUS_LABELS,
+  JOB_STATUS_STYLES,
+  JOB_TYPE_LABELS,
+  JOB_PRIORITY_LABELS,
+  JOB_PRIORITY_COLOR,
+} from "@/lib/status";
+import type { Database } from "@/lib/supabase/database.types";
+import { Briefcase, Plus, Calendar } from "lucide-react";
 
-export default async function LucrariPage() {
+type JobStatus = Database["public"]["Enums"]["job_status"];
+
+// Same 7 statuses the mockup filters by — "ajunsă" is a brief in-transit
+// state with no dedicated pill there either; "Toate" still includes it.
+const STATUS_PILLS: JobStatus[] = [
+  "programata",
+  "in_drum",
+  "in_lucru",
+  "pauza",
+  "finalizata",
+  "necesita_atentie",
+  "anulata",
+];
+
+export default async function LucrariPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
+  const { status } = await searchParams;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const { data: jobs } = await supabase
-    .from("jobs")
-    .select(
-      "id, display_number, title, job_type, status, scheduled_date, start_time, end_time, clients(name), locations(address), teams(name)"
-    )
-    .eq("organization_id", organization.id)
-    .order("scheduled_date", { ascending: false })
-    .order("start_time", { ascending: true, nullsFirst: true });
+  const [{ data: jobs }, { data: allStatuses }] = await Promise.all([
+    (() => {
+      let query = supabase
+        .from("jobs")
+        .select(
+          "id, display_number, title, job_type, status, priority, scheduled_date, start_time, end_time, clients(name), locations(address), teams(name), job_assignments(profiles(full_name))"
+        )
+        .eq("organization_id", organization.id);
+      if (status && STATUS_PILLS.includes(status as JobStatus)) {
+        query = query.eq("status", status as JobStatus);
+      }
+      return query
+        .order("scheduled_date", { ascending: false })
+        .order("start_time", { ascending: true, nullsFirst: false });
+    })(),
+    supabase.from("jobs").select("status").eq("organization_id", organization.id),
+  ]);
+
+  const statusCounts = new Map<JobStatus, number>();
+  for (const row of allStatuses ?? []) {
+    statusCounts.set(row.status, (statusCounts.get(row.status) ?? 0) + 1);
+  }
+  const totalCount = allStatuses?.length ?? 0;
 
   return (
     <div className="flex flex-col gap-5 p-7">
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-extrabold text-foreground">Lucrări</h1>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/calendar"
+            prefetch={false}
+            className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13.5px] font-bold text-[#344054]"
+          >
+            <Calendar className="h-3.5 w-3.5" /> Vezi în calendar
+          </Link>
+          <Link
+            href="/lucrari/nou"
+            prefetch={false}
+            className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
+          >
+            <Plus className="h-4 w-4" /> Lucrare nouă
+          </Link>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
         <Link
-          href="/lucrari/nou"
+          href="/lucrari"
           prefetch={false}
-          className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
+          className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
+            !status ? "bg-[#101828] text-white" : "bg-neutral-bg text-[#475467]"
+          }`}
         >
-          <Plus className="h-4 w-4" /> Lucrare nouă
+          Toate ({totalCount})
         </Link>
+        {STATUS_PILLS.map((s) => (
+          <Link
+            key={s}
+            href={`/lucrari?status=${s}`}
+            prefetch={false}
+            className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
+              status === s ? "bg-[#101828] text-white" : JOB_STATUS_STYLES[s]
+            }`}
+          >
+            {JOB_STATUS_LABELS[s]} ({statusCounts.get(s) ?? 0})
+          </Link>
+        ))}
       </div>
 
       {jobs && jobs.length > 0 ? (
@@ -42,60 +116,82 @@ export default async function LucrariPage() {
                 <th className="px-5 py-3">Adresă</th>
                 <th className="px-5 py-3">Echipă</th>
                 <th className="px-5 py-3">Dată / Interval</th>
+                <th className="px-5 py-3">Prioritate</th>
                 <th className="px-5 py-3">Status</th>
               </tr>
             </thead>
             <tbody>
-              {jobs.map((job) => (
-                <tr key={job.id} className="border-t border-[#f2f4f7] hover:bg-[#f9fafb]">
-                  <td className="px-5 py-3.5">
-                    <Link href={`/lucrari/${job.id}`} prefetch={false} className="text-[13px] font-bold text-electric">
-                      #{job.display_number}
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="text-[13.5px] font-bold text-foreground">
-                      {job.clients?.name ?? "—"}
-                    </div>
-                    <div className="text-[12px] text-muted-2">
-                      {JOB_TYPE_LABELS[job.job_type]}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5 text-[13px] text-[#344054]">
-                    {job.locations?.address ?? "—"}
-                  </td>
-                  <td className="px-5 py-3.5 text-[13px] text-[#344054]">
-                    {job.teams?.name ?? "neasignată"}
-                  </td>
-                  <td className="px-5 py-3.5 text-[13px] text-[#344054]">
-                    {job.scheduled_date}
-                    {job.start_time ? ` · ${job.start_time.slice(0, 5)}` : ""}
-                    {job.end_time ? `–${job.end_time.slice(0, 5)}` : ""}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <StatusBadge
-                      label={JOB_STATUS_LABELS[job.status]}
-                      className={JOB_STATUS_STYLES[job.status]}
-                    />
-                  </td>
-                </tr>
-              ))}
+              {jobs.map((job) => {
+                const assignees = job.job_assignments
+                  .map((a) => a.profiles?.full_name)
+                  .filter((name): name is string => Boolean(name));
+                return (
+                  <tr key={job.id} className="border-t border-[#f2f4f7] hover:bg-[#f9fafb]">
+                    <td className="px-5 py-3.5">
+                      <Link href={`/lucrari/${job.id}`} prefetch={false} className="text-[13px] font-bold text-electric">
+                        #{job.display_number}
+                      </Link>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="text-[13.5px] font-bold text-foreground">
+                        {job.clients?.name ?? "—"}
+                      </div>
+                      <div className="text-[12px] text-muted-2">
+                        {JOB_TYPE_LABELS[job.job_type]}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#344054]">
+                      {job.locations?.address ?? "—"}
+                    </td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#344054]">
+                      {assignees.length > 0
+                        ? assignees.join(", ")
+                        : (job.teams?.name ?? "neasignată")}
+                    </td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#344054]">
+                      {job.scheduled_date}
+                      {job.start_time ? ` · ${job.start_time.slice(0, 5)}` : ""}
+                      {job.end_time ? `–${job.end_time.slice(0, 5)}` : ""}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className="text-[12px] font-bold"
+                        style={{ color: JOB_PRIORITY_COLOR[job.priority] }}
+                      >
+                        ● {JOB_PRIORITY_LABELS[job.priority]}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <StatusBadge
+                        label={JOB_STATUS_LABELS[job.status]}
+                        className={JOB_STATUS_STYLES[job.status]}
+                      />
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       ) : (
         <EmptyState
           icon={Briefcase}
-          title="Nicio lucrare încă"
-          description="Creează prima lucrare pentru a începe să urmărești programările echipei."
+          title={status ? "Nicio lucrare cu acest status" : "Nicio lucrare încă"}
+          description={
+            status
+              ? "Încearcă alt filtru de status."
+              : "Creează prima lucrare pentru a începe să urmărești programările echipei."
+          }
           action={
-            <Link
-              href="/lucrari/nou"
-              prefetch={false}
-              className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
-            >
-              <Plus className="h-4 w-4" /> Lucrare nouă
-            </Link>
+            !status && (
+              <Link
+                href="/lucrari/nou"
+                prefetch={false}
+                className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
+              >
+                <Plus className="h-4 w-4" /> Lucrare nouă
+              </Link>
+            )
           }
         />
       )}

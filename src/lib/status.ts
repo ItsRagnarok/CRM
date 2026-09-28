@@ -60,3 +60,12 @@ export const JOB_PRIORITY_LABELS: Record<
   ridicata: "Ridicată",
   urgenta: "Urgentă",
 };
+
+export const JOB_PRIORITY_COLOR: Record<
+  Database["public"]["Enums"]["job_priority"],
+  string
+> = {
+  normala: "#667085",
+  ridicata: "#B45309",
+  urgenta: "#B91C1C",
+};

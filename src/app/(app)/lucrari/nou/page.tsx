@@ -5,9 +5,9 @@ import { NewJobForm } from "./new-job-form";
 export default async function NewJobPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clientId?: string }>;
+  searchParams: Promise<{ clientId?: string; date?: string; teamId?: string }>;
 }) {
-  const { clientId } = await searchParams;
+  const { clientId, date, teamId } = await searchParams;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -40,6 +40,8 @@ export default async function NewJobPage({
       teams={teams ?? []}
       locationsByClient={locationsByClient}
       defaultClientId={clientId}
+      defaultDate={date}
+      defaultTeamId={teamId}
     />
   );
 }

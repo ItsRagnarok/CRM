@@ -15,11 +15,15 @@ export function NewJobForm({
   teams,
   locationsByClient,
   defaultClientId,
+  defaultDate,
+  defaultTeamId,
 }: {
   clients: { id: string; name: string }[];
   teams: { id: string; name: string }[];
   locationsByClient: Record<string, Location[]>;
   defaultClientId?: string;
+  defaultDate?: string;
+  defaultTeamId?: string;
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
   const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
@@ -151,7 +155,7 @@ export function NewJobForm({
             <Field label="Echipă (opțional)">
               <select
                 name="teamId"
-                defaultValue=""
+                defaultValue={defaultTeamId ?? ""}
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               >
                 <option value="">Neasignată</option>
@@ -170,6 +174,7 @@ export function NewJobForm({
                 name="scheduledDate"
                 type="date"
                 required
+                defaultValue={defaultDate}
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
             </Field>

@@ -5,7 +5,16 @@ export default function LucrariLoading() {
     <div className="flex flex-col gap-5 p-7">
       <div className="flex items-center justify-between">
         <Skeleton className="h-5 w-24" />
-        <Skeleton className="h-10 w-36 rounded-[10px]" />
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-10 w-40 rounded-[10px]" />
+          <Skeleton className="h-10 w-36 rounded-[10px]" />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-[34px] w-24 rounded-[9px]" />
+        ))}
       </div>
 
       <div className="overflow-hidden rounded-[13px] border border-border bg-white">
@@ -21,7 +30,7 @@ export default function LucrariLoading() {
             </div>
             <Skeleton className="h-3.5 w-32" />
             <Skeleton className="h-3.5 w-24" />
-            <Skeleton className="h-3.5 w-28" />
+            <Skeleton className="h-3.5 w-20" />
             <Skeleton className="h-6 w-20 rounded-full" />
           </div>
         ))}
