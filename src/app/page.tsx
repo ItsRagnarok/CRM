@@ -17,5 +17,17 @@ export default async function RootPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  redirect(platformAdmin ? "/admin" : "/dashboard");
+  if (platformAdmin) redirect("/admin");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  // Field roles land on the mobile-optimized flow by default; office roles
+  // (admin/manager) get the desktop dashboard. Either can still navigate to
+  // the other manually — this only picks the default landing page.
+  const fieldRoles = ["technician", "team_leader"];
+  redirect(profile && fieldRoles.includes(profile.role) ? "/mobil" : "/dashboard");
 }

@@ -24,5 +24,14 @@ export async function login(_prevState: { error?: string } | undefined, formData
     .eq("id", data.user.id)
     .maybeSingle();
 
-  redirect(platformAdmin ? "/admin" : "/dashboard");
+  if (platformAdmin) redirect("/admin");
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  const fieldRoles = ["technician", "team_leader"];
+  redirect(profile && fieldRoles.includes(profile.role) ? "/mobil" : "/dashboard");
 }

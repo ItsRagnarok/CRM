@@ -66,23 +66,22 @@ export async function addExpense(formData: FormData) {
   revalidatePath(`/lucrari/${jobId}`);
 }
 
-async function ensureChecklist(
+export async function ensureChecklist(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  jobId: string
+  jobId: string,
+  phase: "before" | "after" = "after"
 ) {
   const { data: existing } = await supabase
     .from("job_checklists")
     .select("id")
     .eq("job_id", jobId)
-    .eq("phase", "after")
+    .eq("phase", phase)
     .maybeSingle();
   if (existing) return existing.id;
 
-  // phase only allows 'before' | 'after' — this tab is the final/after-work
-  // checklist ("Checklist final" in the mockup).
   const { data: created } = await supabase
     .from("job_checklists")
-    .insert({ job_id: jobId, phase: "after" })
+    .insert({ job_id: jobId, phase })
     .select("id")
     .single();
   return created?.id ?? null;
@@ -91,10 +90,11 @@ async function ensureChecklist(
 export async function addChecklistItem(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const label = String(formData.get("label") ?? "").trim();
+  const phase = String(formData.get("phase") ?? "after") as "before" | "after";
   if (!jobId || !label) return;
 
   const supabase = await createClient();
-  const checklistId = await ensureChecklist(supabase, jobId);
+  const checklistId = await ensureChecklist(supabase, jobId, phase);
   if (!checklistId) return;
 
   const { count } = await supabase
@@ -109,6 +109,8 @@ export async function addChecklistItem(formData: FormData) {
   });
 
   revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
+  revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
 }
 
 export async function toggleChecklistItem(formData: FormData) {
@@ -130,6 +132,8 @@ export async function toggleChecklistItem(formData: FormData) {
     .eq("id", itemId);
 
   revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
+  revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
 }
 
 export async function deleteChecklistItem(formData: FormData) {
@@ -140,6 +144,8 @@ export async function deleteChecklistItem(formData: FormData) {
   const supabase = await createClient();
   await supabase.from("job_checklist_items").delete().eq("id", itemId);
   revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
+  revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
 }
 
 export async function uploadDocument(formData: FormData) {
