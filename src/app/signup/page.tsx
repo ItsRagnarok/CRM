@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { signup } from "./actions";
-import { Zap } from "lucide-react";
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(signup, undefined);
@@ -12,10 +12,7 @@ export default function SignupPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="w-full max-w-[440px] rounded-2xl border border-border bg-white p-10 shadow-sm">
         <div className="mb-6 flex items-center gap-3">
-          {/* Placeholder mark — swap for the real logo file once provided */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-gradient-to-br from-electric to-amber">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
+          <Image src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" priority />
           <span className="text-lg font-extrabold tracking-tight text-foreground">
             ElectroField
           </span>

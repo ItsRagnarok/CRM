@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { login } from "./actions";
-import { Zap, Users, Camera, FileText } from "lucide-react";
+import { Users, Camera, FileText } from "lucide-react";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined);
@@ -12,10 +13,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen">
       <div className="hidden lg:flex w-[46%] flex-col justify-between bg-gradient-to-br from-[#1c1c22] via-[#202027] to-[#26262e] p-14 text-white">
         <div className="flex items-center gap-3">
-          {/* Placeholder mark — swap for the real logo file once provided */}
-          <div className="flex h-10 w-10 items-center justify-center rounded-[11px] bg-gradient-to-br from-electric to-amber">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
+          <Image src="/logo-mark.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" priority />
           <span className="text-xl font-extrabold tracking-tight">ElectroField</span>
         </div>
 

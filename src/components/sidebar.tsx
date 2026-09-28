@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -15,7 +16,6 @@ import {
   BarChart3,
   FileText,
   Settings,
-  Zap,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -51,10 +51,14 @@ export function Sidebar({
   return (
     <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-5">
       <Link href="/dashboard" prefetch={false} className="flex items-center gap-2.5 px-2 pb-5 pt-1.5">
-        {/* Placeholder mark — swap for the real logo file once provided */}
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-[9px] bg-gradient-to-br from-electric to-amber">
-          <Zap className="h-[18px] w-[18px] text-white" />
-        </div>
+        <Image
+          src="/logo-mark.png"
+          alt="ElectroField"
+          width={34}
+          height={34}
+          className="h-[34px] w-[34px] shrink-0 object-contain"
+          priority
+        />
         <div>
           <div className="text-[15px] font-bold tracking-tight text-white">
             ElectroField
