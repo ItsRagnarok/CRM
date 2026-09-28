@@ -25,6 +25,7 @@ export default async function LucrariPage() {
         <h1 className="text-[17px] font-extrabold text-foreground">Lucrări</h1>
         <Link
           href="/lucrari/nou"
+          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-4 w-4" /> Lucrare nouă
@@ -48,7 +49,7 @@ export default async function LucrariPage() {
               {jobs.map((job) => (
                 <tr key={job.id} className="border-t border-[#f2f4f7] hover:bg-[#f9fafb]">
                   <td className="px-5 py-3.5">
-                    <Link href={`/lucrari/${job.id}`} className="text-[13px] font-bold text-electric">
+                    <Link href={`/lucrari/${job.id}`} prefetch={false} className="text-[13px] font-bold text-electric">
                       #{job.display_number}
                     </Link>
                   </td>
@@ -90,6 +91,7 @@ export default async function LucrariPage() {
           action={
             <Link
               href="/lucrari/nou"
+              prefetch={false}
               className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
             >
               <Plus className="h-4 w-4" /> Lucrare nouă

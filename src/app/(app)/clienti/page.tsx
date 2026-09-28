@@ -44,6 +44,7 @@ export default async function ClientiPage({
         <h1 className="text-[17px] font-extrabold text-foreground">Clienți</h1>
         <Link
           href="/clienti/nou"
+          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-4 w-4" /> Client nou
@@ -74,6 +75,7 @@ export default async function ClientiPage({
               <Link
                 key={tab.value || "toti"}
                 href={href}
+                prefetch={false}
                 className={`rounded-[8px] px-3.5 py-1.5 text-[13px] font-semibold transition-colors ${
                   isActive ? "bg-white text-foreground shadow-sm" : "text-muted"
                 }`}
@@ -100,7 +102,7 @@ export default async function ClientiPage({
               {clients.map((c) => (
                 <tr key={c.id} className="border-t border-[#f2f4f7] hover:bg-[#f9fafb]">
                   <td className="px-5 py-3.5">
-                    <Link href={`/clienti/${c.id}`} className="block">
+                    <Link href={`/clienti/${c.id}`} prefetch={false} className="block">
                       <div className="text-[13.5px] font-bold text-foreground">
                         {c.name}
                       </div>
@@ -144,6 +146,7 @@ export default async function ClientiPage({
           action={
             <Link
               href="/clienti/nou"
+              prefetch={false}
               className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
             >
               <Plus className="h-4 w-4" /> Client nou

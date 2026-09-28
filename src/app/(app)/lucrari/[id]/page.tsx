@@ -54,6 +54,7 @@ export default async function JobDetailPage({
         <div className="flex flex-wrap items-center gap-2.5">
           <Link
             href="/lucrari"
+            prefetch={false}
             className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-neutral-bg"
           >
             <ArrowLeft className="h-[15px] w-[15px] text-[#344054]" />
@@ -73,6 +74,7 @@ export default async function JobDetailPage({
           {job.clients && (
             <Link
               href={`/clienti/${job.clients.id}`}
+              prefetch={false}
               className="flex items-center gap-1.5 font-semibold"
             >
               <UsersRound className="h-3.5 w-3.5 text-muted" /> {job.clients.name}

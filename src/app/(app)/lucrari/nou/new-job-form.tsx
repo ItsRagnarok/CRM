@@ -34,6 +34,7 @@ export function NewJobForm({
       <div className="flex items-center gap-3">
         <Link
           href="/lucrari"
+          prefetch={false}
           className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg"
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
@@ -44,7 +45,7 @@ export function NewJobForm({
       {clients.length === 0 ? (
         <div className="rounded-[14px] border border-border bg-white p-6 text-[13.5px] text-muted">
           Trebuie să adaugi mai întâi un client.{" "}
-          <Link href="/clienti/nou" className="font-bold text-electric">
+          <Link href="/clienti/nou" prefetch={false} className="font-bold text-electric">
             Adaugă un client →
           </Link>
         </div>
@@ -203,6 +204,7 @@ export function NewJobForm({
           <div className="flex justify-end gap-3 pt-2">
             <Link
               href="/lucrari"
+              prefetch={false}
               className="rounded-[10px] border border-[#d0d5dd] px-4 py-2.5 text-[13.5px] font-bold text-[#344054]"
             >
               Anulează

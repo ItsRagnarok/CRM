@@ -74,6 +74,7 @@ export default async function ClientDetailPage({
       <div className="flex items-center gap-3">
         <Link
           href="/clienti"
+          prefetch={false}
           className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg"
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
@@ -123,6 +124,7 @@ export default async function ClientDetailPage({
         <div className="flex items-center gap-2.5">
           <Link
             href={`/clienti/${client.id}/editeaza`}
+            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-[13px] font-bold text-[#344054]"
           >
             <Pencil className="h-3.5 w-3.5" /> Editează
@@ -140,6 +142,7 @@ export default async function ClientDetailPage({
           </form>
           <Link
             href={`/lucrari/nou?clientId=${client.id}`}
+            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13px] font-bold text-white"
           >
             <Plus className="h-4 w-4" /> Lucrare nouă
@@ -317,6 +320,7 @@ export default async function ClientDetailPage({
               <Link
                 key={job.id}
                 href={`/lucrari/${job.id}`}
+                prefetch={false}
                 className="flex items-center gap-4 px-5 py-3.5 hover:bg-[#f9fafb]"
               >
                 <div className="w-16 shrink-0 text-[13px] font-bold text-electric">
