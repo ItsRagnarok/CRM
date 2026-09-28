@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { PreventZoom } from "@/components/prevent-zoom";
 import "./globals.css";
 
 const inter = Inter({
@@ -12,6 +13,13 @@ export const metadata: Metadata = {
   description: "Echipă. Lucrări. Control.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -19,7 +27,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ro" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <PreventZoom />
+        {children}
+      </body>
     </html>
   );
 }
