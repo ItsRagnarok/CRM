@@ -37,7 +37,8 @@ const MONTHS = [
 
 const HOUR_START = 7;
 const HOUR_END = 19;
-const PX_PER_HOUR = 50;
+const PX_PER_HOUR = 60;
+const GRID_HEIGHT = (HOUR_END - HOUR_START) * PX_PER_HOUR;
 
 function dateParts(iso: string) {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -60,6 +61,72 @@ function timeToHours(t: string | null) {
   if (!t) return null;
   const [h, m] = t.split(":").map(Number);
   return h + m / 60;
+}
+
+// Classic day-schedule collision layout: jobs that overlap in time get
+// split into side-by-side columns instead of stacking exactly on top of
+// each other (two teams both starting at 09:00 is a real, common case,
+// not an edge case — the previous version rendered them fully overlapped).
+type Positioned = { job: Job; top: number; height: number; col: number; cols: number };
+
+function layoutTimedJobs(jobs: Job[]): Positioned[] {
+  const items = jobs
+    .map((job) => {
+      const rawStart = timeToHours(job.start_time) ?? HOUR_START;
+      const rawEnd = Math.max(timeToHours(job.end_time) ?? rawStart + 1, rawStart + 0.5);
+      const start = Math.min(Math.max(rawStart, HOUR_START), HOUR_END);
+      const end = Math.min(Math.max(rawEnd, start + 0.25), HOUR_END);
+      return { job, start, end };
+    })
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+
+  // Group into clusters of mutually-overlapping jobs.
+  const clusters: (typeof items)[] = [];
+  let current: typeof items = [];
+  let currentEnd = -Infinity;
+  for (const item of items) {
+    if (current.length === 0 || item.start < currentEnd) {
+      current.push(item);
+      currentEnd = Math.max(currentEnd, item.end);
+    } else {
+      clusters.push(current);
+      current = [item];
+      currentEnd = item.end;
+    }
+  }
+  if (current.length) clusters.push(current);
+
+  const positioned: Positioned[] = [];
+  for (const cluster of clusters) {
+    const columnEnds: number[] = [];
+    const colOf: number[] = [];
+    for (const item of cluster) {
+      let placed = false;
+      for (let c = 0; c < columnEnds.length; c++) {
+        if (columnEnds[c] <= item.start) {
+          columnEnds[c] = item.end;
+          colOf.push(c);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) {
+        columnEnds.push(item.end);
+        colOf.push(columnEnds.length - 1);
+      }
+    }
+    const cols = columnEnds.length;
+    cluster.forEach((item, i) => {
+      positioned.push({
+        job: item.job,
+        top: (item.start - HOUR_START) * PX_PER_HOUR,
+        height: (item.end - item.start) * PX_PER_HOUR,
+        col: colOf[i],
+        cols,
+      });
+    });
+  }
+  return positioned;
 }
 
 export function CalendarGrid({
@@ -98,7 +165,9 @@ export function CalendarGrid({
 
   const jobsByDay = new Map<string, Job[]>();
   for (const job of jobs) {
-    (jobsByDay.get(job.scheduled_date) ?? jobsByDay.set(job.scheduled_date, []).get(job.scheduled_date)!).push(job);
+    const list = jobsByDay.get(job.scheduled_date);
+    if (list) list.push(job);
+    else jobsByDay.set(job.scheduled_date, [job]);
   }
 
   function handleDrop(e: React.DragEvent, dateStr: string) {
@@ -121,7 +190,6 @@ export function CalendarGrid({
         <div className="ml-2 flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
           <Link
             href={baseHref({ view: "day" })}
-            prefetch={false}
             className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-semibold ${
               view === "day" ? "bg-white text-foreground shadow-sm" : "text-muted"
             }`}
@@ -130,7 +198,6 @@ export function CalendarGrid({
           </Link>
           <Link
             href={baseHref({ view: "week" })}
-            prefetch={false}
             className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-semibold ${
               view === "week" ? "bg-white text-foreground shadow-sm" : "text-muted"
             }`}
@@ -148,7 +215,6 @@ export function CalendarGrid({
         <div className="flex items-center gap-1">
           <Link
             href={baseHref({ date: prevStr })}
-            prefetch={false}
             className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted hover:bg-neutral-bg"
             aria-label="Perioada anterioară"
           >
@@ -156,14 +222,12 @@ export function CalendarGrid({
           </Link>
           <Link
             href={baseHref({ date: todayStr })}
-            prefetch={false}
             className="rounded-[8px] px-2.5 py-1.5 text-[12px] font-bold text-muted hover:bg-neutral-bg"
           >
             Azi
           </Link>
           <Link
             href={baseHref({ date: nextStr })}
-            prefetch={false}
             className="flex h-8 w-8 items-center justify-center rounded-[8px] text-muted hover:bg-neutral-bg"
             aria-label="Perioada următoare"
           >
@@ -190,7 +254,6 @@ export function CalendarGrid({
 
         <Link
           href={`/lucrari/nou?date=${anchorStr}`}
-          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-3.5 w-3.5" /> Lucrare nouă
@@ -221,7 +284,7 @@ export function CalendarGrid({
           </div>
 
           <div className="grid" style={{ gridTemplateColumns: `64px repeat(${days.length}, 1fr)` }}>
-            <div className="relative" style={{ height: (HOUR_END - HOUR_START) * PX_PER_HOUR }}>
+            <div className="relative" style={{ height: GRID_HEIGHT }}>
               {Array.from({ length: HOUR_END - HOUR_START + 1 }, (_, i) => HOUR_START + i)
                 .filter((h) => h % 2 === HOUR_START % 2)
                 .map((h) => (
@@ -237,8 +300,9 @@ export function CalendarGrid({
 
             {days.map((d) => {
               const dayJobs = jobsByDay.get(d.dateStr) ?? [];
-              const timedJobs = dayJobs.filter((j) => j.start_time);
               const untimedJobs = dayJobs.filter((j) => !j.start_time);
+              const positionedTimedJobs = layoutTimedJobs(dayJobs.filter((j) => j.start_time));
+              const isDragOver = dragOverDate === d.dateStr;
 
               return (
                 <div
@@ -249,36 +313,40 @@ export function CalendarGrid({
                   }}
                   onDragLeave={() => setDragOverDate((cur) => (cur === d.dateStr ? null : cur))}
                   onDrop={(e) => handleDrop(e, d.dateStr)}
-                  className={`relative border-l ${
-                    dragOverDate === d.dateStr ? "border-electric bg-electric-soft" : "border-[#f2f4f7]"
-                  }`}
-                  style={{
-                    height: (HOUR_END - HOUR_START) * PX_PER_HOUR,
-                    backgroundImage:
-                      dragOverDate === d.dateStr
-                        ? undefined
-                        : `repeating-linear-gradient(180deg, transparent, transparent ${PX_PER_HOUR - 1}px, #f2f4f7 ${PX_PER_HOUR}px)`,
-                  }}
+                  className={`flex flex-col border-l ${isDragOver ? "border-electric bg-electric-soft" : "border-[#f2f4f7]"}`}
                 >
                   {untimedJobs.length > 0 && (
-                    <div className="absolute inset-x-1 top-1 z-10 flex flex-col gap-1">
+                    <div className="flex flex-col gap-1 border-b border-[#f2f4f7] p-1">
                       {untimedJobs.map((job) => (
                         <JobCard key={job.id} job={job} dateStr={d.dateStr} compact />
                       ))}
                     </div>
                   )}
 
-                  {timedJobs.map((job) => {
-                    const start = timeToHours(job.start_time) ?? HOUR_START;
-                    const end = timeToHours(job.end_time) ?? start + 1;
-                    const top = Math.max(0, (start - HOUR_START) * PX_PER_HOUR);
-                    const height = Math.max((end - start) * PX_PER_HOUR, 32);
-                    return (
-                      <div key={job.id} className="absolute inset-x-1" style={{ top, height }}>
+                  <div
+                    className="relative"
+                    style={{
+                      height: GRID_HEIGHT,
+                      backgroundImage: isDragOver
+                        ? undefined
+                        : `repeating-linear-gradient(180deg, transparent, transparent ${PX_PER_HOUR - 1}px, #f2f4f7 ${PX_PER_HOUR}px)`,
+                    }}
+                  >
+                    {positionedTimedJobs.map(({ job, top, height, col, cols }) => (
+                      <div
+                        key={job.id}
+                        className="absolute"
+                        style={{
+                          top,
+                          height,
+                          left: `calc(${(col / cols) * 100}% + 2px)`,
+                          width: `calc(${100 / cols}% - 4px)`,
+                        }}
+                      >
                         <JobCard job={job} dateStr={d.dateStr} />
                       </div>
-                    );
-                  })}
+                    ))}
+                  </div>
                 </div>
               );
             })}
@@ -298,27 +366,26 @@ function JobCard({ job, dateStr, compact }: { job: Job; dateStr: string; compact
   return (
     <Link
       href={`/lucrari/${job.id}`}
-      prefetch={false}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/job-id", job.id);
         e.dataTransfer.setData("text/job-date", dateStr);
       }}
-      className={`block h-full overflow-hidden rounded-[7px] border-l-[3px] px-2.5 py-1.5 ${JOB_STATUS_STYLES[job.status]}`}
+      className={`block h-full overflow-hidden rounded-[7px] border-l-[3px] px-2 py-1.5 leading-tight ${JOB_STATUS_STYLES[job.status]}`}
       style={{ borderLeftColor: color }}
       title={`${job.title} — ${JOB_STATUS_LABELS[job.status]}`}
     >
       {!compact && job.start_time && (
-        <div className="text-[11px] font-bold" style={{ color }}>
+        <div className="truncate text-[10.5px] font-bold" style={{ color }}>
           {job.start_time.slice(0, 5)}
           {job.end_time ? `–${job.end_time.slice(0, 5)}` : ""}
         </div>
       )}
-      <div className="truncate text-[12px] font-bold text-foreground">
+      <div className="truncate text-[11.5px] font-bold text-foreground">
         {job.clients?.name ?? job.title}
       </div>
       {!compact && (
-        <div className="truncate text-[10.5px] text-[#475467]">
+        <div className="truncate text-[10px] text-[#475467]">
           {job.title}
           {assignees.length > 0 ? ` · ${assignees.join("+")}` : ""}
         </div>
