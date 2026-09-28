@@ -1104,6 +1104,7 @@ export type Database = {
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
           id: string
+          is_active: boolean
           logo_storage_path: string | null
           name: string
           phone: string | null
@@ -1118,6 +1119,7 @@ export type Database = {
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           id?: string
+          is_active?: boolean
           logo_storage_path?: string | null
           name: string
           phone?: string | null
@@ -1132,6 +1134,7 @@ export type Database = {
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           id?: string
+          is_active?: boolean
           logo_storage_path?: string | null
           name?: string
           phone?: string | null
@@ -1628,6 +1631,55 @@ export type Database = {
       current_org_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
       is_staff: { Args: never; Returns: boolean }
+      platform_admin_create_company: {
+        Args: {
+          company_cui: string
+          company_name: string
+          owner_email: string
+          owner_full_name: string
+          owner_password: string
+        }
+        Returns: string
+      }
+      platform_admin_list_companies: {
+        Args: never
+        Returns: {
+          address: string
+          created_at: string
+          cui: string
+          email: string
+          id: string
+          is_active: boolean
+          job_count: number
+          name: string
+          phone: string
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          user_count: number
+        }[]
+      }
+      platform_admin_list_company_users: {
+        Args: { org_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
+      platform_admin_update_company: {
+        Args: {
+          company_address: string
+          company_cui: string
+          company_email: string
+          company_name: string
+          company_phone: string
+          new_is_active: boolean
+          new_plan: Database["public"]["Enums"]["subscription_plan"]
+          org_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       client_status: "active" | "inactive"
