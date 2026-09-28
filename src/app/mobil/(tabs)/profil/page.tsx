@@ -1,4 +1,4 @@
-import { LogOut, Shield, HelpCircle } from "lucide-react";
+import { LogOut, Shield, HelpCircle, Bell, FileText } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
@@ -45,6 +45,7 @@ export default async function MobileProfilePage() {
   const jobs = (assignments ?? []).map((a) => a.jobs).filter((j): j is NonNullable<typeof j> => Boolean(j));
   const jobsThisWeek = jobs.filter((j) => j.scheduled_date >= weekStartStr).length;
   const jobsCompleted = jobs.filter((j) => j.status === "finalizata").length;
+  const isActiveNow = jobs.some((j) => j.status === "in_lucru" || j.status === "pauza");
 
   const color = avatarColor(profile.id);
 
@@ -61,6 +62,11 @@ export default async function MobileProfilePage() {
         <div className="mt-0.5 text-[12.5px] text-muted-2">
           {ROLE_LABELS[profile.role]} · {organization.name}
         </div>
+        {isActiveNow && (
+          <div className="mt-2 rounded-full bg-success-bg px-3 py-1 text-[11px] font-bold text-success">
+            ● Activ acum
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-2.5">
@@ -70,7 +76,13 @@ export default async function MobileProfilePage() {
       </div>
 
       <div className="mt-5 overflow-hidden rounded-[13px] border border-[#eaecf0] bg-white">
-        <MenuRow icon={Shield} label="Confidențialitate & locație" />
+        <MenuRow
+          icon={Shield}
+          label="Confidențialitate & locație"
+          note={organization.gps_continuous_tracking_enabled ? "GPS activ" : "GPS oprit"}
+        />
+        <MenuRow icon={Bell} label="Notificări" note="În curând" />
+        <MenuRow icon={FileText} label="Documentele mele" note="În curând" />
         <MenuRow icon={HelpCircle} label="Ajutor & suport" last />
       </div>
 
@@ -99,16 +111,19 @@ function StatBox({ value, label }: { value: string; label: string }) {
 function MenuRow({
   icon: Icon,
   label,
+  note,
   last,
 }: {
   icon: typeof Shield;
   label: string;
+  note?: string;
   last?: boolean;
 }) {
   return (
     <div className={`flex items-center gap-3 px-4 py-3.5 ${last ? "" : "border-b border-[#f2f4f7]"}`}>
       <Icon className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
       <div className="flex-1 text-[13.5px] font-semibold">{label}</div>
+      {note && <div className="text-[11.5px] font-semibold text-muted-2">{note}</div>}
     </div>
   );
 }
