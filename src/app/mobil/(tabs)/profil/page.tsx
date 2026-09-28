@@ -1,4 +1,5 @@
-import { LogOut, Shield, HelpCircle, Bell, FileText } from "lucide-react";
+import Link from "next/link";
+import { LogOut, Shield, HelpCircle, FileText, ChevronRight } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
@@ -24,7 +25,7 @@ export default async function MobileProfilePage() {
   const monthStartStr = `${toISODate(now).slice(0, 7)}-01`;
   const weekStartStr = toISODate(startOfWeek(now));
 
-  const [{ data: entriesThisMonth }, { data: assignments }] = await Promise.all([
+  const [{ data: entriesThisMonth }, { data: assignments }, { count: documentCount }] = await Promise.all([
     supabase
       .from("time_entries")
       .select("event_type, occurred_at")
@@ -34,6 +35,7 @@ export default async function MobileProfilePage() {
       .from("job_assignments")
       .select("jobs(scheduled_date, status)")
       .eq("profile_id", profile.id),
+    supabase.from("documents").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
   ]);
 
   const hoursThisMonth = pairHours(
@@ -81,8 +83,12 @@ export default async function MobileProfilePage() {
           label="Confidențialitate & locație"
           note={organization.gps_continuous_tracking_enabled ? "GPS activ" : "GPS oprit"}
         />
-        <MenuRow icon={Bell} label="Notificări" note="În curând" />
-        <MenuRow icon={FileText} label="Documentele mele" note="În curând" />
+        <Link href="/mobil/documente" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
+          <FileText className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
+          <div className="flex-1 text-[13.5px] font-semibold">Documentele mele</div>
+          <div className="text-[11.5px] font-semibold text-muted-2">{documentCount ?? 0}</div>
+          <ChevronRight className="h-4 w-4 text-muted-2" />
+        </Link>
         <MenuRow icon={HelpCircle} label="Ajutor & suport" last />
       </div>
 

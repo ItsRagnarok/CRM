@@ -106,26 +106,34 @@ export default async function SetariPage({
                           {p.is_active ? "Activ" : "Inactiv"}
                         </div>
                       </div>
-                      <form action={updateUserRole} className="flex items-center gap-2">
-                        <input type="hidden" name="profileId" value={p.id} />
-                        <select
-                          name="role"
-                          defaultValue={p.role}
-                          className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[12.5px] font-semibold outline-none focus:border-electric"
-                        >
-                          {ROLE_OPTIONS.map((r) => (
-                            <option key={r} value={r}>
-                              {ROLE_LABELS[r]}
-                            </option>
-                          ))}
-                        </select>
-                        <button
-                          type="submit"
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/setari/utilizatori/${p.id}`}
                           className="rounded-[9px] bg-neutral-bg px-3 py-2 text-[12px] font-bold text-[#344054]"
                         >
-                          Salvează
-                        </button>
-                      </form>
+                          Documente
+                        </Link>
+                        <form action={updateUserRole} className="flex items-center gap-2">
+                          <input type="hidden" name="profileId" value={p.id} />
+                          <select
+                            name="role"
+                            defaultValue={p.role}
+                            className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[12.5px] font-semibold outline-none focus:border-electric"
+                          >
+                            {ROLE_OPTIONS.map((r) => (
+                              <option key={r} value={r}>
+                                {ROLE_LABELS[r]}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            className="rounded-[9px] bg-neutral-bg px-3 py-2 text-[12px] font-bold text-[#344054]"
+                          >
+                            Salvează
+                          </button>
+                        </form>
+                      </div>
                     </div>
                   ))}
                 </div>

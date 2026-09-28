@@ -261,6 +261,7 @@ export type Database = {
           job_id: string | null
           name: string
           organization_id: string
+          profile_id: string | null
           storage_path: string
           uploaded_by: string | null
         }
@@ -272,6 +273,7 @@ export type Database = {
           job_id?: string | null
           name: string
           organization_id: string
+          profile_id?: string | null
           storage_path: string
           uploaded_by?: string | null
         }
@@ -283,6 +285,7 @@ export type Database = {
           job_id?: string | null
           name?: string
           organization_id?: string
+          profile_id?: string | null
           storage_path?: string
           uploaded_by?: string | null
         }
@@ -306,6 +309,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
