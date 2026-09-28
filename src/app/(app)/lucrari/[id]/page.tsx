@@ -86,17 +86,16 @@ export default async function JobDetailPage({
   const { id } = await params;
   const { tab: tabParam } = await searchParams;
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "rezumat";
-  const { organization, userId } = await requireSessionContext();
+  const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "*, clients(id, name), locations(address), teams(id, name), job_status_history(id, status, created_at, profiles(full_name)), job_assignments(profiles(full_name))"
+      "*, clients(id, name), locations(address), teams(id, name), job_assignments(profiles(full_name))"
     )
     .eq("organization_id", organization.id)
     .eq("id", id)
-    .order("created_at", { ascending: true, foreignTable: "job_status_history" })
     .maybeSingle();
 
   if (!job) notFound();
@@ -128,7 +127,6 @@ export default async function JobDetailPage({
     supabase.from("signatures").select("signer_name, storage_path, signed_at").eq("job_id", id).maybeSingle(),
   ]);
 
-  const history = job.job_status_history;
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
   const totalExpenses = (expenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
   const checklistItems = checklist?.job_checklist_items ?? [];
@@ -545,7 +543,7 @@ function ReportCard({ jobId, full }: { jobId: string; full?: boolean }) {
       </Link>
       {full && (
         <p className="mt-3 text-[12px] text-muted">
-          Raportul se deschide într-o pagină nouă, gata de printat sau salvat ca PDF (Ctrl/Cmd+P → „Salvează ca PDF").
+          Raportul se deschide într-o pagină nouă, gata de printat sau salvat ca PDF (Ctrl/Cmd+P → „Salvează ca PDF”).
         </p>
       )}
     </Card>

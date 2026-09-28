@@ -11,7 +11,7 @@ import {
   JOB_PRIORITY_COLOR,
 } from "@/lib/status";
 import type { Database } from "@/lib/supabase/database.types";
-import { Briefcase, Plus, Calendar } from "lucide-react";
+import { Briefcase, Plus, Calendar, ArrowLeft } from "lucide-react";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 
@@ -30,13 +30,13 @@ const STATUS_PILLS: JobStatus[] = [
 export default async function LucrariPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; clientId?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, clientId } = await searchParams;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const [{ data: jobs }, { data: allStatuses }] = await Promise.all([
+  const [{ data: jobs }, { data: allStatuses }, { data: client }] = await Promise.all([
     (() => {
       let query = supabase
         .from("jobs")
@@ -47,12 +47,27 @@ export default async function LucrariPage({
       if (status && STATUS_PILLS.includes(status as JobStatus)) {
         query = query.eq("status", status as JobStatus);
       }
+      if (clientId) query = query.eq("client_id", clientId);
       return query
         .order("scheduled_date", { ascending: false })
         .order("start_time", { ascending: true, nullsFirst: false });
     })(),
-    supabase.from("jobs").select("status").eq("organization_id", organization.id),
+    (() => {
+      let q = supabase.from("jobs").select("status").eq("organization_id", organization.id);
+      if (clientId) q = q.eq("client_id", clientId);
+      return q;
+    })(),
+    clientId
+      ? supabase.from("clients").select("id, name").eq("id", clientId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+
+  const statusHref = (s: string) => {
+    const params = new URLSearchParams();
+    if (s) params.set("status", s);
+    if (clientId) params.set("clientId", clientId);
+    return params.toString() ? `/lucrari?${params}` : "/lucrari";
+  };
 
   const statusCounts = new Map<JobStatus, number>();
   for (const row of allStatuses ?? []) {
@@ -63,7 +78,17 @@ export default async function LucrariPage({
   return (
     <div className="flex flex-col gap-5 p-7">
       <div className="flex items-center justify-between">
-        <h1 className="text-[17px] font-extrabold text-foreground">Lucrări</h1>
+        <div>
+          <h1 className="text-[17px] font-extrabold text-foreground">Lucrări</h1>
+          {client && (
+            <div className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted">
+              Filtrat pentru <span className="font-semibold text-foreground">{client.name}</span>
+              <Link href="/lucrari" prefetch={false} className="flex items-center gap-1 font-semibold text-electric">
+                <ArrowLeft className="h-3 w-3" /> vezi toate
+              </Link>
+            </div>
+          )}
+        </div>
         <div className="flex items-center gap-2.5">
           <Link
             href="/calendar"
@@ -73,7 +98,7 @@ export default async function LucrariPage({
             <Calendar className="h-3.5 w-3.5" /> Vezi în calendar
           </Link>
           <Link
-            href="/lucrari/nou"
+            href={clientId ? `/lucrari/nou?clientId=${clientId}` : "/lucrari/nou"}
             prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
           >
@@ -84,7 +109,7 @@ export default async function LucrariPage({
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href="/lucrari"
+          href={statusHref("")}
           prefetch={false}
           className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
             !status ? "bg-[#101828] text-white" : "bg-neutral-bg text-[#475467]"
@@ -95,7 +120,7 @@ export default async function LucrariPage({
         {STATUS_PILLS.map((s) => (
           <Link
             key={s}
-            href={`/lucrari?status=${s}`}
+            href={statusHref(s)}
             prefetch={false}
             className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
               status === s ? "bg-[#101828] text-white" : JOB_STATUS_STYLES[s]

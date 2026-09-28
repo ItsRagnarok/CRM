@@ -130,3 +130,82 @@ export async function deleteContact(formData: FormData) {
   await supabase.from("client_contacts").delete().eq("id", contactId);
   revalidatePath(`/clienti/${clientId}`);
 }
+
+export async function createInvoice(formData: FormData) {
+  const clientId = String(formData.get("clientId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "") || null;
+  const laborAmount = Number(formData.get("laborAmount") ?? 0) || 0;
+  const materialsAmount = Number(formData.get("materialsAmount") ?? 0) || 0;
+  const travelAmount = Number(formData.get("travelAmount") ?? 0) || 0;
+  const otherAmount = Number(formData.get("otherAmount") ?? 0) || 0;
+  const total = laborAmount + materialsAmount + travelAmount + otherAmount;
+  if (!clientId || total <= 0) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { count } = await supabase
+    .from("invoices")
+    .select("id", { count: "exact", head: true })
+    .eq("organization_id", organization.id);
+
+  const invoiceNumber = `FACT-${String((count ?? 0) + 1).padStart(4, "0")}`;
+
+  // total_amount is a DB-generated column (sum of the four below) — sending
+  // it explicitly is rejected outright, not just ignored.
+  await supabase.from("invoices").insert({
+    organization_id: organization.id,
+    client_id: clientId,
+    job_id: jobId,
+    invoice_number: invoiceNumber,
+    labor_amount: laborAmount,
+    materials_amount: materialsAmount,
+    travel_amount: travelAmount,
+    other_amount: otherAmount,
+    created_by: userId,
+  });
+
+  revalidatePath(`/clienti/${clientId}`);
+}
+
+export async function addClientDocument(formData: FormData) {
+  const clientId = String(formData.get("clientId") ?? "");
+  const file = formData.get("file") as File | null;
+  if (!clientId || !file || file.size === 0) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `${organization.id}/clients/${clientId}/documents/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("attachments")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (uploadError) return;
+
+  await supabase.from("documents").insert({
+    organization_id: organization.id,
+    client_id: clientId,
+    name: file.name,
+    doc_type: String(formData.get("docType") ?? "").trim() || null,
+    storage_path: path,
+    uploaded_by: userId,
+  });
+
+  revalidatePath(`/clienti/${clientId}`);
+}
+
+export async function deleteClientDocument(formData: FormData) {
+  const documentId = String(formData.get("documentId") ?? "");
+  const storagePath = String(formData.get("storagePath") ?? "");
+  const clientId = String(formData.get("clientId") ?? "");
+  if (!documentId) return;
+
+  const supabase = await createClient();
+  if (storagePath) {
+    await supabase.storage.from("attachments").remove([storagePath]);
+  }
+  await supabase.from("documents").delete().eq("id", documentId);
+  revalidatePath(`/clienti/${clientId}`);
+}
