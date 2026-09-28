@@ -13,6 +13,18 @@ const STATUS_DOT: Record<string, string> = {
   critic: "🔴",
 };
 
+// min_stock is a warehouse reorder threshold, not a van par level — a van
+// always carries a small fraction of it. Items a van holds "one of" (min_stock
+// <= 3, e.g. hand tools) are only critical when actually out; bulk consumables
+// (cable, doze, etc.) are critical only when the van itself is nearly empty.
+// Mirrors the same logic used on the mobile technician app.
+function vehicleStockStatus(qty: number, minStock: number): "ok" | "scazut" | "critic" {
+  if (minStock <= 3) return qty === 0 ? "critic" : "ok";
+  if (qty < minStock * 0.15) return "critic";
+  if (qty < minStock * 0.3) return "scazut";
+  return "ok";
+}
+
 export default async function MaterialePage({
   searchParams,
 }: {
@@ -64,6 +76,16 @@ export default async function MaterialePage({
   const lowCount = rows.filter((r) => r.status === "scazut").length;
   const criticalCount = rows.filter((r) => r.status === "critic").length;
   const vehicleRows = rows.filter((r) => Object.keys(r.vehicleQty).length > 0);
+
+  // Vehicle-view stats count each (material, vehicle) pair separately — e.g.
+  // 3 vans all critically low on the same cable counts as 3, since each van
+  // needs its own restock regardless of what the others carry.
+  const vehiclePairs = vehicleRows.flatMap((r) =>
+    Object.values(r.vehicleQty).map((qty) => vehicleStockStatus(qty, r.min_stock))
+  );
+  const vehicleOkCount = vehiclePairs.filter((s) => s === "ok").length;
+  const vehicleLowCount = vehiclePairs.filter((s) => s === "scazut").length;
+  const vehicleCriticalCount = vehiclePairs.filter((s) => s === "critic").length;
 
   const viewHref = (v: View) => {
     const params = new URLSearchParams();
@@ -124,12 +146,21 @@ export default async function MaterialePage({
         </Link>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
-        <StatCard label="Materiale în stoc" value={total} />
-        <StatCard label="🟢 Stoc OK" value={okCount} color="text-success" />
-        <StatCard label="🟠 Stoc scăzut" value={lowCount} color="text-warning" />
-        <StatCard label="🔴 Stoc critic" value={criticalCount} color="text-danger" />
-      </div>
+      {view === "depozit" ? (
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard label="Materiale în stoc" value={total} />
+          <StatCard label="🟢 Stoc OK (depozit)" value={okCount} color="text-success" />
+          <StatCard label="🟠 Stoc scăzut (depozit)" value={lowCount} color="text-warning" />
+          <StatCard label="🔴 Stoc critic (depozit)" value={criticalCount} color="text-danger" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-4 gap-4">
+          <StatCard label="Materiale pe mașini" value={vehicleRows.length} />
+          <StatCard label="🟢 Stoc OK (mașini)" value={vehicleOkCount} color="text-success" />
+          <StatCard label="🟠 Stoc scăzut (mașini)" value={vehicleLowCount} color="text-warning" />
+          <StatCard label="🔴 Stoc critic (mașini)" value={vehicleCriticalCount} color="text-danger" />
+        </div>
+      )}
 
       {view === "depozit" ? (
         rows.length > 0 ? (
@@ -221,25 +252,32 @@ export default async function MaterialePage({
               {vehicleRows.map((r) => (
                 <tr key={r.id} className="border-t border-[#f2f4f7]">
                   <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">{r.name}</td>
-                  {vehicles.map((v) => (
-                    <td key={v.id} className="px-5 py-3">
-                      <form
-                        action={setStockQuantity.bind(null, r.id, `vehicle:${v.id}`)}
-                        className="flex items-center gap-1.5"
-                      >
-                        <input
-                          type="number"
-                          name="quantity"
-                          min={0}
-                          defaultValue={r.vehicleQty[v.id] ?? 0}
-                          className="w-[60px] rounded-[7px] border border-[#d0d5dd] px-2 py-1 text-[13px] outline-none focus:border-electric"
-                        />
-                        <button type="submit" className="text-[11px] font-bold text-electric">
-                          ✓
-                        </button>
-                      </form>
-                    </td>
-                  ))}
+                  {vehicles.map((v) => {
+                    const qty = r.vehicleQty[v.id] ?? 0;
+                    const status = vehicleStockStatus(qty, r.min_stock);
+                    return (
+                      <td key={v.id} className="px-5 py-3">
+                        <form
+                          action={setStockQuantity.bind(null, r.id, `vehicle:${v.id}`)}
+                          className="flex items-center gap-1.5"
+                        >
+                          <input
+                            type="number"
+                            name="quantity"
+                            min={0}
+                            defaultValue={qty}
+                            className="w-[60px] rounded-[7px] border border-[#d0d5dd] px-2 py-1 text-[13px] outline-none focus:border-electric"
+                          />
+                          <span className="text-[11px]" title={status}>
+                            {STATUS_DOT[status]}
+                          </span>
+                          <button type="submit" className="text-[11px] font-bold text-electric">
+                            Salvează
+                          </button>
+                        </form>
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
