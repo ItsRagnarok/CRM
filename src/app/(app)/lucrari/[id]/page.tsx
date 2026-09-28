@@ -137,7 +137,7 @@ export default async function JobDetailPage({
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-border bg-white px-7 py-4.5">
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link href="/lucrari" prefetch={false} className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-neutral-bg">
+          <Link href="/lucrari" className="flex h-[30px] w-[30px] items-center justify-center rounded-[9px] bg-neutral-bg">
             <ArrowLeft className="h-[15px] w-[15px] text-[#344054]" />
           </Link>
           <h1 className="text-[17px] font-extrabold text-foreground">
@@ -147,7 +147,6 @@ export default async function JobDetailPage({
           <div className="flex-1" />
           <Link
             href={`/lucrari/${id}/editeaza`}
-            prefetch={false}
             className="flex items-center gap-1.5 rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
           >
             <Pencil className="h-3.5 w-3.5" /> Editează
@@ -164,7 +163,7 @@ export default async function JobDetailPage({
 
         <div className="mt-3 flex flex-wrap gap-6 text-[13px] text-[#475467]">
           {job.clients && (
-            <Link href={`/clienti/${job.clients.id}`} prefetch={false} className="flex items-center gap-1.5 font-semibold">
+            <Link href={`/clienti/${job.clients.id}`} className="flex items-center gap-1.5 font-semibold">
               <UsersRound className="h-3.5 w-3.5 text-muted" /> {job.clients.name}
             </Link>
           )}
@@ -187,7 +186,6 @@ export default async function JobDetailPage({
             <Link
               key={t.id}
               href={tabHref(t.id)}
-              prefetch={false}
               className={`whitespace-nowrap px-3.5 py-2.5 text-[13px] font-semibold ${
                 tab === t.id ? "border-b-2 border-electric text-electric" : "text-muted"
               }`}
@@ -256,7 +254,7 @@ export default async function JobDetailPage({
               <p className="text-[13px] text-muted">
                 Niciun material înregistrat încă. Catalogul de materiale al companiei e gol —
                 completează-l din{" "}
-                <Link href="/materiale" prefetch={false} className="font-semibold text-electric">
+                <Link href="/materiale" className="font-semibold text-electric">
                   secțiunea Materiale
                 </Link>{" "}
                 pentru a putea înregistra consum pe lucrare.
@@ -415,7 +413,7 @@ function PhotosCard({
   return (
     <Card title="Fotografii">
       {!full && photos.length > 0 && (
-        <Link href={`/lucrari/${jobId}?tab=fotografii`} prefetch={false} className="mb-3 -mt-2 block text-right text-[12px] font-semibold text-electric">
+        <Link href={`/lucrari/${jobId}?tab=fotografii`} className="mb-3 -mt-2 block text-right text-[12px] font-semibold text-electric">
           Vezi toate ({photos.length}) →
         </Link>
       )}
@@ -497,7 +495,7 @@ function ChecklistPreview({
     return (
       <p className="text-[13px] text-muted">
         Fără checklist încă.{" "}
-        <Link href={`/lucrari/${jobId}?tab=checklist`} prefetch={false} className="font-semibold text-electric">
+        <Link href={`/lucrari/${jobId}?tab=checklist`} className="font-semibold text-electric">
           Adaugă elemente →
         </Link>
       </p>
@@ -514,7 +512,7 @@ function ChecklistPreview({
         </div>
       ))}
       {items.length > 6 && (
-        <Link href={`/lucrari/${jobId}?tab=checklist`} prefetch={false} className="text-[12px] font-semibold text-electric">
+        <Link href={`/lucrari/${jobId}?tab=checklist`} className="text-[12px] font-semibold text-electric">
           Vezi toate ({items.length}) →
         </Link>
       )}

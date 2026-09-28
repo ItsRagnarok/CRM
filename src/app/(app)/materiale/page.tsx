@@ -80,7 +80,6 @@ export default async function MaterialePage({
         <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
           <Link
             href={viewHref("depozit")}
-            prefetch={false}
             className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-bold ${
               view === "depozit" ? "bg-white text-foreground shadow-sm" : "text-muted"
             }`}
@@ -89,7 +88,6 @@ export default async function MaterialePage({
           </Link>
           <Link
             href={viewHref("masini")}
-            prefetch={false}
             className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-bold ${
               view === "masini" ? "bg-white text-foreground shadow-sm" : "text-muted"
             }`}
@@ -114,14 +112,12 @@ export default async function MaterialePage({
 
         <Link
           href="/materiale/comanda"
-          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13px] font-bold text-[#344054]"
         >
           Comandă furnizor
         </Link>
         <Link
           href="/materiale/nou"
-          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-4 w-4" /> Material
@@ -198,7 +194,6 @@ export default async function MaterialePage({
               !q && (
                 <Link
                   href="/materiale/nou"
-                  prefetch={false}
                   className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
                 >
                   <Plus className="h-4 w-4" /> Material

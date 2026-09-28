@@ -52,7 +52,7 @@ export function Sidebar({
 
   return (
     <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-5">
-      <Link href="/dashboard" prefetch={false} className="flex items-center gap-2.5 px-2 pb-5 pt-1.5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 pb-5 pt-1.5">
         <Image
           src="/logo-mark.png"
           alt="ElectroField"
@@ -85,7 +85,6 @@ export function Sidebar({
             <Link
               key={href}
               href={href}
-              prefetch={false}
               className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
                 isActive
                   ? "bg-navy-active font-semibold text-white"

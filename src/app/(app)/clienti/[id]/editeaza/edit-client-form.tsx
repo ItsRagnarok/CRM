@@ -27,7 +27,6 @@ export function EditClientForm({ client }: { client: Client }) {
       <div className="flex items-center gap-3">
         <Link
           href={`/clienti/${client.id}`}
-          prefetch={false}
           className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg"
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
@@ -106,7 +105,6 @@ export function EditClientForm({ client }: { client: Client }) {
         <div className="flex justify-end gap-3 pt-2">
           <Link
             href={`/clienti/${client.id}`}
-            prefetch={false}
             className="rounded-[10px] border border-[#d0d5dd] px-4 py-2.5 text-[13.5px] font-bold text-[#344054]"
           >
             Anulează

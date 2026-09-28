@@ -50,7 +50,6 @@ export default async function EchipePage() {
         <h1 className="text-[17px] font-extrabold text-foreground">Echipe</h1>
         <Link
           href="/echipe/noua"
-          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-4 w-4" /> Echipă nouă
@@ -156,7 +155,6 @@ export default async function EchipePage() {
           action={
             <Link
               href="/echipe/noua"
-              prefetch={false}
               className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
             >
               <Plus className="h-4 w-4" /> Echipă nouă

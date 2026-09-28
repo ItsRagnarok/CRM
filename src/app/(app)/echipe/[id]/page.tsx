@@ -79,7 +79,6 @@ export default async function TeamDetailPage({
       <div className="flex items-center gap-3">
         <Link
           href="/echipe"
-          prefetch={false}
           className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg"
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />

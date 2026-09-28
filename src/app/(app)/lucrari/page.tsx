@@ -83,7 +83,7 @@ export default async function LucrariPage({
           {client && (
             <div className="mt-1 flex items-center gap-1.5 text-[12.5px] text-muted">
               Filtrat pentru <span className="font-semibold text-foreground">{client.name}</span>
-              <Link href="/lucrari" prefetch={false} className="flex items-center gap-1 font-semibold text-electric">
+              <Link href="/lucrari" className="flex items-center gap-1 font-semibold text-electric">
                 <ArrowLeft className="h-3 w-3" /> vezi toate
               </Link>
             </div>
@@ -92,14 +92,12 @@ export default async function LucrariPage({
         <div className="flex items-center gap-2.5">
           <Link
             href="/calendar"
-            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13.5px] font-bold text-[#344054]"
           >
             <Calendar className="h-3.5 w-3.5" /> Vezi în calendar
           </Link>
           <Link
             href={clientId ? `/lucrari/nou?clientId=${clientId}` : "/lucrari/nou"}
-            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
           >
             <Plus className="h-4 w-4" /> Lucrare nouă
@@ -110,7 +108,6 @@ export default async function LucrariPage({
       <div className="flex flex-wrap gap-2">
         <Link
           href={statusHref("")}
-          prefetch={false}
           className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
             !status ? "bg-[#101828] text-white" : "bg-neutral-bg text-[#475467]"
           }`}
@@ -121,7 +118,6 @@ export default async function LucrariPage({
           <Link
             key={s}
             href={statusHref(s)}
-            prefetch={false}
             className={`rounded-[9px] px-3.5 py-2 text-[12.5px] font-semibold ${
               status === s ? "bg-[#101828] text-white" : JOB_STATUS_STYLES[s]
             }`}
@@ -211,7 +207,6 @@ export default async function LucrariPage({
             !status && (
               <Link
                 href="/lucrari/nou"
-                prefetch={false}
                 className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
               >
                 <Plus className="h-4 w-4" /> Lucrare nouă

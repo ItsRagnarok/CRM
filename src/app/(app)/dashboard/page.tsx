@@ -415,7 +415,7 @@ export default async function DashboardPage() {
             <h2 className="text-[15px] font-bold text-foreground">
               Lucrări programate astăzi
             </h2>
-            <Link href="/lucrari" prefetch={false} className="text-[12.5px] font-semibold text-electric">
+            <Link href="/lucrari" className="text-[12.5px] font-semibold text-electric">
               Vezi toate lucrările →
             </Link>
           </div>
@@ -468,7 +468,6 @@ export default async function DashboardPage() {
                 action={
                   <Link
                     href="/lucrari/nou"
-                    prefetch={false}
                     className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
                   >
                     <Plus className="h-4 w-4" /> Lucrare nouă
@@ -498,7 +497,7 @@ export default async function DashboardPage() {
               )}
             </div>
             <div className="border-t border-[#f2f4f7] px-4 py-2.5 text-right">
-              <Link href="/harta" prefetch={false} className="text-[12px] font-semibold text-electric">
+              <Link href="/harta" className="text-[12px] font-semibold text-electric">
                 Deschide harta →
               </Link>
             </div>

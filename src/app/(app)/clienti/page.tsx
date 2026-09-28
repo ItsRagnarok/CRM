@@ -81,7 +81,6 @@ export default async function ClientiPage({
         <h1 className="text-[17px] font-extrabold text-foreground">Clienți</h1>
         <Link
           href="/clienti/nou"
-          prefetch={false}
           className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
         >
           <Plus className="h-4 w-4" /> Client nou
@@ -105,7 +104,6 @@ export default async function ClientiPage({
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href={buildHref({ status: "" })}
-            prefetch={false}
             className={`rounded-[9px] px-3.5 py-2 text-[13px] font-semibold ${
               !status ? "bg-[#101828] text-white" : "border border-[#d0d5dd] bg-white text-[#344054]"
             }`}
@@ -116,7 +114,6 @@ export default async function ClientiPage({
             <Link
               key={tab.value}
               href={buildHref({ status: tab.value })}
-              prefetch={false}
               className={`rounded-[9px] px-3.5 py-2 text-[13px] font-semibold ${
                 status === tab.value ? "bg-[#101828] text-white" : "border border-[#d0d5dd] bg-white text-[#344054]"
               }`}
@@ -129,7 +126,6 @@ export default async function ClientiPage({
             <Link
               key={tab.value}
               href={buildHref({ type: type === tab.value ? "" : tab.value })}
-              prefetch={false}
               className={`rounded-[9px] px-3.5 py-2 text-[13px] font-semibold ${
                 type === tab.value ? "bg-[#101828] text-white" : "border border-[#d0d5dd] bg-white text-[#344054]"
               }`}
@@ -210,7 +206,6 @@ export default async function ClientiPage({
           action={
             <Link
               href="/clienti/nou"
-              prefetch={false}
               className="mt-1 flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[13px] font-bold text-white"
             >
               <Plus className="h-4 w-4" /> Client nou

@@ -102,7 +102,7 @@ export default async function ClientDetailPage({
   return (
     <div className="flex flex-col gap-5 p-7">
       <div className="flex items-center gap-3">
-        <Link href="/clienti" prefetch={false} className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg">
+        <Link href="/clienti" className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg">
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
         <span className="text-[13.5px] text-muted-2">Clienți /</span>
@@ -147,7 +147,6 @@ export default async function ClientDetailPage({
         <div className="flex items-center gap-2.5">
           <Link
             href={`/clienti/${client.id}/editeaza`}
-            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-[13px] font-bold text-[#344054]"
           >
             <Pencil className="h-3.5 w-3.5" /> Editează
@@ -162,7 +161,6 @@ export default async function ClientDetailPage({
           </form>
           <Link
             href={`/lucrari/nou?clientId=${client.id}`}
-            prefetch={false}
             className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13px] font-bold text-white"
           >
             <Plus className="h-4 w-4" /> Lucrare nouă
@@ -175,7 +173,6 @@ export default async function ClientDetailPage({
           <Link
             key={t.id}
             href={tabHref(t.id)}
-            prefetch={false}
             className={`px-4 py-2.5 text-[13.5px] font-semibold ${
               tab === t.id ? "border-b-2 border-electric text-electric" : "text-muted"
             }`}
@@ -245,7 +242,7 @@ export default async function ClientDetailPage({
         <div className="rounded-[13px] border border-dashed border-border bg-white p-6">
           <p className="text-[13.5px] text-muted">
             Vezi toate lucrările acestui client, filtrabile pe status, în{" "}
-            <Link href={`/lucrari?clientId=${client.id}`} prefetch={false} className="font-semibold text-electric">
+            <Link href={`/lucrari?clientId=${client.id}`} className="font-semibold text-electric">
               secțiunea Lucrări →
             </Link>
           </p>
