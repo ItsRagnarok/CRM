@@ -6,13 +6,14 @@ import { StatusBadge } from "@/components/status-badge";
 import { ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import {
-  addMember,
   addVehicle,
   removeMember,
   removeVehicle,
   setTeamLeader,
+  setVehicleDriver,
   toggleTeamActive,
 } from "../actions";
+import { AddTeamMember } from "./add-team-member";
 import {
   ArrowLeft,
   Crown,
@@ -35,7 +36,7 @@ export default async function TeamDetailPage({
   const { data: team } = await supabase
     .from("teams")
     .select(
-      "*, leader:profiles!teams_team_leader_id_fkey(id, full_name), team_members(profile_id, profiles(id, full_name, role)), vehicles(id, name, plate_number)"
+      "*, leader:profiles!teams_team_leader_id_fkey(id, full_name), team_members(profile_id, profiles(id, full_name, role)), vehicles(id, name, plate_number, driver_id)"
     )
     .eq("organization_id", organization.id)
     .eq("id", id)
@@ -45,7 +46,7 @@ export default async function TeamDetailPage({
 
   const memberIds = new Set(team.team_members.map((m) => m.profile_id));
 
-  const [{ data: availableProfiles }, { data: jobs }] = await Promise.all([
+  const [{ data: availableProfiles }, { data: allMemberships }, { data: jobs }] = await Promise.all([
     supabase
       .from("profiles")
       .select("id, full_name, role")
@@ -53,6 +54,7 @@ export default async function TeamDetailPage({
       .eq("is_active", true)
       .neq("role", "client")
       .order("full_name"),
+    supabase.from("team_members").select("profile_id, team_id, teams(organization_id)"),
     supabase
       .from("jobs")
       .select("id, display_number, title, status, scheduled_date, clients(name)")
@@ -62,8 +64,15 @@ export default async function TeamDetailPage({
       .limit(15),
   ]);
 
+  // A technician already on some other team in this org isn't offered here —
+  // one technician belongs to one team at a time.
+  const assignedElsewhere = new Set(
+    (allMemberships ?? [])
+      .filter((m) => m.teams?.organization_id === organization.id && !memberIds.has(m.profile_id))
+      .map((m) => m.profile_id)
+  );
   const assignableProfiles = (availableProfiles ?? []).filter(
-    (p) => !memberIds.has(p.id)
+    (p) => !memberIds.has(p.id) && !assignedElsewhere.has(p.id)
   );
 
   const initials = (name: string) =>
@@ -182,33 +191,7 @@ export default async function TeamDetailPage({
             )}
 
             {assignableProfiles.length > 0 ? (
-              <form
-                action={addMember}
-                className="mt-2 flex items-center gap-2 border-t border-[#f2f4f7] pt-4"
-              >
-                <input type="hidden" name="teamId" value={team.id} />
-                <select
-                  name="profileId"
-                  required
-                  defaultValue=""
-                  className="w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-                >
-                  <option value="" disabled>
-                    Alege un coleg…
-                  </option>
-                  {assignableProfiles.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.full_name} — {ROLE_LABELS[p.role]}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
-                >
-                  <Plus className="h-3.5 w-3.5" /> Adaugă
-                </button>
-              </form>
+              <AddTeamMember teamId={team.id} profiles={assignableProfiles} />
             ) : (
               <div className="mt-2 border-t border-[#f2f4f7] pt-4 text-[12.5px] text-muted">
                 Nu ai încă niciun angajat pe care să-l poți adăuga.{" "}
@@ -228,27 +211,48 @@ export default async function TeamDetailPage({
             {team.vehicles.length > 0 ? (
               <div className="flex flex-col divide-y divide-[#f2f4f7]">
                 {team.vehicles.map((v) => (
-                  <div key={v.id} className="flex items-center gap-3 py-2.5">
-                    <Truck className="h-4 w-4 shrink-0 text-muted" />
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate text-[13px] font-semibold text-foreground">
-                        {v.name}
-                      </div>
-                      {v.plate_number && (
-                        <div className="truncate text-[12px] text-muted-2">
-                          {v.plate_number}
+                  <div key={v.id} className="flex flex-col gap-2 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <Truck className="h-4 w-4 shrink-0 text-muted" />
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[13px] font-semibold text-foreground">
+                          {v.name}
                         </div>
-                      )}
+                        {v.plate_number && (
+                          <div className="truncate text-[12px] text-muted-2">
+                            {v.plate_number}
+                          </div>
+                        )}
+                      </div>
+                      <form action={removeVehicle}>
+                        <input type="hidden" name="vehicleId" value={v.id} />
+                        <input type="hidden" name="teamId" value={team.id} />
+                        <button
+                          type="submit"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted-2 hover:bg-danger-bg hover:text-danger"
+                          aria-label="Elimină vehiculul"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </form>
                     </div>
-                    <form action={removeVehicle}>
+                    <form action={setVehicleDriver} className="flex items-center gap-2 pl-7">
+                      <span className="text-[11.5px] font-semibold text-muted-2">Șofer:</span>
                       <input type="hidden" name="vehicleId" value={v.id} />
-                      <input type="hidden" name="teamId" value={team.id} />
-                      <button
-                        type="submit"
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted-2 hover:bg-danger-bg hover:text-danger"
-                        aria-label="Elimină vehiculul"
+                      <select
+                        name="driverId"
+                        defaultValue={v.driver_id ?? ""}
+                        className="rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-electric"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <option value="">Nesetat</option>
+                        {team.team_members.map((m) => (
+                          <option key={m.profile_id} value={m.profile_id}>
+                            {m.profiles?.full_name ?? "—"}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" className="text-[11px] font-bold text-electric">
+                        Salvează
                       </button>
                     </form>
                   </div>

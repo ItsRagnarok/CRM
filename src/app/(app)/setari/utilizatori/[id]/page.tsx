@@ -4,18 +4,22 @@ import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addUserDocument, deleteUserDocument } from "./actions";
+import { AccountForm } from "./account-form";
 
 export default async function UserDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role")
-    .eq("id", id)
-    .eq("organization_id", organization.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: email }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, role")
+      .eq("id", id)
+      .eq("organization_id", organization.id)
+      .maybeSingle(),
+    supabase.rpc("company_admin_get_employee_email", { target_profile_id: id }),
+  ]);
   if (!profile) notFound();
 
   const { data: documents } = await supabase
@@ -34,6 +38,8 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
 
       <h1 className="text-[19px] font-extrabold text-foreground">{profile.full_name}</h1>
       <div className="mt-0.5 text-[13px] text-muted-2">{ROLE_LABELS[profile.role]}</div>
+
+      <AccountForm profileId={profile.id} email={email ?? ""} />
 
       <div className="mt-6 rounded-[13px] border border-border bg-white p-5">
         <h2 className="text-[14.5px] font-bold text-foreground">Documente</h2>

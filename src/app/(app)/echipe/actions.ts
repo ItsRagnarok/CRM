@@ -64,6 +64,14 @@ export async function addMember(formData: FormData) {
     .maybeSingle();
   if (!profile) return;
 
+  // A technician belongs to one team at a time.
+  const { data: existingMembership } = await supabase
+    .from("team_members")
+    .select("team_id")
+    .eq("profile_id", profileId)
+    .maybeSingle();
+  if (existingMembership) return;
+
   await supabase.from("team_members").insert({ team_id: teamId, profile_id: profileId });
   revalidatePath(`/echipe/${teamId}`);
   revalidatePath("/echipe");

@@ -119,7 +119,7 @@ export default async function SetariPage({
                           href={`/setari/utilizatori/${p.id}`}
                           className="rounded-[9px] bg-neutral-bg px-3 py-2 text-[12px] font-bold text-[#344054]"
                         >
-                          Documente
+                          Detalii cont
                         </Link>
                         <form action={updateUserRole} className="flex items-center gap-2">
                           <input type="hidden" name="profileId" value={p.id} />

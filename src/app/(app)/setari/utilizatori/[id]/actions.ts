@@ -4,6 +4,57 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 
+export async function updateEmployeeEmail(
+  profileId: string,
+  _prevState: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+) {
+  await requireSessionContext();
+  const supabase = await createClient();
+
+  const email = String(formData.get("email") ?? "").trim();
+  if (!email) {
+    return { error: "Emailul este obligatoriu." };
+  }
+
+  const { error } = await supabase.rpc("company_admin_update_employee_email", {
+    target_profile_id: profileId,
+    new_email: email,
+  });
+
+  if (error) {
+    return { error: error.message.includes("Există deja") ? error.message : "Nu am putut salva emailul." };
+  }
+
+  revalidatePath(`/setari/utilizatori/${profileId}`);
+  return { success: true };
+}
+
+export async function resetEmployeePassword(
+  profileId: string,
+  _prevState: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+) {
+  await requireSessionContext();
+  const supabase = await createClient();
+
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 6) {
+    return { error: "Parola trebuie să aibă cel puțin 6 caractere." };
+  }
+
+  const { error } = await supabase.rpc("company_admin_reset_employee_password", {
+    target_profile_id: profileId,
+    new_password: password,
+  });
+
+  if (error) {
+    return { error: "Nu am putut reseta parola." };
+  }
+
+  return { success: true };
+}
+
 export async function addUserDocument(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
   const file = formData.get("file") as File | null;

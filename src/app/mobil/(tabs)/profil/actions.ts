@@ -9,7 +9,15 @@ export async function toggleNotifications(formData: FormData) {
   const { profile } = await requireSessionContext();
   const supabase = await createClient();
 
-  await supabase.from("profiles").update({ notifications_enabled: enabled }).eq("id", profile.id);
+  const { error } = await supabase
+    .from("profiles")
+    .update({ notifications_enabled: enabled })
+    .eq("id", profile.id);
+
+  if (error) {
+    return { error: "Nu am putut salva preferința." };
+  }
 
   revalidatePath("/mobil/profil");
+  revalidatePath("/setari");
 }

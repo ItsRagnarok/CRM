@@ -1583,7 +1583,7 @@ export type Database = {
           {
             foreignKeyName: "team_members_profile_id_fkey"
             columns: ["profile_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1793,6 +1793,18 @@ export type Database = {
           employee_role: Database["public"]["Enums"]["user_role"]
         }
         Returns: string
+      }
+      company_admin_get_employee_email: {
+        Args: { target_profile_id: string }
+        Returns: string
+      }
+      company_admin_reset_employee_password: {
+        Args: { new_password: string; target_profile_id: string }
+        Returns: undefined
+      }
+      company_admin_update_employee_email: {
+        Args: { new_email: string; target_profile_id: string }
+        Returns: undefined
       }
       create_organization_and_owner: {
         Args: { org_name: string; owner_full_name: string }
