@@ -5,11 +5,31 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PhotoCapture } from "./photo-capture";
 
-const CATEGORIES = [
-  { value: "before", label: "ÎNAINTE" },
-  { value: "during", label: "ÎN TIMPUL LUCRĂRII" },
-  { value: "after", label: "DUPĂ" },
-];
+// The photo screen is entered from one fixed place in the flow each time
+// (arrival, mid-work, or finalization) — it's locked to that context rather
+// than letting the technician freely switch categories, so he always knows
+// exactly what he's supposed to be photographing.
+const CATEGORY_INFO: Record<string, { title: string; caption: string; continueLabel: string }> = {
+  before: {
+    title: "Poze la sosire",
+    caption: "Fă o poză la locul unde lucrezi — panoul electric, tabloul sau zona respectivă — înainte să începi.",
+    continueLabel: "CONTINUĂ",
+  },
+  during: {
+    title: "Poze în timpul lucrării",
+    caption: "Adaugă poze din timpul lucrării, dacă e nevoie (opțional).",
+    continueLabel: "ÎNAPOI LA LUCRARE",
+  },
+  after: {
+    title: "Poze la finalizarea lucrării",
+    caption: "Fă poza cu lucrarea finalizată (ex: rețeaua montată, tabloul montat).",
+    continueLabel: "CONTINUĂ",
+  },
+};
+
+function continueHref(id: string, category: string) {
+  return category === "after" ? `/mobil/lucrari/${id}/finalizare` : `/mobil/lucrari/${id}`;
+}
 
 export default async function MobilePhotoPage({
   params,
@@ -20,7 +40,8 @@ export default async function MobilePhotoPage({
 }) {
   const { id } = await params;
   const { cat } = await searchParams;
-  const category = CATEGORIES.some((c) => c.value === cat) ? cat! : "before";
+  const category = CATEGORY_INFO[cat ?? ""] ? cat! : "before";
+  const info = CATEGORY_INFO[category];
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -50,21 +71,14 @@ export default async function MobilePhotoPage({
         >
           <ArrowLeft className="h-4 w-4 text-white" />
         </Link>
-        <div className="text-[15px] font-extrabold text-white">Fotografii lucrare #{job.display_number}</div>
+        <div>
+          <div className="text-[15px] font-extrabold text-white">{info.title}</div>
+          <div className="text-[11px] text-white/60">Lucrare #{job.display_number}</div>
+        </div>
       </div>
 
-      <div className="flex flex-shrink-0 gap-2 px-4">
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c.value}
-            href={`/mobil/lucrari/${id}/foto?cat=${c.value}`}
-            className={`rounded-full px-3.5 py-1.5 text-[11.5px] font-bold ${
-              category === c.value ? "bg-electric text-white" : "bg-white/10 text-white/70"
-            }`}
-          >
-            {c.label}
-          </Link>
-        ))}
+      <div className="mx-4 mt-2 rounded-[10px] bg-white/10 px-3.5 py-2.5 text-[12px] leading-snug text-white/80">
+        {info.caption}
       </div>
 
       <div className="flex-1 overflow-auto px-4 pb-2 pt-4">
@@ -85,10 +99,10 @@ export default async function MobilePhotoPage({
 
       <div className="flex-shrink-0 px-4 pb-8 pt-4">
         <Link
-          href={`/mobil/lucrari/${id}/finalizare`}
+          href={continueHref(id, category)}
           className="block rounded-[12px] bg-electric py-[14px] text-center text-[14.5px] font-extrabold text-white"
         >
-          CONTINUĂ
+          {info.continueLabel}
         </Link>
       </div>
     </div>
