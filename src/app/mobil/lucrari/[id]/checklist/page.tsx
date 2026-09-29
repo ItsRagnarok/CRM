@@ -40,6 +40,9 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
   const takenCount = required.filter((r) => r.taken).length;
   const totalCount = required.length + items.length;
   const doneCount = takenCount + items.filter((i) => i.is_checked).length;
+  // Nothing left to pick up — skip the depot entirely and go straight to
+  // the next step, instead of always forcing a detour through it.
+  const hasEverything = required.length === 0 || takenCount === required.length;
 
   return (
     <div className="flex h-full flex-col">
@@ -160,14 +163,19 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
       <div className="flex-shrink-0 border-t border-[#eaecf0] p-4">
         <form action={advanceMobileStage}>
           <input type="hidden" name="jobId" value={id} />
-          <input type="hidden" name="stage" value="depozit" />
+          <input type="hidden" name="stage" value={hasEverything ? "cheltuiala" : "depozit"} />
           <button
             type="submit"
             className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
           >
-            MAI DEPARTE
+            {hasEverything ? "MAI DEPARTE" : "RIDICĂ DE LA DEPOZIT"}
           </button>
         </form>
+        {!hasEverything && (
+          <div className="mt-2 text-center text-[11.5px] text-muted-2">
+            Ai deja tot ce trebuie? Bifează-le mai sus și butonul devine „Mai departe”.
+          </div>
+        )}
       </div>
     </div>
   );
