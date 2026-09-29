@@ -26,18 +26,20 @@ export default async function MobileProfilePage() {
   const monthStartStr = `${toISODate(now).slice(0, 7)}-01`;
   const weekStartStr = toISODate(startOfWeek(now));
 
-  const [{ data: entriesThisMonth }, { data: assignments }, { count: documentCount }] = await Promise.all([
-    supabase
-      .from("time_entries")
-      .select("event_type, occurred_at")
-      .eq("profile_id", profile.id)
-      .gte("occurred_at", `${monthStartStr}T00:00:00`),
-    supabase
-      .from("job_assignments")
-      .select("jobs(scheduled_date, status)")
-      .eq("profile_id", profile.id),
-    supabase.from("documents").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
-  ]);
+  const [{ data: entriesThisMonth }, { data: assignments }, { count: documentCount }, { data: membership }] =
+    await Promise.all([
+      supabase
+        .from("time_entries")
+        .select("event_type, occurred_at")
+        .eq("profile_id", profile.id)
+        .gte("occurred_at", `${monthStartStr}T00:00:00`),
+      supabase
+        .from("job_assignments")
+        .select("jobs(scheduled_date, status)")
+        .eq("profile_id", profile.id),
+      supabase.from("documents").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
+      supabase.from("team_members").select("teams(name)").eq("profile_id", profile.id).maybeSingle(),
+    ]);
 
   const hoursThisMonth = pairHours(
     (entriesThisMonth ?? []).map((e) => ({ ...e, profile_id: profile.id, job_id: "" })),
@@ -65,6 +67,11 @@ export default async function MobileProfilePage() {
         <div className="mt-0.5 text-[12.5px] text-muted-2">
           {ROLE_LABELS[profile.role]} · {organization.name}
         </div>
+        {membership?.teams?.name && (
+          <div className="mt-1 rounded-full bg-electric-soft px-3 py-1 text-[11px] font-bold text-electric">
+            {membership.teams.name}
+          </div>
+        )}
         {isActiveNow && (
           <div className="mt-2 rounded-full bg-success-bg px-3 py-1 text-[11px] font-bold text-success">
             ● Activ acum

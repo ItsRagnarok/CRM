@@ -105,13 +105,19 @@ export default async function MobileMaterialsPage() {
             {vehicle.name}
           </div>
         </div>
-        <div className="mt-1.5 flex items-center gap-3 text-[12px] text-muted">
-          <span className="flex items-center gap-1">
-            <Truck className="h-3.5 w-3.5" /> {vehicle.plate_number ?? "—"}
-          </span>
-          <span className="flex items-center gap-1">
-            <User className="h-3.5 w-3.5" /> {driver?.full_name ?? "Șofer nesetat"}
-          </span>
+        <div className="mt-1.5 flex items-center gap-1.5 text-[12px] text-muted">
+          <Truck className="h-3.5 w-3.5" /> {vehicle.plate_number ?? "—"}
+        </div>
+        <div className="mt-2 flex items-center gap-2 rounded-[10px] bg-neutral-bg px-3 py-2">
+          <User className="h-4 w-4 shrink-0 text-electric" />
+          {driver ? (
+            <div className="text-[13px]">
+              <span className="text-muted-2">Șofer: </span>
+              <span className="font-bold text-foreground">{driver.full_name}</span>
+            </div>
+          ) : (
+            <span className="text-[13px] font-semibold text-danger">Șofer nesetat</span>
+          )}
         </div>
       </div>
 
