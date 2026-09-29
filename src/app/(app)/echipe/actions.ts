@@ -139,19 +139,24 @@ export async function reassignVehicle(formData: FormData) {
 
 export async function setVehicleDriver(formData: FormData) {
   const vehicleId = String(formData.get("vehicleId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "").trim() || null;
   const driverId = String(formData.get("driverId") ?? "").trim() || null;
-  if (!vehicleId) return;
+  if (!vehicleId) return { error: "Lipsește vehiculul." };
 
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  await supabase
+  const { error } = await supabase
     .from("vehicles")
     .update({ driver_id: driverId })
     .eq("id", vehicleId)
     .eq("organization_id", organization.id);
 
+  if (error) return { error: "Nu am putut salva șoferul." };
+
   revalidatePath("/echipe");
+  if (teamId) revalidatePath(`/echipe/${teamId}`);
+  return { success: true };
 }
 
 export async function addVehicle(formData: FormData) {

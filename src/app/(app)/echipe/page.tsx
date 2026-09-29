@@ -6,7 +6,8 @@ import { StatusBadge } from "@/components/status-badge";
 import { ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { UsersRound, Plus, Truck } from "lucide-react";
-import { reassignVehicle, setVehicleDriver } from "./actions";
+import { reassignVehicle } from "./actions";
+import { DriverSelect } from "./driver-select";
 
 const AVATAR_PALETTE = [
   { bg: "#EFF4FF", text: "#2F6FED" },
@@ -137,24 +138,14 @@ export default async function EchipePage({
                       </form>
                     </td>
                     <td className="px-5 py-3.5">
-                      <form action={setVehicleDriver} className="flex items-center gap-2">
-                        <input type="hidden" name="vehicleId" value={v.id} />
-                        <select
-                          name="driverId"
-                          defaultValue={v.driver_id ?? ""}
-                          className="rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-electric"
-                        >
-                          <option value="">Nesetat</option>
-                          {((teams ?? []).find((t) => t.id === v.assigned_team_id)?.team_members ?? []).map((m) => (
-                            <option key={m.profile_id} value={m.profile_id}>
-                              {m.profiles?.full_name ?? "—"}
-                            </option>
-                          ))}
-                        </select>
-                        <button type="submit" className="text-[11px] font-bold text-electric">
-                          Salvează
-                        </button>
-                      </form>
+                      <DriverSelect
+                        vehicleId={v.id}
+                        teamId={v.assigned_team_id ?? undefined}
+                        driverId={v.driver_id}
+                        options={((teams ?? []).find((t) => t.id === v.assigned_team_id)?.team_members ?? []).map(
+                          (m) => ({ id: m.profile_id, name: m.profiles?.full_name ?? "—" })
+                        )}
+                      />
                     </td>
                     <td className="px-5 py-3.5">
                       <StatusBadge

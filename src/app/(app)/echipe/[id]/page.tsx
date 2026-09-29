@@ -10,10 +10,10 @@ import {
   removeMember,
   removeVehicle,
   setTeamLeader,
-  setVehicleDriver,
   toggleTeamActive,
 } from "../actions";
 import { AddTeamMember } from "./add-team-member";
+import { DriverSelect } from "../driver-select";
 import {
   ArrowLeft,
   Crown,
@@ -236,25 +236,18 @@ export default async function TeamDetailPage({
                         </button>
                       </form>
                     </div>
-                    <form action={setVehicleDriver} className="flex items-center gap-2 pl-7">
+                    <div className="flex items-center gap-2 pl-7">
                       <span className="text-[11.5px] font-semibold text-muted-2">Șofer:</span>
-                      <input type="hidden" name="vehicleId" value={v.id} />
-                      <select
-                        name="driverId"
-                        defaultValue={v.driver_id ?? ""}
-                        className="rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-electric"
-                      >
-                        <option value="">Nesetat</option>
-                        {team.team_members.map((m) => (
-                          <option key={m.profile_id} value={m.profile_id}>
-                            {m.profiles?.full_name ?? "—"}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" className="text-[11px] font-bold text-electric">
-                        Salvează
-                      </button>
-                    </form>
+                      <DriverSelect
+                        vehicleId={v.id}
+                        teamId={team.id}
+                        driverId={v.driver_id}
+                        options={team.team_members.map((m) => ({
+                          id: m.profile_id,
+                          name: m.profiles?.full_name ?? "—",
+                        }))}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
