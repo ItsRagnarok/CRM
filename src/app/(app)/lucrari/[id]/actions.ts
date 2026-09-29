@@ -325,6 +325,23 @@ export async function deleteRequiredItem(formData: FormData) {
   revalidatePath(`/mobil/materiale`);
 }
 
+export async function setJobWarehouse(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!jobId) return;
+  const warehouseId = String(formData.get("warehouseId") ?? "").trim() || null;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("jobs")
+    .update({ warehouse_id: warehouseId })
+    .eq("id", jobId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath(`/lucrari/${jobId}`);
+}
+
 export async function decidePurchaseRequest(formData: FormData) {
   const requestId = String(formData.get("requestId") ?? "");
   const decision = String(formData.get("decision") ?? "") as "approved" | "denied";

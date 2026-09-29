@@ -953,6 +953,7 @@ export type Database = {
           team_id: string | null
           title: string
           updated_at: string
+          warehouse_id: string | null
           work_ended_at: string | null
           work_started_at: string | null
         }
@@ -982,6 +983,7 @@ export type Database = {
           team_id?: string | null
           title: string
           updated_at?: string
+          warehouse_id?: string | null
           work_ended_at?: string | null
           work_started_at?: string | null
         }
@@ -1011,6 +1013,7 @@ export type Database = {
           team_id?: string | null
           title?: string
           updated_at?: string
+          warehouse_id?: string | null
           work_ended_at?: string | null
           work_started_at?: string | null
         }
@@ -1048,6 +1051,13 @@ export type Database = {
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_warehouse_id_fkey"
+            columns: ["warehouse_id"]
+            isOneToOne: false
+            referencedRelation: "warehouses"
             referencedColumns: ["id"]
           },
         ]

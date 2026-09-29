@@ -12,6 +12,7 @@ import {
   deleteChecklistItem,
   deleteDocument,
   deleteRequiredItem,
+  setJobWarehouse,
   toggleChecklistItem,
   uploadDocument,
 } from "./actions";
@@ -113,6 +114,7 @@ export default async function JobDetailPage({
     { data: requiredItems },
     { data: catalog },
     { data: jobNotes },
+    { data: warehouses },
   ] = await Promise.all([
     supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
     supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date, receipt_path").eq("job_id", id).order("created_at"),
@@ -141,6 +143,7 @@ export default async function JobDetailPage({
       .select("id, kind, text, photo_path, created_at, profiles(full_name)")
       .eq("job_id", id)
       .order("created_at", { ascending: false }),
+    supabase.from("warehouses").select("id, name").eq("organization_id", organization.id).order("name"),
   ]);
 
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
@@ -297,6 +300,31 @@ export default async function JobDetailPage({
 
         {tab === "materiale" && (
           <div className="flex flex-col gap-4">
+            {warehouses && warehouses.length > 0 && (
+              <Card title="Depozit de ridicare">
+                <form action={setJobWarehouse} className="flex items-center gap-3">
+                  <input type="hidden" name="jobId" value={id} />
+                  <select
+                    name="warehouseId"
+                    defaultValue={job.warehouse_id ?? ""}
+                    className="flex-1 rounded-[9px] border border-[#d0d5dd] px-3 py-2.5 text-[13px] outline-none focus:border-electric"
+                  >
+                    <option value="">— fără depozit specific —</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </select>
+                  <button type="submit" className="rounded-[9px] bg-electric px-4 py-2.5 text-[13px] font-bold text-white">
+                    Salvează
+                  </button>
+                </form>
+                <p className="mt-2 text-[11.5px] text-muted-2">
+                  Depozitul de unde tehnicianul trebuie să ridice materialele/sculele necesare acestei lucrări.
+                </p>
+              </Card>
+            )}
             <Card title="Materiale & scule necesare pentru această lucrare">
               {requiredItems && requiredItems.length > 0 ? (
                 <div className="flex flex-col divide-y divide-[#f2f4f7]">
