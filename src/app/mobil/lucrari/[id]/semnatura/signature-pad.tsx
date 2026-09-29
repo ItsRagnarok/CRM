@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveSignature } from "../actions";
+import { saveSignature, flagClientAbsent } from "../actions";
 
 export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultName: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const [hasDrawn, setHasDrawn] = useState(false);
-  const [signerName, setSignerName] = useState(defaultName);
+  const signerName = defaultName || "Client";
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -76,11 +76,11 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
   }
 
   function submit() {
-    if (!hasDrawn || !signerName.trim()) return;
+    if (!hasDrawn) return;
     const dataUrl = canvasRef.current!.toDataURL("image/png");
     const formData = new FormData();
     formData.set("jobId", jobId);
-    formData.set("signerName", signerName.trim());
+    formData.set("signerName", signerName);
     formData.set("dataUrl", dataUrl);
     startTransition(async () => {
       await saveSignature(formData);
@@ -89,8 +89,9 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
     });
   }
 
-  function skip() {
-    startTransition(() => {
+  function clientAbsent() {
+    startTransition(async () => {
+      await flagClientAbsent(jobId);
       router.push(`/mobil/lucrari/${jobId}`);
       router.refresh();
     });
@@ -100,11 +101,9 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
     <div className="flex flex-1 flex-col overflow-auto p-4">
       <div>
         <div className="mb-1.5 text-[12.5px] font-bold text-[#344054]">Numele clientului</div>
-        <input
-          value={signerName}
-          onChange={(e) => setSignerName(e.target.value)}
-          className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-3 text-[14px] outline-none focus:border-electric"
-        />
+        <div className="w-full rounded-[10px] border border-[#eaecf0] bg-neutral-bg px-3.5 py-3 text-[14px] font-bold text-[#344054]">
+          {signerName}
+        </div>
       </div>
 
       <div className="mt-4.5">
@@ -139,18 +138,18 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
       <button
         type="button"
         onClick={submit}
-        disabled={!hasDrawn || !signerName.trim() || pending}
+        disabled={!hasDrawn || pending}
         className="mt-4 block w-full rounded-[12px] bg-success py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(21,128,61,0.28)] disabled:opacity-50"
       >
         {pending ? "Se salvează…" : "CONFIRMĂ ȘI FINALIZEAZĂ"}
       </button>
       <button
         type="button"
-        onClick={skip}
+        onClick={clientAbsent}
         disabled={pending}
-        className="mt-2.5 block w-full py-2 text-center text-[13px] font-bold text-muted disabled:opacity-50"
+        className="mt-2.5 block w-full rounded-[12px] border border-[#d0d5dd] py-3 text-center text-[13px] font-bold text-[#344054] disabled:opacity-50"
       >
-        Clientul nu este disponibil — continuă fără semnătură
+        Clientul nu e prezent — anunță administratorul
       </button>
     </div>
   );

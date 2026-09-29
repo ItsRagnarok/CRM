@@ -41,7 +41,7 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
         </Link>
         <div>
           <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
-          <div className="text-[11.5px] text-muted-2">Checklist înainte de start</div>
+          <div className="text-[11.5px] text-muted-2">Checklist înainte de plecare</div>
         </div>
       </div>
 

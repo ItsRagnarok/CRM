@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -15,6 +15,12 @@ export type DashboardMapMarker = {
   lng: number;
   href?: string;
   linkLabel?: string;
+};
+
+export type DashboardMapTrail = {
+  id: string;
+  color: string;
+  points: [number, number][];
 };
 
 // Romania's rough center, used only when there's nothing to plot yet.
@@ -61,8 +67,10 @@ function FitToMarkers({ markers }: { markers: DashboardMapMarker[] }) {
 
 export default function DashboardMap({
   markers,
+  trails,
 }: {
   markers: DashboardMapMarker[];
+  trails?: DashboardMapTrail[];
 }) {
   const center: [number, number] =
     markers.length > 0 ? [markers[0].lat, markers[0].lng] : FALLBACK_CENTER;
@@ -79,6 +87,12 @@ export default function DashboardMap({
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <FitToMarkers markers={markers} />
+      {(trails ?? []).map(
+        (trail) =>
+          trail.points.length > 1 && (
+            <Polyline key={trail.id} positions={trail.points} pathOptions={{ color: trail.color, weight: 3, opacity: 0.6 }} />
+          )
+      )}
       {markers.map((marker) => (
         <Marker
           key={marker.id}

@@ -69,6 +69,13 @@ export default async function HartaPage() {
         .order("created_at", { ascending: false }),
     ]);
 
+  const { data: trailLog } = await supabase
+    .from("technician_position_log")
+    .select("profile_id, lat, lng, recorded_at")
+    .eq("organization_id", organization.id)
+    .gte("recorded_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
+    .order("recorded_at", { ascending: true });
+
   const arrivalByJob = new Map<string, string>();
   for (const a of arrivalsToday ?? []) {
     if (!arrivalByJob.has(a.job_id)) arrivalByJob.set(a.job_id, a.occurred_at);
@@ -174,6 +181,17 @@ export default async function HartaPage() {
 
   const allMapMarkers = [...mapMarkers, ...livePositionMarkers];
 
+  const trailsByProfile = new Map<string, [number, number][]>();
+  for (const p of trailLog ?? []) {
+    if (!trailsByProfile.has(p.profile_id)) trailsByProfile.set(p.profile_id, []);
+    trailsByProfile.get(p.profile_id)!.push([p.lat, p.lng]);
+  }
+  const trails = [...trailsByProfile.entries()].map(([profileId, points]) => ({
+    id: `trail-${profileId}`,
+    color: "#0369a1",
+    points,
+  }));
+
   return (
     <div className="flex h-full flex-col">
       <AutoRefresh />
@@ -243,7 +261,7 @@ export default async function HartaPage() {
 
       <div className="relative flex-1">
         {allMapMarkers.length > 0 ? (
-          <DashboardMapLoader markers={allMapMarkers} />
+          <DashboardMapLoader markers={allMapMarkers} trails={trails} />
         ) : (
           <EmptyState
             icon={MapPin}

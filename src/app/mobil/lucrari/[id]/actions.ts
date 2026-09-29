@@ -182,6 +182,29 @@ export async function recordArrivalPromptDismissal(jobId: string) {
   return { attempts };
 }
 
+export async function flagClientAbsent(jobId: string) {
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const [{ data: job }, { data: profile }] = await Promise.all([
+    supabase.from("jobs").select("display_number, title").eq("id", jobId).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+  ]);
+
+  await supabase.from("job_alerts").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    profile_id: userId,
+    kind: "client_absent",
+    message: `${profile?.full_name ?? "Tehnicianul"} a finalizat lucrarea #${job?.display_number ?? ""} (${
+      job?.title ?? "—"
+    }) fără semnătură — clientul nu era prezent.`,
+  });
+
+  revalidatePath("/harta");
+  revalidatePath("/dashboard");
+}
+
 export async function saveSignature(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const signerName = String(formData.get("signerName") ?? "").trim();

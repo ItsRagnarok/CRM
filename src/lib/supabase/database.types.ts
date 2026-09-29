@@ -1754,6 +1754,48 @@ export type Database = {
           },
         ]
       }
+      technician_position_log: {
+        Row: {
+          id: string
+          lat: number
+          lng: number
+          organization_id: string
+          profile_id: string
+          recorded_at: string
+        }
+        Insert: {
+          id?: string
+          lat: number
+          lng: number
+          organization_id: string
+          profile_id: string
+          recorded_at: string
+        }
+        Update: {
+          id?: string
+          lat?: number
+          lng?: number
+          organization_id?: string
+          profile_id?: string
+          recorded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_position_log_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_position_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       technician_positions: {
         Row: {
           accuracy_m: number | null

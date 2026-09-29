@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardList, ChevronRight } from "lucide-react";
+import { ArrowLeft, ClipboardList, ChevronRight, Receipt, Camera } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { startWork } from "./actions";
 import { ArriveButton } from "./arrive-button";
 import { StartTravelButton } from "./start-travel-button";
+import { WorkTimer } from "./work-timer";
 
 function mapsHref(address: string | null, lat: number | null, lng: number | null) {
   if (lat != null && lng != null) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -78,6 +79,37 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         </div>
 
         <div className="mt-4 flex flex-col gap-3">
+          {job.status === "programata" && (
+            <>
+              <Link
+                href={`/mobil/lucrari/${job.id}/checklist`}
+                className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
+                  <ClipboardList className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[13.5px] font-bold">Checklist înainte de plecare</div>
+                  <div className="text-[11px] text-muted-2">Ce trebuie să iei — scule, materiale</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-2" />
+              </Link>
+              <Link
+                href={`/mobil/lucrari/${job.id}/cheltuiala`}
+                className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
+                  <Receipt className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+                </div>
+                <div className="flex-1">
+                  <div className="text-[13.5px] font-bold">Îți lipsesc materiale/scule?</div>
+                  <div className="text-[11px] text-muted-2">Adaugă cheltuiala înainte să pleci</div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-2" />
+              </Link>
+            </>
+          )}
+
           {isTraveling && (
             <>
               {maps && (
@@ -113,13 +145,16 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 )}
               </div>
               <Link
-                href={`/mobil/lucrari/${job.id}/checklist`}
+                href={`/mobil/lucrari/${job.id}/foto?cat=before`}
                 className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
-                  <ClipboardList className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+                  <Camera className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
                 </div>
-                <div className="flex-1 text-[13.5px] font-bold">Checklist înainte de start</div>
+                <div className="flex-1">
+                  <div className="text-[13.5px] font-bold">Poză la locul de muncă</div>
+                  <div className="text-[11px] text-muted-2">Ex: panoul electric, tabloul, zona de lucru</div>
+                </div>
                 <ChevronRight className="h-4 w-4 text-muted-2" />
               </Link>
               <form action={startWork.bind(null, job.id)}>
@@ -135,8 +170,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
           {isWorking && (
             <>
+              {job.work_started_at && <WorkTimer startedAt={job.work_started_at} />}
               <Link
-                href={`/mobil/lucrari/${job.id}/foto`}
+                href={`/mobil/lucrari/${job.id}/foto?cat=during`}
                 className="block rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
               >
                 CONTINUĂ LUCRAREA

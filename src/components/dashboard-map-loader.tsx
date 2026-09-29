@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import type { DashboardMapMarker } from "@/components/dashboard-map";
+import type { DashboardMapMarker, DashboardMapTrail } from "@/components/dashboard-map";
 
 // Leaflet touches `window` at import time, so it must never run during SSR.
 const DashboardMap = dynamic(() => import("@/components/dashboard-map"), {
@@ -13,6 +13,12 @@ const DashboardMap = dynamic(() => import("@/components/dashboard-map"), {
   ),
 });
 
-export function DashboardMapLoader({ markers }: { markers: DashboardMapMarker[] }) {
-  return <DashboardMap markers={markers} />;
+export function DashboardMapLoader({
+  markers,
+  trails,
+}: {
+  markers: DashboardMapMarker[];
+  trails?: DashboardMapTrail[];
+}) {
+  return <DashboardMap markers={markers} trails={trails} />;
 }
