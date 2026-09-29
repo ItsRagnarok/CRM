@@ -1,11 +1,11 @@
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
-import { Package, Truck, User, Wrench, Send } from "lucide-react";
+import { Package, Truck, User, Wrench, Send, Warehouse } from "lucide-react";
 import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
 
 export default async function MobileMaterialsPage() {
-  const { profile } = await requireSessionContext();
+  const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: membership } = await supabase
@@ -45,6 +45,23 @@ export default async function MobileMaterialsPage() {
         .select("id, kind, quantity_needed, custom_name, materials(id, name, unit)")
         .eq("job_id", currentJob.id)
     : { data: null };
+
+  const { data: centralWarehouse } = currentJob
+    ? await supabase
+        .from("warehouses")
+        .select("id")
+        .eq("organization_id", organization.id)
+        .eq("is_central", true)
+        .maybeSingle()
+    : { data: null };
+
+  const { data: depotStock } = centralWarehouse
+    ? await supabase
+        .from("material_stock")
+        .select("material_id, quantity")
+        .eq("warehouse_id", centralWarehouse.id)
+    : { data: null };
+  const depotByMaterialId = new Map((depotStock ?? []).map((s) => [s.material_id, s.quantity]));
 
   const { data: myRequests } = currentJob
     ? await supabase
@@ -110,6 +127,8 @@ export default async function MobileMaterialsPage() {
                   const name = item.materials?.name ?? item.custom_name ?? "—";
                   const have = item.materials ? stockByMaterialId.get(item.materials.id) ?? 0 : null;
                   const covered = have !== null && have >= item.quantity_needed;
+                  const depotHave = item.materials ? depotByMaterialId.get(item.materials.id) ?? 0 : null;
+                  const availableAtDepot = !covered && depotHave !== null && depotHave >= item.quantity_needed;
                   const key = item.materials ? `m:${item.materials.id}` : `c:${item.custom_name}`;
                   const alreadyRequested = requestedKeys.has(key);
                   return (
@@ -123,12 +142,16 @@ export default async function MobileMaterialsPage() {
                         <div className="text-[13px] font-bold">{name}</div>
                         <div className="text-[11px] text-muted-2">
                           Necesar: {item.quantity_needed} {item.materials?.unit ?? "buc"}
-                          {have !== null ? ` · Ai: ${have}` : ""}
+                          {have !== null ? ` · Ai în dubă: ${have}` : ""}
                         </div>
                       </div>
                       {covered ? (
                         <span className="rounded-full bg-success-bg px-2 py-1 text-[10.5px] font-bold text-success">
                           OK
+                        </span>
+                      ) : availableAtDepot ? (
+                        <span className="flex items-center gap-1 rounded-full bg-electric-soft px-2 py-1 text-[10.5px] font-bold text-electric">
+                          <Warehouse className="h-3 w-3" /> La depozit
                         </span>
                       ) : alreadyRequested ? (
                         <span className="rounded-full bg-[#fef9ec] px-2 py-1 text-[10.5px] font-bold text-[#b45309]">
