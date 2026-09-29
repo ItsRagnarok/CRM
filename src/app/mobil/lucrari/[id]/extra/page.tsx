@@ -38,31 +38,13 @@ export default async function MobileExtraPage({ params }: { params: Promise<{ id
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
         <div>
-          <div className="text-[15px] font-extrabold">Meniu lucrare — #{job.display_number}</div>
+          <div className="text-[15px] font-extrabold">Raportează — #{job.display_number}</div>
           <div className="mt-1"><StepBadge step="executie" /></div>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         <div className="rounded-[13px] border border-[#eaecf0] bg-white p-4">
-          <div className="text-[14px] font-bold text-foreground">Ai finalizat lucrarea?</div>
-          <div className="mt-3 flex gap-2.5">
-            <Link
-              href={`/mobil/lucrari/${id}/finalizare`}
-              className="flex-1 rounded-[12px] bg-success py-3 text-center text-[14px] font-extrabold text-white"
-            >
-              DA
-            </Link>
-            <button
-              type="button"
-              className="flex-1 rounded-[12px] bg-neutral-bg py-3 text-center text-[14px] font-extrabold text-[#344054]"
-            >
-              NU
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-4 rounded-[13px] border border-[#eaecf0] bg-white p-4">
           <div className="mb-2.5 flex items-center gap-2 text-[14px] font-bold text-foreground">
             <AlertTriangle className="h-4 w-4 text-warning" /> Raportează o problemă
           </div>

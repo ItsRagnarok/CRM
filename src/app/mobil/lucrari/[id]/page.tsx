@@ -311,15 +311,38 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
               >
                 ADAUGĂ POZĂ
               </Link>
+              <div className="-mt-2 text-center text-[11px] text-muted-2">
+                Poză din timpul lucrării — una sau mai multe (opțional)
+              </div>
+
               <Link
                 href={`/mobil/lucrari/${job.id}/extra`}
                 className="block rounded-[12px] border border-[#d0d5dd] bg-white py-[15px] text-center text-[15px] font-extrabold text-[#344054]"
               >
-                MENIU LUCRARE — probleme, comentarii, finalizare
+                RAPORTEAZĂ — probleme sau comentarii
               </Link>
+
               <div className="text-center text-[12px] text-muted-2">
                 Fotografii ({photoCount ?? 0})
                 {expenseCount ? ` · ${expenseCount} cheltuieli adăugate` : ""}
+              </div>
+
+              <div className="mt-2 rounded-[13px] border border-[#eaecf0] bg-white p-4">
+                <div className="text-[14px] font-bold text-foreground">Ai terminat lucrarea?</div>
+                <div className="mt-3 flex gap-2.5">
+                  <Link
+                    href={`/mobil/lucrari/${job.id}/finalizare`}
+                    className="flex-1 rounded-[12px] bg-success py-3 text-center text-[14px] font-extrabold text-white"
+                  >
+                    DA
+                  </Link>
+                  <button
+                    type="button"
+                    className="flex-1 rounded-[12px] bg-neutral-bg py-3 text-center text-[14px] font-extrabold text-[#344054]"
+                  >
+                    NU
+                  </button>
+                </div>
               </div>
             </>
           )}
