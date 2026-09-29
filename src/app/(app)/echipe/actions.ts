@@ -111,6 +111,24 @@ export async function setTeamLeader(formData: FormData) {
   revalidatePath("/echipe");
 }
 
+export async function reassignVehicle(formData: FormData) {
+  const vehicleId = String(formData.get("vehicleId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "").trim() || null;
+  if (!vehicleId) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("vehicles")
+    .update({ assigned_team_id: teamId })
+    .eq("id", vehicleId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath("/echipe");
+  if (teamId) revalidatePath(`/echipe/${teamId}`);
+}
+
 export async function addVehicle(formData: FormData) {
   const teamId = String(formData.get("teamId") ?? "");
   const name = String(formData.get("name") ?? "").trim();

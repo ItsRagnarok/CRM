@@ -5,7 +5,8 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
-import { UsersRound, Plus } from "lucide-react";
+import { UsersRound, Plus, Truck } from "lucide-react";
+import { reassignVehicle } from "./actions";
 
 const AVATAR_PALETTE = [
   { bg: "#EFF4FF", text: "#2F6FED" },
@@ -15,8 +16,14 @@ const AVATAR_PALETTE = [
   { bg: "#F2F4F7", text: "#475467" },
 ];
 
-export default async function EchipePage() {
+export default async function EchipePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { organization } = await requireSessionContext();
+  const { tab: rawTab } = await searchParams;
+  const tab = rawTab === "vehicule" ? "vehicule" : "echipe";
   const supabase = await createClient();
 
   const { data: teams } = await supabase
@@ -26,6 +33,15 @@ export default async function EchipePage() {
     )
     .eq("organization_id", organization.id)
     .order("created_at", { ascending: true });
+
+  const { data: vehicles } =
+    tab === "vehicule"
+      ? await supabase
+          .from("vehicles")
+          .select("id, name, plate_number, is_active, assigned_team_id, teams(id, name)")
+          .eq("organization_id", organization.id)
+          .order("name")
+      : { data: null };
 
   const teamIds = (teams ?? []).map((t) => t.id);
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -46,17 +62,98 @@ export default async function EchipePage() {
 
   return (
     <div className="flex flex-col gap-5 p-7">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-[17px] font-extrabold text-foreground">Echipe</h1>
-        <Link
-          href="/echipe/noua"
-          className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
-        >
-          <Plus className="h-4 w-4" /> Echipă nouă
-        </Link>
+        <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
+          <Link
+            href="/echipe"
+            className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-bold ${
+              tab === "echipe" ? "bg-white text-foreground shadow-sm" : "text-muted"
+            }`}
+          >
+            Echipe
+          </Link>
+          <Link
+            href="/echipe?tab=vehicule"
+            className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-bold ${
+              tab === "vehicule" ? "bg-white text-foreground shadow-sm" : "text-muted"
+            }`}
+          >
+            Vehicule
+          </Link>
+        </div>
+        <div className="flex-1" />
+        {tab === "echipe" && (
+          <Link
+            href="/echipe/noua"
+            className="flex items-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
+          >
+            <Plus className="h-4 w-4" /> Echipă nouă
+          </Link>
+        )}
       </div>
 
-      {teams && teams.length > 0 ? (
+      {tab === "vehicule" ? (
+        vehicles && vehicles.length > 0 ? (
+          <div className="overflow-hidden rounded-[13px] border border-border bg-white">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-[#f9fafb] text-left text-[11px] font-bold uppercase tracking-wide text-muted">
+                  <th className="px-5 py-3">Vehicul</th>
+                  <th className="px-5 py-3">Nr. înmatriculare</th>
+                  <th className="px-5 py-3">Alocat echipei</th>
+                  <th className="px-5 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {vehicles.map((v) => (
+                  <tr key={v.id} className="border-t border-[#f2f4f7]">
+                    <td className="px-5 py-3.5 text-[13.5px] font-bold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <Truck className="h-4 w-4 text-muted" />
+                        {v.name}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5 text-[13px] text-muted">{v.plate_number ?? "—"}</td>
+                    <td className="px-5 py-3.5">
+                      <form action={reassignVehicle} className="flex items-center gap-2">
+                        <input type="hidden" name="vehicleId" value={v.id} />
+                        <select
+                          name="teamId"
+                          defaultValue={v.assigned_team_id ?? ""}
+                          className="rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-electric"
+                        >
+                          <option value="">Neasignat</option>
+                          {(teams ?? []).map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className="text-[11px] font-bold text-electric">
+                          Salvează
+                        </button>
+                      </form>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <StatusBadge
+                        label={v.is_active ? "Activ" : "Inactiv"}
+                        className={v.is_active ? "bg-success-bg text-success" : "bg-neutral-bg text-neutral"}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            icon={Truck}
+            title="Niciun vehicul încă"
+            description="Adaugă vehicule din pagina fiecărei echipe."
+          />
+        )
+      ) : teams && teams.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => {
             const members = team.team_members;
