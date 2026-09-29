@@ -250,7 +250,7 @@ export async function uploadJobPhoto(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const category = String(formData.get("category") ?? "in_timpul");
   const file = formData.get("file") as File | null;
-  if (!jobId || !file || file.size === 0) return;
+  if (!jobId || !file || file.size === 0) return { error: "Nicio poză selectată." };
 
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
@@ -261,7 +261,9 @@ export async function uploadJobPhoto(formData: FormData) {
   const { error: uploadError } = await supabase.storage
     .from("attachments")
     .upload(path, file, { contentType: file.type || "image/jpeg" });
-  if (uploadError) return;
+  // Previously failed silently here — the technician saw "Se încarcă…" and
+  // then nothing, stuck with no photo and no way to tell why.
+  if (uploadError) return { error: `Încărcarea a eșuat: ${uploadError.message}` };
 
   await supabase.from("photos").insert({
     organization_id: organization.id,

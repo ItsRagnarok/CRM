@@ -18,9 +18,21 @@ export function PhotoCapture({ jobId, category }: { jobId: string; category: str
     formData.set("category", category);
     formData.set("file", file);
     startTransition(async () => {
-      await uploadJobPhoto(formData);
-      router.refresh();
-      if (inputRef.current) inputRef.current.value = "";
+      try {
+        const result = await uploadJobPhoto(formData);
+        if (result?.error) {
+          alert(result.error);
+          return;
+        }
+        router.refresh();
+      } catch {
+        // A network hiccup or an oversized photo can reject the request
+        // outright — surface it instead of leaving "Se încarcă…" stuck
+        // forever with no way to tell what happened.
+        alert("Încărcarea pozei a eșuat. Verifică conexiunea și încearcă din nou.");
+      } finally {
+        if (inputRef.current) inputRef.current.value = "";
+      }
     });
   }
 

@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     // Server Actions default to a 1 MB body limit, which a real phone
     // camera photo or a scanned PDF document blows past immediately.
     serverActions: {
-      bodySizeLimit: "15mb",
+      bodySizeLimit: "30mb",
     },
   },
   // The PDF report route loads its fonts from disk at runtime (pdfkit
