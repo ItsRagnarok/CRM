@@ -25,7 +25,6 @@ import {
   UsersRound,
   Calendar,
   Pencil,
-  FileDown,
   Plus,
   Trash2,
   FileText,
@@ -160,13 +159,6 @@ export default async function JobDetailPage({
             className="flex items-center gap-1.5 rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
           >
             <Pencil className="h-3.5 w-3.5" /> Editează
-          </Link>
-          <Link
-            href={`/rapoarte-lucrare/${id}`}
-            target="_blank"
-            className="flex items-center gap-1.5 rounded-[9px] bg-[#101828] px-3.5 py-2 text-[12.5px] font-bold text-white"
-          >
-            <FileDown className="h-3.5 w-3.5" /> Descarcă raport PDF
           </Link>
           <StatusActions jobId={job.id} status={job.status} />
         </div>

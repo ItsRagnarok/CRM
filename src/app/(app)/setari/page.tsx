@@ -5,8 +5,10 @@ import type { Database } from "@/lib/supabase/database.types";
 import { CompanyForm } from "./company-form";
 import { NewEmployeeForm } from "./new-employee-form";
 import { updateUserRole, updateGpsSettings } from "./actions";
+import { ChecklistTemplatesTab } from "./checklist-templates-tab";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
+type JobType = Database["public"]["Enums"]["job_type"];
 
 const NAV = [
   { id: "companie", label: "Companie" },
@@ -32,10 +34,11 @@ const ROLE_OPTIONS: UserRole[] = ["admin", "manager", "team_leader", "technician
 export default async function SetariPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; jt?: string }>;
 }) {
-  const { tab: tabParam } = await searchParams;
+  const { tab: tabParam, jt } = await searchParams;
   const tab = NAV.some((n) => n.id === tabParam) ? tabParam! : "companie";
+  const selectedJobType = (jt as JobType) || null;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -157,9 +160,12 @@ export default async function SetariPage({
               </div>
             )}
 
-            {(tab === "checklisturi" || tab === "tipuri" || tab === "notificari" || tab === "integrari") && (
+            {tab === "checklisturi" && (
+              <ChecklistTemplatesTab organizationId={organization.id} selectedJobType={selectedJobType} />
+            )}
+
+            {(tab === "tipuri" || tab === "notificari" || tab === "integrari") && (
               <div className="rounded-[13px] border border-dashed border-border bg-white p-6 text-[13.5px] text-muted">
-                {tab === "checklisturi" && "Editor de checklist-uri per tip de lucrare — în curând."}
                 {tab === "tipuri" && "Tipurile de lucrări sunt momentan fixe (Instalare, Reparație, Mentenanță, Inspecție, Intervenție, Service, Demontare, Urgență) — personalizare în curând."}
                 {tab === "notificari" && "Preferințe de notificare per utilizator — în curând."}
                 {tab === "integrari" && "Integrări cu SmartBill, Oblio, FGO și altele — în curând."}
@@ -170,7 +176,11 @@ export default async function SetariPage({
               <div className="rounded-[13px] border border-border bg-white p-[22px]">
                 <div className="mb-1 text-[15px] font-bold text-foreground">GPS & confidențialitate</div>
                 <p className="mb-4 text-[12.5px] text-muted-2">
-                  Controlează cum și când este urmărită locația echipelor.
+                  Controlează cum și când este urmărită locația echipelor. Cât timp aplicația mobilă e deschisă și
+                  activată, poziția tehnicianului apare live pe hartă și primește automat o alertă când ajunge lângă
+                  locația unei lucrări la care e în drum. Ca orice aplicație de telefon în browser (nu e o aplicație
+                  nativă), urmărirea se oprește dacă telefonul e blocat mult timp sau aplicația e complet închisă —
+                  repornește automat de îndată ce tehnicianul redeschide aplicația.
                 </p>
                 <div className="flex items-center justify-between border-b border-[#f2f4f7] py-3.5">
                   <div>
@@ -189,11 +199,11 @@ export default async function SetariPage({
                 >
                   <div>
                     <div className="text-[13.5px] font-semibold">
-                      Tracking GPS continuu în timpul deplasării
+                      Tracking GPS continuu + alertă de sosire (rază 50m)
                     </div>
                     <div className="text-[12px] text-muted-2">
-                      Necesită consimțământul angajatului și politică de retenție ({org.gps_retention_days}{" "}
-                      zile).
+                      Arată echipele live pe hartă și avertizează tehnicianul să confirme sosirea când e aproape de
+                      locație — la a 3-a nereușită, tu primești o alertă. Necesită consimțământul angajatului.
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

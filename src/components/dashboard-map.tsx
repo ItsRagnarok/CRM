@@ -13,7 +13,8 @@ export type DashboardMapMarker = {
   color: string;
   lat: number;
   lng: number;
-  href: string;
+  href?: string;
+  linkLabel?: string;
 };
 
 // Romania's rough center, used only when there's nothing to plot yet.
@@ -91,9 +92,11 @@ export default function DashboardMap({
               <div style={{ marginTop: 4, fontWeight: 600 }}>
                 {marker.statusLabel}
               </div>
-              <a href={marker.href} style={{ color: "#3b82f6", fontWeight: 600 }}>
-                Deschide lucrarea →
-              </a>
+              {marker.href && (
+                <a href={marker.href} style={{ color: "#3b82f6", fontWeight: 600 }}>
+                  {marker.linkLabel ?? "Deschide lucrarea →"}
+                </a>
+              )}
             </div>
           </Popup>
         </Marker>

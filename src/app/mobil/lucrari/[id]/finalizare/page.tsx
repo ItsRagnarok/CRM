@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { addChecklistItem, toggleChecklistItem } from "@/app/(app)/lucrari/[id]/actions";
+import { addChecklistItem, toggleChecklistItem, ensureChecklist } from "@/app/(app)/lucrari/[id]/actions";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { finalizeJob } from "../actions";
 
@@ -20,19 +20,21 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
     .maybeSingle();
   if (!job) notFound();
 
-  const [{ data: checklist }, { count: photoCount }, { data: expenses }, { data: entries }] = await Promise.all([
-    supabase
-      .from("job_checklists")
-      .select("id, job_checklist_items(id, label, is_checked, sort_order)")
-      .eq("job_id", id)
-      .eq("phase", "after")
-      .maybeSingle(),
+  const checklistId = await ensureChecklist(supabase, id, "after");
+  const [{ data: rawItems }, { count: photoCount }, { data: expenses }, { data: entries }] = await Promise.all([
+    checklistId
+      ? supabase
+          .from("job_checklist_items")
+          .select("id, label, is_checked, sort_order, locked")
+          .eq("job_checklist_id", checklistId)
+          .order("sort_order")
+      : Promise.resolve({ data: [] }),
     supabase.from("photos").select("id", { count: "exact", head: true }).eq("job_id", id),
     supabase.from("expenses").select("amount").eq("job_id", id),
     supabase.from("time_entries").select("profile_id, job_id, event_type, occurred_at").eq("job_id", id),
   ]);
 
-  const items = (checklist?.job_checklist_items ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const items = rawItems ?? [];
   const totalExpenses = (expenses ?? []).reduce((s, e) => s + Number(e.amount), 0);
   const workedHours = pairHours(entries ?? [], "work_start", "work_end");
 

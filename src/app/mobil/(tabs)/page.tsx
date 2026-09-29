@@ -6,6 +6,7 @@ import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { DepartureAlert } from "./departure-alert";
+import { ArrivalAlert } from "./arrival-alert";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -211,6 +212,13 @@ export default async function MobileHomePage({
     (j) => j.status === "programata" && j.start_time && j.locations?.lat != null && j.locations?.lng != null
   );
 
+  const inDrumJob = allJobs.find(
+    (j) => j.status === "in_drum" && j.locations?.lat != null && j.locations?.lng != null
+  );
+  const { data: arrivalPrompt } = inDrumJob
+    ? await supabase.from("arrival_prompts").select("attempts").eq("job_id", inDrumJob.id).maybeSingle()
+    : { data: null };
+
   return (
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3.5 pt-1.5">
@@ -252,6 +260,18 @@ export default async function MobileHomePage({
             lng: nextUpcomingJob.locations.lng,
             address: nextUpcomingJob.locations.address,
           }}
+        />
+      )}
+
+      {inDrumJob && inDrumJob.locations?.lat != null && inDrumJob.locations?.lng != null && (
+        <ArrivalAlert
+          job={{
+            id: inDrumJob.id,
+            title: inDrumJob.title,
+            lat: inDrumJob.locations.lat,
+            lng: inDrumJob.locations.lng,
+          }}
+          initialAttempts={arrivalPrompt?.attempts ?? 0}
         />
       )}
 

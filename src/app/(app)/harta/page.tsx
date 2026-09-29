@@ -6,7 +6,8 @@ import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import { JOB_STATUS_LABELS } from "@/lib/status";
 import type { Database } from "@/lib/supabase/database.types";
-import { MapPin } from "lucide-react";
+import { MapPin, AlertTriangle } from "lucide-react";
+import { resolveJobAlert } from "./actions";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 
@@ -22,7 +23,9 @@ export default async function HartaPage() {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }] =
+  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+
+  const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }, { data: livePositions }, { data: openAlerts }] =
     await Promise.all([
       supabase
         .from("jobs")
@@ -52,6 +55,17 @@ export default async function HartaPage() {
         .eq("event_type", "arrival")
         .gte("occurred_at", startOfDay(today))
         .order("occurred_at", { ascending: false }),
+      supabase
+        .from("technician_positions")
+        .select("profile_id, lat, lng, recorded_at, profiles(full_name)")
+        .eq("organization_id", organization.id)
+        .gte("recorded_at", tenMinAgo),
+      supabase
+        .from("job_alerts")
+        .select("id, kind, message, created_at, jobs(display_number)")
+        .eq("organization_id", organization.id)
+        .is("resolved_at", null)
+        .order("created_at", { ascending: false }),
     ]);
 
   const arrivalByJob = new Map<string, string>();
@@ -142,10 +156,42 @@ export default async function HartaPage() {
         href: `/lucrari/${job.id}`,
       };
     })
-    .filter((m): m is DashboardMapMarker => m !== null);
+    .filter((m): m is NonNullable<typeof m> => m !== null);
+
+  const livePositionMarkers: DashboardMapMarker[] = (livePositions ?? []).map((p) => {
+    const minutesAgo = Math.round((Date.now() - new Date(p.recorded_at).getTime()) / 60000);
+    return {
+      id: `pos-${p.profile_id}`,
+      label: `📍 ${p.profiles?.full_name ?? "Tehnician"}`,
+      sublabel: "Poziție live",
+      statusLabel: minutesAgo <= 1 ? "chiar acum" : `acum ${minutesAgo} min`,
+      color: "#0369a1",
+      lat: p.lat,
+      lng: p.lng,
+    };
+  });
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers];
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-full flex-col">
+      {(openAlerts ?? []).length > 0 && (
+        <div className="flex flex-col gap-1.5 border-b border-[#fee4e2] bg-[#fef3f2] px-5 py-2.5">
+          {(openAlerts ?? []).map((alert) => (
+            <div key={alert.id} className="flex items-center gap-2.5 text-[12.5px]">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
+              <span className="flex-1 text-[#7a271a]">{alert.message}</span>
+              <form action={resolveJobAlert}>
+                <input type="hidden" name="alertId" value={alert.id} />
+                <button type="submit" className="shrink-0 rounded-[8px] bg-white px-2.5 py-1 text-[11px] font-bold text-[#7a271a]">
+                  Marchează rezolvat
+                </button>
+              </form>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-1 overflow-hidden">
       <div className="flex w-[320px] shrink-0 flex-col border-r border-border bg-white">
         <div className="px-[18px] pb-3 pt-[18px] text-[16px] font-extrabold text-foreground">
           Echipe pe teren
@@ -194,8 +240,8 @@ export default async function HartaPage() {
       </div>
 
       <div className="relative flex-1">
-        {mapMarkers.length > 0 ? (
-          <DashboardMapLoader markers={mapMarkers} />
+        {allMapMarkers.length > 0 ? (
+          <DashboardMapLoader markers={allMapMarkers} />
         ) : (
           <EmptyState
             icon={MapPin}
@@ -203,6 +249,7 @@ export default async function HartaPage() {
             description="Harta arată echipele care sunt în drum sau în lucru chiar acum. Momentan nu e nicio lucrare activă cu locație GPS."
           />
         )}
+      </div>
       </div>
     </div>
   );

@@ -259,7 +259,7 @@ export default async function DashboardPage() {
         href: `/lucrari/${job.id}`,
       };
     })
-    .filter((m): m is DashboardMapMarker => m !== null);
+    .filter((m): m is NonNullable<typeof m> => m !== null);
 
   // Unified activity feed — merges status changes, arrivals, expenses,
   // photo uploads and new jobs into one real, timestamp-sorted stream.

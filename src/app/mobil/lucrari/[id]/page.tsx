@@ -4,8 +4,9 @@ import { ArrowLeft, ClipboardList, ChevronRight } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
-import { startTravel, startWork } from "./actions";
+import { startWork } from "./actions";
 import { ArriveButton } from "./arrive-button";
+import { StartTravelButton } from "./start-travel-button";
 
 function mapsHref(address: string | null, lat: number | null, lng: number | null) {
   if (lat != null && lng != null) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -90,14 +91,11 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 </a>
               )}
               {job.status === "programata" ? (
-                <form action={startTravel.bind(null, job.id)}>
-                  <button
-                    type="submit"
-                    className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
-                  >
-                    PORNESC SPRE LOCAȚIE
-                  </button>
-                </form>
+                <StartTravelButton
+                  jobId={job.id}
+                  jobTitle={job.title}
+                  address={job.locations?.address ?? null}
+                />
               ) : (
                 <ArriveButton jobId={job.id} />
               )}
@@ -144,7 +142,8 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 CONTINUĂ LUCRAREA
               </Link>
               <div className="text-center text-[12px] text-muted-2">
-                Fotografii ({photoCount ?? 0}) → Cheltuieli ({expenseCount ?? 0}) → Finalizare → Semnătură
+                Fotografii ({photoCount ?? 0}) → Finalizare → Semnătură
+                {expenseCount ? ` · ${expenseCount} cheltuieli adăugate` : ""}
               </div>
             </>
           )}

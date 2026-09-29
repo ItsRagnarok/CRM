@@ -51,6 +51,8 @@ export default async function MobileProfilePage() {
   const jobsThisWeek = jobs.filter((j) => j.scheduled_date >= weekStartStr).length;
   const jobsCompleted = jobs.filter((j) => j.status === "finalizata").length;
   const isActiveNow = jobs.some((j) => j.status === "in_lucru" || j.status === "pauza");
+  const ACTIVE_JOB_STATUSES = ["in_drum", "ajunsa", "in_lucru", "pauza"];
+  const hasActiveJob = jobs.some((j) => ACTIVE_JOB_STATUSES.includes(j.status));
 
   const color = avatarColor(profile.id);
 
@@ -105,14 +107,21 @@ export default async function MobileProfilePage() {
         </Link>
       </div>
 
-      <form action={signOut} className="mt-4">
-        <button
-          type="submit"
-          className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-danger-bg bg-white py-3.5 text-[13.5px] font-bold text-danger"
-        >
-          <LogOut className="h-4 w-4" /> Deconectare
-        </button>
-      </form>
+      {hasActiveJob ? (
+        <div className="mt-4 rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-3.5 text-center text-[12.5px] text-muted-2">
+          Nu te poți deconecta cât ai o lucrare activă (în drum, la locație sau în lucru). Finalizează sau
+          contactează administratorul dacă e nevoie să ieși din aplicație.
+        </div>
+      ) : (
+        <form action={signOut} className="mt-4">
+          <button
+            type="submit"
+            className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-danger-bg bg-white py-3.5 text-[13.5px] font-bold text-danger"
+          >
+            <LogOut className="h-4 w-4" /> Deconectare
+          </button>
+        </form>
+      )}
       <div className="mt-3.5 text-center text-[11px] text-muted-2">ElectroField · v1.0.0</div>
     </div>
   );

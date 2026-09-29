@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { addChecklistItem, toggleChecklistItem, deleteChecklistItem } from "@/app/(app)/lucrari/[id]/actions";
+import { addChecklistItem, toggleChecklistItem, deleteChecklistItem, ensureChecklist } from "@/app/(app)/lucrari/[id]/actions";
 
 export default async function MobileChecklistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,14 +18,16 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
     .maybeSingle();
   if (!job) notFound();
 
-  const { data: checklist } = await supabase
-    .from("job_checklists")
-    .select("id, job_checklist_items(id, label, is_checked, sort_order)")
-    .eq("job_id", id)
-    .eq("phase", "before")
-    .maybeSingle();
+  const checklistId = await ensureChecklist(supabase, id, "before");
+  const { data: rawItems } = checklistId
+    ? await supabase
+        .from("job_checklist_items")
+        .select("id, label, is_checked, sort_order, locked")
+        .eq("job_checklist_id", checklistId)
+        .order("sort_order")
+    : { data: [] };
 
-  const items = (checklist?.job_checklist_items ?? []).sort((a, b) => a.sort_order - b.sort_order);
+  const items = rawItems ?? [];
   const doneCount = items.filter((i) => i.is_checked).length;
 
   return (
@@ -85,13 +87,17 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
               <div className={`flex-1 text-[14px] font-semibold ${item.is_checked ? "text-muted line-through" : ""}`}>
                 {item.label}
               </div>
-              <form action={deleteChecklistItem}>
-                <input type="hidden" name="itemId" value={item.id} />
-                <input type="hidden" name="jobId" value={id} />
-                <button type="submit" className="text-[11px] font-bold text-danger">
-                  Șterge
-                </button>
-              </form>
+              {item.locked ? (
+                <span className="text-[10.5px] font-semibold text-muted-2">stabilit de admin</span>
+              ) : (
+                <form action={deleteChecklistItem}>
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <input type="hidden" name="jobId" value={id} />
+                  <button type="submit" className="text-[11px] font-bold text-danger">
+                    Șterge
+                  </button>
+                </form>
+              )}
             </div>
           ))}
         </div>
@@ -113,7 +119,7 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
 
       <div className="flex-shrink-0 border-t border-[#eaecf0] p-4">
         <Link
-          href={`/mobil/lucrari/${id}`}
+          href={`/mobil/lucrari/${id}/cheltuiala`}
           className="block rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
         >
           CONTINUĂ

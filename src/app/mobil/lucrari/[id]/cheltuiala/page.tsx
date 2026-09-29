@@ -38,6 +38,11 @@ export default async function MobileExpensePage({ params }: { params: Promise<{ 
         <div className="text-[15px] font-extrabold">Cheltuială — #{job.display_number}</div>
       </div>
 
+      <div className="mx-4 mt-3 rounded-[10px] bg-electric-soft px-3.5 py-2.5 text-[12px] leading-snug text-electric">
+        Dacă îți lipsesc materiale sau scule pentru lucrarea asta, adaugă aici achiziția înainte să începi — poți
+        continua fără dacă ai tot ce-ți trebuie.
+      </div>
+
       <form action={addExpense} className="flex flex-1 flex-col overflow-auto p-4">
         <input type="hidden" name="jobId" value={id} />
 
@@ -98,7 +103,7 @@ export default async function MobileExpensePage({ params }: { params: Promise<{ 
       <div className="flex-shrink-0 border-t border-[#eaecf0] p-4">
         <div className="mb-2 text-center text-[11.5px] text-muted-2">Cheltuiala e opțională — poți continua fără</div>
         <Link
-          href={`/mobil/lucrari/${id}/finalizare`}
+          href={`/mobil/lucrari/${id}`}
           className="block rounded-[12px] bg-neutral-bg py-[14px] text-center text-[14.5px] font-extrabold text-[#344054]"
         >
           CONTINUĂ

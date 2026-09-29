@@ -14,6 +14,55 @@ export type Database = {
   }
   public: {
     Tables: {
+      arrival_prompts: {
+        Row: {
+          attempts: number
+          created_at: string
+          job_id: string
+          last_prompted_at: string | null
+          organization_id: string
+          profile_id: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          job_id: string
+          last_prompted_at?: string | null
+          organization_id: string
+          profile_id: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          job_id?: string
+          last_prompted_at?: string | null
+          organization_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "arrival_prompts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: true
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arrival_prompts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "arrival_prompts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           action: string
@@ -528,6 +577,61 @@ export type Database = {
           },
         ]
       }
+      job_alerts: {
+        Row: {
+          created_at: string
+          id: string
+          job_id: string
+          kind: string
+          message: string
+          organization_id: string
+          profile_id: string
+          resolved_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_id: string
+          kind?: string
+          message: string
+          organization_id: string
+          profile_id: string
+          resolved_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_id?: string
+          kind?: string
+          message?: string
+          organization_id?: string
+          profile_id?: string
+          resolved_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_alerts_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_alerts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_alerts_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_assignments: {
         Row: {
           assigned_at: string
@@ -572,6 +676,7 @@ export type Database = {
           is_checked: boolean
           job_checklist_id: string
           label: string
+          locked: boolean
           sort_order: number
         }
         Insert: {
@@ -581,6 +686,7 @@ export type Database = {
           is_checked?: boolean
           job_checklist_id: string
           label: string
+          locked?: boolean
           sort_order?: number
         }
         Update: {
@@ -590,6 +696,7 @@ export type Database = {
           is_checked?: boolean
           job_checklist_id?: string
           label?: string
+          locked?: boolean
           sort_order?: number
         }
         Relationships: [
@@ -1642,6 +1749,51 @@ export type Database = {
             foreignKeyName: "teams_team_leader_id_fkey"
             columns: ["team_leader_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      technician_positions: {
+        Row: {
+          accuracy_m: number | null
+          lat: number
+          lng: number
+          organization_id: string
+          profile_id: string
+          recorded_at: string
+          updated_at: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          lat: number
+          lng: number
+          organization_id: string
+          profile_id: string
+          recorded_at: string
+          updated_at?: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          lat?: number
+          lng?: number
+          organization_id?: string
+          profile_id?: string
+          recorded_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "technician_positions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "technician_positions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

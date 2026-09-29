@@ -141,6 +141,47 @@ export async function uploadJobPhoto(formData: FormData) {
   revalidatePath(`/lucrari/${jobId}`);
 }
 
+export async function recordArrivalPromptDismissal(jobId: string) {
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("arrival_prompts")
+    .select("attempts")
+    .eq("job_id", jobId)
+    .maybeSingle();
+
+  const attempts = (existing?.attempts ?? 0) + 1;
+
+  await supabase.from("arrival_prompts").upsert({
+    job_id: jobId,
+    organization_id: organization.id,
+    profile_id: userId,
+    attempts,
+    last_prompted_at: new Date().toISOString(),
+  });
+
+  if (attempts >= 3) {
+    const [{ data: job }, { data: profile }] = await Promise.all([
+      supabase.from("jobs").select("display_number, title").eq("id", jobId).maybeSingle(),
+      supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    ]);
+    await supabase.from("job_alerts").insert({
+      organization_id: organization.id,
+      job_id: jobId,
+      profile_id: userId,
+      kind: "arrival_not_confirmed",
+      message: `${profile?.full_name ?? "Tehnicianul"} este de peste 3 ori în raza locației lucrării #${
+        job?.display_number ?? ""
+      } (${job?.title ?? "—"}) dar nu a confirmat sosirea.`,
+    });
+    revalidatePath("/harta");
+    revalidatePath("/dashboard");
+  }
+
+  return { attempts };
+}
+
 export async function saveSignature(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const signerName = String(formData.get("signerName") ?? "").trim();

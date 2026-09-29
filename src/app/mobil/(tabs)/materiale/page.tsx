@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
 import { Package, Truck, User, Wrench, Send, Warehouse } from "lucide-react";
 import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
+import { MaterialThumb } from "./material-thumb";
 
 export default async function MobileMaterialsPage() {
   const { profile, organization } = await requireSessionContext();
@@ -20,7 +21,7 @@ export default async function MobileMaterialsPage() {
     vehicle
       ? supabase
           .from("material_stock")
-          .select("id, quantity, materials(id, name, category, unit, min_stock)")
+          .select("id, quantity, materials(id, name, category, unit, min_stock, kind, image_path)")
           .eq("vehicle_id", vehicle.id)
           .order("name", { foreignTable: "materials" })
       : Promise.resolve({ data: null }),
@@ -217,10 +218,23 @@ export default async function MobileMaterialsPage() {
                     critical ? "border-[1.5px] border-danger-bg" : "border border-[#eaecf0]"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-[14px] font-bold">{m.name}</div>
-                      <div className="text-[11.5px] text-muted-2">{m.category ?? "—"}</div>
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <MaterialThumb
+                        name={m.name}
+                        category={m.category}
+                        kind={m.kind}
+                        unit={m.unit}
+                        quantity={s.quantity}
+                        minStock={m.min_stock}
+                        imageUrl={
+                          m.image_path ? supabase.storage.from("attachments").getPublicUrl(m.image_path).data.publicUrl : null
+                        }
+                      />
+                      <div>
+                        <div className="text-[14px] font-bold">{m.name}</div>
+                        <div className="text-[11.5px] text-muted-2">{m.category ?? "—"}</div>
+                      </div>
                     </div>
                     <div className={`text-[15px] font-extrabold ${critical ? "text-danger" : ""}`}>
                       {s.quantity} {m.unit}

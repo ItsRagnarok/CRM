@@ -86,6 +86,11 @@ export async function addExpense(formData: FormData) {
   revalidatePath("/cheltuieli");
 }
 
+// Seeds a job's checklist from the organization's admin-defined template (if
+// one exists for that job_type, falling back to a generic org-wide template)
+// the first time it's opened. Seeded items are locked so the technician can
+// only check them, not delete them — they can still add their own extra
+// items on top, which stay deletable.
 export async function ensureChecklist(
   supabase: Awaited<ReturnType<typeof createClient>>,
   jobId: string,
@@ -99,12 +104,53 @@ export async function ensureChecklist(
     .maybeSingle();
   if (existing) return existing.id;
 
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("job_type, organization_id")
+    .eq("id", jobId)
+    .maybeSingle();
+
+  let templateId: string | null = null;
+  let templateItems: { label: string; sort_order: number }[] = [];
+
+  if (job) {
+    const { data: templates } = await supabase
+      .from("checklist_templates")
+      .select("id, job_type, checklist_template_items(label, sort_order, phase)")
+      .eq("organization_id", job.organization_id)
+      .eq("is_active", true);
+
+    const matching =
+      (templates ?? []).find((t) => t.job_type === job.job_type) ??
+      (templates ?? []).find((t) => t.job_type === null);
+
+    if (matching) {
+      templateId = matching.id;
+      templateItems = (matching.checklist_template_items ?? [])
+        .filter((i) => i.phase === phase)
+        .sort((a, b) => a.sort_order - b.sort_order);
+    }
+  }
+
   const { data: created } = await supabase
     .from("job_checklists")
-    .insert({ job_id: jobId, phase })
+    .insert({ job_id: jobId, phase, template_id: templateId })
     .select("id")
     .single();
-  return created?.id ?? null;
+  if (!created) return null;
+
+  if (templateItems.length > 0) {
+    await supabase.from("job_checklist_items").insert(
+      templateItems.map((item, i) => ({
+        job_checklist_id: created.id,
+        label: item.label,
+        sort_order: i,
+        locked: true,
+      }))
+    );
+  }
+
+  return created.id;
 }
 
 export async function addChecklistItem(formData: FormData) {
@@ -162,6 +208,15 @@ export async function deleteChecklistItem(formData: FormData) {
   if (!itemId) return;
 
   const supabase = await createClient();
+  // Admin-defined checklist items are locked — a technician can check them
+  // off but can't remove them, only delete extras they added themselves.
+  const { data: item } = await supabase
+    .from("job_checklist_items")
+    .select("locked")
+    .eq("id", itemId)
+    .maybeSingle();
+  if (item?.locked) return;
+
   await supabase.from("job_checklist_items").delete().eq("id", itemId);
   revalidatePath(`/lucrari/${jobId}`);
   revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
