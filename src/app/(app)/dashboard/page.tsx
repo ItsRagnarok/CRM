@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { DashboardMapLoader } from "@/components/dashboard-map-loader";
+import { AutoRefresh } from "@/components/auto-refresh";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import type { Database } from "@/lib/supabase/database.types";
 import {
@@ -114,6 +115,7 @@ export default async function DashboardPage() {
     { data: arrivalsToday },
     { data: photosToday },
     { data: jobsCreatedToday },
+    { data: livePositions },
   ] = await Promise.all([
     supabase
       .from("jobs")
@@ -184,6 +186,11 @@ export default async function DashboardPage() {
       .gte("created_at", startOfDay(today))
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("technician_positions")
+      .select("profile_id, lat, lng, recorded_at, profiles(full_name)")
+      .eq("organization_id", organization.id)
+      .gte("recorded_at", new Date(Date.now() - 10 * 60 * 1000).toISOString()),
   ]);
 
   const activeJobsList = activeJobs ?? [];
@@ -260,6 +267,21 @@ export default async function DashboardPage() {
       };
     })
     .filter((m): m is NonNullable<typeof m> => m !== null);
+
+  const livePositionMarkers: DashboardMapMarker[] = (livePositions ?? []).map((p) => {
+    const minutesAgo = Math.round((Date.now() - new Date(p.recorded_at).getTime()) / 60000);
+    return {
+      id: `pos-${p.profile_id}`,
+      label: `📍 ${p.profiles?.full_name ?? "Tehnician"}`,
+      sublabel: "Poziție live",
+      statusLabel: minutesAgo <= 1 ? "chiar acum" : `acum ${minutesAgo} min`,
+      color: "#0369a1",
+      lat: p.lat,
+      lng: p.lng,
+    };
+  });
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers];
 
   // Unified activity feed — merges status changes, arrivals, expenses,
   // photo uploads and new jobs into one real, timestamp-sorted stream.
@@ -365,6 +387,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <AutoRefresh />
       <div>
         <h1 className="text-[22px] font-extrabold text-foreground">
           {greeting()}, {firstName} 👋
@@ -486,8 +509,8 @@ export default async function DashboardPage() {
               </h2>
             </div>
             <div className="h-[200px] p-2.5">
-              {mapMarkers.length > 0 ? (
-                <DashboardMapLoader markers={mapMarkers} />
+              {allMapMarkers.length > 0 ? (
+                <DashboardMapLoader markers={allMapMarkers} />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1 rounded-[10px] bg-[#f9fafb] text-center">
                   <p className="text-[12.5px] font-semibold text-foreground">

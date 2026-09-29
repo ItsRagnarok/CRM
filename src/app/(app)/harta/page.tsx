@@ -8,6 +8,7 @@ import { JOB_STATUS_LABELS } from "@/lib/status";
 import type { Database } from "@/lib/supabase/database.types";
 import { MapPin, AlertTriangle } from "lucide-react";
 import { resolveJobAlert } from "./actions";
+import { AutoRefresh } from "@/components/auto-refresh";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 
@@ -175,6 +176,7 @@ export default async function HartaPage() {
 
   return (
     <div className="flex h-full flex-col">
+      <AutoRefresh />
       {(openAlerts ?? []).length > 0 && (
         <div className="flex flex-col gap-1.5 border-b border-[#fee4e2] bg-[#fef3f2] px-5 py-2.5">
           {(openAlerts ?? []).map((alert) => (
