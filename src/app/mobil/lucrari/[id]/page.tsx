@@ -195,9 +195,12 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         )}
 
         {isTraveling && jobPin ? (
-          <div className="mt-3 h-[260px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
-            <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
-          </div>
+          <>
+            <div className="mt-4 text-[12px] font-bold text-muted-2">PORNEȘTE SPRE LUCRARE</div>
+            <div className="mt-1.5 h-[260px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+              <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
+            </div>
+          </>
         ) : (
           jobPin &&
           !isDone && (
