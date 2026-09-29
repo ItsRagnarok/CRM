@@ -8,6 +8,7 @@ import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { UsersRound, Plus, Truck } from "lucide-react";
 import { addVehicle, reassignVehicle } from "./actions";
 import { DriverSelect } from "./driver-select";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 const AVATAR_PALETTE = [
   { bg: "#EFF4FF", text: "#2F6FED" },
@@ -45,7 +46,7 @@ export default async function EchipePage({
       : { data: null };
 
   const teamIds = (teams ?? []).map((t) => t.id);
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayInOrgTimeZone();
 
   const { data: jobs } = teamIds.length
     ? await supabase

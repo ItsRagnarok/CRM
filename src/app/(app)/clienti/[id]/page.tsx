@@ -30,6 +30,7 @@ import {
   Receipt,
 } from "lucide-react";
 import type { Database } from "@/lib/supabase/database.types";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -76,7 +77,7 @@ export default async function ClientDetailPage({
   const locations = client.locations;
   const contacts = client.client_contacts;
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayInOrgTimeZone();
   const upcoming = [...jobs]
     .filter((j) => j.scheduled_date >= todayStr && j.status !== "finalizata" && j.status !== "anulata")
     .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));

@@ -8,6 +8,7 @@ import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import { AutoRefresh } from "@/components/auto-refresh";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import type { Database } from "@/lib/supabase/database.types";
+import { todayInOrgTimeZone } from "@/lib/date";
 import {
   Briefcase,
   UsersRound,
@@ -99,9 +100,8 @@ export default async function DashboardPage() {
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const firstName = profile.full_name.split(" ")[0];
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
-  const yesterday = new Date(now.getTime() - 86_400_000).toISOString().slice(0, 10);
+  const today = todayInOrgTimeZone();
+  const yesterday = new Date(new Date(`${today}T00:00:00Z`).getTime() - 86_400_000).toISOString().slice(0, 10);
 
   const [
     { data: jobsToday },

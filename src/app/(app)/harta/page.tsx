@@ -9,6 +9,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { MapPin, AlertTriangle } from "lucide-react";
 import { resolveJobAlert } from "./actions";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 
@@ -22,7 +23,7 @@ function startOfDay(dateStr: string) {
 export default async function HartaPage() {
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInOrgTimeZone();
 
   const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }, { data: livePositions }, { data: openAlerts }, { data: warehouses }] =
     await Promise.all([

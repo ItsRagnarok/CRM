@@ -3,6 +3,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
+import { todayInOrgTimeZone } from "@/lib/date";
 import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { DepartureAlert } from "./departure-alert";
@@ -32,13 +33,12 @@ export default async function MobileHomePage({
   const { profile } = await requireSessionContext();
   const supabase = await createClient();
   const firstName = profile.full_name.split(" ")[0];
-  const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = todayInOrgTimeZone();
 
   const { data: assignments } = await supabase
     .from("job_assignments")
     .select(
-      "jobs(id, display_number, title, status, scheduled_date, start_time, end_time, clients(name), locations(address, lat, lng))"
+      "jobs(id, display_number, title, status, priority, scheduled_date, start_time, end_time, clients(name), locations(address, lat, lng))"
     )
     .eq("profile_id", profile.id);
 
@@ -195,9 +195,19 @@ export default async function MobileHomePage({
     );
   }
 
+  const PRIORITY_RANK: Record<string, number> = { urgenta: 0, ridicata: 1, normala: 2 };
+
   const jobs = allJobs
     .filter((j) => j.scheduled_date === today)
-    .sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
+    .sort((a, b) => {
+      const aDone = a.status === "finalizata" ? 1 : 0;
+      const bDone = b.status === "finalizata" ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      const aRank = PRIORITY_RANK[a.priority] ?? 2;
+      const bRank = PRIORITY_RANK[b.priority] ?? 2;
+      if (aRank !== bRank) return aRank - bRank;
+      return (a.start_time ?? "").localeCompare(b.start_time ?? "");
+    });
 
   const nextUpcomingJob = jobs.find(
     (j) => j.status === "programata" && j.start_time && j.locations?.lat != null && j.locations?.lng != null

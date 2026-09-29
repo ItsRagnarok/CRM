@@ -4,6 +4,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
 import { approveExpense, rejectExpense } from "./actions";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 const STATUS_TABS = [
   { value: "pending", label: "În așteptare", bg: "#FEF3C7", color: "#B45309" },
@@ -37,9 +38,7 @@ export default async function CheltuieliPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const monthStart = new Date();
-  monthStart.setUTCDate(1);
-  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const monthStartStr = `${todayInOrgTimeZone().slice(0, 7)}-01`;
 
   const [{ data: expenses }, { data: allExpenses }] = await Promise.all([
     (() => {

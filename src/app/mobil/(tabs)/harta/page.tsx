@@ -5,11 +5,12 @@ import { MobileMapLoader } from "@/components/mobile-map-loader";
 import type { MobileMapJob } from "@/components/mobile-map";
 import { EmptyState } from "@/components/empty-state";
 import { MapPin } from "lucide-react";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 export default async function MobileMapPage() {
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInOrgTimeZone();
 
   const { data: assignments } = await supabase
     .from("job_assignments")

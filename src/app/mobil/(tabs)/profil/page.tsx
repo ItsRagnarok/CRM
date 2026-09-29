@@ -6,6 +6,7 @@ import { avatarColor, initials } from "@/lib/avatar-color";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { signOut } from "@/app/(app)/actions";
 import { NotificationsToggle } from "./notifications-toggle";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -22,8 +23,9 @@ export default async function MobileProfilePage() {
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const now = new Date();
-  const monthStartStr = `${toISODate(now).slice(0, 7)}-01`;
+  const todayStr = todayInOrgTimeZone();
+  const now = new Date(`${todayStr}T00:00:00Z`);
+  const monthStartStr = `${todayStr.slice(0, 7)}-01`;
   const weekStartStr = toISODate(startOfWeek(now));
 
   const [{ data: entriesThisMonth }, { data: assignments }, { count: documentCount }, { data: membership }] =

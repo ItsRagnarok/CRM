@@ -1,6 +1,7 @@
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { CalendarGrid } from "./calendar-grid";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -32,7 +33,7 @@ export default async function CalendarPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const todayStr = toISODate(new Date());
+  const todayStr = todayInOrgTimeZone();
   const anchor = date ? parseISODate(date) : parseISODate(todayStr);
   const rangeStart = view === "day" ? anchor : startOfWeek(anchor);
   const rangeEnd = view === "day" ? anchor : addDays(rangeStart, 6);

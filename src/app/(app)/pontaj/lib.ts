@@ -1,3 +1,5 @@
+import { todayInOrgTimeZone } from "@/lib/date";
+
 export type TimeEntry = { profile_id: string; job_id: string; event_type: string; occurred_at: string };
 
 export function toISODate(d: Date) {
@@ -78,7 +80,7 @@ export function statusKind(status: string | undefined): keyof typeof STATUS_BADG
 export type View = "zi" | "saptamana";
 
 export function resolveRange(view: View, dateParam: string | undefined) {
-  const todayStr = toISODate(new Date());
+  const todayStr = todayInOrgTimeZone();
   const anchor = dateParam ? parseISODate(dateParam) : parseISODate(todayStr);
   const rangeStart = view === "zi" ? anchor : startOfWeek(anchor);
   const rangeEnd = view === "zi" ? anchor : addDays(rangeStart, 6);

@@ -236,8 +236,8 @@ export function NewJobForm({
               <input
                 name="scheduledDate"
                 type="date"
-                required
                 defaultValue={defaultDate}
+                placeholder="Azi"
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
             </Field>
@@ -245,6 +245,7 @@ export function NewJobForm({
               <input
                 name="startTime"
                 type="time"
+                placeholder="Acum"
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
             </Field>
@@ -252,10 +253,14 @@ export function NewJobForm({
               <input
                 name="endTime"
                 type="time"
+                placeholder="20:00"
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
             </Field>
           </div>
+          <p className="-mt-2 text-[11.5px] text-muted-2">
+            Lăsate necompletate, lucrarea se programează azi, cu ora de start acum și ora de sfârșit la 20:00.
+          </p>
 
           <Field label="Descriere">
             <textarea

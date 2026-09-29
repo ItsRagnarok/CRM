@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { EmptyState } from "@/components/empty-state";
 import { Briefcase } from "lucide-react";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 type Range = "azi" | "saptamana" | "toate";
 
@@ -31,8 +32,8 @@ export default async function MobileJobsPage({
   const { profile } = await requireSessionContext();
   const supabase = await createClient();
 
-  const today = new Date();
-  const todayStr = toISODate(today);
+  const todayStr = todayInOrgTimeZone();
+  const today = new Date(`${todayStr}T00:00:00Z`);
   const weekStartStr = toISODate(startOfWeek(today));
   const weekEndStr = toISODate(addDays(startOfWeek(today), 6));
 

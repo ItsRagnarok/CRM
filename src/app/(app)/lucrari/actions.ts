@@ -7,6 +7,7 @@ import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "./team-sync";
 import { geocodeAddress } from "@/lib/geocode";
+import { todayInOrgTimeZone, nowTimeInOrgTimeZone } from "@/lib/date";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -26,14 +27,15 @@ export async function createJob(
   const adminMessage = String(formData.get("adminMessage") ?? "").trim() || null;
   const jobType = String(formData.get("jobType") ?? "interventie") as JobType;
   const priority = String(formData.get("priority") ?? "normala") as JobPriority;
-  const scheduledDate = String(formData.get("scheduledDate") ?? "");
-  const startTime = String(formData.get("startTime") ?? "") || null;
-  const endTime = String(formData.get("endTime") ?? "") || null;
+  const scheduledDate = String(formData.get("scheduledDate") ?? "") || todayInOrgTimeZone();
+  const startTime = String(formData.get("startTime") ?? "") || nowTimeInOrgTimeZone();
+  const DEFAULT_END_TIME = "20:00";
+  const endTime = String(formData.get("endTime") ?? "") || (startTime < DEFAULT_END_TIME ? DEFAULT_END_TIME : "23:59");
   const address = String(formData.get("address") ?? "").trim();
   const existingLocationId = String(formData.get("locationId") ?? "").trim() || null;
 
-  if (!clientId || !title || !scheduledDate) {
-    return { error: "Client, titlu și dată sunt obligatorii." };
+  if (!clientId || !title) {
+    return { error: "Client și titlu sunt obligatorii." };
   }
 
   let locationId: string | null = null;

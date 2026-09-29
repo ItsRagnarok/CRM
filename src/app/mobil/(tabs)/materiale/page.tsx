@@ -4,6 +4,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Package, Truck, User, Wrench, Send, Warehouse } from "lucide-react";
 import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
 import { MaterialThumb } from "./material-thumb";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 export default async function MobileMaterialsPage() {
   const { profile, organization } = await requireSessionContext();
@@ -34,7 +35,7 @@ export default async function MobileMaterialsPage() {
       .eq("profile_id", profile.id),
   ]);
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayInOrgTimeZone();
   const jobs = (assignments ?? []).map((a) => a.jobs).filter((j): j is NonNullable<typeof j> => Boolean(j));
   const currentJob =
     jobs.find((j) => j.status === "in_lucru" || j.status === "pauza") ??

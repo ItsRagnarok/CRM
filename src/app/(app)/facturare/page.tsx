@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import { createInvoiceForJob, markInvoicePaid } from "./actions";
+import { todayInOrgTimeZone } from "@/lib/date";
 
 const STATUS_LABEL: Record<string, string> = { unpaid: "Neplătită", paid: "Plătită", overdue: "Restantă" };
 const STATUS_STYLE: Record<string, string> = {
@@ -16,9 +17,7 @@ export default async function FacturarePage() {
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const monthStart = new Date();
-  monthStart.setUTCDate(1);
-  const monthStartStr = monthStart.toISOString().slice(0, 10);
+  const monthStartStr = `${todayInOrgTimeZone().slice(0, 7)}-01`;
 
   const [{ data: invoices }, { data: jobs }] = await Promise.all([
     supabase
