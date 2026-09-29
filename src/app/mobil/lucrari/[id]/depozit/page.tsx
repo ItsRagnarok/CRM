@@ -75,9 +75,40 @@ export default async function MobileDepotPage({ params }: { params: Promise<{ id
 
           {depotPin ? (
             <>
-              <div className="relative mt-3 h-[300px] shrink-0 overflow-hidden">
+              <div className="relative mx-4 mt-3 h-[220px] shrink-0 overflow-hidden rounded-[13px] border border-[#eaecf0]">
                 <MobileMapLoader jobs={[depotPin]} routeTo={depotPin} />
               </div>
+
+              {/* Explicit, always-in-flow navigation section — not an
+                  overlay on the map, so it can never end up hidden behind
+                  it or clipped off-screen on a shorter phone. */}
+              <div className="mx-4 mt-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+                <div className="mb-2.5 text-[12px] font-bold text-muted-2">NAVIGHEAZĂ CĂTRE DEPOZIT</div>
+                <div className="flex gap-2.5">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${depotPin.lat},${depotPin.lng}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                  >
+                    Deschide în Google Maps
+                  </a>
+                  <a
+                    href={`https://waze.com/ul?ll=${depotPin.lat},${depotPin.lng}&navigate=yes`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                  >
+                    Deschide în Waze
+                  </a>
+                </div>
+                <p className="mt-2 text-[11px] text-muted-2">
+                  Sau folosește traseul din hartă de mai sus (navigare în aplicație).
+                </p>
+              </div>
+
+              <div className="flex-1" />
+
               <div className="p-4">
                 <DepotArriveButton jobId={id} depotLat={depotPin.lat} depotLng={depotPin.lng} />
               </div>

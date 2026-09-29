@@ -194,6 +194,7 @@ export function MobileMap({
           onClick={() => setFlyTarget([hq.lat, hq.lng])}
           style={{
             position: "absolute",
+            zIndex: 1000,
             bottom: 16,
             right: 12,
             background: "#101828",
@@ -215,6 +216,7 @@ export function MobileMap({
         <div
           style={{
             position: "absolute",
+            zIndex: 1000,
             top: 12,
             left: 12,
             right: 12,
