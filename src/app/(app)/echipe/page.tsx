@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { UsersRound, Plus, Truck } from "lucide-react";
-import { reassignVehicle } from "./actions";
+import { addVehicle, reassignVehicle } from "./actions";
 import { DriverSelect } from "./driver-select";
 
 const AVATAR_PALETTE = [
@@ -95,7 +95,46 @@ export default async function EchipePage({
       </div>
 
       {tab === "vehicule" ? (
-        vehicles && vehicles.length > 0 ? (
+        <>
+          <form
+            action={addVehicle}
+            className="flex flex-wrap items-end gap-2 rounded-[13px] border border-border bg-white p-4"
+          >
+            <div>
+              <label className="mb-1.5 block text-[11.5px] font-semibold text-muted-2">Vehicul nou</label>
+              <input
+                name="name"
+                required
+                placeholder="Ex: Dacia Dokker 1"
+                className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
+              />
+            </div>
+            <input
+              name="plateNumber"
+              placeholder="Nr. înmatriculare"
+              className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
+            />
+            <select
+              name="teamId"
+              defaultValue=""
+              className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] font-semibold outline-none focus:border-electric"
+            >
+              <option value="">Neasignat</option>
+              {(teams ?? []).map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white"
+            >
+              <Plus className="h-3.5 w-3.5" /> Adaugă vehicul
+            </button>
+          </form>
+
+          {vehicles && vehicles.length > 0 ? (
           <div className="overflow-hidden rounded-[13px] border border-border bg-white">
             <table className="w-full border-collapse">
               <thead>
@@ -158,13 +197,14 @@ export default async function EchipePage({
               </tbody>
             </table>
           </div>
-        ) : (
-          <EmptyState
-            icon={Truck}
-            title="Niciun vehicul încă"
-            description="Adaugă vehicule din pagina fiecărei echipe."
-          />
-        )
+          ) : (
+            <EmptyState
+              icon={Truck}
+              title="Niciun vehicul încă"
+              description="Adaugă primul vehicul mai sus."
+            />
+          )}
+        </>
       ) : teams && teams.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {teams.map((team) => {

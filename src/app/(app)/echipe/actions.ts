@@ -160,10 +160,10 @@ export async function setVehicleDriver(formData: FormData) {
 }
 
 export async function addVehicle(formData: FormData) {
-  const teamId = String(formData.get("teamId") ?? "");
+  const teamId = String(formData.get("teamId") ?? "").trim() || null;
   const name = String(formData.get("name") ?? "").trim();
   const plateNumber = String(formData.get("plateNumber") ?? "").trim() || null;
-  if (!teamId || !name) return;
+  if (!name) return;
 
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
@@ -175,7 +175,8 @@ export async function addVehicle(formData: FormData) {
     plate_number: plateNumber,
   });
 
-  revalidatePath(`/echipe/${teamId}`);
+  revalidatePath("/echipe");
+  if (teamId) revalidatePath(`/echipe/${teamId}`);
 }
 
 export async function removeVehicle(formData: FormData) {
