@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "../team-sync";
+import { geocodeAddress } from "@/lib/geocode";
 
 type JobType = Database["public"]["Enums"]["job_type"];
 type JobPriority = Database["public"]["Enums"]["job_priority"];
@@ -25,6 +26,8 @@ export async function updateJob(
   }
 
   const teamId = String(formData.get("teamId") ?? "") || null;
+  const address = String(formData.get("address") ?? "").trim();
+  const currentAddress = String(formData.get("currentAddress") ?? "").trim();
 
   const { error } = await supabase
     .from("jobs")
@@ -43,12 +46,43 @@ export async function updateJob(
 
   if (error) return { error: "Nu am putut salva modificările." };
 
+  // Only re-geocode when the address text actually changed — avoids hammering
+  // the free geocoding service on every save when nothing about it moved.
+  if (address && address !== currentAddress) {
+    const { data: job } = await supabase.from("jobs").select("location_id, client_id").eq("id", jobId).single();
+    const coords = await geocodeAddress(address);
+
+    if (job?.location_id) {
+      await supabase
+        .from("locations")
+        .update({ address, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
+        .eq("id", job.location_id);
+    } else if (job) {
+      const { data: newLocation } = await supabase
+        .from("locations")
+        .insert({
+          organization_id: organization.id,
+          client_id: job.client_id,
+          address,
+          lat: coords?.lat ?? null,
+          lng: coords?.lng ?? null,
+        })
+        .select("id")
+        .single();
+      if (newLocation) {
+        await supabase.from("jobs").update({ location_id: newLocation.id }).eq("id", jobId);
+      }
+    }
+  }
+
   await syncJobAssignmentsToTeam(supabase, jobId, teamId);
 
   revalidatePath(`/lucrari/${jobId}`);
   revalidatePath("/lucrari");
   revalidatePath("/mobil");
   revalidatePath("/mobil/lucrari");
+  revalidatePath("/harta");
+  revalidatePath("/dashboard");
   redirect(`/lucrari/${jobId}`);
 }
 

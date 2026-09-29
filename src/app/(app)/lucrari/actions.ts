@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "./team-sync";
+import { geocodeAddress } from "@/lib/geocode";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -48,12 +49,15 @@ export async function createJob(
     locationId = ownedLocation?.id ?? null;
   }
   if (!locationId && address) {
+    const coords = await geocodeAddress(address);
     const { data: location } = await supabase
       .from("locations")
       .insert({
         organization_id: organization.id,
         client_id: clientId,
         address,
+        lat: coords?.lat ?? null,
+        lng: coords?.lng ?? null,
       })
       .select("id")
       .single();

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
+import { geocodeAddress } from "@/lib/geocode";
 
 type ClientType = Database["public"]["Tables"]["clients"]["Row"]["client_type"];
 
@@ -105,11 +106,15 @@ export async function addLocation(formData: FormData) {
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
+  const coords = await geocodeAddress(address);
+
   await supabase.from("locations").insert({
     organization_id: organization.id,
     client_id: clientId,
     address,
     label,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
   });
 
   revalidatePath(`/clienti/${clientId}`);

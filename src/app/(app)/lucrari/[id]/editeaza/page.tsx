@@ -15,7 +15,9 @@ export default async function EditJobPage({
   const [{ data: job }, { data: teams }] = await Promise.all([
     supabase
       .from("jobs")
-      .select("id, title, description, job_type, priority, scheduled_date, start_time, end_time, team_id")
+      .select(
+        "id, title, description, job_type, priority, scheduled_date, start_time, end_time, team_id, location_id, locations(address)"
+      )
       .eq("organization_id", organization.id)
       .eq("id", id)
       .maybeSingle(),

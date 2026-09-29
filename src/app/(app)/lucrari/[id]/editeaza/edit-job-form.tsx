@@ -16,6 +16,8 @@ type Job = {
   start_time: string | null;
   end_time: string | null;
   team_id: string | null;
+  location_id: string | null;
+  locations: { address: string } | null;
 };
 
 export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; name: string }[] }) {
@@ -80,6 +82,19 @@ export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; nam
             <input name="endTime" type="time" defaultValue={job.end_time?.slice(0, 5) ?? ""} className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric" />
           </Field>
         </div>
+
+        <Field label="Adresă">
+          <input type="hidden" name="currentAddress" value={job.locations?.address ?? ""} />
+          <input
+            name="address"
+            defaultValue={job.locations?.address ?? ""}
+            placeholder="Ex: Str. Exemplu 10, București"
+            className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+          />
+          <p className="mt-1 text-[11.5px] text-muted-2">
+            Dacă schimbi adresa, coordonatele GPS pentru hartă se recalculează automat la salvare.
+          </p>
+        </Field>
 
         <Field label="Descriere">
           <textarea
