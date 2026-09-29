@@ -2041,23 +2041,32 @@ export type Database = {
       }
       warehouses: {
         Row: {
+          address: string | null
           created_at: string
           id: string
           is_central: boolean
+          lat: number | null
+          lng: number | null
           name: string
           organization_id: string
         }
         Insert: {
+          address?: string | null
           created_at?: string
           id?: string
           is_central?: boolean
+          lat?: number | null
+          lng?: number | null
           name: string
           organization_id: string
         }
         Update: {
+          address?: string | null
           created_at?: string
           id?: string
           is_central?: boolean
+          lat?: number | null
+          lng?: number | null
           name?: string
           organization_id?: string
         }

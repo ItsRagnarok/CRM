@@ -24,7 +24,7 @@ export default async function HartaPage() {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }, { data: livePositions }, { data: openAlerts }] =
+  const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }, { data: livePositions }, { data: openAlerts }, { data: warehouses }] =
     await Promise.all([
       supabase
         .from("jobs")
@@ -67,6 +67,10 @@ export default async function HartaPage() {
         .eq("organization_id", organization.id)
         .is("resolved_at", null)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("warehouses")
+        .select("id, name, address, lat, lng")
+        .eq("organization_id", organization.id),
     ]);
 
   const { data: trailLog } = await supabase
@@ -196,7 +200,19 @@ export default async function HartaPage() {
         ]
       : [];
 
-  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker];
+  const warehouseMarkers: DashboardMapMarker[] = (warehouses ?? [])
+    .filter((w) => w.lat != null && w.lng != null)
+    .map((w) => ({
+      id: `wh-${w.id}`,
+      label: `🏭 ${w.name}`,
+      sublabel: w.address ?? "",
+      statusLabel: "Depozit",
+      color: "#7c2d12",
+      lat: w.lat!,
+      lng: w.lng!,
+    }));
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker, ...warehouseMarkers];
 
   const trailsByProfile = new Map<string, [number, number][]>();
   for (const p of trailLog ?? []) {

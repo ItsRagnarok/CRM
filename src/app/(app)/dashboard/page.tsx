@@ -195,12 +195,15 @@ export default async function DashboardPage() {
       .eq("organization_id", organization.id),
   ]);
 
-  const { data: trailLog } = await supabase
-    .from("technician_position_log")
-    .select("profile_id, lat, lng, recorded_at")
-    .eq("organization_id", organization.id)
-    .gte("recorded_at", new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString())
-    .order("recorded_at", { ascending: true });
+  const [{ data: trailLog }, { data: warehouses }] = await Promise.all([
+    supabase
+      .from("technician_position_log")
+      .select("profile_id, lat, lng, recorded_at")
+      .eq("organization_id", organization.id)
+      .gte("recorded_at", new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString())
+      .order("recorded_at", { ascending: true }),
+    supabase.from("warehouses").select("id, name, address, lat, lng").eq("organization_id", organization.id),
+  ]);
 
   const activeJobsList = activeJobs ?? [];
   const teamsInField = new Map(
@@ -307,7 +310,19 @@ export default async function DashboardPage() {
         ]
       : [];
 
-  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker];
+  const warehouseMarkers: DashboardMapMarker[] = (warehouses ?? [])
+    .filter((w) => w.lat != null && w.lng != null)
+    .map((w) => ({
+      id: `wh-${w.id}`,
+      label: `🏭 ${w.name}`,
+      sublabel: w.address ?? "",
+      statusLabel: "Depozit",
+      color: "#7c2d12",
+      lat: w.lat!,
+      lng: w.lng!,
+    }));
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker, ...warehouseMarkers];
 
   const trailsByProfile = new Map<string, [number, number][]>();
   for (const p of trailLog ?? []) {

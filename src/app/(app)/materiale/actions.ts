@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import { STANDARD_CATALOG } from "./standard-catalog";
+import { geocodeAddress } from "@/lib/geocode";
 
 type MaterialKind = "material" | "tool";
 
@@ -188,6 +189,70 @@ export async function uploadMaterialImage(materialId: string, formData: FormData
 
   revalidatePath(`/materiale/${materialId}`);
   revalidatePath("/materiale");
+}
+
+export async function createWarehouse(formData: FormData) {
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const address = String(formData.get("address") ?? "").trim() || null;
+
+  const coords = address ? await geocodeAddress(address) : null;
+
+  await supabase.from("warehouses").insert({
+    organization_id: organization.id,
+    name,
+    address,
+    lat: coords?.lat ?? null,
+    lng: coords?.lng ?? null,
+  });
+
+  revalidatePath("/materiale");
+  revalidatePath("/harta");
+  revalidatePath("/dashboard");
+}
+
+export async function updateWarehouseAddress(formData: FormData) {
+  const warehouseId = String(formData.get("warehouseId") ?? "");
+  if (!warehouseId) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const address = String(formData.get("address") ?? "").trim() || null;
+  const coords = address ? await geocodeAddress(address) : null;
+
+  await supabase
+    .from("warehouses")
+    .update({ address, lat: coords?.lat ?? null, lng: coords?.lng ?? null })
+    .eq("id", warehouseId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath("/materiale");
+  revalidatePath("/harta");
+  revalidatePath("/dashboard");
+}
+
+export async function deleteWarehouse(formData: FormData) {
+  const warehouseId = String(formData.get("warehouseId") ?? "");
+  if (!warehouseId) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("warehouses")
+    .delete()
+    .eq("id", warehouseId)
+    .eq("organization_id", organization.id)
+    .eq("is_central", false);
+
+  revalidatePath("/materiale");
+  revalidatePath("/harta");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteMaterialImage(materialId: string) {

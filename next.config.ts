@@ -8,6 +8,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "15mb",
     },
   },
+  // The PDF report route loads its fonts from disk at runtime (pdfkit
+  // registerFont), but Next's build trace doesn't follow that dynamic
+  // fs.readFileSync path, so the .ttf files never made it into the
+  // deployed serverless function bundle — breaking the download in
+  // production while working fine locally. Force them in explicitly.
+  outputFileTracingIncludes: {
+    "/api/rapoarte-lucrare/[id]": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
+  },
 };
 
 export default nextConfig;
