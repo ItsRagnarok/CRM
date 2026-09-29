@@ -5,6 +5,7 @@ import { avatarColor, initials } from "@/lib/avatar-color";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
+import { DepartureAlert } from "./departure-alert";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -206,6 +207,10 @@ export default async function MobileHomePage({
     .filter((j) => j.scheduled_date === today)
     .sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
 
+  const nextUpcomingJob = jobs.find(
+    (j) => j.status === "programata" && j.start_time && j.locations?.lat != null && j.locations?.lng != null
+  );
+
   return (
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3.5 pt-1.5">
@@ -235,6 +240,20 @@ export default async function MobileHomePage({
           </Link>
         </div>
       </div>
+
+      {nextUpcomingJob && nextUpcomingJob.locations && (
+        <DepartureAlert
+          job={{
+            id: nextUpcomingJob.id,
+            title: nextUpcomingJob.title,
+            scheduled_date: nextUpcomingJob.scheduled_date,
+            start_time: nextUpcomingJob.start_time!,
+            lat: nextUpcomingJob.locations.lat,
+            lng: nextUpcomingJob.locations.lng,
+            address: nextUpcomingJob.locations.address,
+          }}
+        />
+      )}
 
       <div className="flex flex-col gap-3 px-4 py-4">
         {jobs.length === 0 ? (
