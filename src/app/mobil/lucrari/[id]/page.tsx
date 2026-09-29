@@ -7,7 +7,6 @@ import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { startWork, beginJobPrep } from "./actions";
 import { mobileStagePath } from "./mobile-stage";
 import { ArriveButton } from "./arrive-button";
-import { StartTravelButton } from "./start-travel-button";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { acknowledgeRejectedPurchase } from "./actions";
 import { Store, XCircle } from "lucide-react";
@@ -31,12 +30,14 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   // Once a technician has stepped into the pre-departure wizard, re-opening
   // the job (from home, from the list, from anywhere) must drop him back at
   // exactly the screen he left — never the start of the wizard again.
-  if (job.status === "programata" && job.mobile_stage && job.mobile_stage !== "ready") {
+  if (job.status === "in_drum" && job.mobile_stage && job.mobile_stage !== "ready") {
     redirect(mobileStagePath(id, job.mobile_stage as "checklist" | "depozit" | "cheltuiala"));
   }
 
-  const isReadyToTravel = job.status === "programata" && job.mobile_stage === "ready";
-  const isTraveling = job.status === "in_drum";
+  // Status flips to in_drum the moment "Start" is pressed (see beginJobPrep),
+  // so by the time the wizard reaches "ready" the job is already traveling —
+  // there's no separate "confirm and start driving" step anymore.
+  const isTraveling = job.status === "in_drum" && job.mobile_stage === "ready";
   const isDone = job.status === "finalizata";
   const isWorking = job.status === "in_lucru" || job.status === "pauza";
 
@@ -193,7 +194,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {(isReadyToTravel || isTraveling) && jobPin ? (
+        {isTraveling && jobPin ? (
           <div className="mt-3 h-[260px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
             <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
           </div>
@@ -217,10 +218,6 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 <ClipboardList className="h-[18px] w-[18px]" /> PORNEȘTE
               </button>
             </form>
-          )}
-
-          {isReadyToTravel && (
-            <StartTravelButton jobId={job.id} jobTitle={job.title} address={job.locations?.address ?? null} />
           )}
 
           {isTraveling && <ArriveButton jobId={job.id} />}

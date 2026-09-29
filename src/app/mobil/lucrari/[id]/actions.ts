@@ -23,23 +23,54 @@ export async function beginJobPrep(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   if (!jobId) return;
 
-  const { organization } = await requireSessionContext();
+  const { organization, userId, profile } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("mobile_stage")
+    .select("mobile_stage, display_number, title")
     .eq("id", jobId)
     .eq("organization_id", organization.id)
     .maybeSingle();
 
   const stage = (job?.mobile_stage as MobileStage | null) ?? "checklist";
   if (!job?.mobile_stage) {
+    // First press: the job goes "in curs" immediately — the whole
+    // pre-departure wizard (checklist/depozit/cheltuiala/ready) now runs
+    // under status in_drum rather than sitting as "programată" while the
+    // technician is actively working through it.
     await supabase
       .from("jobs")
-      .update({ mobile_stage: "checklist" })
+      .update({ mobile_stage: "checklist", status: "in_drum" })
       .eq("id", jobId)
       .eq("organization_id", organization.id);
+
+    await supabase.from("time_entries").insert({
+      organization_id: organization.id,
+      job_id: jobId,
+      profile_id: userId,
+      event_type: "travel_start",
+      occurred_at: new Date().toISOString(),
+    });
+
+    const { data: admins } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("organization_id", organization.id)
+      .in("role", ["admin", "manager"]);
+
+    if (admins && admins.length > 0 && job) {
+      await supabase.from("notifications").insert(
+        admins.map((a) => ({
+          organization_id: organization.id,
+          profile_id: a.id,
+          type: "job_started",
+          title: "Lucrare pornită",
+          body: `${profile.full_name} a pornit lucrarea #${job.display_number} — ${job.title}`,
+          related_job_id: jobId,
+        }))
+      );
+    }
   }
 
   paths(jobId);
