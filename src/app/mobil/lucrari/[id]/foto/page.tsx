@@ -10,6 +10,11 @@ import { PhotoCapture } from "./photo-capture";
 // than letting the technician freely switch categories, so he always knows
 // exactly what he's supposed to be photographing.
 const CATEGORY_INFO: Record<string, { title: string; caption: string; continueLabel: string }> = {
+  depot_pickup: {
+    title: "Poză ridicare de la depozit",
+    caption: "Fă o poză cu materialele/sculele pe care le-ai ridicat de la depozit.",
+    continueLabel: "CONTINUĂ",
+  },
   before: {
     title: "Poze la sosire",
     caption: "Fă o poză la locul unde lucrezi — panoul electric, tabloul sau zona respectivă — înainte să începi.",
@@ -28,7 +33,9 @@ const CATEGORY_INFO: Record<string, { title: string; caption: string; continueLa
 };
 
 function continueHref(id: string, category: string) {
-  return category === "after" ? `/mobil/lucrari/${id}/finalizare` : `/mobil/lucrari/${id}`;
+  if (category === "after") return `/mobil/lucrari/${id}/finalizare`;
+  if (category === "depot_pickup") return `/mobil/lucrari/${id}/ridicare`;
+  return `/mobil/lucrari/${id}`;
 }
 
 export default async function MobilePhotoPage({

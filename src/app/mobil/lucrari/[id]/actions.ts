@@ -116,12 +116,12 @@ export async function confirmDepotArrival(formData: FormData) {
 
   await supabase
     .from("jobs")
-    .update({ mobile_stage: "cheltuiala" })
+    .update({ mobile_stage: "ridicare" })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
 
   paths(jobId);
-  redirect(mobileStagePath(jobId, "cheltuiala"));
+  redirect(mobileStagePath(jobId, "ridicare"));
 }
 
 export async function toggleRequiredItemTaken(formData: FormData) {
@@ -134,6 +134,7 @@ export async function toggleRequiredItemTaken(formData: FormData) {
   await supabase.from("job_required_items").update({ taken: !taken }).eq("id", itemId);
 
   revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
+  revalidatePath(`/mobil/lucrari/${jobId}/ridicare`);
 }
 
 export async function startTravel(jobId: string) {

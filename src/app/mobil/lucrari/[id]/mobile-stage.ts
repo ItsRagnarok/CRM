@@ -1,4 +1,4 @@
-export type MobileStage = "checklist" | "depozit" | "cheltuiala" | "ready";
+export type MobileStage = "checklist" | "depozit" | "ridicare" | "cheltuiala" | "ready";
 
 export function mobileStagePath(jobId: string, stage: MobileStage | null | undefined) {
   switch (stage) {
@@ -6,6 +6,8 @@ export function mobileStagePath(jobId: string, stage: MobileStage | null | undef
       return `/mobil/lucrari/${jobId}/checklist`;
     case "depozit":
       return `/mobil/lucrari/${jobId}/depozit`;
+    case "ridicare":
+      return `/mobil/lucrari/${jobId}/ridicare`;
     case "cheltuiala":
       return `/mobil/lucrari/${jobId}/cheltuiala`;
     case "ready":

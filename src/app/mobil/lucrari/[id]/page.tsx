@@ -31,7 +31,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   // the job (from home, from the list, from anywhere) must drop him back at
   // exactly the screen he left — never the start of the wizard again.
   if (job.status === "in_drum" && job.mobile_stage && job.mobile_stage !== "ready") {
-    redirect(mobileStagePath(id, job.mobile_stage as "checklist" | "depozit" | "cheltuiala"));
+    redirect(mobileStagePath(id, job.mobile_stage as "checklist" | "depozit" | "ridicare" | "cheltuiala"));
   }
 
   // Status flips to in_drum the moment "Start" is pressed (see beginJobPrep),
