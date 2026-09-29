@@ -165,9 +165,16 @@ export default async function LucrariPage({
                       {job.locations?.address ?? "—"}
                     </td>
                     <td className="px-5 py-3.5 text-[13px] text-[#344054]">
-                      {assignees.length > 0
-                        ? assignees.join(", ")
-                        : (job.teams?.name ?? "neasignată")}
+                      {job.teams?.name ? (
+                        <>
+                          <div className="font-bold text-foreground">{job.teams.name}</div>
+                          {assignees.length > 0 && (
+                            <div className="text-[11.5px] text-muted-2">{assignees.join(", ")}</div>
+                          )}
+                        </>
+                      ) : (
+                        "neasignată"
+                      )}
                     </td>
                     <td className="px-5 py-3.5 text-[13px] text-[#344054]">
                       {job.scheduled_date}

@@ -157,7 +157,7 @@ export default async function RapoartePage() {
                   </td>
                   <td className="px-5 py-3 text-right">
                     <Link
-                      href={`/rapoarte-lucrare/${job.id}`}
+                      href={`/api/rapoarte-lucrare/${job.id}`}
                       className="inline-flex items-center gap-1.5 text-[12px] font-bold text-electric"
                     >
                       <Download className="h-3.5 w-3.5" /> Descarcă PDF

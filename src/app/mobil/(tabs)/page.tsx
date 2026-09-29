@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { DepartureAlert } from "./departure-alert";
 import { ArrivalAlert } from "./arrival-alert";
+import { StartButtonCompact } from "./start-button-compact";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -330,6 +331,13 @@ export default async function MobileHomePage({
                   >
                     DETALII
                   </Link>
+                  {job.status === "programata" && (
+                    <StartButtonCompact
+                      jobId={job.id}
+                      jobTitle={job.title}
+                      address={job.locations?.address ?? null}
+                    />
+                  )}
                 </div>
               </div>
             );

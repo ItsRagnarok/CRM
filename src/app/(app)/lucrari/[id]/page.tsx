@@ -4,6 +4,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
+import { LiveJobTimer } from "./live-timer";
 import {
   addChecklistItem,
   addExpense,
@@ -153,6 +154,9 @@ export default async function JobDetailPage({
             Lucrare #{job.display_number} — {job.title}
           </h1>
           <StatusBadge label={JOB_STATUS_LABELS[job.status]} className={JOB_STATUS_STYLES[job.status]} />
+          {(job.status === "in_lucru" || job.status === "pauza") && job.work_started_at && (
+            <LiveJobTimer startedAt={job.work_started_at} />
+          )}
           <div className="flex-1" />
           <Link
             href={`/lucrari/${id}/editeaza`}
@@ -176,7 +180,9 @@ export default async function JobDetailPage({
           )}
           <span className="flex items-center gap-1.5">
             <UsersRound className="h-3.5 w-3.5 text-muted" />{" "}
-            {assignees.length > 0 ? assignees.join(" + ") : (job.teams?.name ?? "neasignată")}
+            {job.teams?.name
+              ? `${job.teams.name}${assignees.length > 0 ? ` (${assignees.join(" + ")})` : ""}`
+              : "neasignată"}
           </span>
           <span className="flex items-center gap-1.5">
             <Calendar className="h-3.5 w-3.5 text-muted" /> {formatDateRo(job.scheduled_date)}
@@ -620,8 +626,7 @@ function ReportCard({ jobId, full }: { jobId: string; full?: boolean }) {
         </div>
       </div>
       <Link
-        href={`/rapoarte-lucrare/${jobId}`}
-        target="_blank"
+        href={`/api/rapoarte-lucrare/${jobId}`}
         className="mt-3 flex items-center justify-center rounded-[10px] bg-electric py-3 text-[13.5px] font-bold text-white"
       >
         Descarcă PDF

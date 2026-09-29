@@ -6,6 +6,7 @@ import { AlertTriangle } from "lucide-react";
 import { arriveAtJob, recordArrivalPromptDismissal } from "../lucrari/[id]/actions";
 
 const RADIUS_M = 50;
+const GRACE_MS = 5 * 60 * 1000;
 const REPROMPT_MS = 5 * 60 * 1000;
 
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -29,6 +30,10 @@ export function ArrivalAlert({
   const [visible, setVisible] = useState(false);
   const [pending, setPending] = useState(false);
   const lastPromptRef = useRef(0);
+  // Tracks when he first entered the radius — resets if he leaves it, so a
+  // technician who's just passing by nearby doesn't get pinged, only one
+  // who's actually stayed within range for a while without checking in.
+  const enteredRadiusAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
@@ -36,9 +41,15 @@ export function ArrivalAlert({
       (pos) => {
         const dist = distanceMeters(pos.coords.latitude, pos.coords.longitude, job.lat, job.lng);
         const now = Date.now();
-        if (dist <= RADIUS_M && now - lastPromptRef.current > REPROMPT_MS) {
-          lastPromptRef.current = now;
-          setVisible(true);
+        if (dist <= RADIUS_M) {
+          if (enteredRadiusAtRef.current == null) enteredRadiusAtRef.current = now;
+          const inRadiusFor = now - enteredRadiusAtRef.current;
+          if (inRadiusFor >= GRACE_MS && now - lastPromptRef.current > REPROMPT_MS) {
+            lastPromptRef.current = now;
+            setVisible(true);
+          }
+        } else {
+          enteredRadiusAtRef.current = null;
         }
       },
       () => {},

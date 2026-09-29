@@ -7,7 +7,7 @@ import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { startWork } from "./actions";
 import { ArriveButton } from "./arrive-button";
 import { StartTravelButton } from "./start-travel-button";
-import { WorkTimer } from "./work-timer";
+import { DistancePanel } from "./distance-panel";
 
 function mapsHref(address: string | null, lat: number | null, lng: number | null) {
   if (lat != null && lng != null) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -112,6 +112,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
           {isTraveling && (
             <>
+              {job.locations?.lat != null && job.locations?.lng != null && (
+                <DistancePanel lat={job.locations.lat} lng={job.locations.lng} />
+              )}
               {maps && (
                 <a
                   href={maps}
@@ -170,7 +173,6 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
           {isWorking && (
             <>
-              {job.work_started_at && <WorkTimer startedAt={job.work_started_at} />}
               <Link
                 href={`/mobil/lucrari/${job.id}/foto?cat=during`}
                 className="block rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
