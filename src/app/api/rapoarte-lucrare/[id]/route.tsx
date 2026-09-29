@@ -51,8 +51,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
 
-  const doc = new PDFDocument({ size: "A4", margin: 40 });
-  doc.registerFont("Regular", path.join(FONT_DIR, "NotoSans-Regular.ttf"));
+  // pdfkit's default constructor eagerly loads its bundled "Helvetica"
+  // standard font via a package subpath import (#standard-fonts/Helvetica)
+  // that Vercel's output file tracing doesn't pick up, crashing every
+  // request in production (MODULE_NOT_FOUND) while working fine locally.
+  // Passing our own font as the initial one skips that path entirely.
+  const regularFontPath = path.join(FONT_DIR, "NotoSans-Regular.ttf");
+  const doc = new PDFDocument({ size: "A4", margin: 40, font: regularFontPath });
+  doc.registerFont("Regular", regularFontPath);
   doc.registerFont("Bold", path.join(FONT_DIR, "NotoSans-Bold.ttf"));
 
   const chunks: Buffer[] = [];
