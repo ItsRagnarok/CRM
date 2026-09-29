@@ -63,7 +63,7 @@ export default async function HartaPage() {
         .gte("recorded_at", tenMinAgo),
       supabase
         .from("job_alerts")
-        .select("id, kind, message, created_at, jobs(display_number)")
+        .select("id, job_id, kind, message, created_at, jobs(display_number)")
         .eq("organization_id", organization.id)
         .is("resolved_at", null)
         .order("created_at", { ascending: false }),
@@ -201,6 +201,12 @@ export default async function HartaPage() {
             <div key={alert.id} className="flex items-center gap-2.5 text-[12.5px]">
               <AlertTriangle className="h-4 w-4 shrink-0 text-danger" />
               <span className="flex-1 text-[#7a271a]">{alert.message}</span>
+              <Link
+                href={`/lucrari/${alert.job_id}`}
+                className="shrink-0 rounded-[8px] border border-[#7a271a]/30 px-2.5 py-1 text-[11px] font-bold text-[#7a271a]"
+              >
+                Vezi lucrarea
+              </Link>
               <form action={resolveJobAlert}>
                 <input type="hidden" name="alertId" value={alert.id} />
                 <button type="submit" className="shrink-0 rounded-[8px] bg-white px-2.5 py-1 text-[11px] font-bold text-[#7a271a]">
