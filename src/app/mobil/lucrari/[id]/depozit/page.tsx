@@ -5,6 +5,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { DepotArriveButton } from "./depot-arrive-button";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileDepotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -50,7 +51,7 @@ export default async function MobileDepotPage({ params }: { params: Promise<{ id
         </Link>
         <div>
           <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
-          <div className="text-[11.5px] text-muted-2">Ridicare de la depozit</div>
+          <div className="mt-1"><StepBadge step="depozit" /></div>
         </div>
       </div>
 

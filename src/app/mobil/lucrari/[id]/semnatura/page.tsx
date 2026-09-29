@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SignaturePad } from "./signature-pad";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileSignaturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -68,7 +69,10 @@ export default async function MobileSignaturePage({ params }: { params: Promise<
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
-        <div className="text-[15px] font-extrabold">Semnătură de recepție — #{job.display_number}</div>
+        <div>
+          <div className="text-[15px] font-extrabold">Semnătură de recepție — #{job.display_number}</div>
+          <div className="mt-1"><StepBadge step="semnatura" /></div>
+        </div>
       </div>
 
       <SignaturePad jobId={id} defaultName={client?.name ?? ""} adminPhone={adminPhone} />

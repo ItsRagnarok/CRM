@@ -4,6 +4,7 @@ import { ArrowLeft, Camera, ChevronRight } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { advanceMobileStage, toggleRequiredItemTaken } from "../actions";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileRidicarePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -43,7 +44,7 @@ export default async function MobileRidicarePage({ params }: { params: Promise<{
         </Link>
         <div>
           <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
-          <div className="text-[11.5px] text-muted-2">Ai ajuns la depozit</div>
+          <div className="mt-1"><StepBadge step="ridicare" /></div>
         </div>
       </div>
 

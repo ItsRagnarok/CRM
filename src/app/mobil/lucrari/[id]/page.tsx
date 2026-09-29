@@ -10,6 +10,7 @@ import { ArriveButton } from "./arrive-button";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { acknowledgeRejectedPurchase } from "./actions";
 import { Store, XCircle } from "lucide-react";
+import { StepBadge } from "./step-badge";
 
 export default async function MobileJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -40,6 +41,8 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const isTraveling = job.status === "in_drum" && job.mobile_stage === "ready";
   const isDone = job.status === "finalizata";
   const isWorking = job.status === "in_lucru" || job.status === "pauza";
+  const currentStep =
+    isTraveling ? "pornire" : job.status === "ajunsa" ? "sosire" : isWorking ? "executie" : null;
 
   const [{ count: photoCount }, { count: expenseCount }] = isWorking
     ? await Promise.all([
@@ -114,6 +117,11 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
       </div>
 
       <div className="flex-1 overflow-auto p-4">
+        {currentStep && (
+          <div className="mb-3">
+            <StepBadge step={currentStep} />
+          </div>
+        )}
         <div className="rounded-[13px] border border-[#eaecf0] bg-white p-4">
           <div className="text-[12.5px] text-muted-2">
             {job.scheduled_date} · {job.start_time?.slice(0, 5) ?? "—"}
@@ -251,7 +259,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             </form>
           )}
 
-          {isTraveling && <ArriveButton jobId={job.id} />}
+          {isTraveling && (
+            <ArriveButton jobId={job.id} jobLat={job.locations?.lat ?? undefined} jobLng={job.locations?.lng ?? undefined} />
+          )}
 
           {job.status === "ajunsa" && (
             <>

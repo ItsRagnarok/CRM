@@ -4,6 +4,14 @@ import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PhotoCapture } from "./photo-capture";
+import { JOB_STEPS, type JobStepKey } from "../step-badge";
+
+const CATEGORY_STEP: Record<string, JobStepKey> = {
+  depot_pickup: "ridicare",
+  before: "sosire",
+  during: "executie",
+  after: "finalizare",
+};
 
 // The photo screen is entered from one fixed place in the flow each time
 // (arrival, mid-work, or finalization) — it's locked to that context rather
@@ -80,7 +88,10 @@ export default async function MobilePhotoPage({
         </Link>
         <div>
           <div className="text-[15px] font-extrabold text-white">{info.title}</div>
-          <div className="text-[11px] text-white/60">Lucrare #{job.display_number}</div>
+          <div className="text-[11px] text-white/60">
+            Lucrare #{job.display_number} · Pasul {JOB_STEPS[CATEGORY_STEP[category]].n} ·{" "}
+            {JOB_STEPS[CATEGORY_STEP[category]].label}
+          </div>
         </div>
       </div>
 

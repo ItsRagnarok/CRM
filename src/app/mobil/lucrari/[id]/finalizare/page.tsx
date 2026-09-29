@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { addChecklistItem, toggleChecklistItem, ensureChecklist } from "@/app/(app)/lucrari/[id]/actions";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { finalizeJob } from "../actions";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileFinalizarePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -51,8 +52,8 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
         <div>
-          <div className="text-[15px] font-extrabold">Finalizare lucrare</div>
-          <div className="text-[11.5px] text-muted-2">Checklist final — #{job.display_number}</div>
+          <div className="text-[15px] font-extrabold">Finalizare lucrare — #{job.display_number}</div>
+          <div className="mt-1"><StepBadge step="finalizare" /></div>
         </div>
       </div>
 

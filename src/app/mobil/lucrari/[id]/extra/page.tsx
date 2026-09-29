@@ -5,6 +5,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addJobNote } from "../actions";
 import { ProblemPicker } from "./problem-picker";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileExtraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,7 +39,7 @@ export default async function MobileExtraPage({ params }: { params: Promise<{ id
         </Link>
         <div>
           <div className="text-[15px] font-extrabold">Meniu lucrare — #{job.display_number}</div>
-          <div className="text-[11.5px] text-muted-2">{job.title}</div>
+          <div className="mt-1"><StepBadge step="executie" /></div>
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ensureChecklist, toggleChecklistItem } from "@/app/(app)/lucrari/[id]/actions";
 import { advanceMobileStage, toggleRequiredItemTaken } from "../actions";
+import { StepBadge } from "../step-badge";
 
 export default async function MobileChecklistPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -55,7 +56,7 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
         </Link>
         <div>
           <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
-          <div className="text-[11.5px] text-muted-2">Checklist înainte de plecare</div>
+          <div className="mt-1"><StepBadge step="checklist" /></div>
         </div>
       </div>
 

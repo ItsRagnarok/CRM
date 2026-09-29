@@ -182,6 +182,14 @@ export async function arriveAtJob(jobId: string, lat?: number, lng?: number) {
   paths(jobId);
 }
 
+export async function arriveAtJobForm(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!jobId) return;
+  const lat = formData.get("lat") ? Number(formData.get("lat")) : undefined;
+  const lng = formData.get("lng") ? Number(formData.get("lng")) : undefined;
+  await arriveAtJob(jobId, lat, lng);
+}
+
 export async function startWork(jobId: string) {
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();

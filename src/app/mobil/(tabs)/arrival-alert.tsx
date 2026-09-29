@@ -47,6 +47,9 @@ export function ArrivalAlert({
           if (inRadiusFor >= GRACE_MS && now - lastPromptRef.current > REPROMPT_MS) {
             lastPromptRef.current = now;
             setVisible(true);
+            // Modal alone can go unnoticed in a pocket — vibrate too, so the
+            // alert is noticeable, not just visible on screen.
+            if (navigator.vibrate) navigator.vibrate([400, 200, 400, 200, 400]);
           }
         } else {
           enteredRadiusAtRef.current = null;
