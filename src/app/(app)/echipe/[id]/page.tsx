@@ -181,7 +181,7 @@ export default async function TeamDetailPage({
               <p className="text-[13px] text-muted">Niciun membru adăugat încă.</p>
             )}
 
-            {assignableProfiles.length > 0 && (
+            {assignableProfiles.length > 0 ? (
               <form
                 action={addMember}
                 className="mt-2 flex items-center gap-2 border-t border-[#f2f4f7] pt-4"
@@ -209,6 +209,13 @@ export default async function TeamDetailPage({
                   <Plus className="h-3.5 w-3.5" /> Adaugă
                 </button>
               </form>
+            ) : (
+              <div className="mt-2 border-t border-[#f2f4f7] pt-4 text-[12.5px] text-muted">
+                Nu ai încă niciun angajat pe care să-l poți adăuga.{" "}
+                <Link href="/setari?tab=utilizatori" className="font-semibold text-electric">
+                  Creează un cont de angajat din Setări →
+                </Link>
+              </div>
             )}
           </div>
         </div>

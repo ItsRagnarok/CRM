@@ -8,6 +8,42 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type ClientType = Database["public"]["Tables"]["clients"]["Row"]["client_type"];
 
+export async function createNewClient(
+  _prevState: { error?: string } | undefined,
+  formData: FormData
+) {
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) {
+    return { error: "Numele clientului este obligatoriu." };
+  }
+
+  const { data, error } = await supabase
+    .from("clients")
+    .insert({
+      organization_id: organization.id,
+      name,
+      client_type: String(formData.get("clientType") ?? "company") as ClientType,
+      company_name: String(formData.get("companyName") ?? "").trim() || null,
+      cui: String(formData.get("cui") ?? "").trim() || null,
+      phone: String(formData.get("phone") ?? "").trim() || null,
+      email: String(formData.get("email") ?? "").trim() || null,
+      address: String(formData.get("address") ?? "").trim() || null,
+      created_by: userId,
+    })
+    .select("id")
+    .single();
+
+  if (error || !data) {
+    return { error: "Nu am putut salva clientul. Încearcă din nou." };
+  }
+
+  revalidatePath("/clienti");
+  redirect(`/clienti/${data.id}`);
+}
+
 export async function updateClient(
   clientId: string,
   _prevState: { error?: string } | undefined,
