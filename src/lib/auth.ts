@@ -147,10 +147,4 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
 
 export const requireSessionContext = cache(requireSessionContextUncached);
 
-export const ROLE_LABELS: Record<Profile["role"], string> = {
-  admin: "Administrator companie",
-  manager: "Manager / Dispatcher",
-  team_leader: "Team Leader",
-  technician: "Tehnician",
-  client: "Client",
-};
+export { ROLE_LABELS } from "@/lib/role-labels";

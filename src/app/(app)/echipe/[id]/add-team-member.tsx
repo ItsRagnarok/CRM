@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { addMember } from "../actions";
-import { ROLE_LABELS } from "@/lib/auth";
+import { ROLE_LABELS } from "@/lib/role-labels";
 import type { Database } from "@/lib/supabase/database.types";
 
 type Profile = { id: string; full_name: string; role: Database["public"]["Enums"]["user_role"] };
