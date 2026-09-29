@@ -18,13 +18,14 @@ export default async function MobileMapPage() {
     )
     .eq("profile_id", profile.id);
 
+  // Every open job gets a pin, not just today's — a technician should see
+  // his whole upcoming workload on the map, not just what's scheduled now.
   const jobs = (assignments ?? [])
     .map((a) => a.jobs)
     .filter(
-      (j): j is NonNullable<typeof j> =>
-        Boolean(j) && j!.scheduled_date === today && j!.status !== "finalizata" && j!.status !== "anulata"
+      (j): j is NonNullable<typeof j> => Boolean(j) && j!.status !== "finalizata" && j!.status !== "anulata"
     )
-    .sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
+    .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date) || (a.start_time ?? "").localeCompare(b.start_time ?? ""));
 
   const mapJobs: MobileMapJob[] = jobs
     .filter((j) => j.locations?.lat != null && j.locations?.lng != null)
@@ -37,14 +38,14 @@ export default async function MobileMapPage() {
       href: `/mobil/lucrari/${j.id}`,
     }));
 
-  const nextJob = jobs[0] ?? null;
+  const nextJob = jobs.find((j) => j.scheduled_date === today) ?? jobs[0] ?? null;
   const routeTo = nextJob ? mapJobs.find((j) => j.id === nextJob.id) : undefined;
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3 pt-1.5">
         <div className="text-[19px] font-extrabold">Harta mea</div>
-        <div className="mt-0.5 text-[12.5px] text-muted">Lucrările tale de azi</div>
+        <div className="mt-0.5 text-[12.5px] text-muted">Toate lucrările tale nefinalizate</div>
       </div>
 
       <div className="relative flex-1">
