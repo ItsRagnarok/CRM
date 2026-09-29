@@ -645,6 +645,71 @@ export type Database = {
           },
         ]
       }
+      job_required_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          custom_name: string | null
+          id: string
+          job_id: string
+          kind: string
+          material_id: string | null
+          organization_id: string
+          quantity_needed: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          custom_name?: string | null
+          id?: string
+          job_id: string
+          kind: string
+          material_id?: string | null
+          organization_id: string
+          quantity_needed?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          custom_name?: string | null
+          id?: string
+          job_id?: string
+          kind?: string
+          material_id?: string | null
+          organization_id?: string
+          quantity_needed?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_required_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_required_items_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_required_items_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_required_items_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_status_history: {
         Row: {
           changed_by: string | null
@@ -1224,6 +1289,7 @@ export type Database = {
           full_name: string
           id: string
           is_active: boolean
+          notifications_enabled: boolean
           organization_id: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1236,6 +1302,7 @@ export type Database = {
           full_name: string
           id: string
           is_active?: boolean
+          notifications_enabled?: boolean
           organization_id: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1248,6 +1315,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_active?: boolean
+          notifications_enabled?: boolean
           organization_id?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1266,6 +1334,90 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      purchase_requests: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          id: string
+          job_id: string
+          material_id: string | null
+          note: string | null
+          organization_id: string
+          quantity: number
+          requested_by: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          job_id: string
+          material_id?: string | null
+          note?: string | null
+          organization_id: string
+          quantity?: number
+          requested_by: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          id?: string
+          job_id?: string
+          material_id?: string | null
+          note?: string | null
+          organization_id?: string
+          quantity?: number
+          requested_by?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchase_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materials"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchase_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1545,6 +1697,7 @@ export type Database = {
         Row: {
           assigned_team_id: string | null
           created_at: string
+          driver_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -1554,6 +1707,7 @@ export type Database = {
         Insert: {
           assigned_team_id?: string | null
           created_at?: string
+          driver_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -1563,6 +1717,7 @@ export type Database = {
         Update: {
           assigned_team_id?: string | null
           created_at?: string
+          driver_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1575,6 +1730,13 @@ export type Database = {
             columns: ["assigned_team_id"]
             isOneToOne: false
             referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
@@ -1649,6 +1811,10 @@ export type Database = {
           owner_password: string
         }
         Returns: string
+      }
+      platform_admin_delete_company: {
+        Args: { org_id: string }
+        Returns: undefined
       }
       platform_admin_list_companies: {
         Args: never

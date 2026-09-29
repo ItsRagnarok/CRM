@@ -46,7 +46,7 @@ export default async function SetariPage({
     tab === "utilizatori"
       ? supabase
           .from("profiles")
-          .select("id, full_name, role, is_active")
+          .select("id, full_name, role, is_active, notifications_enabled")
           .eq("organization_id", organization.id)
           .order("full_name")
       : Promise.resolve({ data: null }),
@@ -106,8 +106,12 @@ export default async function SetariPage({
                     <div key={p.id} className="flex items-center justify-between px-5 py-3.5">
                       <div>
                         <div className="text-[13.5px] font-bold text-foreground">{p.full_name}</div>
-                        <div className="text-[12px] text-muted-2">
+                        <div className="flex items-center gap-1.5 text-[12px] text-muted-2">
                           {p.is_active ? "Activ" : "Inactiv"}
+                          <span>·</span>
+                          <span className={p.notifications_enabled ? "text-success" : "text-muted-2"}>
+                            {p.notifications_enabled ? "Notificări activate" : "Notificări dezactivate"}
+                          </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">

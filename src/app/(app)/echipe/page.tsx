@@ -6,7 +6,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { UsersRound, Plus, Truck } from "lucide-react";
-import { reassignVehicle } from "./actions";
+import { reassignVehicle, setVehicleDriver } from "./actions";
 
 const AVATAR_PALETTE = [
   { bg: "#EFF4FF", text: "#2F6FED" },
@@ -38,7 +38,7 @@ export default async function EchipePage({
     tab === "vehicule"
       ? await supabase
           .from("vehicles")
-          .select("id, name, plate_number, is_active, assigned_team_id, teams(id, name)")
+          .select("id, name, plate_number, is_active, assigned_team_id, driver_id, teams(id, name)")
           .eq("organization_id", organization.id)
           .order("name")
       : { data: null };
@@ -102,6 +102,7 @@ export default async function EchipePage({
                   <th className="px-5 py-3">Vehicul</th>
                   <th className="px-5 py-3">Nr. înmatriculare</th>
                   <th className="px-5 py-3">Alocat echipei</th>
+                  <th className="px-5 py-3">Șofer</th>
                   <th className="px-5 py-3">Status</th>
                 </tr>
               </thead>
@@ -127,6 +128,26 @@ export default async function EchipePage({
                           {(teams ?? []).map((t) => (
                             <option key={t.id} value={t.id}>
                               {t.name}
+                            </option>
+                          ))}
+                        </select>
+                        <button type="submit" className="text-[11px] font-bold text-electric">
+                          Salvează
+                        </button>
+                      </form>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <form action={setVehicleDriver} className="flex items-center gap-2">
+                        <input type="hidden" name="vehicleId" value={v.id} />
+                        <select
+                          name="driverId"
+                          defaultValue={v.driver_id ?? ""}
+                          className="rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[12.5px] font-semibold outline-none focus:border-electric"
+                        >
+                          <option value="">Nesetat</option>
+                          {((teams ?? []).find((t) => t.id === v.assigned_team_id)?.team_members ?? []).map((m) => (
+                            <option key={m.profile_id} value={m.profile_id}>
+                              {m.profiles?.full_name ?? "—"}
                             </option>
                           ))}
                         </select>

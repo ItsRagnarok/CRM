@@ -19,7 +19,7 @@ export function AdminTopbar({ fullName }: { fullName: string }) {
             ElectroField
           </span>
           <span className="ml-1 rounded-full bg-purple/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-purple">
-            Admin
+            Super Admin
           </span>
         </div>
         <nav className="flex items-center gap-1">

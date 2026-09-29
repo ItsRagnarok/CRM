@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { signOut } from "@/app/(app)/actions";
+import { NotificationsToggle } from "./notifications-toggle";
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -83,13 +84,18 @@ export default async function MobileProfilePage() {
           label="Confidențialitate & locație"
           note={organization.gps_continuous_tracking_enabled ? "GPS activ" : "GPS oprit"}
         />
+        <NotificationsToggle initialEnabled={profile.notifications_enabled} />
         <Link href="/mobil/documente" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
           <FileText className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
           <div className="flex-1 text-[13.5px] font-semibold">Documentele mele</div>
           <div className="text-[11.5px] font-semibold text-muted-2">{documentCount ?? 0}</div>
           <ChevronRight className="h-4 w-4 text-muted-2" />
         </Link>
-        <MenuRow icon={HelpCircle} label="Ajutor & suport" last />
+        <Link href="/mobil/ajutor" className="flex items-center gap-3 px-4 py-3.5">
+          <HelpCircle className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
+          <div className="flex-1 text-[13.5px] font-semibold">Ajutor & suport</div>
+          <ChevronRight className="h-4 w-4 text-muted-2" />
+        </Link>
       </div>
 
       <form action={signOut} className="mt-4">

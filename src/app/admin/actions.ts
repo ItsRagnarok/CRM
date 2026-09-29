@@ -47,6 +47,17 @@ export async function createCompany(
   redirect(`/admin/companii/${newOrgId}`);
 }
 
+export async function deleteCompany(orgId: string) {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("platform_admin_delete_company", { org_id: orgId });
+  if (error) {
+    return { error: "Nu am putut șterge compania. Încearcă din nou." };
+  }
+
+  revalidatePath("/admin/companii");
+  redirect("/admin/companii");
+}
+
 export async function updateCompany(orgId: string, formData: FormData) {
   const companyName = String(formData.get("companyName") ?? "").trim();
   if (!companyName) return;

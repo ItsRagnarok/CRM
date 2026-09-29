@@ -17,6 +17,7 @@ import {
   FileText,
   Settings,
   LogOut,
+  ClipboardCheck,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
@@ -28,6 +29,7 @@ const NAV_ITEMS = [
   { href: "/echipe", label: "Echipe", icon: UsersRound },
   { href: "/harta", label: "Hartă & GPS", icon: MapPin },
   { href: "/materiale", label: "Materiale", icon: Package },
+  { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
   { href: "/cheltuieli", label: "Cheltuieli", icon: Receipt },
   { href: "/pontaj", label: "Pontaj", icon: Clock },
   { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },

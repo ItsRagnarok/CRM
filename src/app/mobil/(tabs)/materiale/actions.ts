@@ -86,3 +86,25 @@ export async function reportShortage(formData: FormData) {
 
   revalidatePath("/mobil/materiale");
 }
+
+export async function requestPurchase(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  const materialId = String(formData.get("materialId") ?? "").trim() || null;
+  const customName = String(formData.get("customName") ?? "").trim() || null;
+  const quantity = Math.max(1, Number(formData.get("quantity") ?? 1) || 1);
+  if (!jobId || (!materialId && !customName)) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase.from("purchase_requests").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    requested_by: userId,
+    material_id: materialId,
+    custom_name: materialId ? null : customName,
+    quantity,
+  });
+
+  revalidatePath("/mobil/materiale");
+}

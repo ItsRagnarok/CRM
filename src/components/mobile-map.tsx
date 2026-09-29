@@ -145,23 +145,61 @@ export function MobileMap({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: M
             boxShadow: "0 4px 14px rgba(16,24,40,0.12)",
             fontSize: 12.5,
             display: "flex",
-            gap: 10,
-            alignItems: "center",
+            flexDirection: "column",
+            gap: 8,
           }}
         >
-          {route ? (
-            <>
-              <span style={{ fontWeight: 800, color: "#101828" }}>{(route.distanceM / 1000).toFixed(1)} km</span>
-              <span style={{ color: "#98A2B3" }}>·</span>
-              <span style={{ color: "#475467" }}>{Math.round(route.durationS / 60)} min cu mașina</span>
-            </>
-          ) : routeError ? (
-            <span style={{ color: "#98A2B3" }}>Traseul nu a putut fi calculat</span>
-          ) : !selfPos ? (
-            <span style={{ color: "#98A2B3" }}>Se așteaptă locația ta…</span>
-          ) : (
-            <span style={{ color: "#98A2B3" }}>Se calculează traseul…</span>
-          )}
+          <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+            {route ? (
+              <>
+                <span style={{ fontWeight: 800, color: "#101828" }}>{(route.distanceM / 1000).toFixed(1)} km</span>
+                <span style={{ color: "#98A2B3" }}>·</span>
+                <span style={{ color: "#475467" }}>{Math.round(route.durationS / 60)} min cu mașina</span>
+              </>
+            ) : routeError ? (
+              <span style={{ color: "#98A2B3" }}>Traseul nu a putut fi calculat</span>
+            ) : !selfPos ? (
+              <span style={{ color: "#98A2B3" }}>Se așteaptă locația ta…</span>
+            ) : (
+              <span style={{ color: "#98A2B3" }}>Se calculează traseul…</span>
+            )}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${routeTo.lat},${routeTo.lng}&travelmode=driving`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                textAlign: "center",
+                background: "#f2f4f7",
+                color: "#344054",
+                fontWeight: 700,
+                borderRadius: 8,
+                padding: "7px 0",
+                fontSize: 12,
+              }}
+            >
+              Google Maps
+            </a>
+            <a
+              href={`https://waze.com/ul?ll=${routeTo.lat},${routeTo.lng}&navigate=yes`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                flex: 1,
+                textAlign: "center",
+                background: "#f2f4f7",
+                color: "#344054",
+                fontWeight: 700,
+                borderRadius: 8,
+                padding: "7px 0",
+                fontSize: 12,
+              }}
+            >
+              Waze
+            </a>
+          </div>
         </div>
       )}
     </>

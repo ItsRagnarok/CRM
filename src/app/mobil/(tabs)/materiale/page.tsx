@@ -1,8 +1,8 @@
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
-import { Package } from "lucide-react";
-import { consumeMaterial, reportShortage } from "./actions";
+import { Package, Truck, User, Wrench, Send } from "lucide-react";
+import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
 
 export default async function MobileMaterialsPage() {
   const { profile } = await requireSessionContext();
@@ -10,18 +10,48 @@ export default async function MobileMaterialsPage() {
 
   const { data: membership } = await supabase
     .from("team_members")
-    .select("team_id, teams(name, vehicles(id, name, plate_number))")
+    .select("team_id, teams(name, vehicles(id, name, plate_number, driver_id))")
     .eq("profile_id", profile.id)
     .maybeSingle();
 
   const vehicle = membership?.teams?.vehicles?.[0] ?? null;
 
-  const { data: stock } = vehicle
+  const [{ data: stock }, { data: driver }, { data: assignments }] = await Promise.all([
+    vehicle
+      ? supabase
+          .from("material_stock")
+          .select("id, quantity, materials(id, name, category, unit, min_stock)")
+          .eq("vehicle_id", vehicle.id)
+          .order("name", { foreignTable: "materials" })
+      : Promise.resolve({ data: null }),
+    vehicle?.driver_id
+      ? supabase.from("profiles").select("full_name").eq("id", vehicle.driver_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("job_assignments")
+      .select("jobs(id, display_number, title, status, scheduled_date)")
+      .eq("profile_id", profile.id),
+  ]);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const jobs = (assignments ?? []).map((a) => a.jobs).filter((j): j is NonNullable<typeof j> => Boolean(j));
+  const currentJob =
+    jobs.find((j) => j.status === "in_lucru" || j.status === "pauza") ??
+    jobs.find((j) => j.scheduled_date === today && j.status !== "finalizata" && j.status !== "anulata");
+
+  const { data: requiredItems } = currentJob
     ? await supabase
-        .from("material_stock")
-        .select("id, quantity, materials(id, name, category, unit, min_stock)")
-        .eq("vehicle_id", vehicle.id)
-        .order("name", { foreignTable: "materials" })
+        .from("job_required_items")
+        .select("id, kind, quantity_needed, custom_name, materials(id, name, unit)")
+        .eq("job_id", currentJob.id)
+    : { data: null };
+
+  const { data: myRequests } = currentJob
+    ? await supabase
+        .from("purchase_requests")
+        .select("id, status, material_id, custom_name")
+        .eq("job_id", currentJob.id)
+        .eq("requested_by", profile.id)
     : { data: null };
 
   const rows = (stock ?? []).filter((s) => s.materials);
@@ -31,6 +61,11 @@ export default async function MobileMaterialsPage() {
   // etc.) are critical only when the van itself is nearly empty of them.
   const isCritical = (qty: number, minStock: number) => (minStock <= 3 ? qty === 0 : qty < minStock * 0.15);
   const criticalCount = rows.filter((s) => isCritical(s.quantity, s.materials?.min_stock ?? 0)).length;
+
+  const stockByMaterialId = new Map(rows.map((s) => [s.materials!.id, s.quantity]));
+  const requestedKeys = new Set(
+    (myRequests ?? []).map((r) => (r.material_id ? `m:${r.material_id}` : `c:${r.custom_name}`))
+  );
 
   if (!vehicle) {
     return (
@@ -53,10 +88,81 @@ export default async function MobileMaterialsPage() {
             {vehicle.name}
           </div>
         </div>
-        <div className="mt-1 text-[12.5px] text-muted">Materiale disponibile în vehicul</div>
+        <div className="mt-1.5 flex items-center gap-3 text-[12px] text-muted">
+          <span className="flex items-center gap-1">
+            <Truck className="h-3.5 w-3.5" /> {vehicle.plate_number ?? "—"}
+          </span>
+          <span className="flex items-center gap-1">
+            <User className="h-3.5 w-3.5" /> {driver?.full_name ?? "Șofer nesetat"}
+          </span>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 px-4 py-4">
+        {currentJob && (
+          <div className="rounded-[13px] border border-electric bg-electric-soft/40 p-3.5">
+            <div className="text-[11.5px] font-bold text-electric">
+              PENTRU LUCRAREA #{currentJob.display_number} — {currentJob.title.toUpperCase()}
+            </div>
+            {requiredItems && requiredItems.length > 0 ? (
+              <div className="mt-2.5 flex flex-col gap-2">
+                {requiredItems.map((item) => {
+                  const name = item.materials?.name ?? item.custom_name ?? "—";
+                  const have = item.materials ? stockByMaterialId.get(item.materials.id) ?? 0 : null;
+                  const covered = have !== null && have >= item.quantity_needed;
+                  const key = item.materials ? `m:${item.materials.id}` : `c:${item.custom_name}`;
+                  const alreadyRequested = requestedKeys.has(key);
+                  return (
+                    <div key={item.id} className="flex items-center gap-2 rounded-[10px] bg-white p-2.5">
+                      {item.kind === "tool" ? (
+                        <Wrench className="h-4 w-4 shrink-0 text-muted-2" />
+                      ) : (
+                        <Package className="h-4 w-4 shrink-0 text-muted-2" />
+                      )}
+                      <div className="flex-1">
+                        <div className="text-[13px] font-bold">{name}</div>
+                        <div className="text-[11px] text-muted-2">
+                          Necesar: {item.quantity_needed} {item.materials?.unit ?? "buc"}
+                          {have !== null ? ` · Ai: ${have}` : ""}
+                        </div>
+                      </div>
+                      {covered ? (
+                        <span className="rounded-full bg-success-bg px-2 py-1 text-[10.5px] font-bold text-success">
+                          OK
+                        </span>
+                      ) : alreadyRequested ? (
+                        <span className="rounded-full bg-[#fef9ec] px-2 py-1 text-[10.5px] font-bold text-[#b45309]">
+                          Cerută
+                        </span>
+                      ) : (
+                        <form action={requestPurchase}>
+                          <input type="hidden" name="jobId" value={currentJob.id} />
+                          {item.materials ? (
+                            <input type="hidden" name="materialId" value={item.materials.id} />
+                          ) : (
+                            <input type="hidden" name="customName" value={item.custom_name ?? ""} />
+                          )}
+                          <input type="hidden" name="quantity" value={item.quantity_needed} />
+                          <button
+                            type="submit"
+                            className="flex items-center gap-1 rounded-[8px] bg-danger-bg px-2.5 py-1.5 text-[11px] font-bold text-danger"
+                          >
+                            <Send className="h-3 w-3" /> Cere aprobare
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-1.5 text-[12px] text-[#475467]">
+                Nimic definit special pentru această lucrare — folosește stocul general de mai jos.
+              </p>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2.5">
           <div className="flex-1 rounded-[12px] border border-[#eaecf0] bg-white p-3 text-center">
             <div className="text-[18px] font-extrabold">{rows.length}</div>

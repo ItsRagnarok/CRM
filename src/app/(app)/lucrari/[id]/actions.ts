@@ -176,6 +176,58 @@ export async function uploadDocument(formData: FormData) {
   revalidatePath(`/lucrari/${jobId}`);
 }
 
+export async function addRequiredItem(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  const kind = String(formData.get("kind") ?? "material") as "material" | "tool";
+  const materialId = String(formData.get("materialId") ?? "").trim() || null;
+  const customName = String(formData.get("customName") ?? "").trim() || null;
+  const quantity = Math.max(1, Number(formData.get("quantity") ?? 1) || 1);
+  if (!jobId || (!materialId && !customName)) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase.from("job_required_items").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    kind,
+    material_id: materialId,
+    custom_name: materialId ? null : customName,
+    quantity_needed: quantity,
+    created_by: userId,
+  });
+
+  revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath(`/mobil/materiale`);
+}
+
+export async function deleteRequiredItem(formData: FormData) {
+  const itemId = String(formData.get("itemId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!itemId) return;
+
+  const supabase = await createClient();
+  await supabase.from("job_required_items").delete().eq("id", itemId);
+  revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath(`/mobil/materiale`);
+}
+
+export async function decidePurchaseRequest(formData: FormData) {
+  const requestId = String(formData.get("requestId") ?? "");
+  const decision = String(formData.get("decision") ?? "") as "approved" | "denied";
+  if (!requestId || (decision !== "approved" && decision !== "denied")) return;
+
+  const { userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("purchase_requests")
+    .update({ status: decision, decided_by: userId, decided_at: new Date().toISOString() })
+    .eq("id", requestId);
+
+  revalidatePath("/aprobari");
+}
+
 export async function deleteDocument(formData: FormData) {
   const documentId = String(formData.get("documentId") ?? "");
   const storagePath = String(formData.get("storagePath") ?? "");

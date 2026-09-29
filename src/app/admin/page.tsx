@@ -17,7 +17,7 @@ export default async function AdminHomePage() {
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
       <span className="inline-flex items-center gap-2 rounded-full bg-purple-soft px-3 py-1 text-[12.5px] font-semibold text-purple">
-        Panou Admin ElectroField
+        Panou Super Admin ElectroField
       </span>
       <h1 className="mt-5 text-[26px] font-extrabold tracking-tight text-[#17151f]">
         Bine ai revenit, {fullName.split(" ")[0]}.

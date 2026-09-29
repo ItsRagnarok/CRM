@@ -7,8 +7,10 @@ import { StatusActions } from "./status-actions";
 import {
   addChecklistItem,
   addExpense,
+  addRequiredItem,
   deleteChecklistItem,
   deleteDocument,
+  deleteRequiredItem,
   toggleChecklistItem,
   uploadDocument,
 } from "./actions";
@@ -108,6 +110,8 @@ export default async function JobDetailPage({
     { data: materialUsage },
     { data: documents },
     { data: signature },
+    { data: requiredItems },
+    { data: catalog },
   ] = await Promise.all([
     supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
     supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date").eq("job_id", id).order("created_at"),
@@ -125,6 +129,12 @@ export default async function JobDetailPage({
       .eq("job_id", id),
     supabase.from("documents").select("id, name, doc_type, storage_path, created_at").eq("job_id", id).order("created_at"),
     supabase.from("signatures").select("signer_name, storage_path, signed_at").eq("job_id", id).maybeSingle(),
+    supabase
+      .from("job_required_items")
+      .select("id, kind, quantity_needed, custom_name, materials(id, name, unit)")
+      .eq("job_id", id)
+      .order("created_at"),
+    supabase.from("materials").select("id, name, unit").eq("organization_id", organization.id).order("name"),
   ]);
 
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
@@ -238,7 +248,69 @@ export default async function JobDetailPage({
         )}
 
         {tab === "materiale" && (
-          <Card title="Materiale folosite">
+          <div className="flex flex-col gap-4">
+            <Card title="Materiale & scule necesare pentru această lucrare">
+              {requiredItems && requiredItems.length > 0 ? (
+                <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                  {requiredItems.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 py-2.5 text-[13px]">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
+                          item.kind === "tool" ? "bg-purple-soft text-purple" : "bg-electric-soft text-electric"
+                        }`}
+                      >
+                        {item.kind === "tool" ? "SCULĂ" : "MATERIAL"}
+                      </span>
+                      <span className="flex-1 text-foreground">
+                        {item.materials?.name ?? item.custom_name}
+                      </span>
+                      <span className="font-bold text-[#344054]">
+                        {item.quantity_needed} {item.materials?.unit ?? "buc"}
+                      </span>
+                      <form action={deleteRequiredItem}>
+                        <input type="hidden" name="itemId" value={item.id} />
+                        <input type="hidden" name="jobId" value={id} />
+                        <button type="submit" className="flex h-7 w-7 items-center justify-center rounded-[8px] text-muted-2 hover:bg-danger-bg hover:text-danger" aria-label="Șterge">
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </form>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[13px] text-muted">
+                  Nimic definit încă — tehnicianul vede doar stocul general al vehiculului până completezi lista de mai jos.
+                </p>
+              )}
+
+              <form action={addRequiredItem} className="mt-4 flex flex-col gap-2 border-t border-[#f2f4f7] pt-4">
+                <input type="hidden" name="jobId" value={id} />
+                <div className="grid grid-cols-[100px_1fr_1fr_80px_auto] gap-2">
+                  <select name="kind" className="rounded-[9px] border border-[#d0d5dd] px-2 py-2 text-[12.5px] font-semibold outline-none focus:border-electric">
+                    <option value="material">Material</option>
+                    <option value="tool">Sculă</option>
+                  </select>
+                  <select name="materialId" className="rounded-[9px] border border-[#d0d5dd] px-2 py-2 text-[13px] outline-none focus:border-electric">
+                    <option value="">— alege din catalog —</option>
+                    {(catalog ?? []).map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input name="customName" placeholder="…sau nume liber (ex: scară 3m)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+                  <input name="quantity" type="number" min={1} defaultValue={1} className="rounded-[9px] border border-[#d0d5dd] px-2 py-2 text-center text-[13px] outline-none focus:border-electric" />
+                  <button type="submit" className="flex items-center justify-center gap-1.5 rounded-[9px] bg-neutral-bg px-3 py-2 text-[12.5px] font-bold text-[#344054]">
+                    <Plus className="h-3.5 w-3.5" /> Adaugă
+                  </button>
+                </div>
+                <p className="text-[11.5px] text-muted-2">
+                  Alege fie un material din catalog, fie scrie un nume liber (pentru scule care nu sunt în catalog) — nu ambele.
+                </p>
+              </form>
+            </Card>
+
+            <Card title="Materiale folosite">
             {materialUsage && materialUsage.length > 0 ? (
               <div className="flex flex-col divide-y divide-[#f2f4f7]">
                 {materialUsage.map((mu) => (
@@ -260,7 +332,8 @@ export default async function JobDetailPage({
                 pentru a putea înregistra consum pe lucrare.
               </p>
             )}
-          </Card>
+            </Card>
+          </div>
         )}
 
         {tab === "fotografii" && (
