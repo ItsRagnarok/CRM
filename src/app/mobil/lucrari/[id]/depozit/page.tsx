@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Warehouse } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { advanceMobileStage } from "../actions";
-import { DepotNavigateButton } from "./depot-navigate-button";
+import { MobileMapLoader } from "@/components/mobile-map-loader";
 
 export default async function MobileDepotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -13,62 +12,77 @@ export default async function MobileDepotPage({ params }: { params: Promise<{ id
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number")
+    .select("id, display_number, warehouse_id")
     .eq("id", id)
     .eq("organization_id", organization.id)
     .maybeSingle();
   if (!job) notFound();
 
-  const hasDepot = organization.hq_lat != null && organization.hq_lng != null;
+  // Use the depot the admin explicitly assigned to this job; if none was
+  // picked, fall back to the organization's central depot.
+  const { data: warehouse } = job.warehouse_id
+    ? await supabase.from("warehouses").select("id, name, address, lat, lng").eq("id", job.warehouse_id).maybeSingle()
+    : await supabase
+        .from("warehouses")
+        .select("id, name, address, lat, lng")
+        .eq("organization_id", organization.id)
+        .eq("is_central", true)
+        .maybeSingle();
+
+  const depotPin =
+    warehouse && warehouse.lat != null && warehouse.lng != null
+      ? {
+          id: warehouse.id,
+          label: `🏭 ${warehouse.name}`,
+          sublabel: warehouse.address ?? "",
+          lat: warehouse.lat,
+          lng: warehouse.lng,
+          href: `/mobil/lucrari/${id}/depozit`,
+        }
+      : null;
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#eaecf0] px-4 py-2.5">
-        <Link
-          href="/mobil"
-          className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg"
-        >
+        <Link href="/mobil" className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg">
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
-        <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
+        <div>
+          <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
+          <div className="text-[11.5px] text-muted-2">Ridicare de la depozit</div>
+        </div>
       </div>
 
-      <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-electric-soft">
-          <Warehouse className="h-7 w-7 text-electric" strokeWidth={1.8} />
-        </div>
-        <div>
-          <div className="text-[16px] font-extrabold text-foreground">Ai nevoie să treci pe la depozit?</div>
-          <div className="mt-1.5 text-[13px] text-muted">
-            Dacă nu ai deja materialele și sculele de mai devreme în mașină, treci pe la depozitul central să le
-            ridici.
+      {!warehouse ? (
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center">
+          <Warehouse className="h-8 w-8 text-muted-2" strokeWidth={1.6} />
+          <div className="text-[13.5px] font-semibold text-muted">
+            Niciun depozit configurat încă — cere administratorului să adauge unul din Materiale.
           </div>
         </div>
+      ) : (
+        <div className="flex flex-1 flex-col overflow-auto">
+          <div className="mx-4 mt-3 flex items-center gap-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-electric-soft">
+              <Warehouse className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+            </div>
+            <div className="flex-1">
+              <div className="text-[14px] font-extrabold text-foreground">{warehouse.name}</div>
+              <div className="text-[12px] text-muted">{warehouse.address ?? "Adresă neconfigurată"}</div>
+            </div>
+          </div>
 
-        <div className="mt-2 flex w-full flex-col gap-2.5">
-          <form action={advanceMobileStage} className="w-full">
-            <input type="hidden" name="jobId" value={id} />
-            <input type="hidden" name="stage" value="cheltuiala" />
-            <button
-              type="submit"
-              className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
-            >
-              AM DEJA MATERIALELE ÎN MAȘINĂ
-            </button>
-          </form>
-
-          {hasDepot ? (
-            <DepotNavigateButton jobId={id} lat={organization.hq_lat!} lng={organization.hq_lng!} />
+          {depotPin ? (
+            <div className="relative mt-3 flex-1 overflow-hidden">
+              <MobileMapLoader jobs={[depotPin]} routeTo={depotPin} />
+            </div>
           ) : (
-            <Link
-              href="#"
-              className="pointer-events-none block w-full rounded-[12px] border border-[#d0d5dd] py-[14px] text-center text-[14.5px] font-extrabold text-muted-2"
-            >
-              Depozitul nu are adresă setată încă
-            </Link>
+            <div className="mx-4 mt-3 rounded-[12px] border border-warning-bg bg-warning-bg p-3.5 text-center text-[12.5px] font-semibold text-[#7a5b0e]">
+              Depozitul nu are coordonate GPS setate — adaugă adresa din platformă ca să apară harta și navigarea.
+            </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
