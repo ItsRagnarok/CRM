@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
+import { geocodeAddress } from "@/lib/geocode";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -17,6 +18,18 @@ export async function updateOrganization(
   const name = String(formData.get("name") ?? "").trim();
   if (!name) return { error: "Denumirea companiei este obligatorie." };
 
+  const address = String(formData.get("address") ?? "").trim() || null;
+  let hqLat: number | null = organization.hq_lat;
+  let hqLng: number | null = organization.hq_lng;
+  if (address && address !== organization.address) {
+    const coords = await geocodeAddress(address);
+    hqLat = coords?.lat ?? null;
+    hqLng = coords?.lng ?? null;
+  } else if (!address) {
+    hqLat = null;
+    hqLng = null;
+  }
+
   const { error } = await supabase
     .from("organizations")
     .update({
@@ -24,7 +37,9 @@ export async function updateOrganization(
       cui: String(formData.get("cui") ?? "").trim() || null,
       email: String(formData.get("email") ?? "").trim() || null,
       phone: String(formData.get("phone") ?? "").trim() || null,
-      address: String(formData.get("address") ?? "").trim() || null,
+      address,
+      hq_lat: hqLat,
+      hq_lng: hqLng,
     })
     .eq("id", organization.id);
 

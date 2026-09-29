@@ -186,12 +186,21 @@ export default async function DashboardPage() {
       .gte("created_at", startOfDay(today))
       .order("created_at", { ascending: false })
       .limit(10),
+    // No time filter — a technician who's gone quiet (permission not yet
+    // granted, dead zone, phone backgrounded a while) should still show
+    // up at their last known spot, not disappear from the map entirely.
     supabase
       .from("technician_positions")
       .select("profile_id, lat, lng, recorded_at, profiles(full_name)")
-      .eq("organization_id", organization.id)
-      .gte("recorded_at", new Date(Date.now() - 10 * 60 * 1000).toISOString()),
+      .eq("organization_id", organization.id),
   ]);
+
+  const { data: trailLog } = await supabase
+    .from("technician_position_log")
+    .select("profile_id, lat, lng, recorded_at")
+    .eq("organization_id", organization.id)
+    .gte("recorded_at", new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString())
+    .order("recorded_at", { ascending: true });
 
   const activeJobsList = activeJobs ?? [];
   const teamsInField = new Map(
@@ -270,18 +279,46 @@ export default async function DashboardPage() {
 
   const livePositionMarkers: DashboardMapMarker[] = (livePositions ?? []).map((p) => {
     const minutesAgo = Math.round((Date.now() - new Date(p.recorded_at).getTime()) / 60000);
+    const isLive = minutesAgo <= 3;
+    const isStale = minutesAgo > 15;
     return {
       id: `pos-${p.profile_id}`,
       label: `📍 ${p.profiles?.full_name ?? "Tehnician"}`,
-      sublabel: "Poziție live",
-      statusLabel: minutesAgo <= 1 ? "chiar acum" : `acum ${minutesAgo} min`,
-      color: "#0369a1",
+      sublabel: isStale ? "Ultima poziție cunoscută (offline)" : "Poziție live",
+      statusLabel: minutesAgo <= 1 ? "chiar acum" : minutesAgo < 60 ? `acum ${minutesAgo} min` : `acum ${Math.round(minutesAgo / 60)} h`,
+      color: isLive ? "#15803d" : isStale ? "#98a2b3" : "#0369a1",
       lat: p.lat,
       lng: p.lng,
     };
   });
 
-  const allMapMarkers = [...mapMarkers, ...livePositionMarkers];
+  const hqMarker: DashboardMapMarker[] =
+    organization?.hq_lat != null && organization?.hq_lng != null
+      ? [
+          {
+            id: "hq",
+            label: "🏢 Sediu",
+            sublabel: organization.address ?? organization.name,
+            statusLabel: "Sediul administrativ",
+            color: "#101828",
+            lat: organization.hq_lat,
+            lng: organization.hq_lng,
+          },
+        ]
+      : [];
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker];
+
+  const trailsByProfile = new Map<string, [number, number][]>();
+  for (const p of trailLog ?? []) {
+    if (!trailsByProfile.has(p.profile_id)) trailsByProfile.set(p.profile_id, []);
+    trailsByProfile.get(p.profile_id)!.push([p.lat, p.lng]);
+  }
+  const trails = [...trailsByProfile.entries()].map(([profileId, points]) => ({
+    id: `trail-${profileId}`,
+    color: "#0369a1",
+    points,
+  }));
 
   // Unified activity feed — merges status changes, arrivals, expenses,
   // photo uploads and new jobs into one real, timestamp-sorted stream.
@@ -510,7 +547,7 @@ export default async function DashboardPage() {
             </div>
             <div className="h-[200px] p-2.5">
               {allMapMarkers.length > 0 ? (
-                <DashboardMapLoader markers={allMapMarkers} />
+                <DashboardMapLoader markers={allMapMarkers} trails={trails} />
               ) : (
                 <div className="flex h-full flex-col items-center justify-center gap-1 rounded-[10px] bg-[#f9fafb] text-center">
                   <p className="text-[12.5px] font-semibold text-foreground">

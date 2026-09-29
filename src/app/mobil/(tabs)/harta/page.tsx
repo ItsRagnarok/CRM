@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/empty-state";
 import { MapPin } from "lucide-react";
 
 export default async function MobileMapPage() {
-  const { profile } = await requireSessionContext();
+  const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -40,6 +40,10 @@ export default async function MobileMapPage() {
 
   const nextJob = jobs.find((j) => j.scheduled_date === today) ?? jobs[0] ?? null;
   const routeTo = nextJob ? mapJobs.find((j) => j.id === nextJob.id) : undefined;
+  const hq =
+    organization.hq_lat != null && organization.hq_lng != null
+      ? { lat: organization.hq_lat, lng: organization.hq_lng }
+      : null;
 
   return (
     <div className="flex h-full flex-col">
@@ -50,7 +54,7 @@ export default async function MobileMapPage() {
 
       <div className="relative flex-1">
         {mapJobs.length > 0 ? (
-          <MobileMapLoader jobs={mapJobs} routeTo={routeTo} />
+          <MobileMapLoader jobs={mapJobs} routeTo={routeTo} hq={hq} />
         ) : (
           <EmptyState icon={MapPin} title="Nimic de afișat" description="Nu ai lucrări cu adresă GPS azi." />
         )}

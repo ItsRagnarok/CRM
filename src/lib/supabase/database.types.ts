@@ -1345,6 +1345,8 @@ export type Database = {
           email: string | null
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
+          hq_lat: number | null
+          hq_lng: number | null
           id: string
           is_active: boolean
           logo_storage_path: string | null
@@ -1360,6 +1362,8 @@ export type Database = {
           email?: string | null
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
+          hq_lat?: number | null
+          hq_lng?: number | null
           id?: string
           is_active?: boolean
           logo_storage_path?: string | null
@@ -1375,6 +1379,8 @@ export type Database = {
           email?: string | null
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
+          hq_lat?: number | null
+          hq_lng?: number | null
           id?: string
           is_active?: boolean
           logo_storage_path?: string | null

@@ -54,6 +54,25 @@ const selfIcon = L.divIcon({
   iconAnchor: [8, 8],
 });
 
+const hqIcon = L.divIcon({
+  className: "",
+  html: `<div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;">
+    <span style="background:#101828;color:#fff;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(16,24,40,.3);">🏢 Sediu</span>
+    <span style="width:9px;height:9px;border-radius:50%;background:#101828;border:2px solid #fff;margin-top:3px;"></span>
+  </div>`,
+  iconSize: [0, 0],
+  iconAnchor: [0, 0],
+  popupAnchor: [0, -34],
+});
+
+function FlyTo({ target }: { target: [number, number] | null }) {
+  const map = useMap();
+  useEffect(() => {
+    if (target) map.flyTo(target, 15);
+  }, [target, map]);
+  return null;
+}
+
 function FitBounds({ points }: { points: [number, number][] }) {
   const map = useMap();
   useEffect(() => {
@@ -69,18 +88,30 @@ function FitBounds({ points }: { points: [number, number][] }) {
 
 type RouteInfo = { coords: [number, number][]; distanceM: number; durationS: number };
 
-export function MobileMap({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: MobileMapJob }) {
+export function MobileMap({
+  jobs,
+  routeTo,
+  hq,
+}: {
+  jobs: MobileMapJob[];
+  routeTo?: MobileMapJob;
+  hq?: { lat: number; lng: number } | null;
+}) {
   const [selfPos, setSelfPos] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<RouteInfo | null>(null);
   const [routeError, setRouteError] = useState(false);
+  const [flyTarget, setFlyTarget] = useState<[number, number] | null>(null);
 
   useEffect(() => {
     if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
+    // Continuous tracking — the technician must always see his own live
+    // position on the map, not just a one-time snapshot from page load.
+    const watchId = navigator.geolocation.watchPosition(
       (pos) => setSelfPos([pos.coords.latitude, pos.coords.longitude]),
-      () => setSelfPos(null),
-      { enableHighAccuracy: true, timeout: 8000 }
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000 }
     );
+    return () => navigator.geolocation.clearWatch(watchId);
   }, []);
 
   useEffect(() => {
@@ -126,10 +157,16 @@ export function MobileMap({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: M
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <FitBounds points={route ? [...route.coords, ...points] : points} />
+        <FlyTo target={flyTarget} />
         {route && <Polyline positions={route.coords} pathOptions={{ color: "#2F6FED", weight: 5, opacity: 0.85 }} />}
         {selfPos && (
           <Marker position={selfPos} icon={selfIcon}>
             <Popup>Poziția ta</Popup>
+          </Marker>
+        )}
+        {hq && (
+          <Marker position={[hq.lat, hq.lng]} icon={hqIcon}>
+            <Popup>Sediul administrativ</Popup>
           </Marker>
         )}
         {jobs.map((j) => (
@@ -151,6 +188,29 @@ export function MobileMap({ jobs, routeTo }: { jobs: MobileMapJob[]; routeTo?: M
           </Marker>
         ))}
       </MapContainer>
+      {hq && (
+        <button
+          type="button"
+          onClick={() => setFlyTarget([hq.lat, hq.lng])}
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 12,
+            background: "#101828",
+            color: "#fff",
+            fontWeight: 700,
+            fontSize: 12,
+            borderRadius: 999,
+            padding: "9px 14px",
+            boxShadow: "0 4px 14px rgba(16,24,40,0.25)",
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          🏢 Sediu
+        </button>
+      )}
       {routeTo && (
         <div
           style={{

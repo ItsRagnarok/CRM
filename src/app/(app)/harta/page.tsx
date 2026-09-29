@@ -24,8 +24,6 @@ export default async function HartaPage() {
   const supabase = await createClient();
   const today = new Date().toISOString().slice(0, 10);
 
-  const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-
   const [{ data: activeJobs }, { data: teams }, { data: scheduledToday }, { data: arrivalsToday }, { data: livePositions }, { data: openAlerts }] =
     await Promise.all([
       supabase
@@ -56,11 +54,13 @@ export default async function HartaPage() {
         .eq("event_type", "arrival")
         .gte("occurred_at", startOfDay(today))
         .order("occurred_at", { ascending: false }),
+      // No time filter — a technician who's gone quiet (permission not yet
+      // granted, dead zone, phone backgrounded a while) should still show
+      // up at their last known spot, not disappear from the map entirely.
       supabase
         .from("technician_positions")
         .select("profile_id, lat, lng, recorded_at, profiles(full_name)")
-        .eq("organization_id", organization.id)
-        .gte("recorded_at", tenMinAgo),
+        .eq("organization_id", organization.id),
       supabase
         .from("job_alerts")
         .select("id, job_id, kind, message, created_at, jobs(display_number)")
@@ -73,7 +73,7 @@ export default async function HartaPage() {
     .from("technician_position_log")
     .select("profile_id, lat, lng, recorded_at")
     .eq("organization_id", organization.id)
-    .gte("recorded_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
+    .gte("recorded_at", new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString())
     .order("recorded_at", { ascending: true });
 
   const arrivalByJob = new Map<string, string>();
@@ -168,18 +168,35 @@ export default async function HartaPage() {
 
   const livePositionMarkers: DashboardMapMarker[] = (livePositions ?? []).map((p) => {
     const minutesAgo = Math.round((Date.now() - new Date(p.recorded_at).getTime()) / 60000);
+    const isLive = minutesAgo <= 3;
+    const isStale = minutesAgo > 15;
     return {
       id: `pos-${p.profile_id}`,
       label: `📍 ${p.profiles?.full_name ?? "Tehnician"}`,
-      sublabel: "Poziție live",
-      statusLabel: minutesAgo <= 1 ? "chiar acum" : `acum ${minutesAgo} min`,
-      color: "#0369a1",
+      sublabel: isStale ? "Ultima poziție cunoscută (offline)" : "Poziție live",
+      statusLabel: minutesAgo <= 1 ? "chiar acum" : minutesAgo < 60 ? `acum ${minutesAgo} min` : `acum ${Math.round(minutesAgo / 60)} h`,
+      color: isLive ? "#15803d" : isStale ? "#98a2b3" : "#0369a1",
       lat: p.lat,
       lng: p.lng,
     };
   });
 
-  const allMapMarkers = [...mapMarkers, ...livePositionMarkers];
+  const hqMarker: DashboardMapMarker[] =
+    organization?.hq_lat != null && organization?.hq_lng != null
+      ? [
+          {
+            id: "hq",
+            label: "🏢 Sediu",
+            sublabel: organization.address ?? organization.name,
+            statusLabel: "Sediul administrativ",
+            color: "#101828",
+            lat: organization.hq_lat,
+            lng: organization.hq_lng,
+          },
+        ]
+      : [];
+
+  const allMapMarkers = [...mapMarkers, ...livePositionMarkers, ...hqMarker];
 
   const trailsByProfile = new Map<string, [number, number][]>();
   for (const p of trailLog ?? []) {
