@@ -35,6 +35,7 @@ export default async function PontajPage({
         .select("id, full_name")
         .eq("organization_id", organization.id)
         .eq("is_active", true)
+        .in("role", ["technician", "team_leader"])
         .order("full_name"),
       supabase
         .from("time_entries")

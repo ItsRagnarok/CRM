@@ -1623,6 +1623,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_admin_create_employee: {
+        Args: {
+          employee_email: string
+          employee_full_name: string
+          employee_password: string
+          employee_role: Database["public"]["Enums"]["user_role"]
+        }
+        Returns: string
+      }
       create_organization_and_owner: {
         Args: { org_name: string; owner_full_name: string }
         Returns: string

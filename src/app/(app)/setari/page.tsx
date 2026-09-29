@@ -3,6 +3,7 @@ import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { CompanyForm } from "./company-form";
+import { NewEmployeeForm } from "./new-employee-form";
 import { updateUserRole, updateGpsSettings } from "./actions";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -96,6 +97,9 @@ export default async function SetariPage({
               <div className="overflow-hidden rounded-[13px] border border-border bg-white">
                 <div className="border-b border-[#f2f4f7] px-5 py-3.5 text-[14.5px] font-bold">
                   Utilizatori & roluri
+                </div>
+                <div className="border-b border-[#f2f4f7] p-4">
+                  <NewEmployeeForm />
                 </div>
                 <div className="flex flex-col divide-y divide-[#f2f4f7]">
                   {(profiles ?? []).map((p) => (

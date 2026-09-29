@@ -34,6 +34,43 @@ export async function updateOrganization(
   return { success: true };
 }
 
+export async function createEmployee(
+  _prevState: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+) {
+  const fullName = String(formData.get("fullName") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+  const role = String(formData.get("role") ?? "technician") as UserRole;
+
+  if (!fullName || !email || !password) {
+    return { error: "Completează toate câmpurile." };
+  }
+  if (password.length < 6) {
+    return { error: "Parola trebuie să aibă cel puțin 6 caractere." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("company_admin_create_employee", {
+    employee_full_name: fullName,
+    employee_email: email,
+    employee_password: password,
+    employee_role: role,
+  });
+
+  if (error) {
+    return {
+      error: error.message.includes("Există deja") || error.message.includes("Clienții")
+        ? error.message
+        : "Nu am putut crea contul. Încearcă din nou.",
+    };
+  }
+
+  revalidatePath("/setari");
+  revalidatePath("/echipe");
+  return { success: true };
+}
+
 export async function updateUserRole(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
   const role = String(formData.get("role") ?? "") as UserRole;
