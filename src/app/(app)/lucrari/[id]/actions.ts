@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
+import { syncJobAssignmentsToTeam } from "../team-sync";
 
 type JobType = Database["public"]["Enums"]["job_type"];
 type JobPriority = Database["public"]["Enums"]["job_priority"];
@@ -23,6 +24,8 @@ export async function updateJob(
     return { error: "Titlul și data sunt obligatorii." };
   }
 
+  const teamId = String(formData.get("teamId") ?? "") || null;
+
   const { error } = await supabase
     .from("jobs")
     .update({
@@ -33,15 +36,19 @@ export async function updateJob(
       scheduled_date: scheduledDate,
       start_time: String(formData.get("startTime") ?? "") || null,
       end_time: String(formData.get("endTime") ?? "") || null,
-      team_id: String(formData.get("teamId") ?? "") || null,
+      team_id: teamId,
     })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
 
   if (error) return { error: "Nu am putut salva modificările." };
 
+  await syncJobAssignmentsToTeam(supabase, jobId, teamId);
+
   revalidatePath(`/lucrari/${jobId}`);
   revalidatePath("/lucrari");
+  revalidatePath("/mobil");
+  revalidatePath("/mobil/lucrari");
   redirect(`/lucrari/${jobId}`);
 }
 

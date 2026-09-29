@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
+import { syncJobAssignmentsToTeam } from "./team-sync";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -88,8 +89,12 @@ export async function createJob(
     changed_by: userId,
   });
 
+  await syncJobAssignmentsToTeam(supabase, job.id, teamId);
+
   revalidatePath("/lucrari");
   revalidatePath("/dashboard");
+  revalidatePath("/mobil");
+  revalidatePath("/mobil/lucrari");
   redirect(`/lucrari/${job.id}`);
 }
 
