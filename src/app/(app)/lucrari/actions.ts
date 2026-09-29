@@ -91,8 +91,31 @@ export async function createJob(
 
   await syncJobAssignmentsToTeam(supabase, job.id, teamId);
 
+  const requiredMaterialIds = formData.getAll("requiredMaterialIds").map(String).filter(Boolean);
+  if (requiredMaterialIds.length > 0) {
+    const { data: chosenMaterials } = await supabase
+      .from("materials")
+      .select("id, kind")
+      .eq("organization_id", organization.id)
+      .in("id", requiredMaterialIds);
+
+    if (chosenMaterials && chosenMaterials.length > 0) {
+      await supabase.from("job_required_items").insert(
+        chosenMaterials.map((m) => ({
+          organization_id: organization.id,
+          job_id: job.id,
+          kind: m.kind,
+          material_id: m.id,
+          quantity_needed: 1,
+          created_by: userId,
+        }))
+      );
+    }
+  }
+
   revalidatePath("/lucrari");
   revalidatePath("/dashboard");
+  revalidatePath("/mobil/materiale");
   revalidatePath("/mobil");
   revalidatePath("/mobil/lucrari");
   redirect(`/lucrari/${job.id}`);
