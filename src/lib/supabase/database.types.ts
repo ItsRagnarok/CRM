@@ -821,6 +821,7 @@ export type Database = {
           material_id: string | null
           organization_id: string
           quantity_needed: number
+          taken: boolean
         }
         Insert: {
           created_at?: string
@@ -832,6 +833,7 @@ export type Database = {
           material_id?: string | null
           organization_id: string
           quantity_needed?: number
+          taken?: boolean
         }
         Update: {
           created_at?: string
@@ -843,6 +845,7 @@ export type Database = {
           material_id?: string | null
           organization_id?: string
           quantity_needed?: number
+          taken?: boolean
         }
         Relationships: [
           {
@@ -938,9 +941,12 @@ export type Database = {
           id: string
           job_type: Database["public"]["Enums"]["job_type"]
           location_id: string | null
+          mobile_stage: string | null
           observations: string | null
           organization_id: string
           priority: Database["public"]["Enums"]["job_priority"]
+          require_arrival_photo: boolean
+          require_final_photo: boolean
           scheduled_date: string
           start_time: string | null
           status: Database["public"]["Enums"]["job_status"]
@@ -964,9 +970,12 @@ export type Database = {
           id?: string
           job_type?: Database["public"]["Enums"]["job_type"]
           location_id?: string | null
+          mobile_stage?: string | null
           observations?: string | null
           organization_id: string
           priority?: Database["public"]["Enums"]["job_priority"]
+          require_arrival_photo?: boolean
+          require_final_photo?: boolean
           scheduled_date: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]
@@ -990,9 +999,12 @@ export type Database = {
           id?: string
           job_type?: Database["public"]["Enums"]["job_type"]
           location_id?: string | null
+          mobile_stage?: string | null
           observations?: string | null
           organization_id?: string
           priority?: Database["public"]["Enums"]["job_priority"]
+          require_arrival_photo?: boolean
+          require_final_photo?: boolean
           scheduled_date?: string
           start_time?: string | null
           status?: Database["public"]["Enums"]["job_status"]

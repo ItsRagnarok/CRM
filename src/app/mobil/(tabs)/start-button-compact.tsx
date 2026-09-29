@@ -1,8 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { startTravel } from "../lucrari/[id]/actions";
+import { beginJobPrep } from "../lucrari/[id]/actions";
 
 export function StartButtonCompact({
   jobId,
@@ -13,26 +11,24 @@ export function StartButtonCompact({
   jobTitle: string;
   address: string | null;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
   return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={() => {
+    <form
+      action={beginJobPrep}
+      onSubmit={(e) => {
         const confirmed = window.confirm(
-          `Sigur pornești spre „${jobTitle}”${address ? ` — ${address}` : ""}?`
+          `Pornești pregătirea pentru „${jobTitle}”${address ? ` — ${address}` : ""}?`
         );
-        if (!confirmed) return;
-        startTransition(async () => {
-          await startTravel(jobId);
-          router.refresh();
-        });
+        if (!confirmed) e.preventDefault();
       }}
-      className="flex-1 rounded-[10px] bg-success py-3 text-center text-[13.5px] font-bold text-white disabled:opacity-60"
+      className="flex-1"
     >
-      {pending ? "…" : "START"}
-    </button>
+      <input type="hidden" name="jobId" value={jobId} />
+      <button
+        type="submit"
+        className="w-full rounded-[10px] bg-success py-3 text-center text-[13.5px] font-bold text-white"
+      >
+        START
+      </button>
+    </form>
   );
 }

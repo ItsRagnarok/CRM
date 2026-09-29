@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { mobileStagePath, type MobileStage } from "./mobile-stage";
 
 function paths(jobId: string) {
   revalidatePath(`/mobil/lucrari/${jobId}`);
@@ -12,13 +13,76 @@ function paths(jobId: string) {
   revalidatePath("/mobil/lucrari");
 }
 
+// Pre-departure stages a technician walks through before status flips to
+// "in_drum": checklist (materials/tools to take) -> depozit (pick a route
+// through the warehouse or skip it) -> cheltuiala (log anything bought to
+// cover what's missing) -> ready (map + actually start driving). Stored on
+// the job itself so re-opening it after exiting resumes at the exact same
+// screen instead of restarting the wizard.
+export async function beginJobPrep(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!jobId) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("mobile_stage")
+    .eq("id", jobId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
+
+  const stage = (job?.mobile_stage as MobileStage | null) ?? "checklist";
+  if (!job?.mobile_stage) {
+    await supabase
+      .from("jobs")
+      .update({ mobile_stage: "checklist" })
+      .eq("id", jobId)
+      .eq("organization_id", organization.id);
+  }
+
+  paths(jobId);
+  redirect(mobileStagePath(jobId, stage));
+}
+
+export async function advanceMobileStage(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  const stage = String(formData.get("stage") ?? "") as MobileStage;
+  if (!jobId || !stage) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("jobs")
+    .update({ mobile_stage: stage })
+    .eq("id", jobId)
+    .eq("organization_id", organization.id);
+
+  paths(jobId);
+  redirect(mobileStagePath(jobId, stage));
+}
+
+export async function toggleRequiredItemTaken(formData: FormData) {
+  const itemId = String(formData.get("itemId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "");
+  const taken = String(formData.get("taken") ?? "") === "true";
+  if (!itemId) return;
+
+  const supabase = await createClient();
+  await supabase.from("job_required_items").update({ taken: !taken }).eq("id", itemId);
+
+  revalidatePath(`/mobil/lucrari/${jobId}/checklist`);
+}
+
 export async function startTravel(jobId: string) {
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
   await supabase
     .from("jobs")
-    .update({ status: "in_drum" })
+    .update({ status: "in_drum", mobile_stage: null })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
 

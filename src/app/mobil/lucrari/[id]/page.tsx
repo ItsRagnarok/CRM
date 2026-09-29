@@ -1,22 +1,16 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowLeft, ClipboardList, ChevronRight, Receipt, Camera } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
+import { ArrowLeft, ClipboardList, ChevronRight, Camera, Warehouse } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
-import { startWork } from "./actions";
+import { startWork, beginJobPrep } from "./actions";
+import { mobileStagePath } from "./mobile-stage";
 import { ArriveButton } from "./arrive-button";
 import { StartTravelButton } from "./start-travel-button";
-import { DistancePanel } from "./distance-panel";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { acknowledgeRejectedPurchase } from "./actions";
 import { Store, XCircle } from "lucide-react";
-
-function mapsHref(address: string | null, lat: number | null, lng: number | null) {
-  if (lat != null && lng != null) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  if (address) return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-  return null;
-}
 
 export default async function MobileJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,7 +20,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, mobile_stage, require_arrival_photo, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -34,8 +28,15 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
   if (!job) notFound();
 
-  const maps = mapsHref(job.locations?.address ?? null, job.locations?.lat ?? null, job.locations?.lng ?? null);
-  const isTraveling = job.status === "programata" || job.status === "in_drum";
+  // Once a technician has stepped into the pre-departure wizard, re-opening
+  // the job (from home, from the list, from anywhere) must drop him back at
+  // exactly the screen he left — never the start of the wizard again.
+  if (job.status === "programata" && job.mobile_stage && job.mobile_stage !== "ready") {
+    redirect(mobileStagePath(id, job.mobile_stage as "checklist" | "depozit" | "cheltuiala"));
+  }
+
+  const isReadyToTravel = job.status === "programata" && job.mobile_stage === "ready";
+  const isTraveling = job.status === "in_drum";
   const isDone = job.status === "finalizata";
   const isWorking = job.status === "in_lucru" || job.status === "pauza";
 
@@ -46,6 +47,24 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
       ])
     : [{ count: 0 }, { count: 0 }];
 
+  const { count: beforePhotoCount } =
+    job.status === "ajunsa"
+      ? await supabase
+          .from("photos")
+          .select("id", { count: "exact", head: true })
+          .eq("job_id", id)
+          .eq("category", "before")
+      : { count: 0 };
+
+  const { data: requiredItems } =
+    job.status === "programata" && !job.mobile_stage
+      ? await supabase
+          .from("job_required_items")
+          .select("id, kind, quantity_needed, custom_name, materials(name, unit)")
+          .eq("job_id", id)
+          .order("created_at")
+      : { data: [] };
+
   const { data: purchaseRequests } = await supabase
     .from("purchase_requests")
     .select("id, custom_name, store_name, status, fulfilled_at, technician_acknowledged_at, materials(name)")
@@ -55,6 +74,25 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
   const pendingPickup = (purchaseRequests ?? []).find((r) => r.status === "approved" && !r.fulfilled_at);
   const unseenRejections = (purchaseRequests ?? []).filter((r) => r.status === "denied" && !r.technician_acknowledged_at);
+
+  const jobPin =
+    job.locations?.lat != null && job.locations?.lng != null
+      ? {
+          id: job.id,
+          label: job.title,
+          sublabel: job.locations.address ?? "",
+          lat: job.locations.lat,
+          lng: job.locations.lng,
+          href: `/mobil/lucrari/${job.id}`,
+        }
+      : null;
+
+  const hq =
+    organization.hq_lat != null && organization.hq_lng != null
+      ? { lat: organization.hq_lat, lng: organization.hq_lng }
+      : null;
+
+  const needsArrivalPhoto = job.require_arrival_photo && (beforePhotoCount ?? 0) === 0;
 
   return (
     <div className="flex h-full flex-col">
@@ -130,81 +168,62 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {job.locations?.lat != null && job.locations?.lng != null && !isDone && (
-          <div className="mt-3 h-[160px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
-            <MobileMapLoader
-              jobs={[
-                {
-                  id: job.id,
-                  label: job.title,
-                  sublabel: job.locations.address ?? "",
-                  lat: job.locations.lat,
-                  lng: job.locations.lng,
-                  href: `/mobil/lucrari/${job.id}`,
-                },
-              ]}
-            />
+        {requiredItems && requiredItems.length > 0 && (
+          <div className="mt-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+            <div className="mb-2 flex items-center gap-2 text-[12px] font-bold text-muted-2">
+              <Warehouse className="h-3.5 w-3.5" /> MATERIALE ȘI SCULE NECESARE
+            </div>
+            <div className="flex flex-col divide-y divide-[#f2f4f7]">
+              {requiredItems.map((item) => (
+                <div key={item.id} className="flex items-center gap-2.5 py-1.5 text-[12.5px]">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                      item.kind === "tool" ? "bg-purple-soft text-purple" : "bg-electric-soft text-electric"
+                    }`}
+                  >
+                    {item.kind === "tool" ? "SCULĂ" : "MATERIAL"}
+                  </span>
+                  <span className="flex-1 text-[#344054]">{item.materials?.name ?? item.custom_name}</span>
+                  <span className="font-bold text-muted-2">
+                    {item.quantity_needed} {item.materials?.unit ?? "buc"}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
+        {(isReadyToTravel || isTraveling) && jobPin ? (
+          <div className="mt-3 h-[260px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+            <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
+          </div>
+        ) : (
+          jobPin &&
+          !isDone && (
+            <div className="mt-3 h-[160px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+              <MobileMapLoader jobs={[jobPin]} />
+            </div>
+          )
+        )}
+
         <div className="mt-4 flex flex-col gap-3">
-          {job.status === "programata" && (
-            <>
-              <Link
-                href={`/mobil/lucrari/${job.id}/checklist`}
-                className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
+          {job.status === "programata" && !job.mobile_stage && (
+            <form action={beginJobPrep}>
+              <input type="hidden" name="jobId" value={job.id} />
+              <button
+                type="submit"
+                className="flex w-full items-center justify-center gap-2 rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
-                  <ClipboardList className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
-                </div>
-                <div className="flex-1">
-                  <div className="text-[13.5px] font-bold">Checklist înainte de plecare</div>
-                  <div className="text-[11px] text-muted-2">Ce trebuie să iei — scule, materiale</div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-2" />
-              </Link>
-              <Link
-                href={`/mobil/lucrari/${job.id}/cheltuiala`}
-                className="flex items-center gap-3 rounded-[12px] border border-[#eaecf0] bg-white p-3.5"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-electric-soft">
-                  <Receipt className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
-                </div>
-                <div className="flex-1">
-                  <div className="text-[13.5px] font-bold">Îți lipsesc materiale/scule?</div>
-                  <div className="text-[11px] text-muted-2">Adaugă cheltuiala înainte să pleci</div>
-                </div>
-                <ChevronRight className="h-4 w-4 text-muted-2" />
-              </Link>
-            </>
+                <ClipboardList className="h-[18px] w-[18px]" /> PORNEȘTE
+              </button>
+            </form>
           )}
 
-          {isTraveling && (
-            <>
-              {job.locations?.lat != null && job.locations?.lng != null && (
-                <DistancePanel lat={job.locations.lat} lng={job.locations.lng} />
-              )}
-              {maps && (
-                <a
-                  href={maps}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block rounded-[12px] border border-[#d0d5dd] bg-white py-3.5 text-center text-[14px] font-bold text-[#344054]"
-                >
-                  Deschide în Hărți
-                </a>
-              )}
-              {job.status === "programata" ? (
-                <StartTravelButton
-                  jobId={job.id}
-                  jobTitle={job.title}
-                  address={job.locations?.address ?? null}
-                />
-              ) : (
-                <ArriveButton jobId={job.id} />
-              )}
-            </>
+          {isReadyToTravel && (
+            <StartTravelButton jobId={job.id} jobTitle={job.title} address={job.locations?.address ?? null} />
           )}
+
+          {isTraveling && <ArriveButton jobId={job.id} />}
 
           {job.status === "ajunsa" && (
             <>
@@ -229,14 +248,20 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 </div>
                 <ChevronRight className="h-4 w-4 text-muted-2" />
               </Link>
-              <form action={startWork.bind(null, job.id)}>
-                <button
-                  type="submit"
-                  className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
-                >
-                  PORNEȘTE LUCRUL
-                </button>
-              </form>
+              {needsArrivalPhoto ? (
+                <div className="rounded-[12px] border border-warning-bg bg-warning-bg p-3.5 text-center text-[12.5px] font-semibold text-[#7a5b0e]">
+                  Fă poza de sosire mai sus înainte să pornești lucrul.
+                </div>
+              ) : (
+                <form action={startWork.bind(null, job.id)}>
+                  <button
+                    type="submit"
+                    className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
+                  >
+                    PORNEȘTE LUCRUL
+                  </button>
+                </form>
+              )}
             </>
           )}
 
@@ -277,4 +302,3 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
     </div>
   );
 }
-

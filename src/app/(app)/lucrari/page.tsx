@@ -48,9 +48,7 @@ export default async function LucrariPage({
         query = query.eq("status", status as JobStatus);
       }
       if (clientId) query = query.eq("client_id", clientId);
-      return query
-        .order("scheduled_date", { ascending: false })
-        .order("start_time", { ascending: true, nullsFirst: false });
+      return query.order("created_at", { ascending: false });
     })(),
     (() => {
       let q = supabase.from("jobs").select("status").eq("organization_id", organization.id);

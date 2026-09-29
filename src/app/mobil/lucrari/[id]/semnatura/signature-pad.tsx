@@ -4,13 +4,22 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveSignature, flagClientAbsent } from "../actions";
 
-export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultName: string }) {
+export function SignaturePad({
+  jobId,
+  defaultName,
+  adminPhone,
+}: {
+  jobId: string;
+  defaultName: string;
+  adminPhone: string | null;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawing = useRef(false);
   const lastPoint = useRef<{ x: number; y: number } | null>(null);
   const [hasDrawn, setHasDrawn] = useState(false);
   const signerName = defaultName || "Client";
   const [pending, startTransition] = useTransition();
+  const [showAbsentFlow, setShowAbsentFlow] = useState(false);
   const router = useRouter();
 
   // The canvas's drawing-buffer size must match its actual on-screen CSS size
@@ -143,14 +152,38 @@ export function SignaturePad({ jobId, defaultName }: { jobId: string; defaultNam
       >
         {pending ? "Se salvează…" : "CONFIRMĂ ȘI FINALIZEAZĂ"}
       </button>
-      <button
-        type="button"
-        onClick={clientAbsent}
-        disabled={pending}
-        className="mt-2.5 block w-full rounded-[12px] border border-[#d0d5dd] py-3 text-center text-[13px] font-bold text-[#344054] disabled:opacity-50"
-      >
-        Clientul nu e prezent — anunță administratorul
-      </button>
+      {!showAbsentFlow ? (
+        <button
+          type="button"
+          onClick={() => setShowAbsentFlow(true)}
+          disabled={pending}
+          className="mt-2.5 block w-full rounded-[12px] border border-[#d0d5dd] py-3 text-center text-[13px] font-bold text-[#344054] disabled:opacity-50"
+        >
+          Clientul nu e prezent — anunță administratorul
+        </button>
+      ) : (
+        <div className="mt-2.5 flex flex-col gap-2 rounded-[12px] border border-[#d0d5dd] bg-neutral-bg p-3.5">
+          <div className="text-[12.5px] font-semibold text-[#344054]">
+            Administratorul a fost notificat automat. Sună-l ca să confirme, apoi finalizează fără semnătură.
+          </div>
+          {adminPhone && (
+            <a
+              href={`tel:${adminPhone}`}
+              className="block rounded-[10px] bg-electric py-2.5 text-center text-[13px] font-bold text-white"
+            >
+              📞 Sună administratorul — {adminPhone}
+            </a>
+          )}
+          <button
+            type="button"
+            onClick={clientAbsent}
+            disabled={pending}
+            className="block w-full rounded-[10px] bg-success py-2.5 text-center text-[13px] font-bold text-white disabled:opacity-50"
+          >
+            {pending ? "Se salvează…" : "CONFIRMĂ FĂRĂ SEMNĂTURĂ"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

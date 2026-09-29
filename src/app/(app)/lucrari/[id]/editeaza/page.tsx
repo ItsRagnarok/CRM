@@ -16,7 +16,7 @@ export default async function EditJobPage({
     supabase
       .from("jobs")
       .select(
-        "id, title, description, admin_message, job_type, priority, scheduled_date, start_time, end_time, team_id, location_id, locations(address)"
+        "id, title, description, admin_message, job_type, priority, scheduled_date, start_time, end_time, team_id, location_id, require_arrival_photo, require_final_photo, locations(address)"
       )
       .eq("organization_id", organization.id)
       .eq("id", id)

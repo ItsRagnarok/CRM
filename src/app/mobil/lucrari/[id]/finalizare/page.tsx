@@ -14,7 +14,7 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number, observations")
+    .select("id, display_number, observations, require_final_photo")
     .eq("id", id)
     .eq("organization_id", organization.id)
     .maybeSingle();
@@ -35,7 +35,7 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
     supabase.from("time_entries").select("profile_id, job_id, event_type, occurred_at").eq("job_id", id),
   ]);
 
-  const hasFinalPhoto = (afterPhotoCount ?? 0) > 0;
+  const hasFinalPhoto = !job.require_final_photo || (afterPhotoCount ?? 0) > 0;
 
   const items = rawItems ?? [];
   const totalExpenses = (expenses ?? []).reduce((s, e) => s + Number(e.amount), 0);

@@ -4,14 +4,7 @@ import { ArrowLeft, AlertTriangle, MessageSquare, Camera } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addJobNote } from "../actions";
-
-const PREDEFINED_PROBLEMS = [
-  "Lipsește o piesă/material",
-  "Sculă defectă",
-  "Clientul nu e mulțumit",
-  "Întârziere față de programare",
-  "Acces dificil la locație",
-];
+import { ProblemPicker } from "./problem-picker";
 
 export default async function MobileExtraPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -72,21 +65,7 @@ export default async function MobileExtraPage({ params }: { params: Promise<{ id
           <div className="mb-2.5 flex items-center gap-2 text-[14px] font-bold text-foreground">
             <AlertTriangle className="h-4 w-4 text-warning" /> Raportează o problemă
           </div>
-          <div className="flex flex-col gap-2">
-            {PREDEFINED_PROBLEMS.map((p) => (
-              <form key={p} action={addJobNote}>
-                <input type="hidden" name="jobId" value={id} />
-                <input type="hidden" name="kind" value="problem" />
-                <input type="hidden" name="text" value={p} />
-                <button
-                  type="submit"
-                  className="w-full rounded-[10px] bg-danger-bg px-3.5 py-2.5 text-left text-[13px] font-semibold text-danger"
-                >
-                  {p}
-                </button>
-              </form>
-            ))}
-          </div>
+          <ProblemPicker jobId={id} />
         </div>
 
         <div className="mt-4 rounded-[13px] border border-[#eaecf0] bg-white p-4">

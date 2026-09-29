@@ -41,6 +41,8 @@ export async function updateJob(
       start_time: String(formData.get("startTime") ?? "") || null,
       end_time: String(formData.get("endTime") ?? "") || null,
       team_id: teamId,
+      require_arrival_photo: formData.get("requireArrivalPhoto") === "on",
+      require_final_photo: formData.get("requireFinalPhoto") === "on",
     })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
@@ -119,6 +121,7 @@ export async function addExpense(formData: FormData) {
 
   revalidatePath(`/lucrari/${jobId}`);
   revalidatePath("/cheltuieli");
+  revalidatePath(`/mobil/lucrari/${jobId}/cheltuiala`);
 }
 
 // Seeds a job's checklist from the organization's admin-defined template (if

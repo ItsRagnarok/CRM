@@ -19,6 +19,8 @@ type Job = {
   location_id: string | null;
   locations: { address: string } | null;
   admin_message: string | null;
+  require_arrival_photo: boolean;
+  require_final_photo: boolean;
 };
 
 export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; name: string }[] }) {
@@ -115,6 +117,19 @@ export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; nam
             placeholder="Ex: Ai grijă la siguranță, succes!"
             className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
           />
+        </Field>
+
+        <Field label="Poze obligatorii de la tehnician">
+          <div className="flex flex-col gap-2">
+            <label className="flex items-center gap-2 text-[13px] text-[#344054]">
+              <input type="checkbox" name="requireArrivalPhoto" defaultChecked={job.require_arrival_photo} />
+              Poză la sosire, înainte să pornească lucrul
+            </label>
+            <label className="flex items-center gap-2 text-[13px] text-[#344054]">
+              <input type="checkbox" name="requireFinalPhoto" defaultChecked={job.require_final_photo} />
+              Poză cu lucrarea finalizată, înainte să finalizeze
+            </label>
+          </div>
         </Field>
 
         {state?.error && <p className="text-sm font-medium text-danger">{state.error}</p>}

@@ -16,16 +16,6 @@ function greeting() {
   return "Bună seara";
 }
 
-function mapsHref(address: string | null, lat: number | null, lng: number | null) {
-  if (lat != null && lng != null) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  }
-  if (address) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-  }
-  return null;
-}
-
 const WEEKDAYS = ["L", "Ma", "Mi", "J", "V", "S", "D"];
 
 function pad(n: number) {
@@ -286,7 +276,6 @@ export default async function MobileHomePage({
         ) : (
           jobs.map((job) => {
             const isActive = job.status === "in_lucru" || job.status === "pauza";
-            const maps = mapsHref(job.locations?.address ?? null, job.locations?.lat ?? null, job.locations?.lng ?? null);
             return (
               <div
                 key={job.id}
@@ -311,20 +300,6 @@ export default async function MobileHomePage({
                   <div className="mt-2 text-[12.5px] text-muted">📍 {job.locations.address}</div>
                 )}
                 <div className="mt-3.5 flex gap-2.5">
-                  {maps ? (
-                    <a
-                      href={maps}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex-1 rounded-[10px] bg-electric py-3 text-center text-[13.5px] font-bold text-white"
-                    >
-                      NAVIGARE
-                    </a>
-                  ) : (
-                    <div className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13.5px] font-bold text-muted-2">
-                      NAVIGARE
-                    </div>
-                  )}
                   <Link
                     href={`/mobil/lucrari/${job.id}`}
                     className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13.5px] font-bold text-[#344054]"

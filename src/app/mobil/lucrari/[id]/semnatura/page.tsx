@@ -9,6 +9,7 @@ export default async function MobileSignaturePage({ params }: { params: Promise<
   const { id } = await params;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
+  const adminPhone = organization.phone ?? null;
 
   const { data: job } = await supabase
     .from("jobs")
@@ -70,7 +71,7 @@ export default async function MobileSignaturePage({ params }: { params: Promise<
         <div className="text-[15px] font-extrabold">Semnătură de recepție — #{job.display_number}</div>
       </div>
 
-      <SignaturePad jobId={id} defaultName={client?.name ?? ""} />
+      <SignaturePad jobId={id} defaultName={client?.name ?? ""} adminPhone={adminPhone} />
     </div>
   );
 }
