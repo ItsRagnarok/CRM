@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Package, Plus, Search, Wrench, Download } from "lucide-react";
+import { Package, Plus, Search, Download } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
 import { setStockQuantity, importStandardCatalog } from "./actions";
+import { getMaterialIcon } from "./standard-icons";
 
 const STATUS_DOT: Record<string, string> = {
   ok: "🟢",
@@ -151,7 +152,9 @@ export default async function MaterialePage({
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {rows.map((r) => {
+                const Icon = getMaterialIcon(r.name, r.kind);
+                return (
                 <tr key={r.id} className="border-t border-[#f2f4f7]">
                   <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">
                     <Link href={`/materiale/${r.id}`} className="flex items-center gap-2.5 hover:text-electric">
@@ -160,7 +163,7 @@ export default async function MaterialePage({
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={r.imageUrl} alt={r.name} className="h-full w-full object-cover" />
                         ) : (
-                          <Wrench className="h-3.5 w-3.5 text-muted-2" />
+                          <Icon className="h-3.5 w-3.5 text-muted-2" />
                         )}
                       </div>
                       {r.name}
@@ -196,7 +199,8 @@ export default async function MaterialePage({
                   </td>
                   <td className="px-5 py-3 text-[13px]">{STATUS_DOT[r.status]}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

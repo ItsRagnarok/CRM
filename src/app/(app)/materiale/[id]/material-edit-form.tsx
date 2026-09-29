@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { Trash2 } from "lucide-react";
 import { updateMaterial, uploadMaterialImage, deleteMaterialImage } from "../actions";
+import { getMaterialIcon } from "../standard-icons";
 
 type Material = {
   id: string;
@@ -29,6 +30,8 @@ export function MaterialEditForm({ material, imageUrl }: { material: Material; i
     startImageTransition(() => deleteMaterialImage(material.id));
   }
 
+  const FallbackIcon = getMaterialIcon(material.name, material.kind);
+
   return (
     <div className="flex flex-col gap-4">
       <div className="rounded-[14px] border border-border bg-white p-6">
@@ -39,10 +42,15 @@ export function MaterialEditForm({ material, imageUrl }: { material: Material; i
               // eslint-disable-next-line @next/next/no-img-element
               <img src={imageUrl} alt={material.name} className="h-full w-full object-cover" />
             ) : (
-              <span className="text-[11px] text-muted-2">Fără foto</span>
+              <FallbackIcon className="h-7 w-7 text-muted-2" />
             )}
           </div>
           <div className="flex flex-col gap-2">
+            {!imageUrl && (
+              <p className="text-[11.5px] text-muted-2">
+                Pictogramă generică — încarcă o poză reală a acestui articol mai jos.
+              </p>
+            )}
             <form action={handleUpload} className="flex items-center gap-2">
               <input name="file" type="file" accept="image/*" required className="text-[12.5px]" />
               <button
