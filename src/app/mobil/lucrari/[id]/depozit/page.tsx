@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Warehouse } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -14,11 +14,12 @@ export default async function MobileDepotPage({ params }: { params: Promise<{ id
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number, warehouse_id")
+    .select("id, display_number, warehouse_id, status")
     .eq("id", id)
     .eq("organization_id", organization.id)
     .maybeSingle();
   if (!job) notFound();
+  if (job.status !== "in_drum") redirect(`/mobil/lucrari/${id}`);
 
   // Use the depot the admin explicitly assigned to this job; if none was
   // picked, fall back to the organization's central depot.

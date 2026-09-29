@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -14,11 +14,15 @@ export default async function MobileChecklistPage({ params }: { params: Promise<
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number, title")
+    .select("id, display_number, title, status")
     .eq("id", id)
     .eq("organization_id", organization.id)
     .maybeSingle();
   if (!job) notFound();
+  // This step is only valid while still in transit (in_drum). Once the
+  // technician has moved past it (arrived, started work, finalized…) he
+  // must never be able to come back and redo it.
+  if (job.status !== "in_drum") redirect(`/mobil/lucrari/${id}`);
 
   const checklistId = await ensureChecklist(supabase, id, "before");
   const [{ data: rawItems }, { data: requiredItems }] = await Promise.all([
