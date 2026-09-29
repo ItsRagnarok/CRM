@@ -265,7 +265,7 @@ export async function uploadJobPhoto(formData: FormData) {
   // then nothing, stuck with no photo and no way to tell why.
   if (uploadError) return { error: `Încărcarea a eșuat: ${uploadError.message}` };
 
-  await supabase.from("photos").insert({
+  const { error: insertError } = await supabase.from("photos").insert({
     organization_id: organization.id,
     job_id: jobId,
     category,
@@ -273,6 +273,10 @@ export async function uploadJobPhoto(formData: FormData) {
     uploaded_by: userId,
     taken_at: new Date().toISOString(),
   });
+  // The file can land in storage just fine while this insert is rejected
+  // (e.g. a category the DB doesn't recognize yet) — that combination is
+  // exactly what caused photos to vanish silently before.
+  if (insertError) return { error: `Nu am putut salva poza: ${insertError.message}` };
 
   revalidatePath(`/mobil/lucrari/${jobId}/foto`);
   revalidatePath(`/lucrari/${jobId}`);
