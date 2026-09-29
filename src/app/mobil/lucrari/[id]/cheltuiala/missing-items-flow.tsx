@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { advanceMobileStage } from "../actions";
+import { StepBadge } from "../step-badge";
 
 type Expense = {
   id: string;
@@ -36,6 +37,7 @@ export function MissingItemsFlow({
   if (!showForm) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-5 p-6 text-center">
+        <StepBadge step="cheltuiala" />
         <div className="text-[16px] font-extrabold text-foreground">
           Îți lipsește vreun material sau sculă pentru lucrarea asta?
         </div>
@@ -64,7 +66,10 @@ export function MissingItemsFlow({
 
   return (
     <div className="flex flex-1 flex-col overflow-auto">
-      <div className="mx-4 mt-3 rounded-[10px] bg-electric-soft px-3.5 py-2.5 text-[12px] leading-snug text-electric">
+      <div className="px-4 pt-3">
+        <StepBadge step="achizitie" />
+      </div>
+      <div className="mx-4 mt-2 rounded-[10px] bg-electric-soft px-3.5 py-2.5 text-[12px] leading-snug text-electric">
         Cere acordul pentru cumpărare adăugând cheltuiala aici — magazin, sumă, categorie și bonul. Poți adăuga mai
         multe cheltuieli (materiale, combustibil etc.) înainte de a continua.
       </div>

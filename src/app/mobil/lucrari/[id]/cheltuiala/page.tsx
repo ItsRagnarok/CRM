@@ -5,7 +5,6 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addExpense } from "@/app/(app)/lucrari/[id]/actions";
 import { MissingItemsFlow } from "./missing-items-flow";
-import { StepBadge } from "../step-badge";
 
 export default async function MobileExpensePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -36,10 +35,7 @@ export default async function MobileExpensePage({ params }: { params: Promise<{ 
         >
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
         </Link>
-        <div>
-          <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
-          <div className="mt-1"><StepBadge step="cheltuiala" /></div>
-        </div>
+        <div className="text-[15px] font-extrabold">Lucrare #{job.display_number}</div>
       </div>
 
       <MissingItemsFlow jobId={id} expenses={expenses ?? []} addExpense={addExpense} />
