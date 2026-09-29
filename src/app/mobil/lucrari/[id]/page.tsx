@@ -98,6 +98,22 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
   const needsArrivalPhoto = job.require_arrival_photo && (beforePhotoCount ?? 0) === 0;
 
+  // Geocoding can fail (address outside our coverage, typo, service hiccup),
+  // leaving lat/lng null — the technician must still be able to navigate by
+  // address text alone, not be left with zero options.
+  const destination =
+    job.locations?.lat != null && job.locations?.lng != null
+      ? `${job.locations.lat},${job.locations.lng}`
+      : job.locations?.address
+        ? encodeURIComponent(job.locations.address)
+        : null;
+  const wazeHref =
+    job.locations?.lat != null && job.locations?.lng != null
+      ? `https://waze.com/ul?ll=${job.locations.lat},${job.locations.lng}&navigate=yes`
+      : job.locations?.address
+        ? `https://waze.com/ul?q=${encodeURIComponent(job.locations.address)}&navigate=yes`
+        : null;
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#eaecf0] px-4 py-2.5">
@@ -202,40 +218,55 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
           </div>
         )}
 
-        {isTraveling && jobPin ? (
+        {isTraveling ? (
           <>
-            <div className="mt-4 text-[12px] font-bold text-muted-2">PORNEȘTE SPRE LUCRARE</div>
-            <div className="mt-1.5 h-[220px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
-              <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
-            </div>
+            {jobPin && (
+              <>
+                <div className="mt-4 text-[12px] font-bold text-muted-2">PORNEȘTE SPRE LUCRARE</div>
+                <div className="mt-1.5 h-[220px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+                  <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
+                </div>
+              </>
+            )}
 
             {/* Explicit, always-in-flow navigation options — not just the
                 map's own overlay — so both variants stay visible and
-                tappable regardless of screen size. */}
-            <div className="mt-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
-              <div className="mb-2.5 text-[12px] font-bold text-muted-2">NAVIGHEAZĂ CĂTRE LUCRARE</div>
-              <div className="flex gap-2.5">
-                <a
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${jobPin.lat},${jobPin.lng}&travelmode=driving`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
-                >
-                  Deschide în Google Maps
-                </a>
-                <a
-                  href={`https://waze.com/ul?ll=${jobPin.lat},${jobPin.lng}&navigate=yes`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
-                >
-                  Deschide în Waze
-                </a>
+                tappable regardless of screen size. Falls back to the raw
+                address when the location was never geocoded (e.g. an
+                address outside our coverage), so the technician always has
+                a way to navigate, not just when lat/lng resolved. */}
+            {destination && wazeHref ? (
+              <div className="mt-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+                <div className="mb-2.5 text-[12px] font-bold text-muted-2">NAVIGHEAZĂ CĂTRE LUCRARE</div>
+                <div className="flex gap-2.5">
+                  <a
+                    href={`https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                  >
+                    Deschide în Google Maps
+                  </a>
+                  <a
+                    href={wazeHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                  >
+                    Deschide în Waze
+                  </a>
+                </div>
+                {jobPin && (
+                  <p className="mt-2 text-[11px] text-muted-2">
+                    Sau folosește traseul din hartă de mai sus (navigare în aplicație).
+                  </p>
+                )}
               </div>
-              <p className="mt-2 text-[11px] text-muted-2">
-                Sau folosește traseul din hartă de mai sus (navigare în aplicație).
-              </p>
-            </div>
+            ) : (
+              <div className="mt-3 rounded-[12px] border border-warning-bg bg-warning-bg p-3.5 text-center text-[12.5px] font-semibold text-[#7a5b0e]">
+                Lucrarea nu are o adresă completată — cere administratorului să o adauge, ca să poți naviga.
+              </div>
+            )}
           </>
         ) : (
           jobPin &&
