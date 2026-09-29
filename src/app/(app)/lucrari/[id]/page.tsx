@@ -114,7 +114,7 @@ export default async function JobDetailPage({
     { data: catalog },
   ] = await Promise.all([
     supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
-    supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date").eq("job_id", id).order("created_at"),
+    supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date, receipt_path").eq("job_id", id).order("created_at"),
     supabase.from("time_entries").select("id, event_type, occurred_at").eq("job_id", id).order("occurred_at"),
     supabase
       .from("job_checklists")
@@ -238,7 +238,7 @@ export default async function JobDetailPage({
               <ReportCard jobId={id} />
               <SignatureCard signature={signature ?? null} publicUrl={publicUrl} />
               <Card title="Cheltuieli lucrare">
-                <ExpensesList expenses={expenses ?? []} total={totalExpenses} />
+                <ExpensesList expenses={expenses ?? []} total={totalExpenses} publicUrl={publicUrl} />
               </Card>
               <Card title="Checklist final">
                 <ChecklistPreview items={checklistItems} jobId={id} />
@@ -342,7 +342,7 @@ export default async function JobDetailPage({
 
         {tab === "cheltuieli" && (
           <Card title="Cheltuieli lucrare">
-            <ExpensesList expenses={expenses ?? []} total={totalExpenses} />
+            <ExpensesList expenses={expenses ?? []} total={totalExpenses} publicUrl={publicUrl} />
             <form action={addExpense} className="mt-4 flex flex-col gap-2 border-t border-[#f2f4f7] pt-4">
               <input type="hidden" name="jobId" value={id} />
               <div className="grid grid-cols-3 gap-2">
@@ -350,6 +350,7 @@ export default async function JobDetailPage({
                 <input name="vendor" placeholder="Furnizor (opțional)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
                 <input name="amount" type="number" step="0.01" min="0.01" required placeholder="Sumă (RON)" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
               </div>
+              <input name="receipt" type="file" accept="image/*,application/pdf" className="text-[12.5px]" />
               <button type="submit" className="flex items-center justify-center gap-1.5 self-start rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
                 <Plus className="h-3.5 w-3.5" /> Adaugă cheltuială
               </button>
@@ -532,9 +533,18 @@ function TimeEntriesList({ entries }: { entries: { id: string; event_type: strin
 function ExpensesList({
   expenses,
   total,
+  publicUrl,
 }: {
-  expenses: { id: string; category: string; vendor: string | null; amount: number; currency: string }[];
+  expenses: {
+    id: string;
+    category: string;
+    vendor: string | null;
+    amount: number;
+    currency: string;
+    receipt_path?: string | null;
+  }[];
   total: number;
+  publicUrl: (path: string) => string;
 }) {
   if (expenses.length === 0) {
     return <p className="text-[13px] text-muted">Nicio cheltuială înregistrată încă.</p>;
@@ -543,7 +553,19 @@ function ExpensesList({
     <>
       {expenses.map((e) => (
         <div key={e.id} className="flex items-center justify-between border-b border-[#f2f4f7] py-2 text-[13px] last:border-b-0">
-          <span className="text-foreground">{e.vendor ? `${e.vendor} — ${e.category}` : e.category}</span>
+          <span className="flex items-center gap-2 text-foreground">
+            {e.vendor ? `${e.vendor} — ${e.category}` : e.category}
+            {e.receipt_path && (
+              <a
+                href={publicUrl(e.receipt_path)}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11.5px] font-semibold text-electric"
+              >
+                Bon
+              </a>
+            )}
+          </span>
           <span className="font-bold text-[#344054]">
             {Number(e.amount).toFixed(2)} {e.currency}
           </span>

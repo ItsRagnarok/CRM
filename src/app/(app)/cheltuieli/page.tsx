@@ -46,7 +46,7 @@ export default async function CheltuieliPage({
       let query = supabase
         .from("expenses")
         .select(
-          "id, category, amount, vendor, expense_date, status, rejection_reason, jobs(display_number, title), profiles!expenses_submitted_by_fkey(full_name)"
+          "id, category, amount, vendor, expense_date, status, rejection_reason, receipt_path, jobs(display_number, title), profiles!expenses_submitted_by_fkey(full_name)"
         )
         .eq("organization_id", organization.id);
       if (status) query = query.eq("status", status);
@@ -131,6 +131,16 @@ export default async function CheltuieliPage({
                           <Icon className="h-3.5 w-3.5" style={{ color: cat.color }} />
                         </div>
                         <span className="text-[13px] font-semibold text-foreground">{e.vendor ?? "—"}</span>
+                        {e.receipt_path && (
+                          <a
+                            href={supabase.storage.from("attachments").getPublicUrl(e.receipt_path).data.publicUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-[11px] font-bold text-electric"
+                          >
+                            Bon
+                          </a>
+                        )}
                       </div>
                     </td>
                     <td className="px-5 py-3 text-[13px] capitalize text-[#344054]">{e.category}</td>

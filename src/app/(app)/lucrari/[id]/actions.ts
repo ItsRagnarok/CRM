@@ -54,6 +54,17 @@ export async function addExpense(formData: FormData) {
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
+  let receiptPath: string | null = null;
+  const receipt = formData.get("receipt") as File | null;
+  if (receipt && receipt.size > 0) {
+    const safeName = receipt.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${organization.id}/jobs/${jobId}/receipts/${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("attachments")
+      .upload(path, receipt, { contentType: receipt.type || "application/octet-stream" });
+    if (!uploadError) receiptPath = path;
+  }
+
   await supabase.from("expenses").insert({
     organization_id: organization.id,
     job_id: jobId,
@@ -61,9 +72,11 @@ export async function addExpense(formData: FormData) {
     vendor: String(formData.get("vendor") ?? "").trim() || null,
     amount,
     submitted_by: userId,
+    receipt_path: receiptPath,
   });
 
   revalidatePath(`/lucrari/${jobId}`);
+  revalidatePath("/cheltuieli");
 }
 
 export async function ensureChecklist(

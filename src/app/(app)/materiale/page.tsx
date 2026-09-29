@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { Package, Plus, Search } from "lucide-react";
+import { Package, Plus, Search, Wrench, Download } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
-import { setStockQuantity } from "./actions";
+import { setStockQuantity, importStandardCatalog } from "./actions";
 
 const STATUS_DOT: Record<string, string> = {
   ok: "🟢",
@@ -11,12 +11,15 @@ const STATUS_DOT: Record<string, string> = {
   critic: "🔴",
 };
 
+type Kind = "toate" | "material" | "tool";
+
 export default async function MaterialePage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; kind?: string; imported?: string }>;
 }) {
-  const { q } = await searchParams;
+  const { q, kind: rawKind, imported } = await searchParams;
+  const kind: Kind = rawKind === "material" || rawKind === "tool" ? rawKind : "toate";
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -30,9 +33,10 @@ export default async function MaterialePage({
     (() => {
       let query = supabase
         .from("materials")
-        .select("id, name, category, unit, min_stock, material_stock(quantity, warehouse_id)")
+        .select("id, name, category, unit, min_stock, kind, image_path, material_stock(quantity, warehouse_id)")
         .eq("organization_id", organization.id);
       if (q) query = query.ilike("name", `%${q}%`);
+      if (kind !== "toate") query = query.eq("kind", kind);
       return query.order("category").order("name");
     })(),
   ]);
@@ -43,7 +47,10 @@ export default async function MaterialePage({
     const quantity = m.material_stock.find((s) => s.warehouse_id === warehouseId)?.quantity ?? 0;
     const status: "ok" | "scazut" | "critic" =
       quantity >= m.min_stock ? "ok" : quantity >= m.min_stock * 0.5 ? "scazut" : "critic";
-    return { ...m, quantity, status };
+    const imageUrl = m.image_path
+      ? supabase.storage.from("attachments").getPublicUrl(m.image_path).data.publicUrl
+      : null;
+    return { ...m, quantity, status, imageUrl };
   });
 
   const total = rows.length;
@@ -51,24 +58,54 @@ export default async function MaterialePage({
   const lowCount = rows.filter((r) => r.status === "scazut").length;
   const criticalCount = rows.filter((r) => r.status === "critic").length;
 
+  const kindHref = (k: Kind) => {
+    const params = new URLSearchParams();
+    if (k !== "toate") params.set("kind", k);
+    if (q) params.set("q", q);
+    return params.toString() ? `/materiale?${params}` : "/materiale";
+  };
+
   return (
     <div className="flex flex-col gap-5 p-7">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-[17px] font-extrabold text-foreground">Materiale &amp; Stoc</h1>
+        <h1 className="text-[17px] font-extrabold text-foreground">Materiale &amp; Scule</h1>
 
-        <form className="flex max-w-[320px] flex-1 items-center gap-2 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
+        <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
+          {(["toate", "material", "tool"] as Kind[]).map((k) => (
+            <Link
+              key={k}
+              href={kindHref(k)}
+              className={`rounded-[7px] px-3.5 py-1.5 text-[12.5px] font-bold ${
+                kind === k ? "bg-white text-foreground shadow-sm" : "text-muted"
+              }`}
+            >
+              {k === "toate" ? "Toate" : k === "material" ? "Materiale" : "Scule"}
+            </Link>
+          ))}
+        </div>
+
+        <form className="flex max-w-[280px] flex-1 items-center gap-2 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
           <Search className="h-3.5 w-3.5 text-muted-2" />
           <input
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="Caută material…"
+            placeholder="Caută…"
             className="w-full bg-transparent text-[13px] outline-none placeholder:text-muted-2"
           />
+          {kind !== "toate" && <input type="hidden" name="kind" value={kind} />}
         </form>
 
         <div className="flex-1" />
 
+        <form action={importStandardCatalog}>
+          <button
+            type="submit"
+            className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13px] font-bold text-[#344054]"
+          >
+            <Download className="h-3.5 w-3.5" /> Importă catalog standard
+          </button>
+        </form>
         <Link
           href="/materiale/comanda"
           className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13px] font-bold text-[#344054]"
@@ -82,6 +119,14 @@ export default async function MaterialePage({
           <Plus className="h-4 w-4" /> Material
         </Link>
       </div>
+
+      {imported !== undefined && (
+        <div className="rounded-[10px] bg-success-bg px-4 py-2.5 text-[13px] font-semibold text-success">
+          {Number(imported) > 0
+            ? `S-au adăugat ${imported} materiale/scule noi din catalogul standard.`
+            : "Catalogul standard e deja complet inclus — nimic nou de adăugat."}
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-4">
         <StatCard label="Materiale în stoc" value={total} />
@@ -98,7 +143,7 @@ export default async function MaterialePage({
           <table className="w-full border-collapse">
             <thead>
               <tr className="bg-[#f9fafb] text-left text-[11px] font-bold uppercase tracking-wide text-muted">
-                <th className="px-5 py-3">Material</th>
+                <th className="px-5 py-3">Material / sculă</th>
                 <th className="px-5 py-3">Categorie</th>
                 <th className="px-5 py-3">Stoc total</th>
                 <th className="px-5 py-3">Stoc minim</th>
@@ -108,7 +153,19 @@ export default async function MaterialePage({
             <tbody>
               {rows.map((r) => (
                 <tr key={r.id} className="border-t border-[#f2f4f7]">
-                  <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">{r.name}</td>
+                  <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">
+                    <Link href={`/materiale/${r.id}`} className="flex items-center gap-2.5 hover:text-electric">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-[8px] border border-[#eaecf0] bg-neutral-bg">
+                        {r.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={r.imageUrl} alt={r.name} className="h-full w-full object-cover" />
+                        ) : (
+                          <Wrench className="h-3.5 w-3.5 text-muted-2" />
+                        )}
+                      </div>
+                      {r.name}
+                    </Link>
+                  </td>
                   <td className="px-5 py-3 text-[13px] text-muted">{r.category ?? "—"}</td>
                   <td className="px-5 py-3">
                     {warehouseId ? (
@@ -147,7 +204,7 @@ export default async function MaterialePage({
         <EmptyState
           icon={Package}
           title="Niciun material găsit"
-          description={q ? "Încearcă altă căutare." : "Adaugă primul material pentru a începe."}
+          description={q ? "Încearcă altă căutare." : "Adaugă primul material sau importă catalogul standard."}
           action={
             !q && (
               <Link

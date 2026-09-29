@@ -372,6 +372,7 @@ export type Database = {
           job_id: string
           notes: string | null
           organization_id: string
+          receipt_path: string | null
           rejection_reason: string | null
           status: string
           submitted_by: string | null
@@ -389,6 +390,7 @@ export type Database = {
           job_id: string
           notes?: string | null
           organization_id: string
+          receipt_path?: string | null
           rejection_reason?: string | null
           status?: string
           submitted_by?: string | null
@@ -406,6 +408,7 @@ export type Database = {
           job_id?: string
           notes?: string | null
           organization_id?: string
+          receipt_path?: string | null
           rejection_reason?: string | null
           status?: string
           submitted_by?: string | null
@@ -1066,6 +1069,8 @@ export type Database = {
           category: string | null
           created_at: string
           id: string
+          image_path: string | null
+          kind: string
           min_stock: number
           name: string
           organization_id: string
@@ -1076,6 +1081,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
+          image_path?: string | null
+          kind?: string
           min_stock?: number
           name: string
           organization_id: string
@@ -1086,6 +1093,8 @@ export type Database = {
           category?: string | null
           created_at?: string
           id?: string
+          image_path?: string | null
+          kind?: string
           min_stock?: number
           name?: string
           organization_id?: string

@@ -75,6 +75,16 @@ export default async function MobileExpensePage({ params }: { params: Promise<{ 
           </div>
         </div>
 
+        <Field label="Bon / factură (opțional)">
+          <input
+            name="receipt"
+            type="file"
+            accept="image/*,application/pdf"
+            capture="environment"
+            className="w-full text-[13px]"
+          />
+        </Field>
+
         <div className="flex-1" />
 
         <button

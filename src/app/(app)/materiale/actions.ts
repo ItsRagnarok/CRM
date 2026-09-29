@@ -4,6 +4,9 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { STANDARD_CATALOG } from "./standard-catalog";
+
+type MaterialKind = "material" | "tool";
 
 export async function createMaterial(
   _prevState: { error?: string } | undefined,
@@ -20,6 +23,7 @@ export async function createMaterial(
   const unit = String(formData.get("unit") ?? "buc").trim() || "buc";
   const minStock = Math.max(0, Number(formData.get("minStock") ?? 0) || 0);
   const initialQty = Math.max(0, Number(formData.get("initialQty") ?? 0) || 0);
+  const kind = String(formData.get("kind") ?? "material") as MaterialKind;
 
   const { data: material, error } = await supabase
     .from("materials")
@@ -29,6 +33,7 @@ export async function createMaterial(
       category,
       unit,
       min_stock: minStock,
+      kind,
     })
     .select("id")
     .single();
@@ -95,5 +100,114 @@ export async function setStockQuantity(
     });
   }
 
+  revalidatePath("/materiale");
+}
+
+export async function importStandardCatalog() {
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("materials")
+    .select("name")
+    .eq("organization_id", organization.id);
+  const existingNames = new Set((existing ?? []).map((m) => m.name.trim().toLowerCase()));
+
+  const toInsert = STANDARD_CATALOG.filter((item) => !existingNames.has(item.name.toLowerCase())).map(
+    (item) => ({
+      organization_id: organization.id,
+      name: item.name,
+      category: item.category,
+      unit: item.unit,
+      min_stock: item.minStock,
+      kind: item.kind,
+    })
+  );
+
+  if (toInsert.length > 0) {
+    await supabase.from("materials").insert(toInsert);
+  }
+
+  revalidatePath("/materiale");
+  redirect(`/materiale?imported=${toInsert.length}`);
+}
+
+export async function updateMaterial(materialId: string, formData: FormData) {
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return;
+
+  await supabase
+    .from("materials")
+    .update({
+      name,
+      category: String(formData.get("category") ?? "").trim() || null,
+      unit: String(formData.get("unit") ?? "buc").trim() || "buc",
+      min_stock: Math.max(0, Number(formData.get("minStock") ?? 0) || 0),
+      kind: String(formData.get("kind") ?? "material") as MaterialKind,
+    })
+    .eq("id", materialId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath(`/materiale/${materialId}`);
+  revalidatePath("/materiale");
+}
+
+export async function uploadMaterialImage(materialId: string, formData: FormData) {
+  const file = formData.get("file") as File | null;
+  if (!file || file.size === 0) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `${organization.id}/materials/${materialId}/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("attachments")
+    .upload(path, file, { contentType: file.type || "application/octet-stream" });
+  if (uploadError) return;
+
+  const { data: existing } = await supabase
+    .from("materials")
+    .select("image_path")
+    .eq("id", materialId)
+    .maybeSingle();
+
+  await supabase
+    .from("materials")
+    .update({ image_path: path })
+    .eq("id", materialId)
+    .eq("organization_id", organization.id);
+
+  if (existing?.image_path) {
+    await supabase.storage.from("attachments").remove([existing.image_path]);
+  }
+
+  revalidatePath(`/materiale/${materialId}`);
+  revalidatePath("/materiale");
+}
+
+export async function deleteMaterialImage(materialId: string) {
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: existing } = await supabase
+    .from("materials")
+    .select("image_path")
+    .eq("id", materialId)
+    .maybeSingle();
+  if (!existing?.image_path) return;
+
+  await supabase.storage.from("attachments").remove([existing.image_path]);
+  await supabase
+    .from("materials")
+    .update({ image_path: null })
+    .eq("id", materialId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath(`/materiale/${materialId}`);
   revalidatePath("/materiale");
 }

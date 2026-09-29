@@ -38,6 +38,17 @@ export function NewMaterialForm({ categories }: { categories: string[] }) {
           />
         </Field>
 
+        <Field label="Tip">
+          <select
+            name="kind"
+            defaultValue="material"
+            className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm font-semibold outline-none focus:border-electric"
+          >
+            <option value="material">Material</option>
+            <option value="tool">Sculă</option>
+          </select>
+        </Field>
+
         <Field label="Categorie">
           <select
             value={categoryChoice}
