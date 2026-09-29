@@ -23,6 +23,7 @@ export async function createJob(
   const teamId = String(formData.get("teamId") ?? "") || null;
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim() || null;
+  const adminMessage = String(formData.get("adminMessage") ?? "").trim() || null;
   const jobType = String(formData.get("jobType") ?? "interventie") as JobType;
   const priority = String(formData.get("priority") ?? "normala") as JobPriority;
   const scheduledDate = String(formData.get("scheduledDate") ?? "");
@@ -73,6 +74,7 @@ export async function createJob(
       location_id: locationId,
       title,
       description,
+      admin_message: adminMessage,
       job_type: jobType,
       priority,
       scheduled_date: scheduledDate,

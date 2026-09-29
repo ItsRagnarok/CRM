@@ -29,7 +29,7 @@ export default async function AprobariPage({
   const { data: requests } = await supabase
     .from("purchase_requests")
     .select(
-      "id, quantity, custom_name, note, status, created_at, decided_at, materials(name, unit), jobs(id, display_number, title), requester:profiles!purchase_requests_requested_by_fkey(full_name)"
+      "id, quantity, custom_name, note, status, created_at, decided_at, store_name, materials(name, unit), jobs(id, display_number, title), requester:profiles!purchase_requests_requested_by_fkey(full_name)"
     )
     .eq("organization_id", organization.id)
     .order("created_at", { ascending: false });
@@ -92,10 +92,15 @@ export default async function AprobariPage({
                   {STATUS_LABELS[r.status]}
                 </span>
                 {r.status === "pending" && (
-                  <div className="flex gap-1.5">
-                    <form action={decidePurchaseRequest}>
+                  <div className="flex items-center gap-1.5">
+                    <form action={decidePurchaseRequest} className="flex items-center gap-1.5">
                       <input type="hidden" name="requestId" value={r.id} />
                       <input type="hidden" name="decision" value="approved" />
+                      <input
+                        name="storeName"
+                        placeholder="Magazin (opțional)"
+                        className="w-[140px] rounded-[8px] border border-[#d0d5dd] px-2.5 py-1.5 text-[11.5px] outline-none focus:border-electric"
+                      />
                       <button
                         type="submit"
                         className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-success-bg text-success"
@@ -116,6 +121,9 @@ export default async function AprobariPage({
                       </button>
                     </form>
                   </div>
+                )}
+                {r.status === "approved" && r.store_name && (
+                  <span className="text-[11px] text-muted-2">Magazin: {r.store_name}</span>
                 )}
               </div>
             ))}

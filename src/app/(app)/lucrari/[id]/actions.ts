@@ -34,6 +34,7 @@ export async function updateJob(
     .update({
       title,
       description: String(formData.get("description") ?? "").trim() || null,
+      admin_message: String(formData.get("adminMessage") ?? "").trim() || null,
       job_type: String(formData.get("jobType") ?? "interventie") as JobType,
       priority: String(formData.get("priority") ?? "normala") as JobPriority,
       scheduled_date: scheduledDate,
@@ -324,6 +325,7 @@ export async function deleteRequiredItem(formData: FormData) {
 export async function decidePurchaseRequest(formData: FormData) {
   const requestId = String(formData.get("requestId") ?? "");
   const decision = String(formData.get("decision") ?? "") as "approved" | "denied";
+  const storeName = String(formData.get("storeName") ?? "").trim() || null;
   if (!requestId || (decision !== "approved" && decision !== "denied")) return;
 
   const { userId } = await requireSessionContext();
@@ -331,10 +333,16 @@ export async function decidePurchaseRequest(formData: FormData) {
 
   await supabase
     .from("purchase_requests")
-    .update({ status: decision, decided_by: userId, decided_at: new Date().toISOString() })
+    .update({
+      status: decision,
+      decided_by: userId,
+      decided_at: new Date().toISOString(),
+      store_name: decision === "approved" ? storeName : null,
+    })
     .eq("id", requestId);
 
   revalidatePath("/aprobari");
+  revalidatePath("/mobil/materiale");
 }
 
 export async function deleteDocument(formData: FormData) {

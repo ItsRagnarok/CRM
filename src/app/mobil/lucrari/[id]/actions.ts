@@ -82,6 +82,7 @@ export async function startWork(jobId: string) {
 export async function finalizeJob(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const observations = String(formData.get("observations") ?? "").trim();
+  const equipmentIssue = String(formData.get("equipmentIssue") ?? "").trim();
   if (!jobId) return;
 
   const { organization, userId } = await requireSessionContext();
@@ -94,6 +95,7 @@ export async function finalizeJob(formData: FormData) {
       status: "finalizata",
       work_ended_at: now,
       observations: observations || null,
+      equipment_issue_note: equipmentIssue || null,
     })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
@@ -180,6 +182,88 @@ export async function recordArrivalPromptDismissal(jobId: string) {
   }
 
   return { attempts };
+}
+
+export async function addJobNote(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  const kind = String(formData.get("kind") ?? "comment") as "problem" | "comment";
+  const text = String(formData.get("text") ?? "").trim();
+  if (!jobId || !text) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  let photoPath: string | null = null;
+  const photo = formData.get("photo") as File | null;
+  if (photo && photo.size > 0) {
+    const safeName = photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+    const path = `${organization.id}/jobs/${jobId}/notes/${Date.now()}-${safeName}`;
+    const { error: uploadError } = await supabase.storage
+      .from("attachments")
+      .upload(path, photo, { contentType: photo.type || "image/jpeg" });
+    if (!uploadError) photoPath = path;
+  }
+
+  await supabase.from("job_notes").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    kind,
+    text,
+    photo_path: photoPath,
+    created_by: userId,
+  });
+
+  revalidatePath(`/mobil/lucrari/${jobId}/extra`);
+  revalidatePath(`/lucrari/${jobId}`);
+}
+
+export async function uploadPurchasePhoto(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  const file = formData.get("file") as File | null;
+  if (!jobId || !file || file.size === 0) return;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+  const path = `${organization.id}/jobs/${jobId}/photos/${Date.now()}-${safeName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("attachments")
+    .upload(path, file, { contentType: file.type || "image/jpeg" });
+  if (uploadError) return;
+
+  await supabase.from("photos").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    category: "material",
+    storage_path: path,
+    uploaded_by: userId,
+    taken_at: new Date().toISOString(),
+  });
+
+  revalidatePath(`/mobil/lucrari/${jobId}`);
+}
+
+export async function markPurchaseFulfilled(requestId: string, jobId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("purchase_requests")
+    .update({ fulfilled_at: new Date().toISOString() })
+    .eq("id", requestId);
+
+  revalidatePath(`/mobil/lucrari/${jobId}`);
+  revalidatePath("/mobil/materiale");
+}
+
+export async function acknowledgeRejectedPurchase(requestId: string, jobId: string) {
+  const supabase = await createClient();
+  await supabase
+    .from("purchase_requests")
+    .update({ technician_acknowledged_at: new Date().toISOString() })
+    .eq("id", requestId);
+
+  revalidatePath(`/mobil/lucrari/${jobId}`);
 }
 
 export async function flagClientAbsent(jobId: string) {

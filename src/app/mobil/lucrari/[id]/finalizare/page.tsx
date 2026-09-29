@@ -100,6 +100,16 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
           />
         </div>
 
+        <div className="px-4 pt-3">
+          <div className="mb-1.5 text-[12.5px] font-bold text-[#344054]">Defecțiuni scule/echipamente (dacă au fost)</div>
+          <textarea
+            name="equipmentIssue"
+            rows={2}
+            placeholder="Lasă gol dacă nu au fost probleme"
+            className="w-full resize-none rounded-[12px] border border-[#d0d5dd] p-3 text-[13.5px] outline-none focus:border-electric"
+          />
+        </div>
+
         <div className="mx-4 mt-4 rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-3.5 text-[12.5px] leading-relaxed text-muted">
           <b className="text-foreground">Rezumat:</b> {formatHM(workedHours)} lucrate · {photoCount ?? 0} fotografii ·{" "}
           {totalExpenses.toFixed(2)} RON cheltuieli · checklist {items.length ? Math.round((items.filter(i=>i.is_checked).length/items.length)*100) : 0}% complet

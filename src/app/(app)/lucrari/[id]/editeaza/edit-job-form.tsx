@@ -18,6 +18,7 @@ type Job = {
   team_id: string | null;
   location_id: string | null;
   locations: { address: string } | null;
+  admin_message: string | null;
 };
 
 export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; name: string }[] }) {
@@ -102,6 +103,16 @@ export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; nam
             rows={4}
             defaultValue={job.description ?? ""}
             placeholder="Detalii despre lucrare…"
+            className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+          />
+        </Field>
+
+        <Field label="Mesaj pentru tehnician (opțional)">
+          <textarea
+            name="adminMessage"
+            rows={2}
+            defaultValue={job.admin_message ?? ""}
+            placeholder="Ex: Ai grijă la siguranță, succes!"
             className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
           />
         </Field>

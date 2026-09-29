@@ -265,6 +265,15 @@ export function NewJobForm({
             />
           </Field>
 
+          <Field label="Mesaj pentru tehnician (opțional)">
+            <textarea
+              name="adminMessage"
+              rows={2}
+              placeholder="Ex: Ai grijă la siguranță, succes!"
+              className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+            />
+          </Field>
+
           {materials.length > 0 && (
             <div className="rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-4">
               <div className="mb-1 text-[13px] font-bold text-foreground">

@@ -8,6 +8,9 @@ import { startWork } from "./actions";
 import { ArriveButton } from "./arrive-button";
 import { StartTravelButton } from "./start-travel-button";
 import { DistancePanel } from "./distance-panel";
+import { MobileMapLoader } from "@/components/mobile-map-loader";
+import { acknowledgeRejectedPurchase } from "./actions";
+import { Store, XCircle } from "lucide-react";
 
 function mapsHref(address: string | null, lat: number | null, lng: number | null) {
   if (lat != null && lng != null) return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
@@ -17,13 +20,13 @@ function mapsHref(address: string | null, lat: number | null, lng: number | null
 
 export default async function MobileJobPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { organization } = await requireSessionContext();
+  const { organization, profile } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, status, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -42,6 +45,16 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         supabase.from("expenses").select("id", { count: "exact", head: true }).eq("job_id", id),
       ])
     : [{ count: 0 }, { count: 0 }];
+
+  const { data: purchaseRequests } = await supabase
+    .from("purchase_requests")
+    .select("id, custom_name, store_name, status, fulfilled_at, technician_acknowledged_at, materials(name)")
+    .eq("job_id", id)
+    .eq("requested_by", profile.id)
+    .in("status", ["approved", "denied"]);
+
+  const pendingPickup = (purchaseRequests ?? []).find((r) => r.status === "approved" && !r.fulfilled_at);
+  const unseenRejections = (purchaseRequests ?? []).filter((r) => r.status === "denied" && !r.technician_acknowledged_at);
 
   return (
     <div className="flex h-full flex-col">
@@ -77,6 +90,62 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             </a>
           )}
         </div>
+
+        {pendingPickup && (
+          <Link
+            href={`/mobil/lucrari/${id}/achizitie/${pendingPickup.id}`}
+            className="mt-3 flex items-center gap-3 rounded-[13px] border border-success-bg bg-success-bg p-3.5"
+          >
+            <Store className="h-5 w-5 shrink-0 text-success" />
+            <div className="flex-1">
+              <div className="text-[13px] font-bold text-success">
+                Aprobat: {pendingPickup.materials?.name ?? pendingPickup.custom_name}
+              </div>
+              <div className="text-[11.5px] text-success">
+                {pendingPickup.store_name ? `Cumpără de la ${pendingPickup.store_name}` : "Poți cumpăra de la orice magazin"} — atinge aici
+              </div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-success" />
+          </Link>
+        )}
+
+        {unseenRejections.map((r) => (
+          <div key={r.id} className="mt-3 flex items-center gap-3 rounded-[13px] border border-danger-bg bg-danger-bg p-3.5">
+            <XCircle className="h-5 w-5 shrink-0 text-danger" />
+            <div className="flex-1 text-[13px] font-semibold text-danger">
+              Cererea pentru {r.materials?.name ?? r.custom_name} a fost respinsă.
+            </div>
+            <form action={acknowledgeRejectedPurchase.bind(null, r.id, id)}>
+              <button type="submit" className="rounded-[8px] bg-white px-2.5 py-1.5 text-[11px] font-bold text-danger">
+                Am înțeles
+              </button>
+            </form>
+          </div>
+        ))}
+
+        {job.admin_message && (
+          <div className="mt-3 rounded-[13px] border border-electric bg-electric-soft/40 p-3.5">
+            <div className="text-[11px] font-bold text-electric">MESAJ DE LA ADMINISTRATOR</div>
+            <div className="mt-1 text-[13px] text-[#344054]">{job.admin_message}</div>
+          </div>
+        )}
+
+        {job.locations?.lat != null && job.locations?.lng != null && !isDone && (
+          <div className="mt-3 h-[160px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+            <MobileMapLoader
+              jobs={[
+                {
+                  id: job.id,
+                  label: job.title,
+                  sublabel: job.locations.address ?? "",
+                  lat: job.locations.lat,
+                  lng: job.locations.lng,
+                  href: `/mobil/lucrari/${job.id}`,
+                },
+              ]}
+            />
+          </div>
+        )}
 
         <div className="mt-4 flex flex-col gap-3">
           {job.status === "programata" && (
@@ -177,10 +246,16 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 href={`/mobil/lucrari/${job.id}/foto?cat=during`}
                 className="block rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
               >
-                CONTINUĂ LUCRAREA
+                ADAUGĂ POZĂ
+              </Link>
+              <Link
+                href={`/mobil/lucrari/${job.id}/extra`}
+                className="block rounded-[12px] border border-[#d0d5dd] bg-white py-[15px] text-center text-[15px] font-extrabold text-[#344054]"
+              >
+                MENIU LUCRARE — probleme, comentarii, finalizare
               </Link>
               <div className="text-center text-[12px] text-muted-2">
-                Fotografii ({photoCount ?? 0}) → Finalizare → Semnătură
+                Fotografii ({photoCount ?? 0})
                 {expenseCount ? ` · ${expenseCount} cheltuieli adăugate` : ""}
               </div>
             </>

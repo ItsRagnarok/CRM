@@ -755,6 +755,61 @@ export type Database = {
           },
         ]
       }
+      job_notes: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          job_id: string
+          kind: string
+          organization_id: string
+          photo_path: string | null
+          text: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          job_id: string
+          kind: string
+          organization_id: string
+          photo_path?: string | null
+          text: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          job_id?: string
+          kind?: string
+          organization_id?: string
+          photo_path?: string | null
+          text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_notes_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_notes_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_required_items: {
         Row: {
           created_at: string
@@ -870,6 +925,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          admin_message: string | null
           arrived_at: string | null
           client_id: string
           created_at: string
@@ -878,6 +934,7 @@ export type Database = {
           display_number: number
           distance_km: number | null
           end_time: string | null
+          equipment_issue_note: string | null
           id: string
           job_type: Database["public"]["Enums"]["job_type"]
           location_id: string | null
@@ -894,6 +951,7 @@ export type Database = {
           work_started_at: string | null
         }
         Insert: {
+          admin_message?: string | null
           arrived_at?: string | null
           client_id: string
           created_at?: string
@@ -902,6 +960,7 @@ export type Database = {
           display_number?: number
           distance_km?: number | null
           end_time?: string | null
+          equipment_issue_note?: string | null
           id?: string
           job_type?: Database["public"]["Enums"]["job_type"]
           location_id?: string | null
@@ -918,6 +977,7 @@ export type Database = {
           work_started_at?: string | null
         }
         Update: {
+          admin_message?: string | null
           arrived_at?: string | null
           client_id?: string
           created_at?: string
@@ -926,6 +986,7 @@ export type Database = {
           display_number?: number
           distance_km?: number | null
           end_time?: string | null
+          equipment_issue_note?: string | null
           id?: string
           job_type?: Database["public"]["Enums"]["job_type"]
           location_id?: string | null
@@ -1461,6 +1522,7 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           decision_note: string | null
+          fulfilled_at: string | null
           id: string
           job_id: string
           material_id: string | null
@@ -1469,6 +1531,8 @@ export type Database = {
           quantity: number
           requested_by: string
           status: string
+          store_name: string | null
+          technician_acknowledged_at: string | null
         }
         Insert: {
           created_at?: string
@@ -1476,6 +1540,7 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          fulfilled_at?: string | null
           id?: string
           job_id: string
           material_id?: string | null
@@ -1484,6 +1549,8 @@ export type Database = {
           quantity?: number
           requested_by: string
           status?: string
+          store_name?: string | null
+          technician_acknowledged_at?: string | null
         }
         Update: {
           created_at?: string
@@ -1491,6 +1558,7 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           decision_note?: string | null
+          fulfilled_at?: string | null
           id?: string
           job_id?: string
           material_id?: string | null
@@ -1499,6 +1567,8 @@ export type Database = {
           quantity?: number
           requested_by?: string
           status?: string
+          store_name?: string | null
+          technician_acknowledged_at?: string | null
         }
         Relationships: [
           {

@@ -112,6 +112,7 @@ export default async function JobDetailPage({
     { data: signature },
     { data: requiredItems },
     { data: catalog },
+    { data: jobNotes },
   ] = await Promise.all([
     supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
     supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date, receipt_path").eq("job_id", id).order("created_at"),
@@ -135,6 +136,11 @@ export default async function JobDetailPage({
       .eq("job_id", id)
       .order("created_at"),
     supabase.from("materials").select("id, name, unit").eq("organization_id", organization.id).order("name"),
+    supabase
+      .from("job_notes")
+      .select("id, kind, text, photo_path, created_at, profiles(full_name)")
+      .eq("job_id", id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
@@ -223,7 +229,51 @@ export default async function JobDetailPage({
                     {job.description || "Fără descriere adăugată încă."}
                   </p>
                 </div>
+                {job.admin_message && (
+                  <div className="mt-4 border-t border-[#f2f4f7] pt-4">
+                    <div className="text-[11.5px] font-semibold text-muted-2">MESAJ PENTRU TEHNICIAN</div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-[#344054]">{job.admin_message}</p>
+                  </div>
+                )}
+                {job.equipment_issue_note && (
+                  <div className="mt-4 border-t border-[#f2f4f7] pt-4">
+                    <div className="text-[11.5px] font-semibold text-danger">DEFECȚIUNI SCULE/ECHIPAMENTE</div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-[#344054]">{job.equipment_issue_note}</p>
+                  </div>
+                )}
               </Card>
+
+              {jobNotes && jobNotes.length > 0 && (
+                <Card title="Note tehnician (probleme & comentarii)">
+                  <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                    {jobNotes.map((n) => (
+                      <div key={n.id} className="py-2.5">
+                        <div className="flex items-center justify-between">
+                          <span
+                            className={`text-[12.5px] font-semibold ${n.kind === "problem" ? "text-danger" : "text-[#344054]"}`}
+                          >
+                            {n.kind === "problem" ? "⚠ " : ""}
+                            {n.text}
+                          </span>
+                          <span className="text-[11px] text-muted-2">
+                            {n.profiles?.full_name ?? "—"} · {new Date(n.created_at).toLocaleString("ro-RO")}
+                          </span>
+                        </div>
+                        {n.photo_path && (
+                          <a href={publicUrl(n.photo_path)} target="_blank" rel="noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={publicUrl(n.photo_path)}
+                              alt=""
+                              className="mt-2 h-[100px] w-[100px] rounded-[8px] object-cover"
+                            />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
 
               <PhotosCard photos={photos ?? []} publicUrl={publicUrl} jobId={id} />
 
