@@ -197,8 +197,36 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         {isTraveling && jobPin ? (
           <>
             <div className="mt-4 text-[12px] font-bold text-muted-2">PORNEȘTE SPRE LUCRARE</div>
-            <div className="mt-1.5 h-[260px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
+            <div className="mt-1.5 h-[220px] overflow-hidden rounded-[13px] border border-[#eaecf0]">
               <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
+            </div>
+
+            {/* Explicit, always-in-flow navigation options — not just the
+                map's own overlay — so both variants stay visible and
+                tappable regardless of screen size. */}
+            <div className="mt-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+              <div className="mb-2.5 text-[12px] font-bold text-muted-2">NAVIGHEAZĂ CĂTRE LUCRARE</div>
+              <div className="flex gap-2.5">
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${jobPin.lat},${jobPin.lng}&travelmode=driving`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                >
+                  Deschide în Google Maps
+                </a>
+                <a
+                  href={`https://waze.com/ul?ll=${jobPin.lat},${jobPin.lng}&navigate=yes`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 rounded-[10px] bg-neutral-bg py-3 text-center text-[13px] font-bold text-[#344054]"
+                >
+                  Deschide în Waze
+                </a>
+              </div>
+              <p className="mt-2 text-[11px] text-muted-2">
+                Sau folosește traseul din hartă de mai sus (navigare în aplicație).
+              </p>
             </div>
           </>
         ) : (
