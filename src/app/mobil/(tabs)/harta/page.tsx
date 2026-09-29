@@ -60,6 +60,27 @@ export default async function MobileMapPage() {
         )}
       </div>
 
+      {routeTo && (
+        <div className="mx-4 mt-3 flex flex-shrink-0 gap-2.5">
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${routeTo.lat},${routeTo.lng}&travelmode=driving`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 rounded-[10px] bg-neutral-bg py-2.5 text-center text-[12.5px] font-bold text-[#344054]"
+          >
+            Google Maps
+          </a>
+          <a
+            href={`https://waze.com/ul?ll=${routeTo.lat},${routeTo.lng}&navigate=yes`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 rounded-[10px] bg-neutral-bg py-2.5 text-center text-[12.5px] font-bold text-[#344054]"
+          >
+            Waze
+          </a>
+        </div>
+      )}
+
       {nextJob && (
         <Link
           href={`/mobil/lucrari/${nextJob.id}`}

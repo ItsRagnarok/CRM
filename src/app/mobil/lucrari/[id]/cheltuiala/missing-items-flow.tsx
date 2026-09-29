@@ -30,6 +30,7 @@ export function MissingItemsFlow({
   addExpense: (formData: FormData) => void | Promise<void>;
 }) {
   const [showForm, setShowForm] = useState(expenses.length > 0);
+  const [receiptName, setReceiptName] = useState<string | null>(null);
   const total = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
   if (!showForm) {
@@ -127,13 +128,25 @@ export function MissingItemsFlow({
         </div>
 
         <Field label="Bon / factură">
-          <input
-            name="receipt"
-            type="file"
-            accept="image/*,application/pdf"
-            capture="environment"
-            className="w-full text-[13px]"
-          />
+          <label className="flex items-center gap-3 rounded-[10px] border border-dashed border-[#d0d5dd] bg-neutral-bg px-3.5 py-3">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[8px] bg-white text-[15px]">
+              📎
+            </span>
+            <span className="flex-1 truncate text-[13px] font-semibold text-[#344054]">
+              {receiptName ?? "Adaugă bon / factură (poză sau PDF)"}
+            </span>
+            <span className="shrink-0 rounded-[8px] bg-electric px-3 py-1.5 text-[11.5px] font-bold text-white">
+              Alege
+            </span>
+            <input
+              name="receipt"
+              type="file"
+              accept="image/*,application/pdf"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => setReceiptName(e.target.files?.[0]?.name ?? null)}
+            />
+          </label>
         </Field>
 
         <button
