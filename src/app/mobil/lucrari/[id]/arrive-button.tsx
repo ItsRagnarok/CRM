@@ -28,10 +28,21 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
 
   function handleClick() {
     setPending(true);
-    if (!navigator.geolocation || jobLat == null || jobLng == null) {
-      // No GPS / no known job location — let him check in manually rather
-      // than getting stuck with no way forward.
-      submit();
+    if (jobLat == null || jobLng == null) {
+      // Job has no known coordinates (e.g. address failed to geocode) — we
+      // can't verify distance, but he must still confirm explicitly rather
+      // than being checked in silently with no message at all.
+      setPending(false);
+      const ok = window.confirm(
+        "Nu cunoaștem coordonatele lucrării, deci nu putem verifica automat distanța. Confirmi manual că ai ajuns la locație?"
+      );
+      if (ok) submit();
+      return;
+    }
+    if (!navigator.geolocation) {
+      setPending(false);
+      const ok = window.confirm("Dispozitivul tău nu suportă verificarea locației. Confirmi manual că ai ajuns la locație?");
+      if (ok) submit();
       return;
     }
     navigator.geolocation.getCurrentPosition(
