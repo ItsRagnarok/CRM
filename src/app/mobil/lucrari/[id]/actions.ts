@@ -95,6 +95,35 @@ export async function advanceMobileStage(formData: FormData) {
   redirect(mobileStagePath(jobId, stage));
 }
 
+export async function confirmDepotArrival(formData: FormData) {
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!jobId) return;
+  const lat = formData.get("lat") ? Number(formData.get("lat")) : null;
+  const lng = formData.get("lng") ? Number(formData.get("lng")) : null;
+
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase.from("time_entries").insert({
+    organization_id: organization.id,
+    job_id: jobId,
+    profile_id: userId,
+    event_type: "depot_arrival",
+    occurred_at: new Date().toISOString(),
+    lat,
+    lng,
+  });
+
+  await supabase
+    .from("jobs")
+    .update({ mobile_stage: "cheltuiala" })
+    .eq("id", jobId)
+    .eq("organization_id", organization.id);
+
+  paths(jobId);
+  redirect(mobileStagePath(jobId, "cheltuiala"));
+}
+
 export async function toggleRequiredItemTaken(formData: FormData) {
   const itemId = String(formData.get("itemId") ?? "");
   const jobId = String(formData.get("jobId") ?? "");

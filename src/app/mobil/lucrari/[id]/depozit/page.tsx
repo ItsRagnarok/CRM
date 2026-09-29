@@ -4,6 +4,7 @@ import { ArrowLeft, Warehouse } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
+import { DepotArriveButton } from "./depot-arrive-button";
 
 export default async function MobileDepotPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -73,9 +74,14 @@ export default async function MobileDepotPage({ params }: { params: Promise<{ id
           </div>
 
           {depotPin ? (
-            <div className="relative mt-3 flex-1 overflow-hidden">
-              <MobileMapLoader jobs={[depotPin]} routeTo={depotPin} />
-            </div>
+            <>
+              <div className="relative mt-3 h-[300px] shrink-0 overflow-hidden">
+                <MobileMapLoader jobs={[depotPin]} routeTo={depotPin} />
+              </div>
+              <div className="p-4">
+                <DepotArriveButton jobId={id} depotLat={depotPin.lat} depotLng={depotPin.lng} />
+              </div>
+            </>
           ) : (
             <div className="mx-4 mt-3 rounded-[12px] border border-warning-bg bg-warning-bg p-3.5 text-center text-[12.5px] font-semibold text-[#7a5b0e]">
               Depozitul nu are coordonate GPS setate — adaugă adresa din platformă ca să apară harta și navigarea.
