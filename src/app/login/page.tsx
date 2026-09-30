@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { login } from "./actions";
-import { Users, Camera, FileText } from "lucide-react";
+import { Users, Camera, FileText, Smartphone } from "lucide-react";
 
 export default function LoginPage() {
   const [state, formAction, pending] = useActionState(login, undefined);
@@ -106,6 +106,15 @@ export default function LoginPage() {
               Creează organizația ta
             </Link>
           </p>
+
+          <a
+            href="/downloads/electrofield.apk"
+            download
+            className="mt-4 flex items-center justify-center gap-2 rounded-[10px] border border-[#d0d5dd] py-2.5 text-[13.5px] font-semibold text-[#344054] transition-colors hover:bg-neutral-bg"
+          >
+            <Smartphone className="h-4 w-4" strokeWidth={2} />
+            Descarcă aplicația Android
+          </a>
         </div>
       </div>
     </div>
