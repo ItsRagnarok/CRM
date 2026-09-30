@@ -539,6 +539,29 @@ export type Database = {
           },
         ]
       }
+      invoice_counters: {
+        Row: {
+          next_number: number
+          organization_id: string
+        }
+        Insert: {
+          next_number?: number
+          organization_id: string
+        }
+        Update: {
+          next_number?: number
+          organization_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_counters_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           client_id: string
@@ -2187,6 +2210,10 @@ export type Database = {
       current_org_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
       is_staff: { Args: never; Returns: boolean }
+      next_invoice_number: {
+        Args: { p_organization_id: string }
+        Returns: number
+      }
       platform_admin_create_company: {
         Args: {
           company_cui: string

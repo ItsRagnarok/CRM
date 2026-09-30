@@ -24,11 +24,16 @@ export async function createInvoiceForJob(formData: FormData) {
     .maybeSingle();
   if (!job) return;
 
-  const { count } = await supabase
-    .from("invoices")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organization.id);
-  const invoiceNumber = `FACT-${String((count ?? 0) + 1).padStart(4, "0")}`;
+  // count(*) + 1 raced under concurrent invoice creation — two requests could
+  // read the same count before either insert committed, producing duplicate
+  // numbers. next_invoice_number() increments a per-org counter atomically
+  // (row-locked by Postgres via ON CONFLICT), so concurrent calls always get
+  // distinct numbers.
+  const { data: nextNumber, error: numberError } = await supabase.rpc("next_invoice_number", {
+    p_organization_id: organization.id,
+  });
+  if (numberError || !nextNumber) return;
+  const invoiceNumber = `FACT-${String(nextNumber).padStart(4, "0")}`;
 
   // total_amount is a DB-generated column (sum of the four below) — sending
   // it explicitly is rejected outright, not just ignored.
