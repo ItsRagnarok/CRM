@@ -16,30 +16,44 @@ export function PushRegistration() {
     let cancelled = false;
 
     async function setup() {
-      const perm = await PushNotifications.checkPermissions();
-      let granted = perm.receive === "granted";
-      if (!granted && perm.receive !== "denied") {
-        const req = await PushNotifications.requestPermissions();
-        granted = req.receive === "granted";
-      }
-      if (!granted || cancelled) return;
+      try {
+        const perm = await PushNotifications.checkPermissions();
+        let granted = perm.receive === "granted";
+        if (!granted && perm.receive !== "denied") {
+          const req = await PushNotifications.requestPermissions();
+          granted = req.receive === "granted";
+        }
+        if (!granted || cancelled) return;
 
-      await PushNotifications.register();
+        await PushNotifications.register();
+      } catch (err) {
+        // Registration throws when Firebase isn't configured yet
+        // (google-services.json missing) or on emulators without Google
+        // Play Services — push is a nice-to-have, never worth crashing or
+        // blocking the rest of the app over.
+        console.error("PushNotifications setup failed", err);
+      }
     }
 
-    const registrationListener = PushNotifications.addListener("registration", (token) => {
-      registerPushToken(token.value).catch(() => {});
-    });
-    const errorListener = PushNotifications.addListener("registrationError", (err) => {
-      console.error("PushNotifications registration failed", err);
-    });
+    let registrationListener: ReturnType<typeof PushNotifications.addListener> | null = null;
+    let errorListener: ReturnType<typeof PushNotifications.addListener> | null = null;
+    try {
+      registrationListener = PushNotifications.addListener("registration", (token) => {
+        registerPushToken(token.value).catch(() => {});
+      });
+      errorListener = PushNotifications.addListener("registrationError", (err) => {
+        console.error("PushNotifications registration failed", err);
+      });
+    } catch (err) {
+      console.error("PushNotifications addListener failed", err);
+    }
 
     setup();
 
     return () => {
       cancelled = true;
-      registrationListener.then((h) => h.remove());
-      errorListener.then((h) => h.remove());
+      registrationListener?.then((h) => h.remove()).catch(() => {});
+      errorListener?.then((h) => h.remove()).catch(() => {});
     };
   }, []);
 

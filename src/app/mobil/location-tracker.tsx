@@ -42,32 +42,41 @@ export function LocationTracker({ enabled }: { enabled: boolean }) {
     if (Capacitor.isNativePlatform()) {
       let cancelled = false;
 
-      BackgroundGeolocation.addWatcher(
-        {
-          backgroundTitle: "ElectroField urmărește locația",
-          backgroundMessage: "Se trimite poziția către dispecerat cât timp lucrarea e activă.",
-          requestPermissions: true,
-          stale: false,
-          distanceFilter: 25,
-        },
-        (location, error) => {
-          if (error) {
-            // "not authorized" fires if the user denies the background
-            // permission — nothing to recover from here besides letting
-            // them retry from Setări; the admin-facing map already
-            // handles a technician with no recent position gracefully.
-            console.error("BackgroundGeolocation error", error);
-            return;
+      // Never let a native plugin failure (missing Google Play Services on
+      // an emulator, a denied permission, anything) take the whole app
+      // down — GPS is important but not worth crashing over.
+      try {
+        BackgroundGeolocation.addWatcher(
+          {
+            backgroundTitle: "ElectroField urmărește locația",
+            backgroundMessage: "Se trimite poziția către dispecerat cât timp lucrarea e activă.",
+            requestPermissions: true,
+            stale: false,
+            distanceFilter: 25,
+          },
+          (location, error) => {
+            if (error) {
+              // "not authorized" fires if the user denies the background
+              // permission — nothing to recover from here besides letting
+              // them retry from Setări; the admin-facing map already
+              // handles a technician with no recent position gracefully.
+              console.error("BackgroundGeolocation error", error);
+              return;
+            }
+            if (location) sendIfDue(location.latitude, location.longitude, location.accuracy ?? null);
           }
-          if (location) sendIfDue(location.latitude, location.longitude, location.accuracy ?? null);
-        }
-      ).then((id) => {
-        if (cancelled) {
-          BackgroundGeolocation.removeWatcher({ id }).catch(() => {});
-        } else {
-          nativeWatcherIdRef.current = id;
-        }
-      });
+        )
+          .then((id) => {
+            if (cancelled) {
+              BackgroundGeolocation.removeWatcher({ id }).catch(() => {});
+            } else {
+              nativeWatcherIdRef.current = id;
+            }
+          })
+          .catch((err) => console.error("BackgroundGeolocation.addWatcher failed", err));
+      } catch (err) {
+        console.error("BackgroundGeolocation setup failed", err);
+      }
 
       return () => {
         cancelled = true;

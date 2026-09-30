@@ -104,11 +104,11 @@ export function Sidebar({
         </div>
       </Link>
 
-      <nav className="mt-1.5 flex flex-col gap-3 overflow-y-auto">
+      <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
         {NAV_SECTIONS.map((section, i) => (
           <div key={section.label ?? `section-${i}`} className="flex flex-col gap-0.5">
             {section.label && (
-              <div className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-[#6f727c]">
+              <div className="px-3 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-[#6f727c]">
                 {section.label}
               </div>
             )}
@@ -118,7 +118,7 @@ export function Sidebar({
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] font-medium transition-colors ${
                     isActive
                       ? "bg-navy-active font-semibold text-white"
                       : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
