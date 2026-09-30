@@ -50,7 +50,12 @@ export async function createInvoiceForJob(formData: FormData) {
 export async function markInvoicePaid(formData: FormData) {
   const invoiceId = String(formData.get("invoiceId") ?? "");
   if (!invoiceId) return;
+  const { organization } = await requireSessionContext();
   const supabase = await createClient();
-  await supabase.from("invoices").update({ status: "paid" }).eq("id", invoiceId);
+  await supabase
+    .from("invoices")
+    .update({ status: "paid" })
+    .eq("id", invoiceId)
+    .eq("organization_id", organization.id);
   revalidatePath("/facturare");
 }
