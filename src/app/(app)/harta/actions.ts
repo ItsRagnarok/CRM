@@ -20,3 +20,37 @@ export async function resolveJobAlert(formData: FormData) {
   revalidatePath("/harta");
   revalidatePath("/dashboard");
 }
+
+// There's no in-app calling infrastructure (that would need a third-party
+// telephony/WebRTC service and its own setup) — this sends a push-style
+// in-app notification asking the technician to call the admin back, which
+// they'll see immediately in the mobile app's notification bell.
+export async function requestCallFromTeam(formData: FormData) {
+  const teamId = String(formData.get("teamId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "") || null;
+  if (!teamId) return;
+
+  const { organization, profile } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: members } = await supabase
+    .from("team_members")
+    .select("profile_id")
+    .eq("team_id", teamId);
+
+  const recipients = (members ?? []).map((m) => m.profile_id);
+  if (recipients.length === 0) return;
+
+  await supabase.from("notifications").insert(
+    recipients.map((profileId) => ({
+      organization_id: organization.id,
+      profile_id: profileId,
+      type: "call_request",
+      title: "Sună administratorul",
+      body: `${profile.full_name} te roagă să suni cât mai curând.`,
+      related_job_id: jobId,
+    }))
+  );
+
+  revalidatePath("/harta");
+}

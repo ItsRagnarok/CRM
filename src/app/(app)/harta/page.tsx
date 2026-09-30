@@ -6,8 +6,8 @@ import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import { JOB_STATUS_LABELS } from "@/lib/status";
 import type { Database } from "@/lib/supabase/database.types";
-import { MapPin, AlertTriangle } from "lucide-react";
-import { resolveJobAlert } from "./actions";
+import { MapPin, AlertTriangle, X, Phone, Camera, MessageSquare, Package } from "lucide-react";
+import { resolveJobAlert, requestCallFromTeam } from "./actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { todayInOrgTimeZone } from "@/lib/date";
 
@@ -20,7 +20,12 @@ function startOfDay(dateStr: string) {
   return `${dateStr}T00:00:00`;
 }
 
-export default async function HartaPage() {
+export default async function HartaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ teamId?: string }>;
+}) {
+  const { teamId: selectedTeamId } = await searchParams;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
   const today = todayInOrgTimeZone();
@@ -36,7 +41,7 @@ export default async function HartaPage() {
         .in("status", ACTIVE_STATUSES),
       supabase
         .from("teams")
-        .select("id, name, team_members(profiles(full_name))")
+        .select("id, name, team_members(profiles(id, full_name, phone))")
         .eq("organization_id", organization.id)
         .eq("is_active", true)
         .order("name"),
@@ -90,6 +95,33 @@ export default async function HartaPage() {
   const scheduledByTeam = new Map(
     (scheduledToday ?? []).filter((j) => j.team_id).map((j) => [j.team_id as string, j])
   );
+
+  // Drill-down panel: everything the selected team has done on their
+  // current job, fetched only when a team is actually selected.
+  const selectedTeam = selectedTeamId ? (teams ?? []).find((t) => t.id === selectedTeamId) ?? null : null;
+  const selectedTeamJob = selectedTeamId ? activeByTeam.get(selectedTeamId) ?? null : null;
+  const [{ data: selectedRequiredItems }, { data: selectedPhotos }, { data: selectedNotes }] = selectedTeamJob
+    ? await Promise.all([
+        supabase
+          .from("job_required_items")
+          .select("id, kind, quantity_needed, taken, custom_name, materials(name, unit)")
+          .eq("job_id", selectedTeamJob.id)
+          .order("created_at"),
+        supabase
+          .from("photos")
+          .select("id, category, storage_path, taken_at")
+          .eq("job_id", selectedTeamJob.id)
+          .order("taken_at", { ascending: false })
+          .limit(12),
+        supabase
+          .from("job_notes")
+          .select("id, kind, text, created_at")
+          .eq("job_id", selectedTeamJob.id)
+          .order("created_at", { ascending: false })
+          .limit(10),
+      ])
+    : [{ data: null }, { data: null }, { data: null }];
+  const publicPhotoUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
 
   type Row = {
     teamId: string;
@@ -166,7 +198,7 @@ export default async function HartaPage() {
         color: TEAM_MAP_COLORS[i % TEAM_MAP_COLORS.length],
         lat,
         lng,
-        href: `/lucrari/${job.id}`,
+        href: `/harta?teamId=${teamId}`,
       };
     })
     .filter((m): m is NonNullable<typeof m> => m !== null);
@@ -280,10 +312,14 @@ export default async function HartaPage() {
                 return row.jobId ? (
                   <Link
                     key={row.teamId}
-                    href={`/lucrari/${row.jobId}`}
+                    href={row.kind === "live" ? `/harta?teamId=${row.teamId}` : `/lucrari/${row.jobId}`}
                     prefetch={false}
                     className={`flex gap-2.5 rounded-[10px] p-2.5 hover:bg-[#f9fafb] ${
-                      row.kind === "live" ? "border border-[#d9e6ff] bg-[#f0f5ff] hover:bg-[#f0f5ff]" : ""
+                      row.kind === "live"
+                        ? `border bg-[#f0f5ff] hover:bg-[#f0f5ff] ${
+                            selectedTeamId === row.teamId ? "border-electric" : "border-[#d9e6ff]"
+                          }`
+                        : ""
                     }`}
                   >
                     {content}
@@ -308,6 +344,142 @@ export default async function HartaPage() {
             title="Nicio echipă pe teren acum"
             description="Harta arată echipele care sunt în drum sau în lucru chiar acum. Momentan nu e nicio lucrare activă cu locație GPS."
           />
+        )}
+
+        {selectedTeamId && (
+          <div className="absolute inset-y-0 right-0 z-[500] flex w-[380px] max-w-full flex-col overflow-hidden border-l border-border bg-white shadow-[-4px_0_16px_rgba(16,24,40,0.08)]">
+            <div className="flex items-center gap-2.5 border-b border-[#f2f4f7] px-4 py-3.5">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-[14px] font-extrabold text-foreground">
+                  {selectedTeam?.name ?? "Echipă"}
+                </div>
+                {selectedTeamJob ? (
+                  <Link
+                    href={`/lucrari/${selectedTeamJob.id}`}
+                    prefetch={false}
+                    className="truncate text-[12px] font-semibold text-electric"
+                  >
+                    #{selectedTeamJob.display_number} · {selectedTeamJob.title} — vezi lucrarea completă →
+                  </Link>
+                ) : (
+                  <div className="text-[12px] text-muted-2">Fără lucrare activă chiar acum</div>
+                )}
+              </div>
+              <Link
+                href="/harta"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[8px] text-muted-2 hover:bg-neutral-bg"
+                aria-label="Închide"
+              >
+                <X className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="flex-1 overflow-auto p-4">
+              {selectedTeamJob ? (
+                <>
+                  <div className="mb-4 rounded-[12px] border border-[#eaecf0] p-3.5">
+                    <div className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-muted-2">
+                      <Phone className="h-3.5 w-3.5" /> SOLICITĂ APEL
+                    </div>
+                    <form action={requestCallFromTeam} className="flex flex-col gap-2">
+                      <input type="hidden" name="teamId" value={selectedTeamId} />
+                      <input type="hidden" name="jobId" value={selectedTeamJob.id} />
+                      <button
+                        type="submit"
+                        className="rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white"
+                      >
+                        Trimite notificare de apel în aplicația mobilă
+                      </button>
+                    </form>
+                    {(selectedTeam?.team_members ?? [])
+                      .map((m) => m.profiles)
+                      .filter((p): p is NonNullable<typeof p> => Boolean(p?.phone))
+                      .map((p) => (
+                        <a
+                          key={p!.id}
+                          href={`tel:${p!.phone}`}
+                          className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-[#344054]"
+                        >
+                          <Phone className="h-3.5 w-3.5 text-muted-2" /> Sună direct — {p!.full_name} ({p!.phone})
+                        </a>
+                      ))}
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-muted-2">
+                      <Package className="h-3.5 w-3.5" /> MATERIALE ȘI SCULE
+                    </div>
+                    {selectedRequiredItems && selectedRequiredItems.length > 0 ? (
+                      <div className="flex flex-col divide-y divide-[#f2f4f7] rounded-[12px] border border-[#eaecf0]">
+                        {selectedRequiredItems.map((item) => (
+                          <div key={item.id} className="flex items-center gap-2 px-3 py-2 text-[12.5px]">
+                            <span
+                              className={`h-2 w-2 shrink-0 rounded-full ${item.taken ? "bg-success" : "bg-[#d0d5dd]"}`}
+                            />
+                            <span className="flex-1 text-[#344054]">
+                              {item.materials?.name ?? item.custom_name} · {item.quantity_needed}{" "}
+                              {item.materials?.unit ?? "buc"}
+                            </span>
+                            <span className={`text-[10.5px] font-bold ${item.taken ? "text-success" : "text-muted-2"}`}>
+                              {item.taken ? "LUAT" : "NELUAT"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[12.5px] text-muted">Nimic definit pentru această lucrare.</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <div className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-muted-2">
+                      <Camera className="h-3.5 w-3.5" /> FOTOGRAFII RECENTE ({selectedPhotos?.length ?? 0})
+                    </div>
+                    {selectedPhotos && selectedPhotos.length > 0 ? (
+                      <div className="grid grid-cols-3 gap-1.5">
+                        {selectedPhotos.map((p) => (
+                          <a key={p.id} href={publicPhotoUrl(p.storage_path)} target="_blank" rel="noreferrer">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={publicPhotoUrl(p.storage_path)}
+                              alt={p.category}
+                              className="h-[72px] w-full rounded-[8px] object-cover"
+                            />
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[12.5px] text-muted">Nicio fotografie încărcată încă.</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-muted-2">
+                      <MessageSquare className="h-3.5 w-3.5" /> COMENTARII / PROBLEME
+                    </div>
+                    {selectedNotes && selectedNotes.length > 0 ? (
+                      <div className="flex flex-col gap-2">
+                        {selectedNotes.map((n) => (
+                          <div key={n.id} className="rounded-[10px] border border-[#eaecf0] p-2.5 text-[12.5px]">
+                            <div className="text-[#344054]">{n.text}</div>
+                            <div className="mt-1 text-[11px] text-muted-2">
+                              {new Date(n.created_at).toLocaleString("ro-RO")}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[12.5px] text-muted">Niciun comentariu încă.</p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <p className="text-[13px] text-muted">
+                  Această echipă nu are o lucrare activă chiar acum — nimic de afișat.
+                </p>
+              )}
+            </div>
+          </div>
         )}
       </div>
       </div>

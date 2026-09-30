@@ -9,6 +9,8 @@ import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { DepartureAlert } from "./departure-alert";
 import { ArrivalAlert } from "./arrival-alert";
 import { StartButtonCompact } from "./start-button-compact";
+import { PhoneCall } from "lucide-react";
+import { markNotificationRead } from "@/app/(app)/notifications-actions";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -30,7 +32,7 @@ export default async function MobileHomePage({
 }) {
   const { view: rawView, month: rawMonth, date: rawDate } = await searchParams;
   const view = rawView === "calendar" ? "calendar" : "astazi";
-  const { profile } = await requireSessionContext();
+  const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const firstName = profile.full_name.split(" ")[0];
   const today = todayInOrgTimeZone();
@@ -220,6 +222,14 @@ export default async function MobileHomePage({
     ? await supabase.from("arrival_prompts").select("attempts").eq("job_id", inDrumJob.id).maybeSingle()
     : { data: null };
 
+  const { data: callRequests } = await supabase
+    .from("notifications")
+    .select("id, body, created_at")
+    .eq("profile_id", profile.id)
+    .eq("type", "call_request")
+    .eq("is_read", false)
+    .order("created_at", { ascending: false });
+
   return (
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3.5 pt-1.5">
@@ -249,6 +259,27 @@ export default async function MobileHomePage({
           </Link>
         </div>
       </div>
+
+      {(callRequests ?? []).map((req) => (
+        <div key={req.id} className="mx-4 mt-3 flex items-center gap-3 rounded-[13px] border border-electric bg-electric-soft/40 p-3.5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-electric-soft">
+            <PhoneCall className="h-[18px] w-[18px] text-electric" strokeWidth={1.9} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-[13px] font-bold text-foreground">{req.body}</div>
+            {organization.phone && (
+              <a href={`tel:${organization.phone}`} className="text-[12px] font-semibold text-electric">
+                Sună acum — {organization.phone}
+              </a>
+            )}
+          </div>
+          <form action={markNotificationRead.bind(null, req.id)}>
+            <button type="submit" className="shrink-0 rounded-[8px] bg-white px-2.5 py-1.5 text-[11px] font-bold text-electric">
+              Am văzut
+            </button>
+          </form>
+        </div>
+      ))}
 
       {nextUpcomingJob && nextUpcomingJob.locations && (
         <DepartureAlert
