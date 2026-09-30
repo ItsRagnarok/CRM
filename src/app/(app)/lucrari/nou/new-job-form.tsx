@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Wrench, Package, Sparkles, Camera } from "lucide-react";
+import { ArrowLeft, Wrench, Package, Sparkles, Camera, Loader2 } from "lucide-react";
 import { createJob } from "../actions";
 import { generateJobSuggestion } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
@@ -42,13 +42,18 @@ export function NewJobForm({
   const [addressValue, setAddressValue] = useState("");
 
   const [titleChoice, setTitleChoice] = useState(CUSTOM_TITLE);
+  const [customTitleValue, setCustomTitleValue] = useState("");
   const [jobType, setJobType] = useState("interventie");
+  const [priorityValue, setPriorityValue] = useState("normala");
+  const [startTimeValue, setStartTimeValue] = useState("");
+  const [endTimeValue, setEndTimeValue] = useState("");
   const [checkedMaterialIds, setCheckedMaterialIds] = useState<Set<string>>(new Set());
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiState, aiFormAction, aiPending] = useActionState(generateJobSuggestion, undefined);
   const [customItems, setCustomItems] = useState<{ name: string; quantity: number; unit: string; kind: "material" | "tool" }[]>([]);
+  const [aiSteps, setAiSteps] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
   const [requireArrivalPhoto, setRequireArrivalPhoto] = useState(true);
   const [requireDuringPhoto, setRequireDuringPhoto] = useState(true);
@@ -56,6 +61,17 @@ export function NewJobForm({
   const [photoGuidanceBefore, setPhotoGuidanceBefore] = useState("");
   const [photoGuidanceDuring, setPhotoGuidanceDuring] = useState("");
   const [photoGuidanceAfter, setPhotoGuidanceAfter] = useState("");
+
+  function pad2(n: number) {
+    return String(n).padStart(2, "0");
+  }
+
+  function addHours(hhmm: string, hours: number) {
+    const [h, m] = hhmm.split(":").map(Number);
+    let totalMinutes = h * 60 + m + Math.round(hours * 60);
+    totalMinutes = Math.min(totalMinutes, 23 * 60 + 59);
+    return `${pad2(Math.floor(totalMinutes / 60))}:${pad2(totalMinutes % 60)}`;
+  }
 
   function findCatalogMatch(name: string) {
     return materials.find(
@@ -66,6 +82,19 @@ export function NewJobForm({
   function applyAiSuggestion() {
     const suggestion = aiState?.suggestion;
     if (!suggestion) return;
+
+    if (suggestion.title) {
+      setTitleChoice(CUSTOM_TITLE);
+      setCustomTitleValue(suggestion.title);
+    }
+    if (suggestion.jobType) setJobType(suggestion.jobType);
+    if (suggestion.priority) setPriorityValue(suggestion.priority);
+    setAiSteps(Array.isArray(suggestion.steps) ? suggestion.steps.filter(Boolean) : []);
+
+    const now = new Date();
+    const nowHM = `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    setStartTimeValue(nowHM);
+    setEndTimeValue(addHours(nowHM, suggestion.estimatedHoursTwoPeople || 2));
 
     setDescriptionValue(suggestion.instructions ?? "");
     if (suggestion.photos?.before) setPhotoGuidanceBefore(suggestion.photos.before);
@@ -183,6 +212,8 @@ export function NewJobForm({
               <input
                 name="title"
                 required
+                value={customTitleValue}
+                onChange={(e) => setCustomTitleValue(e.target.value)}
                 placeholder="Ex: Instalare tablou electric"
                 className="mt-2 w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
@@ -222,18 +253,51 @@ export function NewJobForm({
                   fd.set("aiClientName", selectedClient?.name ?? "");
                   aiFormAction(fd);
                 }}
-                className="flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-60"
+                className="flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-80"
               >
-                <Sparkles className="h-3.5 w-3.5" /> {aiPending ? "Se generează…" : "Generează cu AI"}
+                {aiPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {aiPending ? "Se generează…" : "Generează cu AI"}
               </button>
             </div>
+
+            {aiPending && (
+              <div className="mt-3 flex items-center gap-2.5 rounded-[10px] border border-[#d9e6ff] bg-white p-3.5">
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin text-electric" />
+                <p className="text-[12.5px] text-[#344054]">
+                  AI-ul analizează descrierea și completează titlul, materialele, sculele, pașii, pozele necesare și
+                  timpul estimat…
+                </p>
+              </div>
+            )}
 
             {aiState?.error && <p className="mt-2.5 text-[12.5px] font-semibold text-danger">{aiState.error}</p>}
 
             {aiState?.suggestion && !aiApplied && (
               <div className="mt-3 rounded-[10px] border border-[#d9e6ff] bg-white p-3.5">
-                <div className="text-[12.5px] font-bold text-foreground">Sugestie AI</div>
-                <p className="mt-1.5 whitespace-pre-line text-[12px] text-[#344054]">{aiState.suggestion.instructions}</p>
+                <div className="text-[12.5px] font-bold text-foreground">{aiState.suggestion.title}</div>
+                <div className="mt-1 flex flex-wrap gap-1.5 text-[11px] font-semibold text-electric">
+                  <span className="rounded-full bg-electric-soft px-2 py-0.5">
+                    {JOB_TYPE_LABELS[aiState.suggestion.jobType as keyof typeof JOB_TYPE_LABELS] ?? aiState.suggestion.jobType}
+                  </span>
+                  <span className="rounded-full bg-electric-soft px-2 py-0.5">
+                    {JOB_PRIORITY_LABELS[aiState.suggestion.priority as keyof typeof JOB_PRIORITY_LABELS] ?? aiState.suggestion.priority}
+                  </span>
+                  <span className="rounded-full bg-electric-soft px-2 py-0.5">
+                    ~{aiState.suggestion.estimatedHoursTwoPeople}h · 2 persoane
+                  </span>
+                </div>
+                <p className="mt-2 whitespace-pre-line text-[12px] text-[#344054]">{aiState.suggestion.instructions}</p>
+                {aiState.suggestion.steps.length > 0 && (
+                  <ol className="mt-2 list-decimal pl-4 text-[12px] text-[#344054]">
+                    {aiState.suggestion.steps.map((step, i) => (
+                      <li key={i}>{step}</li>
+                    ))}
+                  </ol>
+                )}
                 {aiState.suggestion.materials.length > 0 && (
                   <div className="mt-2 text-[12px] text-[#344054]">
                     <b>Materiale:</b>{" "}
@@ -250,7 +314,7 @@ export function NewJobForm({
                   onClick={applyAiSuggestion}
                   className="mt-3 rounded-[9px] bg-success px-3.5 py-2 text-[12px] font-bold text-white"
                 >
-                  Aplică sugestia (completează Descriere + bifează materialele)
+                  Aplică sugestia (completează tot formularul)
                 </button>
               </div>
             )}
@@ -258,11 +322,15 @@ export function NewJobForm({
             {aiApplied && (
               <div className="mt-3 rounded-[10px] border border-success-bg bg-success-bg p-3">
                 <p className="text-[12px] font-semibold text-success">
-                  Sugestia a fost aplicată — verifică Descrierea, materialele bifate și fotografiile necesare mai jos.
+                  Sugestia a fost aplicată — verifică toate câmpurile completate mai jos înainte să salvezi.
                 </p>
               </div>
             )}
           </div>
+
+          {aiSteps.length > 0 && (
+            <input type="hidden" name="aiChecklistSteps" value={JSON.stringify(aiSteps)} />
+          )}
 
           {clientLocations.length > 0 && (
             <Field label="Punct de lucru">
@@ -324,7 +392,8 @@ export function NewJobForm({
             <Field label="Prioritate">
               <select
                 name="priority"
-                defaultValue="normala"
+                value={priorityValue}
+                onChange={(e) => setPriorityValue(e.target.value)}
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               >
                 {Object.entries(JOB_PRIORITY_LABELS).map(([value, label]) => (
@@ -367,6 +436,8 @@ export function NewJobForm({
               <input
                 name="startTime"
                 type="time"
+                value={startTimeValue}
+                onChange={(e) => setStartTimeValue(e.target.value)}
                 placeholder="Acum"
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />
@@ -375,6 +446,8 @@ export function NewJobForm({
               <input
                 name="endTime"
                 type="time"
+                value={endTimeValue}
+                onChange={(e) => setEndTimeValue(e.target.value)}
                 placeholder="20:00"
                 className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
               />

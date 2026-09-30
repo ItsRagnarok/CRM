@@ -8,6 +8,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "./team-sync";
 import { geocodeAddress } from "@/lib/geocode";
 import { todayInOrgTimeZone, nowTimeInOrgTimeZone } from "@/lib/date";
+import { ensureChecklist } from "./[id]/actions";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -152,6 +153,34 @@ export async function createJob(
             created_by: userId,
           }))
         );
+      }
+    } catch {
+      // Malformed JSON from the client — not worth failing job creation over.
+    }
+  }
+
+  // AI-suggested step-by-step checklist, seeded the same way an admin
+  // checklist template would be — locked so the technician can only check
+  // them off, matching ensureChecklist's existing convention for
+  // template-seeded items.
+  const aiStepsRaw = String(formData.get("aiChecklistSteps") ?? "");
+  if (aiStepsRaw) {
+    try {
+      const steps = (JSON.parse(aiStepsRaw) as unknown[])
+        .map((s) => String(s ?? "").trim())
+        .filter(Boolean);
+      if (steps.length > 0) {
+        const checklistId = await ensureChecklist(supabase, job.id, "after");
+        if (checklistId) {
+          await supabase.from("job_checklist_items").insert(
+            steps.map((label, i) => ({
+              job_checklist_id: checklistId,
+              label,
+              sort_order: i,
+              locked: true,
+            }))
+          );
+        }
       }
     } catch {
       // Malformed JSON from the client — not worth failing job creation over.
