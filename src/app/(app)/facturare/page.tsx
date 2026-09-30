@@ -51,9 +51,10 @@ export default async function FacturarePage() {
       <h1 className="text-[17px] font-extrabold text-foreground">Facturare</h1>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
-        <div className="overflow-hidden rounded-[13px] border border-border bg-white">
+        <div className="min-w-0 overflow-hidden rounded-[13px] border border-border bg-white">
           <div className="border-b border-[#f2f4f7] px-5 py-3.5 text-[14.5px] font-bold">Facturi emise</div>
           {invoices && invoices.length > 0 ? (
+            <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-[#f9fafb] text-left text-[11px] font-bold uppercase tracking-wide text-muted">
@@ -108,6 +109,7 @@ export default async function FacturarePage() {
                 ))}
               </tbody>
             </table>
+            </div>
           ) : (
             <div className="p-5">
               <EmptyState icon={FileText} title="Nicio factură emisă" description="Generează prima factură din panoul alăturat." />
