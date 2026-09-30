@@ -61,34 +61,47 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
 
 "steps" este o listă scurtă de pași concreți (checklist), separată de "instructions" care e textul detaliat. "estimatedHoursTwoPeople" este o estimare realistă în ore (poate fi zecimală) a duratei lucrării presupunând o echipă de 2 persoane.`;
 
-  let res: Response;
-  try {
-    res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
-        }),
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+  });
+
+  // Gemini's free tier returns 503 ("high demand") often enough that a
+  // single attempt isn't good enough — Google's own message says it's
+  // transient, so retry a couple of times with backoff before giving up.
+  let res: Response | null = null;
+  let lastErrText = "";
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+    } catch (err) {
+      console.error(`generateJobSuggestion: fetch failed (attempt ${attempt})`, err);
+      if (attempt === maxAttempts) {
+        return { error: "Nu am putut contacta serviciul AI. Verifică conexiunea și încearcă din nou." };
       }
-    );
-  } catch (err) {
-    console.error("generateJobSuggestion: fetch failed", err);
-    return { error: "Nu am putut contacta serviciul AI. Verifică conexiunea și încearcă din nou." };
+      await new Promise((r) => setTimeout(r, attempt * 1200));
+      continue;
+    }
+
+    if (res.ok) break;
+
+    lastErrText = await res.text().catch(() => "");
+    console.error(`generateJobSuggestion: Gemini error (attempt ${attempt})`, res.status, lastErrText);
+    if (res.status !== 503 || attempt === maxAttempts) break;
+    await new Promise((r) => setTimeout(r, attempt * 1200));
   }
 
-  if (!res.ok) {
-    const errText = await res.text().catch(() => "");
-    console.error("generateJobSuggestion: Gemini error", res.status, errText);
+  if (!res || !res.ok) {
+    const status = res?.status;
     return {
       error:
-        res.status === 400 || res.status === 403
+        status === 400 || status === 403
           ? "Cheia GEMINI_API_KEY pare invalidă sau fără permisiuni. Verific-o în Vercel."
-          : res.status === 503
-            ? "Serviciul AI e supraîncărcat momentan. Mai încearcă o dată în câteva secunde."
-            : `AI a răspuns cu o eroare (${res.status}). Încearcă din nou.`,
+          : status === 503
+            ? "Serviciul AI e supraîncărcat momentan (am reîncercat de 3 ori). Mai încearcă peste un minut."
+            : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
     };
   }
 

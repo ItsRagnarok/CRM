@@ -51,7 +51,23 @@ export function NewJobForm({
   const [showFullCatalog, setShowFullCatalog] = useState(false);
   const [descriptionValue, setDescriptionValue] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
-  const [aiState, aiFormAction, aiPending] = useActionState(generateJobSuggestion, undefined);
+  const [aiState, setAiState] = useState<Awaited<ReturnType<typeof generateJobSuggestion>> | undefined>(undefined);
+  const [aiPending, setAiPending] = useState(false);
+
+  async function handleGenerateAi() {
+    setAiPending(true);
+    setAiState(undefined);
+    const fd = new FormData();
+    fd.set("aiDescription", aiPrompt);
+    fd.set("aiJobType", JOB_TYPE_LABELS[jobType as keyof typeof JOB_TYPE_LABELS] ?? jobType);
+    fd.set("aiClientName", selectedClient?.name ?? "");
+    try {
+      const result = await generateJobSuggestion(undefined, fd);
+      setAiState(result);
+    } finally {
+      setAiPending(false);
+    }
+  }
   const [customItems, setCustomItems] = useState<{ name: string; quantity: number; unit: string; kind: "material" | "tool" }[]>([]);
   const [aiSteps, setAiSteps] = useState<string[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
@@ -240,19 +256,16 @@ export function NewJobForm({
             {/* A <form> here would nest inside the page's own create-job
                 <form> below — invalid HTML that browsers silently break
                 (dropping the inner form entirely), which is why this button
-                did nothing / misbehaved. Dispatch the action directly
-                instead of relying on native form submission. */}
+                did nothing / misbehaved. Call the server action directly and
+                await it instead of relying on native form submission or
+                useActionState's pending flag (unreliable when the action
+                isn't dispatched through an actual <form> submit), so the
+                loading state is never in doubt. */}
             <div className="mt-2.5 flex justify-end">
               <button
                 type="button"
                 disabled={aiPending}
-                onClick={() => {
-                  const fd = new FormData();
-                  fd.set("aiDescription", aiPrompt);
-                  fd.set("aiJobType", JOB_TYPE_LABELS[jobType as keyof typeof JOB_TYPE_LABELS] ?? jobType);
-                  fd.set("aiClientName", selectedClient?.name ?? "");
-                  aiFormAction(fd);
-                }}
+                onClick={handleGenerateAi}
                 className="flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-80"
               >
                 {aiPending ? (
