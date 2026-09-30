@@ -98,8 +98,15 @@ export function NewJobForm({
       console.error("SpeechRecognition error", event.error);
       if (event.error === "not-allowed" || event.error === "service-not-allowed") {
         setVoiceError("Nu am acces la microfon — verifică permisiunile browserului.");
-      } else if (event.error !== "no-speech" && event.error !== "aborted") {
-        setVoiceError("Recunoașterea vocală a întâmpinat o eroare. Încearcă din nou.");
+      } else if (event.error === "no-speech") {
+        // Chrome stops after ~6s of total silence — this almost always
+        // means the mic itself isn't capturing sound (wrong input device
+        // selected, muted at OS level), not a bug in the recognition flow.
+        setVoiceError(
+          "Nu am detectat niciun sunet timp de 6 secunde. Verifică în Windows/browser că e selectat microfonul corect și nu e pe mute, apoi încearcă din nou."
+        );
+      } else if (event.error !== "aborted") {
+        setVoiceError(`Recunoașterea vocală a întâmpinat o eroare (${event.error}). Încearcă din nou.`);
       }
     };
     recognition.onend = () => {
