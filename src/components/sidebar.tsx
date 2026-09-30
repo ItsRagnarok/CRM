@@ -79,38 +79,33 @@ export function Sidebar({
     .toUpperCase();
 
   return (
-    <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-5">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 pb-5 pt-1.5">
+    <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-2.5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 pb-2 pt-0.5">
         <Image
           src="/logo-mark.png"
           alt="ElectroField"
-          width={34}
-          height={34}
-          className="h-[34px] w-[34px] shrink-0 object-contain"
+          width={28}
+          height={28}
+          className="h-7 w-7 shrink-0 object-contain"
           priority
         />
-        <div>
-          <div className="flex items-baseline text-[15px] font-bold tracking-tight text-white">
-            Electro
-            <Image
-              src="/logo-wordmark-field.png"
-              alt="Field"
-              width={496}
-              height={173}
-              className="h-[15px] w-auto translate-y-[1px] object-contain"
-            />
-          </div>
-          <div className="text-[10.5px] text-[#9da0a8]">
-            Echipă. Lucrări. Control.
-          </div>
+        <div className="flex items-baseline text-[15px] font-bold tracking-tight text-white">
+          Electro
+          <Image
+            src="/logo-wordmark-field.png"
+            alt="Field"
+            width={496}
+            height={173}
+            className="h-[15px] w-auto translate-y-[1px] object-contain"
+          />
         </div>
       </Link>
 
-      <nav className="mt-1 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
+      <nav className="mt-0.5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
         {NAV_SECTIONS.map((section, i) => (
           <div key={section.label ?? `section-${i}`} className="flex flex-col gap-0.5">
             {section.label && (
-              <div className="px-3 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-wider text-[#6f727c]">
+              <div className="px-3 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#6f727c]">
                 {section.label}
               </div>
             )}
@@ -120,7 +115,7 @@ export function Sidebar({
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2 text-[13.5px] font-medium transition-colors ${
+                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
                     isActive
                       ? "bg-navy-active font-semibold text-white"
                       : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
@@ -135,8 +130,8 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="mt-auto flex items-center gap-2.5 border-t border-navy-border px-2.5 pt-3">
-        <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-electric text-[13px] font-bold text-white">
+      <div className="mt-auto flex items-center gap-2.5 border-t border-navy-border px-2.5 pt-2">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric text-[13px] font-bold text-white">
           {initials || "?"}
         </div>
         <div className="min-w-0 flex-1">
