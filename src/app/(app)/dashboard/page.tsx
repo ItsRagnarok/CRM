@@ -143,7 +143,7 @@ export default async function DashboardPage({
     supabase
       .from("jobs")
       .select(
-        "id, display_number, title, status, start_time, end_time, team_id, clients(name), locations(address, lat, lng), job_assignments(profiles(full_name))"
+        "id, display_number, title, status, start_time, end_time, team_id, distance_km, clients(name), locations(address, lat, lng), job_assignments(profiles(full_name))"
       )
       .eq("organization_id", organization.id)
       .gte("scheduled_date", rangeStartStr)
@@ -171,13 +171,13 @@ export default async function DashboardPage({
       .lt("expense_date", prevEndExclusiveStr),
     supabase
       .from("time_entries")
-      .select("profile_id, job_id, event_type, occurred_at")
+      .select("profile_id, job_id, event_type, occurred_at, profiles(hourly_rate)")
       .eq("organization_id", organization.id)
       .gte("occurred_at", startOfDay(rangeStartStr))
       .lt("occurred_at", startOfDay(rangeEndExclusiveStr)),
     supabase
       .from("time_entries")
-      .select("profile_id, job_id, event_type, occurred_at")
+      .select("profile_id, job_id, event_type, occurred_at, profiles(hourly_rate)")
       .eq("organization_id", organization.id)
       .gte("occurred_at", startOfDay(prevStartStr))
       .lt("occurred_at", startOfDay(prevEndExclusiveStr)),
@@ -237,6 +237,91 @@ export default async function DashboardPage({
     supabase.from("warehouses").select("id, name, address, lat, lng").eq("organization_id", organization.id),
   ]);
 
+  // Profit = venitul facturat pentru lucrările programate în perioadă, minus
+  // costul lor (materiale folosite + manoperă + combustibil estimat +
+  // cheltuieli — aceeași metodă ca la costul pe lucrare individuală).
+  const [
+    { data: materialUsageInRange },
+    { data: materialUsagePrevRange },
+    { data: invoicesInRange },
+    { data: invoicesPrevRange },
+    { data: jobDistancesPrevRange },
+  ] = await Promise.all([
+    supabase
+      .from("material_usage")
+      .select("quantity, materials(unit_cost), jobs!inner(scheduled_date)")
+      .eq("organization_id", organization.id)
+      .gte("jobs.scheduled_date", rangeStartStr)
+      .lte("jobs.scheduled_date", rangeEndStr),
+    supabase
+      .from("material_usage")
+      .select("quantity, materials(unit_cost), jobs!inner(scheduled_date)")
+      .eq("organization_id", organization.id)
+      .gte("jobs.scheduled_date", prevStartStr)
+      .lt("jobs.scheduled_date", prevEndExclusiveStr),
+    supabase
+      .from("invoices")
+      .select("total_amount, jobs!inner(scheduled_date)")
+      .eq("organization_id", organization.id)
+      .gte("jobs.scheduled_date", rangeStartStr)
+      .lte("jobs.scheduled_date", rangeEndStr),
+    supabase
+      .from("invoices")
+      .select("total_amount, jobs!inner(scheduled_date)")
+      .eq("organization_id", organization.id)
+      .gte("jobs.scheduled_date", prevStartStr)
+      .lt("jobs.scheduled_date", prevEndExclusiveStr),
+    supabase
+      .from("jobs")
+      .select("distance_km")
+      .eq("organization_id", organization.id)
+      .gte("scheduled_date", prevStartStr)
+      .lt("scheduled_date", prevEndExclusiveStr),
+  ]);
+
+  const materialsCostOf = (rows: { quantity: number; materials: { unit_cost: number | null } | null }[] | null) =>
+    (rows ?? []).reduce((s, m) => s + Number(m.quantity) * (m.materials?.unit_cost ?? 0), 0);
+
+  function laborCostOf(
+    rows: { profile_id: string; event_type: string; occurred_at: string; profiles?: { hourly_rate: number | null } | null }[]
+  ) {
+    const byProfile = new Map<string, (typeof rows)[number][]>();
+    for (const e of rows) {
+      if (!byProfile.has(e.profile_id)) byProfile.set(e.profile_id, []);
+      byProfile.get(e.profile_id)!.push(e);
+    }
+    let total = 0;
+    for (const events of byProfile.values()) {
+      const sorted = [...events].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+      const rate = sorted[0]?.profiles?.hourly_rate ?? null;
+      let openStart: number | null = null;
+      let hours = 0;
+      for (const e of sorted) {
+        const t = new Date(e.occurred_at).getTime();
+        if (e.event_type === "work_start") openStart = t;
+        else if (e.event_type === "work_end" && openStart != null) {
+          hours += (t - openStart) / 3_600_000;
+          openStart = null;
+        }
+      }
+      total += hours * (rate ?? 0);
+    }
+    return total;
+  }
+
+  const revenueOf = (rows: { total_amount: number | null }[] | null) =>
+    (rows ?? []).reduce((s, i) => s + Number(i.total_amount ?? 0), 0);
+
+  const materialsCostInRange = materialsCostOf(materialUsageInRange);
+  const materialsCostPrevRange = materialsCostOf(materialUsagePrevRange);
+  const laborCostInRange = laborCostOf(timeEntriesToday ?? []);
+  const laborCostPrevRange = laborCostOf(timeEntriesYesterday ?? []);
+  const travelCostInRange = (jobsToday ?? []).reduce((s, j) => s + (j.distance_km ?? 0), 0) * organization.fuel_cost_per_km;
+  const travelCostPrevRange =
+    (jobDistancesPrevRange ?? []).reduce((s, j) => s + (j.distance_km ?? 0), 0) * organization.fuel_cost_per_km;
+  const revenueInRange = revenueOf(invoicesInRange);
+  const revenuePrevRange = revenueOf(invoicesPrevRange);
+
   const activeJobsList = activeJobs ?? [];
   const teamsInField = new Map(
     activeJobsList.filter((j) => j.team_id).map((j) => [j.team_id as string, j])
@@ -280,6 +365,20 @@ export default async function DashboardPage({
     if (pct === 0) return sameLabel;
     return `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% ${comparisonLabel}`;
   }
+
+  // A percentage trend is meaningless when the baseline is 0 or negative
+  // (routine when nothing's invoiced yet) — profit gets an absolute RON
+  // delta instead.
+  function profitTrend(current: number, previous: number) {
+    const diff = current - previous;
+    if (diff === 0) return sameLabel;
+    return `${diff > 0 ? "↑" : "↓"} ${Math.abs(diff).toFixed(2)} RON ${comparisonLabel}`;
+  }
+
+  const totalCostInRange = materialsCostInRange + laborCostInRange + travelCostInRange + expensesToday;
+  const totalCostPrevRange = materialsCostPrevRange + laborCostPrevRange + travelCostPrevRange + expensesYesterday;
+  const profitInRange = revenueInRange - totalCostInRange;
+  const profitPrevRange = revenuePrevRange - totalCostPrevRange;
 
   const activeYesterdayCount = new Set(
     (timeEntriesYesterday ?? [])
@@ -542,13 +641,17 @@ export default async function DashboardPage({
         />
         <KpiCard
           label={range === "azi" ? "Profit azi" : "Profit (7 zile)"}
-          value="—"
-          trend="Calcul disponibil în curând"
+          value={`${profitInRange.toFixed(2)} RON`}
+          trend={profitTrend(profitInRange, profitPrevRange)}
           icon={TrendingUp}
-          iconBg="bg-purple-soft"
-          iconColor="text-purple"
+          iconBg={profitInRange >= 0 ? "bg-purple-soft" : "bg-danger-bg"}
+          iconColor={profitInRange >= 0 ? "text-purple" : "text-danger"}
         />
       </div>
+      <p className="-mt-2 text-[11.5px] text-muted-2">
+        Profit = venit facturat (facturi emise pentru lucrările din perioadă) − cost (materiale folosite + manoperă +
+        combustibil estimat + cheltuieli). Lucrările nefacturate încă apar doar ca și cost.
+      </p>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
         <div className="rounded-[13px] border border-border bg-white">
