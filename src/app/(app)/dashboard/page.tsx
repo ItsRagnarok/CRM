@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   Plus,
   Activity,
+  TrendingUp,
 } from "lucide-react";
 
 const TEAM_MAP_COLORS = ["#15803d", "#1e293b", "#c2410c", "#7c3aed", "#0369a1"];
@@ -96,12 +97,34 @@ type ActivityItem = {
   text: string;
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: string }>;
+}) {
+  const { range: rawRange } = await searchParams;
+  const range: "azi" | "7zile" = rawRange === "7zile" ? "7zile" : "azi";
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const firstName = profile.full_name.split(" ")[0];
   const today = todayInOrgTimeZone();
-  const yesterday = new Date(new Date(`${today}T00:00:00Z`).getTime() - 86_400_000).toISOString().slice(0, 10);
+
+  // "azi" looks at just today; "7zile" looks back 7 days including today.
+  // The trend comparison always uses the immediately preceding window of
+  // the same length, so "↑ 12%" means the same thing in either mode.
+  const rangeDays = range === "7zile" ? 7 : 1;
+  const rangeStartDate = new Date(`${today}T00:00:00Z`);
+  rangeStartDate.setUTCDate(rangeStartDate.getUTCDate() - (rangeDays - 1));
+  const rangeStartStr = rangeStartDate.toISOString().slice(0, 10);
+  const rangeEndStr = today;
+  const rangeEndExclusiveDate = new Date(`${today}T00:00:00Z`);
+  rangeEndExclusiveDate.setUTCDate(rangeEndExclusiveDate.getUTCDate() + 1);
+  const rangeEndExclusiveStr = rangeEndExclusiveDate.toISOString().slice(0, 10);
+
+  const prevStartDate = new Date(rangeStartDate);
+  prevStartDate.setUTCDate(prevStartDate.getUTCDate() - rangeDays);
+  const prevStartStr = prevStartDate.toISOString().slice(0, 10);
+  const prevEndExclusiveStr = rangeStartStr;
 
   const [
     { data: jobsToday },
@@ -123,7 +146,9 @@ export default async function DashboardPage() {
         "id, display_number, title, status, start_time, end_time, team_id, clients(name), locations(address, lat, lng), job_assignments(profiles(full_name))"
       )
       .eq("organization_id", organization.id)
-      .eq("scheduled_date", today)
+      .gte("scheduled_date", rangeStartStr)
+      .lte("scheduled_date", rangeEndStr)
+      .order("scheduled_date", { ascending: false })
       .order("start_time", { ascending: true, nullsFirst: false }),
     supabase
       .from("jobs")
@@ -136,23 +161,26 @@ export default async function DashboardPage() {
       .from("expenses")
       .select("id, amount, vendor, created_at, jobs(display_number)")
       .eq("organization_id", organization.id)
-      .eq("expense_date", today),
+      .gte("expense_date", rangeStartStr)
+      .lte("expense_date", rangeEndStr),
     supabase
       .from("expenses")
       .select("amount")
       .eq("organization_id", organization.id)
-      .eq("expense_date", yesterday),
+      .gte("expense_date", prevStartStr)
+      .lt("expense_date", prevEndExclusiveStr),
     supabase
       .from("time_entries")
       .select("profile_id, job_id, event_type, occurred_at")
       .eq("organization_id", organization.id)
-      .gte("occurred_at", startOfDay(today)),
+      .gte("occurred_at", startOfDay(rangeStartStr))
+      .lt("occurred_at", startOfDay(rangeEndExclusiveStr)),
     supabase
       .from("time_entries")
       .select("profile_id, job_id, event_type, occurred_at")
       .eq("organization_id", organization.id)
-      .gte("occurred_at", startOfDay(yesterday))
-      .lt("occurred_at", startOfDay(today)),
+      .gte("occurred_at", startOfDay(prevStartStr))
+      .lt("occurred_at", startOfDay(prevEndExclusiveStr)),
     supabase
       .from("teams")
       .select("id", { count: "exact", head: true })
@@ -161,7 +189,8 @@ export default async function DashboardPage() {
     supabase
       .from("job_status_history")
       .select("id, status, created_at, profiles(full_name), jobs(display_number, title)")
-      .gte("created_at", startOfDay(today))
+      .gte("created_at", startOfDay(rangeStartStr))
+      .lt("created_at", startOfDay(rangeEndExclusiveStr))
       .order("created_at", { ascending: false })
       .limit(20),
     supabase
@@ -169,21 +198,24 @@ export default async function DashboardPage() {
       .select("id, occurred_at, profiles(full_name), jobs(display_number, locations(address))")
       .eq("organization_id", organization.id)
       .eq("event_type", "arrival")
-      .gte("occurred_at", startOfDay(today))
+      .gte("occurred_at", startOfDay(rangeStartStr))
+      .lt("occurred_at", startOfDay(rangeEndExclusiveStr))
       .order("occurred_at", { ascending: false })
       .limit(10),
     supabase
       .from("photos")
       .select("id, taken_at, uploaded_by, job_id, profiles(full_name), jobs(display_number)")
       .eq("organization_id", organization.id)
-      .gte("taken_at", startOfDay(today))
+      .gte("taken_at", startOfDay(rangeStartStr))
+      .lt("taken_at", startOfDay(rangeEndExclusiveStr))
       .order("taken_at", { ascending: false })
       .limit(30),
     supabase
       .from("jobs")
       .select("id, display_number, title, created_at, clients(name)")
       .eq("organization_id", organization.id)
-      .gte("created_at", startOfDay(today))
+      .gte("created_at", startOfDay(rangeStartStr))
+      .lt("created_at", startOfDay(rangeEndExclusiveStr))
       .order("created_at", { ascending: false })
       .limit(10),
     // No time filter — a technician who's gone quiet (permission not yet
@@ -238,11 +270,15 @@ export default async function DashboardPage() {
   const hoursToday = hoursWorked(timeEntriesToday ?? []);
   const hoursYesterday = hoursWorked(timeEntriesYesterday ?? []);
 
+  const comparisonLabel = range === "azi" ? "față de ieri" : "față de perioada anterioară";
+  const noComparisonLabel = range === "azi" ? "primele date de azi" : "primele date din perioadă";
+  const sameLabel = range === "azi" ? "la fel ca ieri" : "la fel ca perioada anterioară";
+
   function percentTrend(current: number, previous: number) {
-    if (previous <= 0) return current > 0 ? "primele date de azi" : null;
+    if (previous <= 0) return current > 0 ? noComparisonLabel : null;
     const pct = Math.round(((current - previous) / previous) * 100);
-    if (pct === 0) return "la fel ca ieri";
-    return `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% față de ieri`;
+    if (pct === 0) return sameLabel;
+    return `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% ${comparisonLabel}`;
   }
 
   const activeYesterdayCount = new Set(
@@ -254,11 +290,11 @@ export default async function DashboardPage() {
   const activeTrend =
     activeYesterdayCount === 0
       ? activeJobsList.length > 0
-        ? "primele date de azi"
+        ? noComparisonLabel
         : null
       : activeDelta === 0
-        ? "la fel ca ieri"
-        : `${activeDelta > 0 ? "↑" : "↓"} ${Math.abs(activeDelta)} față de ieri`;
+        ? sameLabel
+        : `${activeDelta > 0 ? "↑" : "↓"} ${Math.abs(activeDelta)} ${comparisonLabel}`;
 
   // Team pins for the map — one per team currently in the field.
   const mapMarkers: DashboardMapMarker[] = [...teamsInField.entries()]
@@ -440,16 +476,38 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-5 p-7">
       <AutoRefresh />
-      <div>
-        <h1 className="text-[22px] font-extrabold text-foreground">
-          {greeting()}, {firstName} 👋
-        </h1>
-        <p className="mt-1 text-sm text-muted">
-          Iată ce se întâmplă astăzi în echipele tale.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-extrabold text-foreground">
+            {greeting()}, {firstName} 👋
+          </h1>
+          <p className="mt-1 text-sm text-muted">
+            {range === "azi"
+              ? "Iată ce se întâmplă astăzi în echipele tale."
+              : "Iată ce s-a întâmplat în ultimele 7 zile în echipele tale."}
+          </p>
+        </div>
+        <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
+          <Link
+            href="/dashboard"
+            className={`rounded-[7px] px-4 py-1.5 text-center text-[12.5px] ${
+              range === "azi" ? "bg-white font-bold shadow-sm" : "font-semibold text-muted"
+            }`}
+          >
+            Astăzi
+          </Link>
+          <Link
+            href="/dashboard?range=7zile"
+            className={`rounded-[7px] px-4 py-1.5 text-center text-[12.5px] ${
+              range === "7zile" ? "bg-white font-bold shadow-sm" : "font-semibold text-muted"
+            }`}
+          >
+            Ultimele 7 zile
+          </Link>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <KpiCard
           label="Lucrări active"
           value={activeJobsList.length}
@@ -467,7 +525,7 @@ export default async function DashboardPage() {
           iconColor="text-success"
         />
         <KpiCard
-          label="Ore lucrate azi"
+          label={range === "azi" ? "Ore lucrate azi" : "Ore lucrate (7 zile)"}
           value={formatHours(hoursToday)}
           trend={percentTrend(hoursToday, hoursYesterday)}
           icon={Clock}
@@ -475,12 +533,20 @@ export default async function DashboardPage() {
           iconColor="text-warning"
         />
         <KpiCard
-          label="Cheltuieli azi"
+          label={range === "azi" ? "Cheltuieli azi" : "Cheltuieli (7 zile)"}
           value={`${expensesToday.toFixed(2)} RON`}
           trend={percentTrend(expensesToday, expensesYesterday)}
           icon={Receipt}
           iconBg="bg-danger-bg"
           iconColor="text-danger"
+        />
+        <KpiCard
+          label={range === "azi" ? "Profit azi" : "Profit (7 zile)"}
+          value="—"
+          trend="Calcul disponibil în curând"
+          icon={TrendingUp}
+          iconBg="bg-purple-soft"
+          iconColor="text-purple"
         />
       </div>
 
@@ -488,7 +554,7 @@ export default async function DashboardPage() {
         <div className="rounded-[13px] border border-border bg-white">
           <div className="flex items-center justify-between border-b border-[#f2f4f7] px-5 py-3.5">
             <h2 className="text-[15px] font-bold text-foreground">
-              Lucrări programate astăzi
+              {range === "azi" ? "Lucrări programate astăzi" : "Lucrări programate (ultimele 7 zile)"}
             </h2>
             <Link href="/lucrari" className="text-[12.5px] font-semibold text-electric">
               Vezi toate lucrările →
