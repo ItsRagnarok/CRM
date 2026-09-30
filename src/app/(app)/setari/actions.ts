@@ -107,10 +107,13 @@ export async function updateGpsSettings(formData: FormData) {
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
+  const retentionDays = Number(formData.get("retentionDays"));
+
   await supabase
     .from("organizations")
     .update({
       gps_continuous_tracking_enabled: formData.get("continuousTracking") === "on",
+      ...(Number.isFinite(retentionDays) && retentionDays > 0 ? { gps_retention_days: retentionDays } : {}),
     })
     .eq("id", organization.id);
 

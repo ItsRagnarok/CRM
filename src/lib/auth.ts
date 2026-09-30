@@ -113,10 +113,11 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
       (user.user_metadata?.full_name as string | undefined) ||
       user.email ||
       "Administrator";
+    const termsAccepted = Boolean(user.user_metadata?.terms_accepted);
 
     const { error: rpcError } = await supabase.rpc(
       "create_organization_and_owner",
-      { org_name: orgName, owner_full_name: fullName }
+      { org_name: orgName, owner_full_name: fullName, terms_accepted: termsAccepted }
     );
 
     // Defensive: two concurrent requests (e.g. two tabs) can both see "no

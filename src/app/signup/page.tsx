@@ -79,6 +79,26 @@ export default function SignupPage() {
             />
           </div>
 
+          <label className="flex items-start gap-2 text-[12.5px] leading-snug text-[#344054]">
+            <input
+              type="checkbox"
+              name="termsAccepted"
+              required
+              className="mt-0.5 h-4 w-4 shrink-0 accent-[#2f6fed]"
+            />
+            <span>
+              Sunt de acord cu{" "}
+              <Link href="/termeni" target="_blank" className="font-semibold text-electric">
+                Termenii și condițiile
+              </Link>{" "}
+              și cu{" "}
+              <Link href="/confidentialitate" target="_blank" className="font-semibold text-electric">
+                Politica de confidențialitate
+              </Link>
+              .
+            </span>
+          </label>
+
           {state?.error && (
             <p className="text-sm font-medium text-danger">{state.error}</p>
           )}

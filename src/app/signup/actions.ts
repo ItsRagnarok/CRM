@@ -8,6 +8,7 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
   const fullName = String(formData.get("fullName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const termsAccepted = formData.get("termsAccepted") === "on";
 
   if (!orgName || !fullName || !email || !password) {
     return { error: "Completează toate câmpurile." };
@@ -15,13 +16,16 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
   if (password.length < 6) {
     return { error: "Parola trebuie să aibă cel puțin 6 caractere." };
   }
+  if (!termsAccepted) {
+    return { error: "Trebuie să accepți Termenii și Politica de confidențialitate." };
+  }
 
   const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { org_name: orgName, full_name: fullName } },
+    options: { data: { org_name: orgName, full_name: fullName, terms_accepted: true } },
   });
 
   if (error) {
@@ -31,7 +35,7 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
   if (data.session) {
     const { error: rpcError } = await supabase.rpc(
       "create_organization_and_owner",
-      { org_name: orgName, owner_full_name: fullName }
+      { org_name: orgName, owner_full_name: fullName, terms_accepted: true }
     );
     if (rpcError) {
       return { error: "Contul a fost creat, dar organizația nu a putut fi inițializată. Contactează suportul." };

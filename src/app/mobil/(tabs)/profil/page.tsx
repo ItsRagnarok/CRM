@@ -90,11 +90,14 @@ export default async function MobileProfilePage() {
       </div>
 
       <div className="mt-5 overflow-hidden rounded-[13px] border border-[#eaecf0] bg-white">
-        <MenuRow
-          icon={Shield}
-          label="Confidențialitate & locație"
-          note={organization.gps_continuous_tracking_enabled ? "GPS activ" : "GPS oprit"}
-        />
+        <Link href="/mobil/confidentialitate" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
+          <Shield className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
+          <div className="flex-1 text-[13.5px] font-semibold">Confidențialitate & locație</div>
+          <div className="text-[11.5px] font-semibold text-muted-2">
+            {profile.location_consent_at ? "Consimțământ acordat" : "Consimțământ neacordat"}
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-2" />
+        </Link>
         <NotificationsToggle initialEnabled={profile.notifications_enabled} />
         <Link href="/mobil/documente" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
           <FileText className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
@@ -134,26 +137,6 @@ function StatBox({ value, label }: { value: string; label: string }) {
     <div className="rounded-[12px] border border-[#eaecf0] bg-white px-2 py-3.5 text-center">
       <div className="text-[16px] font-extrabold">{value}</div>
       <div className="mt-0.5 text-[10px] font-semibold text-muted-2">{label}</div>
-    </div>
-  );
-}
-
-function MenuRow({
-  icon: Icon,
-  label,
-  note,
-  last,
-}: {
-  icon: typeof Shield;
-  label: string;
-  note?: string;
-  last?: boolean;
-}) {
-  return (
-    <div className={`flex items-center gap-3 px-4 py-3.5 ${last ? "" : "border-b border-[#f2f4f7]"}`}>
-      <Icon className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-      <div className="flex-1 text-[13.5px] font-semibold">{label}</div>
-      {note && <div className="text-[11.5px] font-semibold text-muted-2">{note}</div>}
     </div>
   );
 }

@@ -1455,7 +1455,10 @@ export type Database = {
           logo_storage_path: string | null
           name: string
           phone: string | null
+          standard_hours_per_day: number
+          standard_workdays: number[]
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          terms_accepted_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1473,7 +1476,10 @@ export type Database = {
           logo_storage_path?: string | null
           name: string
           phone?: string | null
+          standard_hours_per_day?: number
+          standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1491,7 +1497,10 @@ export type Database = {
           logo_storage_path?: string | null
           name?: string
           phone?: string | null
+          standard_hours_per_day?: number
+          standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
+          terms_accepted_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1578,6 +1587,8 @@ export type Database = {
           hourly_rate: number | null
           id: string
           is_active: boolean
+          location_consent_at: string | null
+          location_consent_revoked_at: string | null
           notifications_enabled: boolean
           organization_id: string
           phone: string | null
@@ -1592,6 +1603,8 @@ export type Database = {
           hourly_rate?: number | null
           id: string
           is_active?: boolean
+          location_consent_at?: string | null
+          location_consent_revoked_at?: string | null
           notifications_enabled?: boolean
           organization_id: string
           phone?: string | null
@@ -1606,6 +1619,8 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           is_active?: boolean
+          location_consent_at?: string | null
+          location_consent_revoked_at?: string | null
           notifications_enabled?: boolean
           organization_id?: string
           phone?: string | null
@@ -2080,6 +2095,80 @@ export type Database = {
           },
         ]
       }
+      time_off_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          end_date: string
+          id: string
+          organization_id: string
+          profile_id: string
+          reason: string | null
+          requested_by: string
+          start_date: string
+          status: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_date: string
+          id?: string
+          organization_id: string
+          profile_id: string
+          reason?: string | null
+          requested_by: string
+          start_date: string
+          status?: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          end_date?: string
+          id?: string
+          organization_id?: string
+          profile_id?: string
+          reason?: string | null
+          requested_by?: string
+          start_date?: string
+          status?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_off_requests_decided_by_fkey"
+            columns: ["decided_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_off_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicles: {
         Row: {
           assigned_team_id: string | null
@@ -2202,10 +2291,19 @@ export type Database = {
         Args: { new_email: string; target_profile_id: string }
         Returns: undefined
       }
-      create_organization_and_owner: {
-        Args: { org_name: string; owner_full_name: string }
-        Returns: string
-      }
+      create_organization_and_owner:
+        | {
+            Args: { org_name: string; owner_full_name: string }
+            Returns: string
+          }
+        | {
+            Args: {
+              org_name: string
+              owner_full_name: string
+              terms_accepted?: boolean
+            }
+            Returns: string
+          }
       current_client_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
@@ -2267,6 +2365,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      purge_old_technician_positions: { Args: never; Returns: undefined }
     }
     Enums: {
       client_status: "active" | "inactive"

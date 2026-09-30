@@ -46,10 +46,10 @@ export default async function SetariPage({
 
   const [{ data: org }, { data: profiles }, { count: jobsThisMonth }] = await Promise.all([
     supabase.from("organizations").select("*").eq("id", organization.id).single(),
-    tab === "utilizatori"
+    tab === "utilizatori" || tab === "gps"
       ? supabase
           .from("profiles")
-          .select("id, full_name, role, is_active, notifications_enabled")
+          .select("id, full_name, role, is_active, notifications_enabled, location_consent_at")
           .eq("organization_id", organization.id)
           .order("full_name")
       : Promise.resolve({ data: null }),
@@ -195,27 +195,54 @@ export default async function SetariPage({
                 </div>
                 <form
                   action={updateGpsSettings}
-                  className="flex items-center justify-between py-3.5"
+                  className="flex flex-col gap-4 py-3.5"
                 >
-                  <div>
-                    <div className="text-[13.5px] font-semibold">
-                      Tracking GPS continuu + alertă de sosire (rază 50m)
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-[13.5px] font-semibold">
+                        Tracking GPS continuu + alertă de sosire (rază 50m)
+                      </div>
+                      <div className="text-[12px] text-muted-2">
+                        Arată echipele live pe hartă și avertizează tehnicianul să confirme sosirea când e aproape de
+                        locație — la a 3-a nereușită, tu primești o alertă. Pornește doar pentru angajații care și-au
+                        dat consimțământul din aplicația mobilă (vezi lista de mai jos).
+                      </div>
                     </div>
-                    <div className="text-[12px] text-muted-2">
-                      Arată echipele live pe hartă și avertizează tehnicianul să confirme sosirea când e aproape de
-                      locație — la a 3-a nereușită, tu primești o alertă. Necesită consimțământul angajatului.
+                    <div className="flex shrink-0 items-center gap-3">
+                      <label className="flex items-center gap-2 text-[12.5px] font-semibold">
+                        <input
+                          type="checkbox"
+                          name="continuousTracking"
+                          defaultChecked={org.gps_continuous_tracking_enabled}
+                          className="h-4 w-4 accent-[#2f6fed]"
+                        />
+                        {org.gps_continuous_tracking_enabled ? "Activat" : "Dezactivat"}
+                      </label>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 text-[12.5px] font-semibold">
+
+                  <div className="flex items-center justify-between border-t border-[#f2f4f7] pt-3.5">
+                    <div>
+                      <div className="text-[13.5px] font-semibold">Retenție date de poziție</div>
+                      <div className="text-[12px] text-muted-2">
+                        Istoricul traseelor (technician_position_log) e șters automat, în fiecare noapte, după acest
+                        număr de zile.
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
                       <input
-                        type="checkbox"
-                        name="continuousTracking"
-                        defaultChecked={org.gps_continuous_tracking_enabled}
-                        className="h-4 w-4 accent-[#2f6fed]"
+                        type="number"
+                        name="retentionDays"
+                        min={1}
+                        max={365}
+                        defaultValue={org.gps_retention_days}
+                        className="w-20 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
                       />
-                      {org.gps_continuous_tracking_enabled ? "Activat" : "Dezactivat"}
-                    </label>
+                      <span className="text-[12.5px] text-muted-2">zile</span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end border-t border-[#f2f4f7] pt-3.5">
                     <button
                       type="submit"
                       className="rounded-[9px] bg-neutral-bg px-3 py-2 text-[12px] font-bold text-[#344054]"
@@ -224,6 +251,26 @@ export default async function SetariPage({
                     </button>
                   </div>
                 </form>
+
+                <div className="mt-2 border-t border-[#f2f4f7] pt-3.5">
+                  <div className="mb-2 text-[12.5px] font-bold text-[#344054]">Consimțământ angajați</div>
+                  <div className="flex flex-col divide-y divide-[#f2f4f7]">
+                    {(profiles ?? [])
+                      .filter((p) => p.role === "technician" || p.role === "team_leader")
+                      .map((p) => (
+                        <div key={p.id} className="flex items-center justify-between py-2">
+                          <span className="text-[12.5px] font-semibold text-foreground">{p.full_name}</span>
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                              p.location_consent_at ? "bg-success-bg text-success" : "bg-neutral-bg text-muted-2"
+                            }`}
+                          >
+                            {p.location_consent_at ? "Consimțământ acordat" : "Neacordat"}
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
               </div>
             )}
 
