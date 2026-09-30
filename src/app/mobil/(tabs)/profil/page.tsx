@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, Shield, HelpCircle, FileText, ChevronRight } from "lucide-react";
+import { LogOut, Shield, HelpCircle, FileText, ChevronRight, CalendarOff } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
@@ -99,6 +99,11 @@ export default async function MobileProfilePage() {
           <ChevronRight className="h-4 w-4 text-muted-2" />
         </Link>
         <NotificationsToggle initialEnabled={profile.notifications_enabled} />
+        <Link href="/mobil/concediu" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
+          <CalendarOff className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
+          <div className="flex-1 text-[13.5px] font-semibold">Concediu & absențe</div>
+          <ChevronRight className="h-4 w-4 text-muted-2" />
+        </Link>
         <Link href="/mobil/documente" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
           <FileText className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
           <div className="flex-1 text-[13.5px] font-semibold">Documentele mele</div>

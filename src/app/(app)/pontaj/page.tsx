@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, Download } from "lucide-react";
+import { Clock, Download, CalendarOff } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
@@ -168,6 +168,13 @@ export default async function PontajPage({
         <div className="text-[14px] font-bold text-foreground">{rangeLabel}</div>
 
         <div className="flex-1" />
+
+        <Link
+          href="/pontaj/concedii"
+          className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13px] font-bold text-[#344054]"
+        >
+          <CalendarOff className="h-3.5 w-3.5" /> Concedii & absențe
+        </Link>
 
         <a
           href={`/pontaj/export?view=${view}&date=${date ?? todayStr}`}

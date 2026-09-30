@@ -103,6 +103,27 @@ export async function updateUserRole(formData: FormData) {
   revalidatePath("/setari");
 }
 
+export async function updateStandardSchedule(formData: FormData) {
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const hoursPerDay = Number(formData.get("hoursPerDay"));
+  const workdays = formData
+    .getAll("workday")
+    .map((d) => Number(d))
+    .filter((d) => Number.isInteger(d) && d >= 1 && d <= 7);
+
+  await supabase
+    .from("organizations")
+    .update({
+      standard_hours_per_day: Number.isFinite(hoursPerDay) && hoursPerDay > 0 ? hoursPerDay : organization.standard_hours_per_day,
+      standard_workdays: workdays.length > 0 ? workdays : organization.standard_workdays,
+    })
+    .eq("id", organization.id);
+
+  revalidatePath("/setari");
+}
+
 export async function updateGpsSettings(formData: FormData) {
   const { organization } = await requireSessionContext();
   const supabase = await createClient();

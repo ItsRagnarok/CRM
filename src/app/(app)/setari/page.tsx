@@ -3,6 +3,7 @@ import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/lib/supabase/database.types";
 import { CompanyForm } from "./company-form";
+import { StandardScheduleForm } from "./standard-schedule-form";
 import { NewEmployeeForm } from "./new-employee-form";
 import { updateUserRole, updateGpsSettings } from "./actions";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
@@ -87,13 +88,16 @@ export default async function SetariPage({
         <div className="flex-1 overflow-auto p-7">
           <div className="mx-auto flex max-w-[920px] flex-col gap-4">
             {tab === "companie" && org && (
-              <CompanyForm
-                name={org.name}
-                cui={org.cui}
-                email={org.email}
-                phone={org.phone}
-                address={org.address}
-              />
+              <>
+                <CompanyForm
+                  name={org.name}
+                  cui={org.cui}
+                  email={org.email}
+                  phone={org.phone}
+                  address={org.address}
+                />
+                <StandardScheduleForm hoursPerDay={org.standard_hours_per_day} workdays={org.standard_workdays} />
+              </>
             )}
 
             {tab === "utilizatori" && (
