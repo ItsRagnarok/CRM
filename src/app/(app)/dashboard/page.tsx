@@ -22,6 +22,9 @@ import {
   Plus,
   Activity,
   TrendingUp,
+  Circle,
+  Smartphone,
+  ArrowRight,
 } from "lucide-react";
 
 const TEAM_MAP_COLORS = ["#15803d", "#1e293b", "#c2410c", "#7c3aed", "#0369a1"];
@@ -108,6 +111,26 @@ export default async function DashboardPage({
   const supabase = await createClient();
   const firstName = profile.full_name.split(" ")[0];
   const today = todayInOrgTimeZone();
+
+  // A brand-new org has nothing to show on this dashboard yet — a wall of
+  // zeroed KPI cards is a worse first impression than a guided setup
+  // checklist, and skips the rest of this page's (heavy) queries entirely.
+  const [{ count: clientCount }, { count: jobCount }, { count: profileCount }] = await Promise.all([
+    supabase.from("clients").select("id", { count: "exact", head: true }).eq("organization_id", organization.id),
+    supabase.from("jobs").select("id", { count: "exact", head: true }).eq("organization_id", organization.id),
+    supabase.from("profiles").select("id", { count: "exact", head: true }).eq("organization_id", organization.id),
+  ]);
+
+  if ((clientCount ?? 0) === 0 && (jobCount ?? 0) === 0) {
+    return (
+      <OnboardingChecklist
+        firstName={firstName}
+        hasClient={(clientCount ?? 0) > 0}
+        hasTeammate={(profileCount ?? 0) > 1}
+        hasJob={(jobCount ?? 0) > 0}
+      />
+    );
+  }
 
   // "azi" looks at just today; "7zile" looks back 7 days including today.
   // The trend comparison always uses the immediately preceding window of
@@ -779,6 +802,105 @@ export default async function DashboardPage({
             )}
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function OnboardingChecklist({
+  firstName,
+  hasClient,
+  hasTeammate,
+  hasJob,
+}: {
+  firstName: string;
+  hasClient: boolean;
+  hasTeammate: boolean;
+  hasJob: boolean;
+}) {
+  const steps = [
+    {
+      done: hasClient,
+      title: "Adaugă primul client",
+      description: "Numele companiei, adresa și persoana de contact.",
+      href: "/clienti/nou",
+      cta: "Adaugă client",
+    },
+    {
+      done: hasTeammate,
+      title: "Invită un coleg",
+      description: "Un tehnician sau un dispecer — poate primi acces chiar acum.",
+      href: "/setari?tab=utilizatori",
+      cta: "Invită coleg",
+    },
+    {
+      done: hasJob,
+      title: "Creează prima lucrare",
+      description: "Alege clientul, adresa și echipa — apare imediat în calendar și pe hartă.",
+      href: "/lucrari/nou",
+      cta: "Lucrare nouă",
+    },
+  ];
+  const nextStep = steps.find((s) => !s.done) ?? steps[steps.length - 1];
+
+  return (
+    <div className="flex flex-col gap-5 p-7">
+      <div>
+        <h1 className="text-[22px] font-extrabold text-foreground">Bine ai venit, {firstName} 👋</h1>
+        <p className="mt-1 text-sm text-muted">
+          Trei pași și platforma e gata de lucru. Dashboard-ul cu activitate live apare automat după ce ai un client
+          și o lucrare.
+        </p>
+      </div>
+
+      <div className="mx-auto w-full max-w-[640px]">
+        <div className="overflow-hidden rounded-[14px] border border-border bg-white">
+          {steps.map((step, i) => (
+            <div
+              key={step.title}
+              className={`flex items-center gap-4 px-6 py-5 ${i > 0 ? "border-t border-[#f2f4f7]" : ""} ${
+                step.done ? "opacity-60" : ""
+              }`}
+            >
+              {step.done ? (
+                <CheckCircle2 className="h-6 w-6 shrink-0 text-success" strokeWidth={2} />
+              ) : (
+                <Circle className="h-6 w-6 shrink-0 text-[#d0d5dd]" strokeWidth={2} />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className={`text-[14.5px] font-bold ${step.done ? "text-muted line-through" : "text-foreground"}`}>
+                  {step.title}
+                </div>
+                <div className="mt-0.5 text-[12.5px] text-muted-2">{step.description}</div>
+              </div>
+              {!step.done && (
+                <Link
+                  href={step.href}
+                  className="flex shrink-0 items-center gap-1.5 rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white"
+                >
+                  {step.cta} <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 flex items-center gap-3 rounded-[13px] border border-dashed border-border bg-neutral-bg px-5 py-4">
+          <Smartphone className="h-5 w-5 shrink-0 text-muted" />
+          <div className="flex-1 text-[12.5px] text-muted-2">
+            Tehnicienii lucrează din aplicația mobilă — instalarea se face din pagina de autentificare
+            („Descarcă aplicația Android”).
+          </div>
+        </div>
+
+        {!nextStep.done && (
+          <Link
+            href={nextStep.href}
+            className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-[12px] bg-[#101828] py-3.5 text-[14px] font-bold text-white"
+          >
+            {nextStep.cta} <ArrowRight className="h-4 w-4" />
+          </Link>
+        )}
       </div>
     </div>
   );
