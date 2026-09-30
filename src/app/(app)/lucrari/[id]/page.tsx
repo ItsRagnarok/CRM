@@ -284,7 +284,7 @@ export default async function JobDetailPage({
                 </div>
                 <div className="mt-4 border-t border-[#f2f4f7] pt-4">
                   <div className="text-[11.5px] font-semibold text-muted-2">DESCRIERE</div>
-                  <p className="mt-1 text-[13px] leading-relaxed text-[#344054]">
+                  <p className="mt-1 whitespace-pre-line text-[13px] leading-relaxed text-[#344054]">
                     {job.description || "Fără descriere adăugată încă."}
                   </p>
                 </div>

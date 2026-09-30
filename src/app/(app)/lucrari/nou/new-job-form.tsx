@@ -112,7 +112,14 @@ export function NewJobForm({
     setStartTimeValue(nowHM);
     setEndTimeValue(addHours(nowHM, suggestion.estimatedHoursTwoPeople || 2));
 
-    setDescriptionValue(suggestion.instructions ?? "");
+    // Compose the description ourselves instead of trusting the model's raw
+    // "instructions" string to contain real line breaks between steps (it
+    // often doesn't, producing an unreadable wall of text) — the numbered
+    // list is built from the structured "steps" array with guaranteed \n
+    // between each one.
+    const steps = Array.isArray(suggestion.steps) ? suggestion.steps.filter(Boolean) : [];
+    const stepsBlock = steps.length > 0 ? steps.map((s, i) => `${i + 1}. ${s}`).join("\n") : "";
+    setDescriptionValue([suggestion.instructions?.trim(), stepsBlock].filter(Boolean).join("\n\n"));
     if (suggestion.photos?.before) setPhotoGuidanceBefore(suggestion.photos.before);
     if (suggestion.photos?.during) setPhotoGuidanceDuring(suggestion.photos.during);
     if (suggestion.photos?.after) setPhotoGuidanceAfter(suggestion.photos.after);

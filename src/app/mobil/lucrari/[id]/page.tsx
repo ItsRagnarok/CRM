@@ -145,7 +145,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             {job.scheduled_date} · {job.start_time?.slice(0, 5) ?? "—"}
             {job.end_time ? `–${job.end_time.slice(0, 5)}` : ""}
           </div>
-          {job.description && <div className="mt-2 text-[13px] text-[#344054]">{job.description}</div>}
+          {job.description && (
+            <div className="mt-2 whitespace-pre-line text-[13px] text-[#344054]">{job.description}</div>
+          )}
           {job.locations?.address && (
             <div className="mt-2 text-[12.5px] text-muted">📍 {job.locations.address}</div>
           )}
