@@ -11,6 +11,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ElectroField",
   description: "Echipă. Lucrări. Control.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/apple-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -18,6 +26,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  themeColor: "#1c1c22",
 };
 
 export default function RootLayout({
