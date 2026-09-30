@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Wrench, Package, Sparkles, Camera, Loader2 } from "lucide-react";
+import { ArrowLeft, Wrench, Package, Sparkles, Camera, Loader2, Mic, Square } from "lucide-react";
 import { createJob } from "../actions";
-import { generateJobSuggestion } from "./ai-actions";
+import { generateJobSuggestion, transcribeAudio } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { JOB_TITLE_TEMPLATES } from "../job-templates";
 
@@ -53,6 +53,56 @@ export function NewJobForm({
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiState, setAiState] = useState<Awaited<ReturnType<typeof generateJobSuggestion>> | undefined>(undefined);
   const [aiPending, setAiPending] = useState(false);
+
+  const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "transcribing">("idle");
+  const [voiceError, setVoiceError] = useState<string | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<BlobPart[]>([]);
+
+  async function handleToggleRecording() {
+    setVoiceError(null);
+
+    if (voiceStatus === "recording") {
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setVoiceStatus("transcribing");
+        const blob = new Blob(audioChunksRef.current, { type: recorder.mimeType || "audio/webm" });
+        const fd = new FormData();
+        fd.set("audio", blob);
+        try {
+          const result = await transcribeAudio(fd);
+          if (result.error) {
+            setVoiceError(result.error);
+          } else if (result.text) {
+            setAiPrompt((prev) => (prev.trim() ? `${prev.trim()} ${result.text}` : result.text!));
+          }
+        } finally {
+          setVoiceStatus("idle");
+        }
+      };
+
+      mediaRecorderRef.current = recorder;
+      recorder.start();
+      setVoiceStatus("recording");
+    } catch (err) {
+      console.error("getUserMedia failed", err);
+      setVoiceError("Nu am acces la microfon — verifică permisiunile browserului/telefonului.");
+      setVoiceStatus("idle");
+    }
+  }
 
   async function handleGenerateAi() {
     setAiPending(true);
@@ -257,13 +307,41 @@ export function NewJobForm({
                 nu îi trimite direct tehnicianului fără să-i citești.
               </b>
             </p>
-            <textarea
-              value={aiPrompt}
-              onChange={(e) => setAiPrompt(e.target.value)}
-              rows={2}
-              placeholder="Ex: Înlocuire tablou electric vechi cu unul nou, 12 module, apartament la etaj 3"
-              className="w-full rounded-[10px] border border-[#d0d5dd] bg-white px-3.5 py-2.5 text-sm outline-none focus:border-electric"
-            />
+            <div className="flex items-start gap-2">
+              <textarea
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                rows={2}
+                placeholder="Ex: Înlocuire tablou electric vechi cu unul nou, 12 module, apartament la etaj 3"
+                className="w-full rounded-[10px] border border-[#d0d5dd] bg-white px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+              />
+              <button
+                type="button"
+                onClick={handleToggleRecording}
+                disabled={voiceStatus === "transcribing"}
+                title={voiceStatus === "recording" ? "Oprește înregistrarea" : "Dictează descrierea"}
+                className={`flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px] border transition-colors disabled:opacity-60 ${
+                  voiceStatus === "recording"
+                    ? "border-danger bg-danger/10 text-danger"
+                    : "border-[#d0d5dd] bg-white text-[#475467] hover:bg-neutral-bg"
+                }`}
+              >
+                {voiceStatus === "transcribing" ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : voiceStatus === "recording" ? (
+                  <Square className="h-4 w-4 fill-current" />
+                ) : (
+                  <Mic className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+            {voiceStatus === "recording" && (
+              <p className="mt-1.5 text-[12px] font-semibold text-danger">● Se înregistrează… apasă din nou ca să oprești.</p>
+            )}
+            {voiceStatus === "transcribing" && (
+              <p className="mt-1.5 text-[12px] font-semibold text-muted">Se transcrie înregistrarea…</p>
+            )}
+            {voiceError && <p className="mt-1.5 text-[12px] font-semibold text-danger">{voiceError}</p>}
             {/* A <form> here would nest inside the page's own create-job
                 <form> below — invalid HTML that browsers silently break
                 (dropping the inner form entirely), which is why this button

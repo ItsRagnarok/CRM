@@ -3,6 +3,60 @@
 import { requireSessionContext } from "@/lib/auth";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 
+export type TranscribeState = { error?: string; text?: string };
+
+// Voice-to-text for the AI description field, via Groq's Whisper endpoint —
+// same GROQ_API_KEY already configured, no separate setup. Romanian is
+// pinned explicitly since technicians dictate in Romanian and Whisper's
+// language auto-detect is noticeably less accurate on short clips.
+export async function transcribeAudio(formData: FormData): Promise<TranscribeState> {
+  await requireSessionContext();
+
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) {
+    return { error: "Transcrierea vocală nu e activată — lipsește cheia GROQ_API_KEY." };
+  }
+
+  const audio = formData.get("audio");
+  if (!(audio instanceof Blob) || audio.size === 0) {
+    return { error: "Nu am primit nicio înregistrare audio." };
+  }
+
+  const groqForm = new FormData();
+  groqForm.set("file", audio, "recording.webm");
+  groqForm.set("model", "whisper-large-v3-turbo");
+  groqForm.set("language", "ro");
+  groqForm.set("response_format", "json");
+
+  let res: Response;
+  try {
+    res = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: groqForm,
+    });
+  } catch (err) {
+    console.error("transcribeAudio: fetch failed", err);
+    return { error: "Nu am putut contacta serviciul de transcriere. Încearcă din nou." };
+  }
+
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    console.error("transcribeAudio: Groq error", res.status, errText);
+    return {
+      error:
+        res.status === 401 || res.status === 403
+          ? "Cheia GROQ_API_KEY pare invalidă sau fără permisiuni."
+          : "Transcrierea a eșuat. Încearcă din nou.",
+    };
+  }
+
+  const data = await res.json();
+  const text = typeof data?.text === "string" ? data.text.trim() : "";
+  if (!text) return { error: "Nu am înțeles nimic din înregistrare. Încearcă din nou, mai aproape de microfon." };
+  return { text };
+}
+
 export type AiJobSuggestion = {
   title: string;
   jobType: string;
