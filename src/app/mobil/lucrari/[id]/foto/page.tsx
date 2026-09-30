@@ -62,11 +62,18 @@ export default async function MobilePhotoPage({
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number")
+    .select("id, display_number, photo_guidance_before, photo_guidance_during, photo_guidance_after")
     .eq("id", id)
     .eq("organization_id", organization.id)
     .maybeSingle();
   if (!job) notFound();
+
+  const guidanceByCategory: Record<string, string | null> = {
+    before: job.photo_guidance_before,
+    during: job.photo_guidance_during,
+    after: job.photo_guidance_after,
+  };
+  const guidance = guidanceByCategory[category];
 
   const { data: photos } = await supabase
     .from("photos")
@@ -96,7 +103,7 @@ export default async function MobilePhotoPage({
       </div>
 
       <div className="mx-4 mt-2 rounded-[10px] bg-white/10 px-3.5 py-2.5 text-[12px] leading-snug text-white/80">
-        {info.caption}
+        {guidance || info.caption}
       </div>
 
       <div className="flex-1 overflow-auto px-4 pb-2 pt-4">

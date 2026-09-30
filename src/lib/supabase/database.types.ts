@@ -944,8 +944,12 @@ export type Database = {
           mobile_stage: string | null
           observations: string | null
           organization_id: string
+          photo_guidance_after: string | null
+          photo_guidance_before: string | null
+          photo_guidance_during: string | null
           priority: Database["public"]["Enums"]["job_priority"]
           require_arrival_photo: boolean
+          require_during_photo: boolean
           require_final_photo: boolean
           scheduled_date: string
           start_time: string | null
@@ -974,8 +978,12 @@ export type Database = {
           mobile_stage?: string | null
           observations?: string | null
           organization_id: string
+          photo_guidance_after?: string | null
+          photo_guidance_before?: string | null
+          photo_guidance_during?: string | null
           priority?: Database["public"]["Enums"]["job_priority"]
           require_arrival_photo?: boolean
+          require_during_photo?: boolean
           require_final_photo?: boolean
           scheduled_date: string
           start_time?: string | null
@@ -1004,8 +1012,12 @@ export type Database = {
           mobile_stage?: string | null
           observations?: string | null
           organization_id?: string
+          photo_guidance_after?: string | null
+          photo_guidance_before?: string | null
+          photo_guidance_during?: string | null
           priority?: Database["public"]["Enums"]["job_priority"]
           require_arrival_photo?: boolean
+          require_during_photo?: boolean
           require_final_photo?: boolean
           scheduled_date?: string
           start_time?: string | null

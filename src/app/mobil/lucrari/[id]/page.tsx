@@ -20,7 +20,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, mobile_stage, require_arrival_photo, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, mobile_stage, require_arrival_photo, require_during_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_started_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -44,12 +44,14 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const currentStep =
     isTraveling ? "pornire" : job.status === "ajunsa" ? "sosire" : isWorking ? "executie" : null;
 
-  const [{ count: photoCount }, { count: expenseCount }] = isWorking
+  const [{ count: photoCount }, { count: expenseCount }, { count: duringPhotoCount }] = isWorking
     ? await Promise.all([
         supabase.from("photos").select("id", { count: "exact", head: true }).eq("job_id", id),
         supabase.from("expenses").select("id", { count: "exact", head: true }).eq("job_id", id),
+        supabase.from("photos").select("id", { count: "exact", head: true }).eq("job_id", id).eq("category", "during"),
       ])
-    : [{ count: 0 }, { count: 0 }];
+    : [{ count: 0 }, { count: 0 }, { count: 0 }];
+  const needsDuringPhoto = isWorking && job.require_during_photo && (duringPhotoCount ?? 0) === 0;
 
   const { count: beforePhotoCount } =
     job.status === "ajunsa"
@@ -343,7 +345,11 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 ADAUGĂ POZĂ
               </Link>
               <div className="-mt-2 text-center text-[11px] text-muted-2">
-                Poză din timpul lucrării — una sau mai multe (opțional)
+                {job.photo_guidance_during
+                  ? job.photo_guidance_during
+                  : job.require_during_photo
+                    ? "Poză din timpul lucrării — obligatorie"
+                    : "Poză din timpul lucrării — una sau mai multe (opțional)"}
               </div>
 
               <Link
@@ -360,13 +366,24 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
               <div className="mt-2 rounded-[13px] border border-[#eaecf0] bg-white p-4">
                 <div className="text-[14px] font-bold text-foreground">Ai terminat lucrarea?</div>
+                {needsDuringPhoto && (
+                  <div className="mt-2.5 rounded-[10px] border border-warning-bg bg-warning-bg p-2.5 text-center text-[12px] font-semibold text-[#7a5b0e]">
+                    Fă cel puțin o poză din timpul lucrării mai sus înainte să finalizezi.
+                  </div>
+                )}
                 <div className="mt-3 flex gap-2.5">
-                  <Link
-                    href={`/mobil/lucrari/${job.id}/finalizare`}
-                    className="flex-1 rounded-[12px] bg-success py-3 text-center text-[14px] font-extrabold text-white"
-                  >
-                    DA
-                  </Link>
+                  {needsDuringPhoto ? (
+                    <div className="flex-1 rounded-[12px] bg-neutral-bg py-3 text-center text-[14px] font-extrabold text-muted-2">
+                      DA
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/mobil/lucrari/${job.id}/finalizare`}
+                      className="flex-1 rounded-[12px] bg-success py-3 text-center text-[14px] font-extrabold text-white"
+                    >
+                      DA
+                    </Link>
+                  )}
                   <button
                     type="button"
                     className="flex-1 rounded-[12px] bg-neutral-bg py-3 text-center text-[14px] font-extrabold text-[#344054]"

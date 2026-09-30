@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Wrench, Package, Sparkles } from "lucide-react";
+import { ArrowLeft, Wrench, Package, Sparkles, Camera } from "lucide-react";
 import { createJob } from "../actions";
 import { generateJobSuggestion } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
@@ -48,31 +48,48 @@ export function NewJobForm({
   const [descriptionValue, setDescriptionValue] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiState, aiFormAction, aiPending] = useActionState(generateJobSuggestion, undefined);
-  const [unmatchedSuggestions, setUnmatchedSuggestions] = useState<string[]>([]);
+  const [customItems, setCustomItems] = useState<{ name: string; quantity: number; unit: string; kind: "material" | "tool" }[]>([]);
   const [aiApplied, setAiApplied] = useState(false);
+  const [requireArrivalPhoto, setRequireArrivalPhoto] = useState(true);
+  const [requireDuringPhoto, setRequireDuringPhoto] = useState(true);
+  const [requireFinalPhoto, setRequireFinalPhoto] = useState(true);
+  const [photoGuidanceBefore, setPhotoGuidanceBefore] = useState("");
+  const [photoGuidanceDuring, setPhotoGuidanceDuring] = useState("");
+  const [photoGuidanceAfter, setPhotoGuidanceAfter] = useState("");
+
+  function findCatalogMatch(name: string) {
+    return materials.find(
+      (m) => m.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(m.name.toLowerCase())
+    );
+  }
 
   function applyAiSuggestion() {
     const suggestion = aiState?.suggestion;
     if (!suggestion) return;
 
-    const photoLines = [
-      suggestion.photos?.before && `- Înainte: ${suggestion.photos.before}`,
-      suggestion.photos?.during && `- În timpul lucrării: ${suggestion.photos.during}`,
-      suggestion.photos?.after && `- La final: ${suggestion.photos.after}`,
-    ].filter(Boolean);
-    const parts = [suggestion.instructions, photoLines.length > 0 ? `Poze necesare:\n${photoLines.join("\n")}` : ""].filter(Boolean);
-    setDescriptionValue(parts.join("\n\n"));
+    setDescriptionValue(suggestion.instructions ?? "");
+    if (suggestion.photos?.before) setPhotoGuidanceBefore(suggestion.photos.before);
+    if (suggestion.photos?.during) setPhotoGuidanceDuring(suggestion.photos.during);
+    if (suggestion.photos?.after) setPhotoGuidanceAfter(suggestion.photos.after);
 
-    const names = [...suggestion.materials.map((m) => m.name), ...suggestion.tools];
+    // Take control of the materials/tools section entirely: catalog matches
+    // get checked directly, and anything AI suggested that isn't in the
+    // catalog is added as its own editable, removable line — not just
+    // listed as text the admin has to act on manually elsewhere.
     const nextChecked = new Set(checkedMaterialIds);
-    const unmatched: string[] = [];
-    for (const name of names) {
-      const match = materials.find((m) => m.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(m.name.toLowerCase()));
+    const nextCustom: typeof customItems = [];
+    for (const m of suggestion.materials) {
+      const match = findCatalogMatch(m.name);
       if (match) nextChecked.add(match.id);
-      else unmatched.push(name);
+      else nextCustom.push({ name: m.name, quantity: Math.max(1, Number(m.quantity) || 1), unit: m.unit || "buc", kind: "material" });
+    }
+    for (const toolName of suggestion.tools) {
+      const match = findCatalogMatch(toolName);
+      if (match) nextChecked.add(match.id);
+      else nextCustom.push({ name: toolName, quantity: 1, unit: "buc", kind: "tool" });
     }
     setCheckedMaterialIds(nextChecked);
-    setUnmatchedSuggestions(unmatched);
+    setCustomItems(nextCustom);
     setShowFullCatalog(true);
     setAiApplied(true);
   }
@@ -241,13 +258,8 @@ export function NewJobForm({
             {aiApplied && (
               <div className="mt-3 rounded-[10px] border border-success-bg bg-success-bg p-3">
                 <p className="text-[12px] font-semibold text-success">
-                  Sugestia a fost aplicată — verifică Descrierea și materialele bifate mai jos.
+                  Sugestia a fost aplicată — verifică Descrierea, materialele bifate și fotografiile necesare mai jos.
                 </p>
-                {unmatchedSuggestions.length > 0 && (
-                  <p className="mt-1.5 text-[11.5px] text-[#7a5b0e]">
-                    Nu sunt în catalog, adaugă-le manual dacă e nevoie: {unmatchedSuggestions.join(", ")}
-                  </p>
-                )}
               </div>
             )}
           </div>
@@ -445,6 +457,75 @@ export function NewJobForm({
             </div>
           )}
 
+          {customItems.length > 0 && (
+            <div className="rounded-[12px] border border-[#d9e6ff] bg-electric-soft/30 p-4">
+              <div className="mb-2 flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-electric" /> Sugerate de AI, nu sunt în catalog
+              </div>
+              <p className="mb-2.5 text-[12px] text-muted-2">
+                Se adaugă lucrării ca elemente separate. Șterge-le pe cele care nu se aplică.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {customItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2 rounded-[9px] bg-white px-3 py-2">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                        item.kind === "tool" ? "bg-purple-soft text-purple" : "bg-electric-soft text-electric"
+                      }`}
+                    >
+                      {item.kind === "tool" ? "SCULĂ" : "MATERIAL"}
+                    </span>
+                    <span className="flex-1 text-[12.5px] text-[#344054]">
+                      {item.name} · {item.quantity} {item.unit}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCustomItems((prev) => prev.filter((_, idx) => idx !== i))}
+                      className="text-[11px] font-bold text-danger"
+                    >
+                      Șterge
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <input type="hidden" name="customRequiredItems" value={JSON.stringify(customItems)} />
+            </div>
+          )}
+
+          <div className="rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-4">
+            <div className="mb-3 flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+              <Camera className="h-4 w-4 text-muted" /> Fotografii necesare
+            </div>
+            <PhotoRequirementField
+              label="Poză la sosire (înainte)"
+              checkboxName="requireArrivalPhoto"
+              checked={requireArrivalPhoto}
+              onToggle={() => setRequireArrivalPhoto((v) => !v)}
+              guidanceName="photoGuidanceBefore"
+              guidance={photoGuidanceBefore}
+              onGuidanceChange={setPhotoGuidanceBefore}
+            />
+            <PhotoRequirementField
+              label="Poză în timpul lucrării"
+              checkboxName="requireDuringPhoto"
+              checked={requireDuringPhoto}
+              onToggle={() => setRequireDuringPhoto((v) => !v)}
+              guidanceName="photoGuidanceDuring"
+              guidance={photoGuidanceDuring}
+              onGuidanceChange={setPhotoGuidanceDuring}
+            />
+            <PhotoRequirementField
+              label="Poză la final"
+              checkboxName="requireFinalPhoto"
+              checked={requireFinalPhoto}
+              onToggle={() => setRequireFinalPhoto((v) => !v)}
+              guidanceName="photoGuidanceAfter"
+              guidance={photoGuidanceAfter}
+              onGuidanceChange={setPhotoGuidanceAfter}
+              last
+            />
+          </div>
+
           {state?.error && (
             <p className="text-sm font-medium text-danger">{state.error}</p>
           )}
@@ -477,6 +558,49 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
         {label}
       </label>
       {children}
+    </div>
+  );
+}
+
+function PhotoRequirementField({
+  label,
+  checkboxName,
+  checked,
+  onToggle,
+  guidanceName,
+  guidance,
+  onGuidanceChange,
+  last,
+}: {
+  label: string;
+  checkboxName: string;
+  checked: boolean;
+  onToggle: () => void;
+  guidanceName: string;
+  guidance: string;
+  onGuidanceChange: (v: string) => void;
+  last?: boolean;
+}) {
+  return (
+    <div className={last ? "" : "mb-3 border-b border-[#eaecf0] pb-3"}>
+      <label className="flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-[#344054]">
+        <input
+          type="checkbox"
+          name={checkboxName}
+          checked={checked}
+          onChange={onToggle}
+          className="h-3.5 w-3.5 accent-[#2f6fed]"
+        />
+        {label} <span className="text-[11px] font-normal text-muted-2">— obligatorie</span>
+      </label>
+      <textarea
+        name={guidanceName}
+        value={guidance}
+        onChange={(e) => onGuidanceChange(e.target.value)}
+        rows={2}
+        placeholder="Ce trebuie să se vadă în poză și de unde se face (opțional, completat automat de AI)"
+        className="mt-1.5 w-full rounded-[9px] border border-[#d0d5dd] bg-white px-3 py-2 text-[12.5px] outline-none focus:border-electric"
+      />
     </div>
   );
 }

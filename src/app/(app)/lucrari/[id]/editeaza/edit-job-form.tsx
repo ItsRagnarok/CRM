@@ -20,7 +20,11 @@ type Job = {
   locations: { address: string } | null;
   admin_message: string | null;
   require_arrival_photo: boolean;
+  require_during_photo: boolean;
   require_final_photo: boolean;
+  photo_guidance_before: string | null;
+  photo_guidance_during: string | null;
+  photo_guidance_after: string | null;
 };
 
 export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; name: string }[] }) {
@@ -120,15 +124,46 @@ export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; nam
         </Field>
 
         <Field label="Poze obligatorii de la tehnician">
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2 text-[13px] text-[#344054]">
-              <input type="checkbox" name="requireArrivalPhoto" defaultChecked={job.require_arrival_photo} />
-              Poză la sosire, înainte să pornească lucrul
-            </label>
-            <label className="flex items-center gap-2 text-[13px] text-[#344054]">
-              <input type="checkbox" name="requireFinalPhoto" defaultChecked={job.require_final_photo} />
-              Poză cu lucrarea finalizată, înainte să finalizeze
-            </label>
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="flex items-center gap-2 text-[13px] text-[#344054]">
+                <input type="checkbox" name="requireArrivalPhoto" defaultChecked={job.require_arrival_photo} />
+                Poză la sosire, înainte să pornească lucrul
+              </label>
+              <textarea
+                name="photoGuidanceBefore"
+                defaultValue={job.photo_guidance_before ?? ""}
+                rows={2}
+                placeholder="Ce trebuie să se vadă și de unde se face (opțional)"
+                className="mt-1.5 w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[12.5px] outline-none focus:border-electric"
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-[13px] text-[#344054]">
+                <input type="checkbox" name="requireDuringPhoto" defaultChecked={job.require_during_photo} />
+                Poză în timpul lucrării
+              </label>
+              <textarea
+                name="photoGuidanceDuring"
+                defaultValue={job.photo_guidance_during ?? ""}
+                rows={2}
+                placeholder="Ce trebuie să se vadă și de unde se face (opțional)"
+                className="mt-1.5 w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[12.5px] outline-none focus:border-electric"
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-[13px] text-[#344054]">
+                <input type="checkbox" name="requireFinalPhoto" defaultChecked={job.require_final_photo} />
+                Poză cu lucrarea finalizată, înainte să finalizeze
+              </label>
+              <textarea
+                name="photoGuidanceAfter"
+                defaultValue={job.photo_guidance_after ?? ""}
+                rows={2}
+                placeholder="Ce trebuie să se vadă și de unde se face (opțional)"
+                className="mt-1.5 w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[12.5px] outline-none focus:border-electric"
+              />
+            </div>
           </div>
         </Field>
 

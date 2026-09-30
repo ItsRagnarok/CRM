@@ -33,6 +33,12 @@ export async function createJob(
   const endTime = String(formData.get("endTime") ?? "") || (startTime < DEFAULT_END_TIME ? DEFAULT_END_TIME : "23:59");
   const address = String(formData.get("address") ?? "").trim();
   const existingLocationId = String(formData.get("locationId") ?? "").trim() || null;
+  const requireArrivalPhoto = formData.get("requireArrivalPhoto") === "on";
+  const requireDuringPhoto = formData.get("requireDuringPhoto") === "on";
+  const requireFinalPhoto = formData.get("requireFinalPhoto") === "on";
+  const photoGuidanceBefore = String(formData.get("photoGuidanceBefore") ?? "").trim() || null;
+  const photoGuidanceDuring = String(formData.get("photoGuidanceDuring") ?? "").trim() || null;
+  const photoGuidanceAfter = String(formData.get("photoGuidanceAfter") ?? "").trim() || null;
 
   if (!clientId || !title) {
     return { error: "Client și titlu sunt obligatorii." };
@@ -83,6 +89,12 @@ export async function createJob(
       start_time: startTime,
       end_time: endTime,
       created_by: userId,
+      require_arrival_photo: requireArrivalPhoto,
+      require_during_photo: requireDuringPhoto,
+      require_final_photo: requireFinalPhoto,
+      photo_guidance_before: photoGuidanceBefore,
+      photo_guidance_during: photoGuidanceDuring,
+      photo_guidance_after: photoGuidanceAfter,
     })
     .select("id")
     .single();
@@ -118,6 +130,31 @@ export async function createJob(
           created_by: userId,
         }))
       );
+    }
+  }
+
+  // AI-suggested materials/tools that don't match anything in the catalog —
+  // added as free-text items rather than silently dropped or forcing the
+  // admin to create catalog entries before the job can reflect them.
+  const customItemsRaw = String(formData.get("customRequiredItems") ?? "");
+  if (customItemsRaw) {
+    try {
+      const customItems = JSON.parse(customItemsRaw) as { name?: string; quantity?: number; kind?: string }[];
+      const validItems = customItems.filter((i) => i.name && i.name.trim());
+      if (validItems.length > 0) {
+        await supabase.from("job_required_items").insert(
+          validItems.map((i) => ({
+            organization_id: organization.id,
+            job_id: job.id,
+            kind: i.kind === "tool" ? "tool" : "material",
+            custom_name: i.name!.trim(),
+            quantity_needed: Math.max(1, Number(i.quantity) || 1),
+            created_by: userId,
+          }))
+        );
+      }
+    } catch {
+      // Malformed JSON from the client — not worth failing job creation over.
     }
   }
 

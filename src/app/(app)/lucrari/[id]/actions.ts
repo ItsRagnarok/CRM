@@ -42,7 +42,11 @@ export async function updateJob(
       end_time: String(formData.get("endTime") ?? "") || null,
       team_id: teamId,
       require_arrival_photo: formData.get("requireArrivalPhoto") === "on",
+      require_during_photo: formData.get("requireDuringPhoto") === "on",
       require_final_photo: formData.get("requireFinalPhoto") === "on",
+      photo_guidance_before: String(formData.get("photoGuidanceBefore") ?? "").trim() || null,
+      photo_guidance_during: String(formData.get("photoGuidanceDuring") ?? "").trim() || null,
+      photo_guidance_after: String(formData.get("photoGuidanceAfter") ?? "").trim() || null,
     })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
