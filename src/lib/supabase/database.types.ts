@@ -1365,6 +1365,7 @@ export type Database = {
           created_at: string
           cui: string | null
           email: string | null
+          fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
           hq_lat: number | null
@@ -1382,6 +1383,7 @@ export type Database = {
           created_at?: string
           cui?: string | null
           email?: string | null
+          fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           hq_lat?: number | null
@@ -1399,6 +1401,7 @@ export type Database = {
           created_at?: string
           cui?: string | null
           email?: string | null
+          fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           hq_lat?: number | null
@@ -1492,6 +1495,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           full_name: string
+          hourly_rate: number | null
           id: string
           is_active: boolean
           notifications_enabled: boolean
@@ -1505,6 +1509,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           full_name: string
+          hourly_rate?: number | null
           id: string
           is_active?: boolean
           notifications_enabled?: boolean
@@ -1518,6 +1523,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           full_name?: string
+          hourly_rate?: number | null
           id?: string
           is_active?: boolean
           notifications_enabled?: boolean

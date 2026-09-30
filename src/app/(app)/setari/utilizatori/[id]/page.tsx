@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { addUserDocument, deleteUserDocument } from "./actions";
+import { addUserDocument, deleteUserDocument, updateHourlyRate } from "./actions";
 import { AccountForm } from "./account-form";
 
 export default async function UserDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -14,7 +14,7 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
   const [{ data: profile }, { data: email }] = await Promise.all([
     supabase
       .from("profiles")
-      .select("id, full_name, role")
+      .select("id, full_name, role, hourly_rate")
       .eq("id", id)
       .eq("organization_id", organization.id)
       .maybeSingle(),
@@ -40,6 +40,34 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
       <div className="mt-0.5 text-[13px] text-muted-2">{ROLE_LABELS[profile.role]}</div>
 
       <AccountForm profileId={profile.id} email={email ?? ""} />
+
+      <div className="mt-6 rounded-[13px] border border-border bg-white p-5">
+        <h2 className="text-[14.5px] font-bold text-foreground">Tarif orar</h2>
+        <p className="mb-3.5 mt-0.5 text-[12px] text-muted-2">
+          Folosit pentru calculul salariului în Pontaj și al costului de manoperă pe fiecare lucrare.
+        </p>
+        <form action={updateHourlyRate} className="flex items-end gap-2">
+          <input type="hidden" name="profileId" value={profile.id} />
+          <div className="flex-1">
+            <label className="mb-1.5 block text-[12.5px] font-semibold text-[#344054]">RON / oră</label>
+            <input
+              name="hourlyRate"
+              type="number"
+              step="0.01"
+              min="0"
+              defaultValue={profile.hourly_rate ?? ""}
+              placeholder="Ex: 40"
+              className="w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
+            />
+          </div>
+          <button
+            type="submit"
+            className="rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
+          >
+            Salvează
+          </button>
+        </form>
+      </div>
 
       <div className="mt-6 rounded-[13px] border border-border bg-white p-5">
         <h2 className="text-[14.5px] font-bold text-foreground">Documente</h2>

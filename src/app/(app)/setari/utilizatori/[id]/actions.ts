@@ -55,6 +55,26 @@ export async function resetEmployeePassword(
   return { success: true };
 }
 
+export async function updateHourlyRate(formData: FormData) {
+  const profileId = String(formData.get("profileId") ?? "");
+  if (!profileId) return;
+  const raw = String(formData.get("hourlyRate") ?? "").trim();
+  const hourlyRate = raw === "" ? null : Number(raw);
+  if (hourlyRate != null && (!Number.isFinite(hourlyRate) || hourlyRate < 0)) return;
+
+  const { organization } = await requireSessionContext();
+  const supabase = await createClient();
+
+  await supabase
+    .from("profiles")
+    .update({ hourly_rate: hourlyRate })
+    .eq("id", profileId)
+    .eq("organization_id", organization.id);
+
+  revalidatePath(`/setari/utilizatori/${profileId}`);
+  revalidatePath("/pontaj");
+}
+
 export async function addUserDocument(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
   const file = formData.get("file") as File | null;

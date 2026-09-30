@@ -32,13 +32,18 @@ import {
   FileText,
   Image as ImageIcon,
   Check,
+  Package,
+  Clock,
+  Fuel,
+  Receipt,
+  TrendingUp,
 } from "lucide-react";
 
 const TABS = [
   { id: "rezumat", label: "Rezumat" },
   { id: "materiale", label: "Materiale" },
   { id: "fotografii", label: "Fotografii" },
-  { id: "cheltuieli", label: "Cheltuieli" },
+  { id: "cheltuieli", label: "Costuri" },
   { id: "pontaj", label: "Pontaj" },
   { id: "checklist", label: "Checklist" },
   { id: "raport", label: "Raport" },
@@ -115,10 +120,15 @@ export default async function JobDetailPage({
     { data: catalog },
     { data: jobNotes },
     { data: warehouses },
+    { data: invoice },
   ] = await Promise.all([
     supabase.from("photos").select("id, category, storage_path, taken_at").eq("job_id", id).order("taken_at"),
     supabase.from("expenses").select("id, category, vendor, amount, currency, expense_date, receipt_path").eq("job_id", id).order("created_at"),
-    supabase.from("time_entries").select("id, event_type, occurred_at").eq("job_id", id).order("occurred_at"),
+    supabase
+      .from("time_entries")
+      .select("id, profile_id, event_type, occurred_at, profiles(full_name, hourly_rate)")
+      .eq("job_id", id)
+      .order("occurred_at"),
     supabase
       .from("job_checklists")
       .select("id, job_checklist_items(id, label, is_checked, sort_order)")
@@ -128,13 +138,13 @@ export default async function JobDetailPage({
       .maybeSingle(),
     supabase
       .from("material_usage")
-      .select("id, quantity, materials(name, unit)")
+      .select("id, quantity, materials(name, unit, unit_cost)")
       .eq("job_id", id),
     supabase.from("documents").select("id, name, doc_type, storage_path, created_at").eq("job_id", id).order("created_at"),
     supabase.from("signatures").select("signer_name, storage_path, signed_at").eq("job_id", id).maybeSingle(),
     supabase
       .from("job_required_items")
-      .select("id, kind, quantity_needed, custom_name, materials(id, name, unit)")
+      .select("id, kind, quantity_needed, custom_name, materials(id, name, unit, unit_cost)")
       .eq("job_id", id)
       .order("created_at"),
     supabase.from("materials").select("id, name, unit").eq("organization_id", organization.id).order("name"),
@@ -144,6 +154,7 @@ export default async function JobDetailPage({
       .eq("job_id", id)
       .order("created_at", { ascending: false }),
     supabase.from("warehouses").select("id, name").eq("organization_id", organization.id).order("name"),
+    supabase.from("invoices").select("id, total_amount, status").eq("job_id", id).maybeSingle(),
   ]);
 
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
@@ -151,6 +162,51 @@ export default async function JobDetailPage({
   const checklistItems = checklist?.job_checklist_items ?? [];
   const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
   const tabHref = (t: string) => `/lucrari/${id}?tab=${t}`;
+
+  // Cost breakdown — materials actually used (not just planned), labor time
+  // at each technician's hourly rate, an estimated travel/fuel cost from the
+  // logged distance, and every ad-hoc expense (parts, tools, parking...).
+  // Rates are opt-in (hourly_rate / material unit_cost can be unset), so a
+  // missing rate contributes 0 rather than breaking the total — the line
+  // still shows so the admin knows what's not priced yet.
+  const materialsCost = (materialUsage ?? []).reduce(
+    (sum, m) => sum + Number(m.quantity) * (m.materials?.unit_cost ?? 0),
+    0
+  );
+
+  const laborByProfile = new Map<string, { name: string; rate: number | null; hours: number }>();
+  {
+    const byProfile = new Map<string, typeof timeEntries>();
+    for (const e of timeEntries ?? []) {
+      if (!byProfile.has(e.profile_id)) byProfile.set(e.profile_id, []);
+      byProfile.get(e.profile_id)!.push(e);
+    }
+    for (const [profileId, events] of byProfile) {
+      const sorted = [...(events ?? [])].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+      let openStart: number | null = null;
+      let totalMs = 0;
+      for (const e of sorted) {
+        const t = new Date(e.occurred_at).getTime();
+        if (e.event_type === "work_start") openStart = t;
+        else if (e.event_type === "work_end" && openStart != null) {
+          totalMs += t - openStart;
+          openStart = null;
+        }
+      }
+      const first = sorted[0];
+      laborByProfile.set(profileId, {
+        name: first?.profiles?.full_name ?? "Tehnician",
+        rate: first?.profiles?.hourly_rate ?? null,
+        hours: totalMs / 3_600_000,
+      });
+    }
+  }
+  const laborCost = [...laborByProfile.values()].reduce((sum, p) => sum + p.hours * (p.rate ?? 0), 0);
+
+  const travelCost = (job.distance_km ?? 0) * organization.fuel_cost_per_km;
+  const totalCost = materialsCost + laborCost + travelCost + totalExpenses;
+  const revenue = invoice?.total_amount ?? null;
+  const profit = revenue != null ? revenue - totalCost : null;
 
   return (
     <div className="flex flex-col">
@@ -417,8 +473,55 @@ export default async function JobDetailPage({
         )}
 
         {tab === "cheltuieli" && (
-          <Card title="Cheltuieli lucrare">
-            <ExpensesList expenses={expenses ?? []} total={totalExpenses} publicUrl={publicUrl} />
+          <div className="flex flex-col gap-4">
+            <Card title="Cost & profit lucrare">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <CostLine icon={Package} label="Materiale folosite" value={materialsCost} />
+                <CostLine icon={Clock} label="Manoperă" value={laborCost} />
+                <CostLine icon={Fuel} label="Deplasare (combustibil)" value={travelCost} />
+                <CostLine icon={Receipt} label="Cheltuieli" value={totalExpenses} />
+              </div>
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-neutral-bg px-4 py-3">
+                <div className="text-[13px] font-bold text-foreground">
+                  Cost total: {totalCost.toFixed(2)} RON
+                </div>
+                {revenue != null ? (
+                  <div className="flex items-center gap-1.5 text-[13px] font-bold">
+                    <TrendingUp className={`h-4 w-4 ${(profit ?? 0) >= 0 ? "text-success" : "text-danger"}`} />
+                    <span className={(profit ?? 0) >= 0 ? "text-success" : "text-danger"}>
+                      Profit: {(profit ?? 0).toFixed(2)} RON
+                    </span>
+                    <span className="text-[11.5px] font-medium text-muted-2">
+                      (facturat {revenue.toFixed(2)} RON)
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-[12px] font-medium text-muted-2">
+                    Fără factură emisă încă — profitul se calculează după facturare.
+                  </div>
+                )}
+              </div>
+              {laborByProfile.size > 0 && (
+                <div className="mt-3 flex flex-col gap-1.5 border-t border-[#f2f4f7] pt-3">
+                  {[...laborByProfile.values()].map((p, i) => (
+                    <div key={i} className="flex items-center justify-between text-[12px] text-muted">
+                      <span>{p.name}</span>
+                      <span>
+                        {p.hours.toFixed(1)}h
+                        {p.rate != null ? ` × ${p.rate.toFixed(2)} RON/h = ${(p.hours * p.rate).toFixed(2)} RON` : " — fără tarif orar setat"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p className="mt-3 text-[11.5px] text-muted-2">
+                Materialele fără preț de achiziție setat sau tehnicienii fără tarif orar setat contribuie cu 0 RON la
+                cost — completează-le în Materiale, respectiv Setări utilizator.
+              </p>
+            </Card>
+
+            <Card title="Cheltuieli lucrare">
+              <ExpensesList expenses={expenses ?? []} total={totalExpenses} publicUrl={publicUrl} />
             <form action={addExpense} className="mt-4 flex flex-col gap-2 border-t border-[#f2f4f7] pt-4">
               <input type="hidden" name="jobId" value={id} />
               <div className="grid grid-cols-3 gap-2">
@@ -431,7 +534,8 @@ export default async function JobDetailPage({
                 <Plus className="h-3.5 w-3.5" /> Adaugă cheltuială
               </button>
             </form>
-          </Card>
+            </Card>
+          </div>
         )}
 
         {tab === "pontaj" && (
@@ -535,6 +639,25 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
     <div className="rounded-[13px] border border-border bg-white p-5">
       <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">{title}</h2>
       {children}
+    </div>
+  );
+}
+
+function CostLine({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  label: string;
+  value: number;
+}) {
+  return (
+    <div className="rounded-[10px] border border-[#eaecf0] p-3">
+      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-2">
+        <Icon className="h-3.5 w-3.5" /> {label}
+      </div>
+      <div className="mt-1 text-[15px] font-extrabold text-foreground">{value.toFixed(2)} RON</div>
     </div>
   );
 }
