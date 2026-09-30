@@ -48,7 +48,15 @@ export async function generateJobSuggestion(
   const jobTypeKeys = Object.keys(JOB_TYPE_LABELS);
   const priorityKeys = Object.keys(JOB_PRIORITY_LABELS);
 
-  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
+  // Groq's model catalog varies by account/plan in ways that aren't
+  // reliably documented — a model name that works for one key 404s
+  // ("model_not_found") for another. Rather than hardcode a single guess,
+  // try a short list of widely-available candidates in order and move on
+  // to the next one specifically on a 404, so this keeps working even if
+  // a given account doesn't have access to the first pick.
+  const candidateModels = process.env.GROQ_MODEL
+    ? [process.env.GROQ_MODEL]
+    : ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b"];
   const prompt = `Ești un electrician autorizat (ANRE, gradele IIB/IIIB) cu peste 15 ani de experiență în instalații electrice, CCTV, securitate și HVAC în România, care scrie acum fișa tehnică de execuție pentru un coleg tehnician care va face lucrarea pe teren. Nu ești un asistent generalist — scrii ca un profesionist din domeniu, pentru un profesionist din domeniu.
 
 Tip lucrare (sugestie inițială, poți corecta): ${jobType || "nespecificat"}
@@ -70,41 +78,49 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
 "instructions" este DOAR un scurt context general (1-2 propoziții, fără numerotare) — toată procedura pas-cu-pas, tehnică și precisă, trebuie să fie în "steps". "estimatedHoursTwoPeople" este o estimare realistă în ore (poate fi zecimală) a duratei lucrării presupunând o echipă de 2 persoane.`;
 
   const url = "https://api.groq.com/openai/v1/chat/completions";
-  const body = JSON.stringify({
-    model,
-    messages: [{ role: "user", content: prompt }],
-    response_format: { type: "json_object" },
-    temperature: 0.2,
-  });
 
-  // Groq's free tier is rarely "overloaded" (dedicated inference hardware),
-  // but can return 429 when the per-minute rate limit is briefly hit —
-  // retry a couple of times with backoff before giving up.
   let res: Response | null = null;
   let lastErrText = "";
-  const maxAttempts = 3;
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-        body,
-      });
-    } catch (err) {
-      console.error(`generateJobSuggestion: fetch failed (attempt ${attempt})`, err);
-      if (attempt === maxAttempts) {
-        return { error: "Nu am putut contacta serviciul AI. Verifică conexiunea și încearcă din nou." };
+  for (const candidateModel of candidateModels) {
+    const body = JSON.stringify({
+      model: candidateModel,
+      messages: [{ role: "user", content: prompt }],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+    });
+
+    // Groq's free tier is rarely "overloaded" (dedicated inference hardware),
+    // but can return 429 when the per-minute rate limit is briefly hit —
+    // retry a couple of times with backoff before giving up on this model.
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          body,
+        });
+      } catch (err) {
+        console.error(`generateJobSuggestion: fetch failed (${candidateModel}, attempt ${attempt})`, err);
+        if (attempt === maxAttempts) {
+          return { error: "Nu am putut contacta serviciul AI. Verifică conexiunea și încearcă din nou." };
+        }
+        await new Promise((r) => setTimeout(r, attempt * 1200));
+        continue;
       }
+
+      if (res.ok) break;
+
+      lastErrText = await res.text().catch(() => "");
+      console.error(`generateJobSuggestion: Groq error (${candidateModel}, attempt ${attempt})`, res.status, lastErrText);
+      if ((res.status !== 429 && res.status !== 503) || attempt === maxAttempts) break;
       await new Promise((r) => setTimeout(r, attempt * 1200));
-      continue;
     }
 
-    if (res.ok) break;
-
-    lastErrText = await res.text().catch(() => "");
-    console.error(`generateJobSuggestion: Groq error (attempt ${attempt})`, res.status, lastErrText);
-    if ((res.status !== 429 && res.status !== 503) || attempt === maxAttempts) break;
-    await new Promise((r) => setTimeout(r, attempt * 1200));
+    if (res?.ok) break;
+    // A model this account can't use — try the next candidate instead of
+    // giving up outright.
+    if (res?.status !== 404) break;
   }
 
   if (!res || !res.ok) {
@@ -115,7 +131,9 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
           ? "Cheia GROQ_API_KEY pare invalidă sau fără permisiuni. Verific-o în Vercel."
           : status === 429
             ? "Serviciul AI a atins limita de cereri momentan (am reîncercat de 3 ori). Mai încearcă peste un minut."
-            : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
+            : status === 404
+              ? "Niciunul dintre modelele AI încercate nu e disponibil pe acest cont Groq. Verifică în consola Groq ce model ai acces și setează-l manual în GROQ_MODEL."
+              : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
     };
   }
 
