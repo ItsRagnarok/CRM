@@ -47,11 +47,17 @@ export async function generateJobSuggestion(
   const priorityKeys = Object.keys(JOB_PRIORITY_LABELS);
 
   const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-  const prompt = `Ești un asistent pentru o platformă de management pentru companii românești de electricieni, CCTV, securitate și HVAC. Pe baza informațiilor de mai jos despre o lucrare, completează automat toate detaliile necesare tehnicianului și administratorului.
+  const prompt = `Ești un electrician autorizat (ANRE, gradele IIB/IIIB) cu peste 15 ani de experiență în instalații electrice, CCTV, securitate și HVAC în România, care scrie acum fișa tehnică de execuție pentru un coleg tehnician care va face lucrarea pe teren. Nu ești un asistent generalist — scrii ca un profesionist din domeniu, pentru un profesionist din domeniu.
 
 Tip lucrare (sugestie inițială, poți corecta): ${jobType || "nespecificat"}
 Client: ${clientName || "nespecificat"}
 Descriere lucrare: ${description || "nespecificată"}
+
+Cerințe stricte pentru "steps" (procedura pas-cu-pas):
+- Fiecare pas trebuie să fie tehnic concret și verificabil: secțiuni de cablu (mmp), valori disjunctoare/siguranțe (A), tip și calibru echipament, unde e relevant — nu generalități de genul "lucrați cu atenție" sau "respectați normele" fără să spui EXACT ce norme și ce înseamnă asta operațional.
+- Respectă ordinea obligatorie pentru orice lucrare cu risc electric: 1) întreruperea și blocarea alimentării la sursă, 2) verificarea absenței tensiunii cu aparat de măsură (nu presupunere), 3) echipament individual de protecție (mănuși electroizolante, ochelari, dacă e cazul), 4) execuția tehnică propriu-zisă, cu pași expliciți, 5) verificări finale (continuitate, izolație, împământare, strângere mecanică a bornelor), 6) repunerea sub tensiune și testarea funcțională.
+- Referă-te la normativele românești relevante (ex: I7-2011 pentru instalații electrice, PE 101/102 unde e cazul) când e relevant pentru tipul de lucrare — fără să inventezi articole sau numere exacte pe care nu le știi cu certitudine; dacă nu ești sigur de un detaliu normativ exact, spune procedura corectă fără să citezi un articol inventat.
+- Un pas per acțiune reală, nu propoziții-umbrelă care ascund mai mulți pași într-una singură.
 
 Valori permise pentru "jobType" (alege EXACT una): ${jobTypeKeys.join(", ")}
 Valori permise pentru "priority" (alege EXACT una, în funcție de urgența descrisă): ${priorityKeys.join(", ")}
@@ -59,12 +65,12 @@ Valori permise pentru "priority" (alege EXACT una, în funcție de urgența desc
 Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact în acest format:
 {"title":"titlu scurt și clar al lucrării","jobType":"una din valorile permise","priority":"una din valorile permise","steps":["pas 1","pas 2","..."],"materials":[{"name":"nume material","quantity":1,"unit":"buc"}],"tools":["nume sculă"],"instructions":"1-2 propoziții scurte de context general (nu pași numerotați)","photos":{"before":"ce poze trebuie făcute înainte de a începe și ce trebuie să se vadă în ele","during":"ce poze trebuie făcute în timpul lucrării","after":"ce poze trebuie făcute la final, ca dovadă a lucrării"},"estimatedHoursTwoPeople":2.5}
 
-IMPORTANT: "instructions" este DOAR un scurt context general (1-2 propoziții, fără numerotare) — toată procedura pas-cu-pas trebuie să fie în "steps", ca listă de pași scurți și concreți, fiecare un element separat al array-ului (nu un singur pas care înșiră totul). "estimatedHoursTwoPeople" este o estimare realistă în ore (poate fi zecimală) a duratei lucrării presupunând o echipă de 2 persoane.`;
+"instructions" este DOAR un scurt context general (1-2 propoziții, fără numerotare) — toată procedura pas-cu-pas, tehnică și precisă, trebuie să fie în "steps". "estimatedHoursTwoPeople" este o estimare realistă în ore (poate fi zecimală) a duratei lucrării presupunând o echipă de 2 persoane.`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const body = JSON.stringify({
     contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.4 },
+    generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
   });
 
   // Gemini's free tier returns 503 ("high demand") often enough that a

@@ -251,7 +251,11 @@ export function NewJobForm({
             </div>
             <p className="mb-3 text-[12px] text-muted-2">
               Descrie pe scurt lucrarea — AI-ul sugerează materiale, scule, instrucțiuni de execuție și ce poze
-              trebuie făcute înainte, în timpul și la final. Verifică mereu sugestiile înainte să salvezi.
+              trebuie făcute înainte, în timpul și la final.{" "}
+              <b className="text-[#7a5b0e]">
+                Pașii tehnici generați de AI trebuie verificați de un electrician autorizat înainte de execuție —
+                nu îi trimite direct tehnicianului fără să-i citești.
+              </b>
             </p>
             <textarea
               value={aiPrompt}
