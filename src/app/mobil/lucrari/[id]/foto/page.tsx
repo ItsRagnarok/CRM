@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { PhotoCapture } from "./photo-capture";
 import { JOB_STEPS, type JobStepKey } from "../step-badge";
 
@@ -82,7 +83,8 @@ export default async function MobilePhotoPage({
     .eq("category", category)
     .order("taken_at", { ascending: false });
 
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, (photos ?? []).map((p) => p.storage_path));
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
 
   return (
     <div className="flex h-full flex-col bg-[#0b1530]">

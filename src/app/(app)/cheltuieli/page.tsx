@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Receipt, Fuel, ParkingCircle, Wrench } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
 import { approveExpense, rejectExpense } from "./actions";
 import { todayInOrgTimeZone } from "@/lib/date";
@@ -62,6 +63,7 @@ export default async function CheltuieliPage({
     .filter((e) => e.expense_date >= monthStartStr)
     .reduce((sum, e) => sum + Number(e.amount), 0);
 
+  const receiptUrls = await signedAttachmentUrls(supabase, (expenses ?? []).map((e) => e.receipt_path));
   const statusHref = (s: string) => (s ? `/cheltuieli?status=${s}` : "/cheltuieli");
 
   return (
@@ -132,7 +134,7 @@ export default async function CheltuieliPage({
                         <span className="text-[13px] font-semibold text-foreground">{e.vendor ?? "—"}</span>
                         {e.receipt_path && (
                           <a
-                            href={supabase.storage.from("attachments").getPublicUrl(e.receipt_path).data.publicUrl}
+                            href={receiptUrls.get(e.receipt_path) ?? "#"}
                             target="_blank"
                             rel="noreferrer"
                             className="text-[11px] font-bold text-electric"

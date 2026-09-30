@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, FileText } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
 
 export default async function MobileDocumentsPage() {
@@ -14,7 +15,8 @@ export default async function MobileDocumentsPage() {
     .eq("profile_id", profile.id)
     .order("created_at", { ascending: false });
 
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, (documents ?? []).map((d) => d.storage_path));
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
 
   return (
     <div className="flex h-full flex-col">

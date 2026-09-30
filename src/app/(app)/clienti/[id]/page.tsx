@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { StatusBadge } from "@/components/status-badge";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
@@ -96,7 +97,11 @@ export default async function ClientDetailPage({
   ]);
 
   const totalValue = (invoices ?? []).reduce((sum, inv) => sum + Number(inv.total_amount ?? 0), 0);
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, [
+    ...(documents ?? []).map((d) => d.storage_path),
+    ...(photos ?? []).map((p) => p.storage_path),
+  ]);
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
   const color = avatarColor(client.id);
   const tabHref = (t: string) => `/clienti/${id}?tab=${t}`;
 

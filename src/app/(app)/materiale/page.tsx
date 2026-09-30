@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Package, Plus, Search, Download } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
 import { setStockQuantity, importStandardCatalog, createWarehouse, updateWarehouseAddress, deleteWarehouse } from "./actions";
 import { Warehouse as WarehouseIcon, Trash2 } from "lucide-react";
@@ -46,13 +47,12 @@ export default async function MaterialePage({
   const warehouse = (warehouses ?? []).find((w) => w.is_central) ?? warehouses?.[0];
   const warehouseId = warehouse?.id;
 
+  const imageUrls = await signedAttachmentUrls(supabase, (materials ?? []).map((m) => m.image_path));
   const rows = (materials ?? []).map((m) => {
     const quantity = m.material_stock.find((s) => s.warehouse_id === warehouseId)?.quantity ?? 0;
     const status: "ok" | "scazut" | "critic" =
       quantity >= m.min_stock ? "ok" : quantity >= m.min_stock * 0.5 ? "scazut" : "critic";
-    const imageUrl = m.image_path
-      ? supabase.storage.from("attachments").getPublicUrl(m.image_path).data.publicUrl
-      : null;
+    const imageUrl = m.image_path ? imageUrls.get(m.image_path) ?? null : null;
     return { ...m, quantity, status, imageUrl };
   });
 

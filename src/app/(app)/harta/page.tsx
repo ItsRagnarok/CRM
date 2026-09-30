@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
 import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
@@ -121,7 +122,8 @@ export default async function HartaPage({
           .limit(10),
       ])
     : [{ data: null }, { data: null }, { data: null }];
-  const publicPhotoUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const selectedPhotoUrls = await signedAttachmentUrls(supabase, (selectedPhotos ?? []).map((p) => p.storage_path));
+  const publicPhotoUrl = (path: string) => selectedPhotoUrls.get(path) ?? "";
 
   type Row = {
     teamId: string;

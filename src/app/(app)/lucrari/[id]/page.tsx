@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
 import { LiveJobTimer } from "./live-timer";
@@ -160,7 +161,14 @@ export default async function JobDetailPage({
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
   const totalExpenses = (expenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
   const checklistItems = checklist?.job_checklist_items ?? [];
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, [
+    ...(photos ?? []).map((p) => p.storage_path),
+    ...(documents ?? []).map((d) => d.storage_path),
+    signature?.storage_path,
+    ...(expenses ?? []).map((e) => e.receipt_path),
+    ...(jobNotes ?? []).map((n) => n.photo_path),
+  ]);
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
   const tabHref = (t: string) => `/lucrari/${id}?tab=${t}`;
 
   // Cost breakdown — materials actually used (not just planned), labor time

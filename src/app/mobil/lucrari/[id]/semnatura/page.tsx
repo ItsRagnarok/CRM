@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrl } from "@/lib/storage";
 import { SignaturePad } from "./signature-pad";
 import { StepBadge } from "../step-badge";
 
@@ -27,7 +28,7 @@ export default async function MobileSignaturePage({ params }: { params: Promise<
     .maybeSingle();
 
   if (existing) {
-    const publicUrl = supabase.storage.from("attachments").getPublicUrl(existing.storage_path).data.publicUrl;
+    const publicUrl = await signedAttachmentUrl(supabase, existing.storage_path);
     return (
       <div className="flex h-full flex-col">
         <div className="flex flex-shrink-0 items-center gap-3 border-b border-[#eaecf0] px-4 py-2.5">

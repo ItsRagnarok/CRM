@@ -1,5 +1,6 @@
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
 import { Package, Truck, User, Wrench, Send, Warehouse } from "lucide-react";
 import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
@@ -74,6 +75,7 @@ export default async function MobileMaterialsPage() {
     : { data: null };
 
   const rows = (stock ?? []).filter((s) => s.materials);
+  const materialImageUrls = await signedAttachmentUrls(supabase, rows.map((s) => s.materials?.image_path));
   // min_stock is a warehouse reorder threshold, not a van par level — a van always
   // carries a small fraction of it. Items a van holds "one of" (min_stock <= 3, e.g.
   // hand tools) are only critical when actually out; bulk consumables (cable, doze,
@@ -228,9 +230,7 @@ export default async function MobileMaterialsPage() {
                         unit={m.unit}
                         quantity={s.quantity}
                         minStock={m.min_stock}
-                        imageUrl={
-                          m.image_path ? supabase.storage.from("attachments").getPublicUrl(m.image_path).data.publicUrl : null
-                        }
+                        imageUrl={m.image_path ? materialImageUrls.get(m.image_path) ?? null : null}
                       />
                       <div>
                         <div className="text-[14px] font-bold">{m.name}</div>

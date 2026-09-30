@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrl } from "@/lib/storage";
 import { MaterialEditForm } from "./material-edit-form";
 
 export default async function MaterialDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -18,9 +19,7 @@ export default async function MaterialDetailPage({ params }: { params: Promise<{
     .maybeSingle();
   if (!material) notFound();
 
-  const imageUrl = material.image_path
-    ? supabase.storage.from("attachments").getPublicUrl(material.image_path).data.publicUrl
-    : null;
+  const imageUrl = material.image_path ? await signedAttachmentUrl(supabase, material.image_path) : null;
 
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-5 p-7">

@@ -42,10 +42,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   let signatureImage: Buffer | null = null;
   if (signature) {
-    const url = supabase.storage.from("attachments").getPublicUrl(signature.storage_path).data.publicUrl;
     try {
-      const res = await fetch(url);
-      if (res.ok) signatureImage = Buffer.from(await res.arrayBuffer());
+      const { data } = await supabase.storage.from("attachments").download(signature.storage_path);
+      if (data) signatureImage = Buffer.from(await data.arrayBuffer());
     } catch {
       // No signature image is not fatal — the report just shows a blank line.
     }

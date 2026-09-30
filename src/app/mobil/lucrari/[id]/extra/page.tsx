@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, AlertTriangle, MessageSquare, Camera } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { addJobNote } from "../actions";
 import { ProblemPicker } from "./problem-picker";
 import { StepBadge } from "../step-badge";
@@ -26,7 +27,8 @@ export default async function MobileExtraPage({ params }: { params: Promise<{ id
     .eq("job_id", id)
     .order("created_at", { ascending: false });
 
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, (notes ?? []).map((n) => n.photo_path));
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
 
   return (
     <div className="flex h-full flex-col">

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrl } from "@/lib/storage";
 import { JOB_STATUS_LABELS, JOB_TYPE_LABELS } from "@/lib/status";
 import { PrintButton } from "./print-button";
 
@@ -39,7 +40,7 @@ export default async function JobReportPage({
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));
   const total = (expenses ?? []).reduce((sum, e) => sum + Number(e.amount), 0);
   const checklistItems = checklist?.job_checklist_items ?? [];
-  const signatureUrl = signature ? supabase.storage.from("attachments").getPublicUrl(signature.storage_path).data.publicUrl : null;
+  const signatureUrl = signature ? await signedAttachmentUrl(supabase, signature.storage_path) : null;
 
   return (
     <div className="mx-auto max-w-[800px] p-10 font-sans text-[#101828]">

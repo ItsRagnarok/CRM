@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, FileText, Plus, Trash2 } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedAttachmentUrls } from "@/lib/storage";
 import { addUserDocument, deleteUserDocument, updateHourlyRate } from "./actions";
 import { AccountForm } from "./account-form";
 
@@ -28,7 +29,8 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
     .eq("profile_id", id)
     .order("created_at", { ascending: false });
 
-  const publicUrl = (path: string) => supabase.storage.from("attachments").getPublicUrl(path).data.publicUrl;
+  const signedUrls = await signedAttachmentUrls(supabase, (documents ?? []).map((d) => d.storage_path));
+  const publicUrl = (path: string) => signedUrls.get(path) ?? "";
 
   return (
     <div className="mx-auto max-w-[720px] px-8 py-8">
