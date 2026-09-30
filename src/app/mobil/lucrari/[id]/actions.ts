@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { sendPushToProfiles } from "@/lib/push";
 import { mobileStagePath, type MobileStage } from "./mobile-stage";
 
 function paths(jobId: string) {
@@ -60,16 +61,21 @@ export async function beginJobPrep(formData: FormData) {
       .in("role", ["admin", "manager"]);
 
     if (admins && admins.length > 0 && job) {
+      const title = "Lucrare pornită";
+      const body = `${profile.full_name} a pornit lucrarea #${job.display_number} — ${job.title}`;
+      const adminIds = admins.map((a) => a.id);
+
       await supabase.from("notifications").insert(
-        admins.map((a) => ({
+        adminIds.map((profileId) => ({
           organization_id: organization.id,
-          profile_id: a.id,
+          profile_id: profileId,
           type: "job_started",
-          title: "Lucrare pornită",
-          body: `${profile.full_name} a pornit lucrarea #${job.display_number} — ${job.title}`,
+          title,
+          body,
           related_job_id: jobId,
         }))
       );
+      await sendPushToProfiles(supabase, adminIds, { title, body, data: { jobId } });
     }
   }
 

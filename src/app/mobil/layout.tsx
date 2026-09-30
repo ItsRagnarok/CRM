@@ -1,5 +1,6 @@
 import { requireSessionContext } from "@/lib/auth";
 import { LocationTracker } from "./location-tracker";
+import { PushRegistration } from "./push-registration";
 
 // Every page in this group reads the signed-in user's session; never serve a
 // cached/prerendered response for someone else's data.
@@ -11,6 +12,7 @@ export default async function MobilLayout({ children }: { children: React.ReactN
   return (
     <div className="mx-auto flex h-screen max-w-[480px] flex-col bg-[#f6f7fa]">
       <LocationTracker enabled={organization.gps_continuous_tracking_enabled} />
+      <PushRegistration />
       {children}
     </div>
   );
