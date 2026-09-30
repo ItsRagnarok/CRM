@@ -17,21 +17,23 @@ export type AiJobSuggestion = {
 
 export type AiJobSuggestionState = { error?: string; suggestion?: AiJobSuggestion };
 
-// Uses Gemini's free tier (aistudio.google.com/apikey — no billing required)
-// rather than Vercel's AI Gateway, which draws from paid team credits. Fails
-// closed with a clear message when the key isn't configured yet, instead of
-// silently doing nothing.
+// Uses Groq's free tier (console.groq.com/keys — no billing required) rather
+// than Gemini (too often 503 "overloaded" on its free flash tier) or
+// Vercel's AI Gateway, which draws from paid team credits. Groq runs on its
+// own dedicated inference hardware, so the free tier is rate-limited but
+// rarely overloaded. Fails closed with a clear message when the key isn't
+// configured yet, instead of silently doing nothing.
 export async function generateJobSuggestion(
   _prevState: AiJobSuggestionState | undefined,
   formData: FormData
 ): Promise<AiJobSuggestionState> {
   await requireSessionContext();
 
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     return {
       error:
-        "Completarea cu AI nu e activată încă — adaugă o cheie GEMINI_API_KEY (gratuită, de la aistudio.google.com/apikey) în variabilele de mediu din Vercel, apoi redeploy.",
+        "Completarea cu AI nu e activată încă — adaugă o cheie GROQ_API_KEY (gratuită, de la console.groq.com/keys) în variabilele de mediu din Vercel, apoi redeploy.",
     };
   }
 
@@ -46,7 +48,7 @@ export async function generateJobSuggestion(
   const jobTypeKeys = Object.keys(JOB_TYPE_LABELS);
   const priorityKeys = Object.keys(JOB_PRIORITY_LABELS);
 
-  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+  const model = process.env.GROQ_MODEL || "llama-3.3-70b-versatile";
   const prompt = `Ești un electrician autorizat (ANRE, gradele IIB/IIIB) cu peste 15 ani de experiență în instalații electrice, CCTV, securitate și HVAC în România, care scrie acum fișa tehnică de execuție pentru un coleg tehnician care va face lucrarea pe teren. Nu ești un asistent generalist — scrii ca un profesionist din domeniu, pentru un profesionist din domeniu.
 
 Tip lucrare (sugestie inițială, poți corecta): ${jobType || "nespecificat"}
@@ -67,21 +69,27 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
 
 "instructions" este DOAR un scurt context general (1-2 propoziții, fără numerotare) — toată procedura pas-cu-pas, tehnică și precisă, trebuie să fie în "steps". "estimatedHoursTwoPeople" este o estimare realistă în ore (poate fi zecimală) a duratei lucrării presupunând o echipă de 2 persoane.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const url = "https://api.groq.com/openai/v1/chat/completions";
   const body = JSON.stringify({
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
+    model,
+    messages: [{ role: "user", content: prompt }],
+    response_format: { type: "json_object" },
+    temperature: 0.2,
   });
 
-  // Gemini's free tier returns 503 ("high demand") often enough that a
-  // single attempt isn't good enough — Google's own message says it's
-  // transient, so retry a couple of times with backoff before giving up.
+  // Groq's free tier is rarely "overloaded" (dedicated inference hardware),
+  // but can return 429 when the per-minute rate limit is briefly hit —
+  // retry a couple of times with backoff before giving up.
   let res: Response | null = null;
   let lastErrText = "";
   const maxAttempts = 3;
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+      res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+        body,
+      });
     } catch (err) {
       console.error(`generateJobSuggestion: fetch failed (attempt ${attempt})`, err);
       if (attempt === maxAttempts) {
@@ -94,8 +102,8 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
     if (res.ok) break;
 
     lastErrText = await res.text().catch(() => "");
-    console.error(`generateJobSuggestion: Gemini error (attempt ${attempt})`, res.status, lastErrText);
-    if (res.status !== 503 || attempt === maxAttempts) break;
+    console.error(`generateJobSuggestion: Groq error (attempt ${attempt})`, res.status, lastErrText);
+    if ((res.status !== 429 && res.status !== 503) || attempt === maxAttempts) break;
     await new Promise((r) => setTimeout(r, attempt * 1200));
   }
 
@@ -103,16 +111,16 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
     const status = res?.status;
     return {
       error:
-        status === 400 || status === 403
-          ? "Cheia GEMINI_API_KEY pare invalidă sau fără permisiuni. Verific-o în Vercel."
-          : status === 503
-            ? "Serviciul AI e supraîncărcat momentan (am reîncercat de 3 ori). Mai încearcă peste un minut."
+        status === 401 || status === 403
+          ? "Cheia GROQ_API_KEY pare invalidă sau fără permisiuni. Verific-o în Vercel."
+          : status === 429
+            ? "Serviciul AI a atins limita de cereri momentan (am reîncercat de 3 ori). Mai încearcă peste un minut."
             : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
     };
   }
 
   const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  const text = data?.choices?.[0]?.message?.content;
   if (!text) return { error: "AI nu a returnat niciun răspuns. Încearcă din nou." };
 
   let parsed: AiJobSuggestion;
