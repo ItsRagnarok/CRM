@@ -1,5 +1,8 @@
 import { todayInOrgTimeZone } from "@/lib/date";
 
+export const OVERTIME_MULTIPLIER = 1.5;
+export const OVERTIME_THRESHOLD_HOURS = 8;
+
 export type TimeEntry = { profile_id: string; job_id: string; event_type: string; occurred_at: string };
 
 export function toISODate(d: Date) {
@@ -39,6 +42,42 @@ export function pairHours(events: TimeEntry[], startType: string, endType: strin
     }
   }
   return total / 3_600_000;
+}
+
+// Buckets work_start/work_end pairs by the Bucharest calendar day the
+// session started on — needed to split regular vs. overtime hours, which
+// pairHours' single running total can't do. A session crossing midnight is
+// counted entirely on its start day; field shifts essentially never do.
+export function dailyWorkedHours(events: TimeEntry[], startType: string, endType: string) {
+  const sorted = [...events].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
+  const byDay = new Map<string, number>();
+  let openStart: number | null = null;
+  for (const e of sorted) {
+    const t = new Date(e.occurred_at).getTime();
+    if (e.event_type === startType) {
+      openStart = t;
+    } else if (e.event_type === endType && openStart != null) {
+      const day = todayInOrgTimeZone(new Date(openStart));
+      const hours = (t - openStart) / 3_600_000;
+      byDay.set(day, (byDay.get(day) ?? 0) + hours);
+      openStart = null;
+    }
+  }
+  return byDay;
+}
+
+export function regularAndOvertimeHours(dailyHours: Map<string, number>, thresholdPerDay = 8) {
+  let regular = 0;
+  let overtime = 0;
+  for (const hours of dailyHours.values()) {
+    if (hours <= thresholdPerDay) {
+      regular += hours;
+    } else {
+      regular += thresholdPerDay;
+      overtime += hours - thresholdPerDay;
+    }
+  }
+  return { regular, overtime };
 }
 
 export function formatHM(hours: number) {

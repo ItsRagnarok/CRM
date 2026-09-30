@@ -9,6 +9,9 @@ import {
   type TimeEntry,
   resolveRange,
   pairHours,
+  dailyWorkedHours,
+  regularAndOvertimeHours,
+  OVERTIME_MULTIPLIER,
   formatHM,
   STATUS_BADGE,
   statusKind,
@@ -18,10 +21,11 @@ import {
 export default async function PontajPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; date?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; calc?: string }>;
 }) {
-  const { view: rawView, date } = await searchParams;
+  const { view: rawView, date, calc: rawCalc } = await searchParams;
   const view: View = rawView === "zi" ? "zi" : "saptamana";
+  const calc: "simplu" | "suplimentare" = rawCalc === "suplimentare" ? "suplimentare" : "simplu";
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -32,7 +36,7 @@ export default async function PontajPage({
     await Promise.all([
       supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, hourly_rate")
         .eq("organization_id", organization.id)
         .eq("is_active", true)
         .in("role", ["technician", "team_leader"])
@@ -85,8 +89,30 @@ export default async function PontajPage({
     const brk = pairHours(pEntries, "break_start", "break_end");
     const jobCount = jobCountByProfile.get(p.id)?.size ?? 0;
     const kind = statusKind(todayStatusByProfile.get(p.id));
-    return { profile: p, worked, travel, brk, jobCount, kind };
+
+    const dailyHours = dailyWorkedHours(pEntries, "work_start", "work_end");
+    const { regular, overtime } = regularAndOvertimeHours(dailyHours);
+    const rate = p.hourly_rate;
+    const salary =
+      rate == null
+        ? null
+        : calc === "suplimentare"
+          ? regular * rate + overtime * rate * OVERTIME_MULTIPLIER
+          : worked * rate;
+
+    return { profile: p, worked, travel, brk, jobCount, kind, regular, overtime, rate, salary };
   });
+
+  const totalSalary = rows.reduce((s, r) => s + (r.salary ?? 0), 0);
+  const missingRateCount = rows.filter((r) => r.rate == null).length;
+
+  const calcHref = (c: "simplu" | "suplimentare") => {
+    const params = new URLSearchParams();
+    if (view !== "saptamana") params.set("view", view);
+    if (date) params.set("date", date);
+    if (c !== "simplu") params.set("calc", c);
+    return params.toString() ? `/pontaj?${params}` : "/pontaj";
+  };
 
   const totalWorked = rows.reduce((s, r) => s + r.worked, 0);
   const totalTravel = rows.reduce((s, r) => s + r.travel, 0);
@@ -214,6 +240,89 @@ export default async function PontajPage({
           title="Niciun angajat activ"
           description="Adaugă membri în echipe pentru a urmări pontajul."
         />
+      )}
+
+      {rows.length > 0 && (
+        <div className="overflow-hidden rounded-[13px] border border-border bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#f2f4f7] px-5 py-3.5">
+            <div className="text-[14.5px] font-bold">Salarizare — {rangeLabel}</div>
+            <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
+              <Link
+                href={calcHref("simplu")}
+                prefetch={false}
+                className={`rounded-[7px] px-3.5 py-1.5 text-[12px] font-semibold ${
+                  calc === "simplu" ? "bg-white text-foreground shadow-sm" : "text-muted"
+                }`}
+              >
+                Simplu (ore × tarif)
+              </Link>
+              <Link
+                href={calcHref("suplimentare")}
+                prefetch={false}
+                className={`rounded-[7px] px-3.5 py-1.5 text-[12px] font-semibold ${
+                  calc === "suplimentare" ? "bg-white text-foreground shadow-sm" : "text-muted"
+                }`}
+              >
+                Cu spor ore suplimentare (×{OVERTIME_MULTIPLIER}, peste 8h/zi)
+              </Link>
+            </div>
+          </div>
+
+          {missingRateCount > 0 && (
+            <div className="border-b border-[#f2f4f7] bg-warning-bg px-5 py-2.5 text-[12px] font-semibold text-[#7a5b0e]">
+              {missingRateCount} {missingRateCount === 1 ? "angajat nu are" : "angajați nu au"} tarif orar setat —
+              salariul lor nu poate fi calculat. Setează-l la Setări → Utilizatori → [angajat].
+            </div>
+          )}
+
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-[#f9fafb] text-left text-[11px] font-bold uppercase tracking-wide text-muted">
+                <th className="px-5 py-3">Angajat</th>
+                {calc === "suplimentare" ? (
+                  <>
+                    <th className="px-5 py-3">Ore normale</th>
+                    <th className="px-5 py-3">Ore suplimentare</th>
+                  </>
+                ) : (
+                  <th className="px-5 py-3">Ore lucrate</th>
+                )}
+                <th className="px-5 py-3">Tarif</th>
+                <th className="px-5 py-3">Salariu</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ profile, worked, regular, overtime, rate, salary }) => (
+                <tr key={profile.id} className="border-t border-[#f2f4f7]">
+                  <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">{profile.full_name}</td>
+                  {calc === "suplimentare" ? (
+                    <>
+                      <td className="px-5 py-3 text-[13px] text-[#344054]">{formatHM(regular)}</td>
+                      <td className="px-5 py-3 text-[13px] text-[#344054]">{formatHM(overtime)}</td>
+                    </>
+                  ) : (
+                    <td className="px-5 py-3 text-[13px] text-[#344054]">{formatHM(worked)}</td>
+                  )}
+                  <td className="px-5 py-3 text-[13px] text-[#344054]">
+                    {rate != null ? `${rate.toFixed(2)} RON/h` : "—"}
+                  </td>
+                  <td className="px-5 py-3 text-[13.5px] font-bold text-foreground">
+                    {salary != null ? `${salary.toFixed(2)} RON` : "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-[#eaecf0] bg-[#f9fafb]">
+                <td className="px-5 py-3 text-[13px] font-bold text-foreground" colSpan={calc === "suplimentare" ? 3 : 2}>
+                  Total
+                </td>
+                <td />
+                <td className="px-5 py-3 text-[14px] font-extrabold text-foreground">{totalSalary.toFixed(2)} RON</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       )}
     </div>
   );
