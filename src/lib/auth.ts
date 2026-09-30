@@ -5,6 +5,12 @@ import type { Database } from "@/lib/supabase/database.types";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
+type UserRole = Database["public"]["Enums"]["user_role"];
+
+// technician/team_leader are the mobile/field roles — they get the /mobil
+// app, not the desktop back office. Kept as one shared list so login
+// routing and the (app) layout guard can't drift apart.
+export const FIELD_ROLES: UserRole[] = ["technician", "team_leader"];
 
 export type SessionContext = {
   userId: string;

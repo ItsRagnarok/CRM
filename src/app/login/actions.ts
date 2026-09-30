@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { FIELD_ROLES } from "@/lib/auth";
 
 export async function login(_prevState: { error?: string } | undefined, formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
@@ -32,6 +33,5 @@ export async function login(_prevState: { error?: string } | undefined, formData
     .eq("id", data.user.id)
     .maybeSingle();
 
-  const fieldRoles = ["technician", "team_leader"];
-  redirect(profile && fieldRoles.includes(profile.role) ? "/mobil" : "/dashboard");
+  redirect(profile && FIELD_ROLES.includes(profile.role) ? "/mobil" : "/dashboard");
 }

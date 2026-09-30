@@ -1,4 +1,5 @@
-import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { requireSessionContext, ROLE_LABELS, FIELD_ROLES } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
@@ -13,6 +14,15 @@ export default async function AppLayout({
   children: React.ReactNode;
 }) {
   const { profile } = await requireSessionContext();
+
+  // requireSessionContext only checks org membership, not role — without this,
+  // a technician/team_leader could type /facturare or /setari directly and the
+  // page would render (RLS only isolates by organization, not by role). Login
+  // already sends these roles to /mobil; this is the guard that makes it stick.
+  if (FIELD_ROLES.includes(profile.role)) {
+    redirect("/mobil");
+  }
+
   const supabase = await createClient();
 
   const { data: notifications } = await supabase
