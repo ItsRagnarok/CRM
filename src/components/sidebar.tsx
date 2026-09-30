@@ -21,20 +21,44 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
-const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/clienti", label: "Clienți", icon: Users },
-  { href: "/lucrari", label: "Lucrări", icon: Briefcase },
-  { href: "/calendar", label: "Calendar", icon: Calendar },
-  { href: "/echipe", label: "Echipe", icon: UsersRound },
-  { href: "/harta", label: "Hartă & GPS", icon: MapPin },
-  { href: "/materiale", label: "Materiale", icon: Package },
-  { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
-  { href: "/cheltuieli", label: "Cheltuieli", icon: Receipt },
-  { href: "/pontaj", label: "Pontaj", icon: Clock },
-  { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
-  { href: "/facturare", label: "Facturare", icon: FileText },
-  { href: "/setari", label: "Setări", icon: Settings },
+// Grouped purely for legibility in the sidebar — no behavior/logic change,
+// every href/icon/active-state check below is unchanged from the old flat
+// list, just organized into sections instead of one undifferentiated block.
+const NAV_SECTIONS: { label: string | null; items: { href: string; label: string; icon: typeof LayoutDashboard }[] }[] = [
+  {
+    label: null,
+    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
+  },
+  {
+    label: "Operațiuni",
+    items: [
+      { href: "/clienti", label: "Clienți", icon: Users },
+      { href: "/lucrari", label: "Lucrări", icon: Briefcase },
+      { href: "/calendar", label: "Calendar", icon: Calendar },
+      { href: "/materiale", label: "Materiale", icon: Package },
+      { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
+    ],
+  },
+  {
+    label: "Echipă & Teren",
+    items: [
+      { href: "/echipe", label: "Echipe", icon: UsersRound },
+      { href: "/harta", label: "Hartă & GPS", icon: MapPin },
+    ],
+  },
+  {
+    label: "Bani & Timp",
+    items: [
+      { href: "/cheltuieli", label: "Cheltuieli", icon: Receipt },
+      { href: "/pontaj", label: "Pontaj", icon: Clock },
+      { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
+      { href: "/facturare", label: "Facturare", icon: FileText },
+    ],
+  },
+  {
+    label: null,
+    items: [{ href: "/setari", label: "Setări", icon: Settings }],
+  },
 ];
 
 export function Sidebar({
@@ -80,24 +104,33 @@ export function Sidebar({
         </div>
       </Link>
 
-      <nav className="mt-1.5 flex flex-col gap-0.5">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const isActive = pathname === href || pathname.startsWith(href + "/");
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
-                isActive
-                  ? "bg-navy-active font-semibold text-white"
-                  : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
-              }`}
-            >
-              <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
-              {label}
-            </Link>
-          );
-        })}
+      <nav className="mt-1.5 flex flex-col gap-3 overflow-y-auto">
+        {NAV_SECTIONS.map((section, i) => (
+          <div key={section.label ?? `section-${i}`} className="flex flex-col gap-0.5">
+            {section.label && (
+              <div className="px-3 pb-1 pt-1 text-[10px] font-semibold uppercase tracking-wider text-[#6f727c]">
+                {section.label}
+              </div>
+            )}
+            {section.items.map(({ href, label, icon: Icon }) => {
+              const isActive = pathname === href || pathname.startsWith(href + "/");
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
+                    isActive
+                      ? "bg-navy-active font-semibold text-white"
+                      : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </nav>
 
       <div className="mt-auto flex items-center gap-2.5 border-t border-navy-border px-2.5 pt-3">
