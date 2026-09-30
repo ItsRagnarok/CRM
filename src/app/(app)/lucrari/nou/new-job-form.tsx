@@ -56,17 +56,64 @@ export function NewJobForm({
 
   const [voiceStatus, setVoiceStatus] = useState<"idle" | "recording" | "transcribing">("idle");
   const [voiceError, setVoiceError] = useState<string | null>(null);
+  const [liveInterim, setLiveInterim] = useState("");
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<BlobPart[]>([]);
+  const speechRecognitionRef = useRef<SpeechRecognition | null>(null);
 
-  async function handleToggleRecording() {
-    setVoiceError(null);
+  // Prefer the browser's own live speech recognition (Chrome/Edge): shows
+  // each phrase as it's recognized, no server round-trip, and sidesteps
+  // whatever silently breaks in the record-then-upload path for some
+  // users/browsers. Falls back to record+Groq-Whisper only when the browser
+  // truly doesn't support it (e.g. Firefox).
+  function getSpeechRecognitionCtor(): (new () => SpeechRecognition) | null {
+    if (typeof window === "undefined") return null;
+    const w = window as unknown as {
+      SpeechRecognition?: new () => SpeechRecognition;
+      webkitSpeechRecognition?: new () => SpeechRecognition;
+    };
+    return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+  }
 
-    if (voiceStatus === "recording") {
-      mediaRecorderRef.current?.stop();
-      return;
-    }
+  function startLiveRecognition(Ctor: new () => SpeechRecognition) {
+    const recognition = new Ctor();
+    recognition.lang = "ro-RO";
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
+    recognition.onresult = (event) => {
+      let finalChunk = "";
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) finalChunk += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      if (finalChunk) {
+        setAiPrompt((prev) => (prev.trim() ? `${prev.trim()} ${finalChunk.trim()}` : finalChunk.trim()));
+      }
+      setLiveInterim(interim);
+    };
+    recognition.onerror = (event) => {
+      console.error("SpeechRecognition error", event.error);
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        setVoiceError("Nu am acces la microfon — verifică permisiunile browserului.");
+      } else if (event.error !== "no-speech" && event.error !== "aborted") {
+        setVoiceError("Recunoașterea vocală a întâmpinat o eroare. Încearcă din nou.");
+      }
+    };
+    recognition.onend = () => {
+      setVoiceStatus("idle");
+      setLiveInterim("");
+      speechRecognitionRef.current = null;
+    };
+
+    speechRecognitionRef.current = recognition;
+    recognition.start();
+    setVoiceStatus("recording");
+  }
+
+  async function startFallbackRecording() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
@@ -101,6 +148,23 @@ export function NewJobForm({
       console.error("getUserMedia failed", err);
       setVoiceError("Nu am acces la microfon — verifică permisiunile browserului/telefonului.");
       setVoiceStatus("idle");
+    }
+  }
+
+  async function handleToggleRecording() {
+    setVoiceError(null);
+
+    if (voiceStatus === "recording") {
+      speechRecognitionRef.current?.stop();
+      mediaRecorderRef.current?.stop();
+      return;
+    }
+
+    const SpeechRecognitionCtor = getSpeechRecognitionCtor();
+    if (SpeechRecognitionCtor) {
+      startLiveRecognition(SpeechRecognitionCtor);
+    } else {
+      await startFallbackRecording();
     }
   }
 
@@ -336,7 +400,9 @@ export function NewJobForm({
               </button>
             </div>
             {voiceStatus === "recording" && (
-              <p className="mt-1.5 text-[12px] font-semibold text-danger">● Se înregistrează… apasă din nou ca să oprești.</p>
+              <p className="mt-1.5 text-[12px] font-semibold text-danger">
+                ● Te ascult… {liveInterim ? <span className="font-normal italic text-[#98a2b3]">{liveInterim}</span> : "vorbește, apasă din nou ca să oprești."}
+              </p>
             )}
             {voiceStatus === "transcribing" && (
               <p className="mt-1.5 text-[12px] font-semibold text-muted">Se transcrie înregistrarea…</p>
