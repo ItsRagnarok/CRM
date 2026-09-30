@@ -347,7 +347,7 @@ export default async function JobDetailPage({
               <Card title="Cheltuieli lucrare">
                 <ExpensesList expenses={expenses ?? []} total={totalExpenses} publicUrl={publicUrl} />
               </Card>
-              <Card title="Checklist final">
+              <Card title="Checklist verificare lucrare">
                 <ChecklistPreview items={checklistItems} jobId={id} />
               </Card>
             </div>
