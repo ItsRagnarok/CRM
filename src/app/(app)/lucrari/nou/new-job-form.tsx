@@ -2,8 +2,9 @@
 
 import { useActionState, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Wrench, Package } from "lucide-react";
+import { ArrowLeft, Wrench, Package, Sparkles } from "lucide-react";
 import { createJob } from "../actions";
+import { generateJobSuggestion } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { JOB_TITLE_TEMPLATES } from "../job-templates";
 
@@ -44,6 +45,37 @@ export function NewJobForm({
   const [jobType, setJobType] = useState("interventie");
   const [checkedMaterialIds, setCheckedMaterialIds] = useState<Set<string>>(new Set());
   const [showFullCatalog, setShowFullCatalog] = useState(false);
+  const [descriptionValue, setDescriptionValue] = useState("");
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [aiState, aiFormAction, aiPending] = useActionState(generateJobSuggestion, undefined);
+  const [unmatchedSuggestions, setUnmatchedSuggestions] = useState<string[]>([]);
+  const [aiApplied, setAiApplied] = useState(false);
+
+  function applyAiSuggestion() {
+    const suggestion = aiState?.suggestion;
+    if (!suggestion) return;
+
+    const photoLines = [
+      suggestion.photos?.before && `- Înainte: ${suggestion.photos.before}`,
+      suggestion.photos?.during && `- În timpul lucrării: ${suggestion.photos.during}`,
+      suggestion.photos?.after && `- La final: ${suggestion.photos.after}`,
+    ].filter(Boolean);
+    const parts = [suggestion.instructions, photoLines.length > 0 ? `Poze necesare:\n${photoLines.join("\n")}` : ""].filter(Boolean);
+    setDescriptionValue(parts.join("\n\n"));
+
+    const names = [...suggestion.materials.map((m) => m.name), ...suggestion.tools];
+    const nextChecked = new Set(checkedMaterialIds);
+    const unmatched: string[] = [];
+    for (const name of names) {
+      const match = materials.find((m) => m.name.toLowerCase().includes(name.toLowerCase()) || name.toLowerCase().includes(m.name.toLowerCase()));
+      if (match) nextChecked.add(match.id);
+      else unmatched.push(name);
+    }
+    setCheckedMaterialIds(nextChecked);
+    setUnmatchedSuggestions(unmatched);
+    setShowFullCatalog(true);
+    setAiApplied(true);
+  }
 
   const template = JOB_TITLE_TEMPLATES.find((t) => t.title === titleChoice);
   const suggested = template
@@ -141,6 +173,75 @@ export function NewJobForm({
               <input type="hidden" name="title" value={titleChoice} />
             )}
           </Field>
+
+          <div className="rounded-[12px] border border-electric bg-electric-soft/40 p-4">
+            <div className="mb-1 flex items-center gap-1.5 text-[13px] font-bold text-foreground">
+              <Sparkles className="h-4 w-4 text-electric" /> Completează cu AI
+            </div>
+            <p className="mb-3 text-[12px] text-muted-2">
+              Descrie pe scurt lucrarea — AI-ul sugerează materiale, scule, instrucțiuni de execuție și ce poze
+              trebuie făcute înainte, în timpul și la final. Verifică mereu sugestiile înainte să salvezi.
+            </p>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              rows={2}
+              placeholder="Ex: Înlocuire tablou electric vechi cu unul nou, 12 module, apartament la etaj 3"
+              className="w-full rounded-[10px] border border-[#d0d5dd] bg-white px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+            />
+            <form action={aiFormAction} className="mt-2.5 flex justify-end">
+              <input type="hidden" name="aiDescription" value={aiPrompt} />
+              <input type="hidden" name="aiJobType" value={JOB_TYPE_LABELS[jobType as keyof typeof JOB_TYPE_LABELS] ?? jobType} />
+              <input type="hidden" name="aiClientName" value={selectedClient?.name ?? ""} />
+              <button
+                type="submit"
+                disabled={aiPending}
+                className="flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-60"
+              >
+                <Sparkles className="h-3.5 w-3.5" /> {aiPending ? "Se generează…" : "Generează cu AI"}
+              </button>
+            </form>
+
+            {aiState?.error && <p className="mt-2.5 text-[12.5px] font-semibold text-danger">{aiState.error}</p>}
+
+            {aiState?.suggestion && !aiApplied && (
+              <div className="mt-3 rounded-[10px] border border-[#d9e6ff] bg-white p-3.5">
+                <div className="text-[12.5px] font-bold text-foreground">Sugestie AI</div>
+                <p className="mt-1.5 whitespace-pre-line text-[12px] text-[#344054]">{aiState.suggestion.instructions}</p>
+                {aiState.suggestion.materials.length > 0 && (
+                  <div className="mt-2 text-[12px] text-[#344054]">
+                    <b>Materiale:</b>{" "}
+                    {aiState.suggestion.materials.map((m) => `${m.name} (${m.quantity} ${m.unit})`).join(", ")}
+                  </div>
+                )}
+                {aiState.suggestion.tools.length > 0 && (
+                  <div className="mt-1 text-[12px] text-[#344054]">
+                    <b>Scule:</b> {aiState.suggestion.tools.join(", ")}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={applyAiSuggestion}
+                  className="mt-3 rounded-[9px] bg-success px-3.5 py-2 text-[12px] font-bold text-white"
+                >
+                  Aplică sugestia (completează Descriere + bifează materialele)
+                </button>
+              </div>
+            )}
+
+            {aiApplied && (
+              <div className="mt-3 rounded-[10px] border border-success-bg bg-success-bg p-3">
+                <p className="text-[12px] font-semibold text-success">
+                  Sugestia a fost aplicată — verifică Descrierea și materialele bifate mai jos.
+                </p>
+                {unmatchedSuggestions.length > 0 && (
+                  <p className="mt-1.5 text-[11.5px] text-[#7a5b0e]">
+                    Nu sunt în catalog, adaugă-le manual dacă e nevoie: {unmatchedSuggestions.join(", ")}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
 
           {clientLocations.length > 0 && (
             <Field label="Punct de lucru">
@@ -265,7 +366,9 @@ export function NewJobForm({
           <Field label="Descriere">
             <textarea
               name="description"
-              rows={3}
+              value={descriptionValue}
+              onChange={(e) => setDescriptionValue(e.target.value)}
+              rows={5}
               className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
             />
           </Field>
