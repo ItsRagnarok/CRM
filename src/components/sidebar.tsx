@@ -27,22 +27,23 @@ import { signOut } from "@/app/(app)/actions";
 const NAV_SECTIONS: { label: string | null; items: { href: string; label: string; icon: typeof LayoutDashboard }[] }[] = [
   {
     label: null,
-    items: [{ href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }],
-  },
-  {
-    label: "Operațiuni",
     items: [
+      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
       { href: "/clienti", label: "Clienți", icon: Users },
-      { href: "/lucrari", label: "Lucrări", icon: Briefcase },
-      { href: "/calendar", label: "Calendar", icon: Calendar },
-      { href: "/materiale", label: "Materiale", icon: Package },
-      { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
     ],
   },
   {
-    label: "Echipă & Teren",
+    label: "Echipă & Lucrări",
     items: [
       { href: "/echipe", label: "Echipe", icon: UsersRound },
+      { href: "/lucrari", label: "Lucrări", icon: Briefcase },
+      { href: "/calendar", label: "Calendar", icon: Calendar },
+    ],
+  },
+  {
+    label: null,
+    items: [
+      { href: "/materiale", label: "Materiale și scule", icon: Package },
       { href: "/harta", label: "Hartă & GPS", icon: MapPin },
     ],
   },
@@ -50,6 +51,7 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
     label: "Bani & Timp",
     items: [
       { href: "/cheltuieli", label: "Cheltuieli", icon: Receipt },
+      { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
       { href: "/pontaj", label: "Pontaj", icon: Clock },
       { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
       { href: "/facturare", label: "Facturare", icon: FileText },
