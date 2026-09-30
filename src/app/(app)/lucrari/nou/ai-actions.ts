@@ -37,7 +37,7 @@ export async function generateJobSuggestion(
     return { error: "Descrie pe scurt lucrarea sau alege întâi un tip de lucrare." };
   }
 
-  const model = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
   const prompt = `Ești un asistent pentru o platformă de management pentru companii românești de electricieni, CCTV, securitate și HVAC. Pe baza informațiilor de mai jos despre o lucrare, generează sugestii utile pentru tehnicianul care o va efectua.
 
 Tip lucrare: ${jobType || "nespecificat"}
