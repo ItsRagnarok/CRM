@@ -82,11 +82,19 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
   let res: Response | null = null;
   let lastErrText = "";
   for (const candidateModel of candidateModels) {
+    // gpt-oss models reason internally before writing the JSON — Groq's
+    // default max_completion_tokens (1024) is consumed by that reasoning
+    // before the document is finished, producing a 400 json_validate_failed
+    // ("max completion tokens reached"). Raise the budget and keep reasoning
+    // effort low: we need precise technical output, not a long chain of
+    // thought. Llama models ignore reasoning_effort harmlessly.
     const body = JSON.stringify({
       model: candidateModel,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
       temperature: 0.2,
+      max_completion_tokens: 4096,
+      reasoning_effort: "low",
     });
 
     // Groq's free tier is rarely "overloaded" (dedicated inference hardware),
@@ -113,7 +121,10 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
 
       lastErrText = await res.text().catch(() => "");
       console.error(`generateJobSuggestion: Groq error (${candidateModel}, attempt ${attempt})`, res.status, lastErrText);
-      if ((res.status !== 429 && res.status !== 503) || attempt === maxAttempts) break;
+      // 429/503 are transient load issues; json_validate_failed is a
+      // sampling-dependent truncation that a retry often clears too.
+      const retryable = res.status === 429 || res.status === 503 || lastErrText.includes("json_validate_failed");
+      if (!retryable || attempt === maxAttempts) break;
       await new Promise((r) => setTimeout(r, attempt * 1200));
     }
 
@@ -133,7 +144,9 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
             ? "Serviciul AI a atins limita de cereri momentan (am reîncercat de 3 ori). Mai încearcă peste un minut."
             : status === 404
               ? "Niciunul dintre modelele AI încercate nu e disponibil pe acest cont Groq. Verifică în consola Groq ce model ai acces și setează-l manual în GROQ_MODEL."
-              : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
+              : status === 400 && lastErrText.includes("json_validate_failed")
+                ? "AI-ul nu a reușit să genereze un răspuns complet (am reîncercat de 3 ori). Încearcă o descriere puțin mai scurtă sau reia."
+                : `AI a răspuns cu o eroare (${status ?? "necunoscută"}). Încearcă din nou.`,
     };
   }
 
