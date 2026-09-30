@@ -189,18 +189,27 @@ export function NewJobForm({
               placeholder="Ex: Înlocuire tablou electric vechi cu unul nou, 12 module, apartament la etaj 3"
               className="w-full rounded-[10px] border border-[#d0d5dd] bg-white px-3.5 py-2.5 text-sm outline-none focus:border-electric"
             />
-            <form action={aiFormAction} className="mt-2.5 flex justify-end">
-              <input type="hidden" name="aiDescription" value={aiPrompt} />
-              <input type="hidden" name="aiJobType" value={JOB_TYPE_LABELS[jobType as keyof typeof JOB_TYPE_LABELS] ?? jobType} />
-              <input type="hidden" name="aiClientName" value={selectedClient?.name ?? ""} />
+            {/* A <form> here would nest inside the page's own create-job
+                <form> below — invalid HTML that browsers silently break
+                (dropping the inner form entirely), which is why this button
+                did nothing / misbehaved. Dispatch the action directly
+                instead of relying on native form submission. */}
+            <div className="mt-2.5 flex justify-end">
               <button
-                type="submit"
+                type="button"
                 disabled={aiPending}
+                onClick={() => {
+                  const fd = new FormData();
+                  fd.set("aiDescription", aiPrompt);
+                  fd.set("aiJobType", JOB_TYPE_LABELS[jobType as keyof typeof JOB_TYPE_LABELS] ?? jobType);
+                  fd.set("aiClientName", selectedClient?.name ?? "");
+                  aiFormAction(fd);
+                }}
                 className="flex items-center gap-1.5 rounded-[9px] bg-electric px-4 py-2 text-[12.5px] font-bold text-white disabled:opacity-60"
               >
                 <Sparkles className="h-3.5 w-3.5" /> {aiPending ? "Se generează…" : "Generează cu AI"}
               </button>
-            </form>
+            </div>
 
             {aiState?.error && <p className="mt-2.5 text-[12.5px] font-semibold text-danger">{aiState.error}</p>}
 
