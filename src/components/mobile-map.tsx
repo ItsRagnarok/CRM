@@ -86,7 +86,14 @@ function FlyTo({ target }: { target: [number, number] | null }) {
   return null;
 }
 
-function FitBounds({ points }: { points: [number, number][] }) {
+// Keyed on a stable summary of WHAT should be shown (which jobs, whether hq/
+// warehouses/route exist) rather than the raw points array, which gets a new
+// reference on every GPS tick since it includes the live self-position. If
+// this ran on every tick, it would keep fighting any manual navigation (e.g.
+// the "Sediu" fly-to button) by re-fitting to include the technician's
+// current real position moments later — jarring when that position is far
+// from everything else being shown (e.g. testing from a different country).
+function FitBounds({ points, fitKey }: { points: [number, number][]; fitKey: string }) {
   const map = useMap();
   useEffect(() => {
     if (points.length === 0) return;
@@ -95,7 +102,9 @@ function FitBounds({ points }: { points: [number, number][] }) {
       return;
     }
     map.fitBounds(L.latLngBounds(points), { padding: [40, 40], maxZoom: 14 });
-  }, [points, map]);
+    // points intentionally excluded: fitKey is the real dependency, see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitKey, map]);
   return null;
 }
 
@@ -167,6 +176,16 @@ export function MobileMap({
     ...warehouses.map((w) => [w.lat, w.lng] as [number, number]),
   ];
   const center = points[0] ?? FALLBACK_CENTER;
+  // Changes only when the SET of things to show changes — not on every GPS
+  // tick — so the auto-fit runs once self position/route first resolve, then
+  // leaves the view alone (see FitBounds above).
+  const fitKey = [
+    jobs.map((j) => j.id).join(","),
+    hq ? "hq" : "",
+    warehouses.map((w) => w.id).join(","),
+    selfPos ? "self" : "",
+    route ? "route" : "",
+  ].join("|");
 
   return (
     <>
@@ -175,7 +194,7 @@ export function MobileMap({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <FitBounds points={route ? [...route.coords, ...points] : points} />
+        <FitBounds points={route ? [...route.coords, ...points] : points} fitKey={fitKey} />
         <FlyTo target={flyTarget} />
         {trail.length > 1 && (
           <Polyline positions={trail} pathOptions={{ color: "#0369a1", weight: 3, opacity: 0.6, dashArray: "1 8" }} />
