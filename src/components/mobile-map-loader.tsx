@@ -16,10 +16,14 @@ export function MobileMapLoader({
   jobs,
   routeTo,
   hq,
+  warehouses,
+  trail,
 }: {
   jobs: MobileMapJob[];
   routeTo?: MobileMapJob;
   hq?: { lat: number; lng: number } | null;
+  warehouses?: { id: string; name: string; lat: number; lng: number }[];
+  trail?: [number, number][];
 }) {
-  return <MobileMap jobs={jobs} routeTo={routeTo} hq={hq} />;
+  return <MobileMap jobs={jobs} routeTo={routeTo} hq={hq} warehouses={warehouses} trail={trail} />;
 }

@@ -65,6 +65,19 @@ const hqIcon = L.divIcon({
   popupAnchor: [0, -34],
 });
 
+function warehouseIcon(name: string) {
+  return L.divIcon({
+    className: "",
+    html: `<div style="transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;">
+      <span style="background:#7c2d12;color:#fff;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(16,24,40,.3);">🏭 ${escapeHtml(name)}</span>
+      <span style="width:9px;height:9px;border-radius:50%;background:#7c2d12;border:2px solid #fff;margin-top:3px;"></span>
+    </div>`,
+    iconSize: [0, 0],
+    iconAnchor: [0, 0],
+    popupAnchor: [0, -34],
+  });
+}
+
 function FlyTo({ target }: { target: [number, number] | null }) {
   const map = useMap();
   useEffect(() => {
@@ -92,10 +105,14 @@ export function MobileMap({
   jobs,
   routeTo,
   hq,
+  warehouses = [],
+  trail = [],
 }: {
   jobs: MobileMapJob[];
   routeTo?: MobileMapJob;
   hq?: { lat: number; lng: number } | null;
+  warehouses?: { id: string; name: string; lat: number; lng: number }[];
+  trail?: [number, number][];
 }) {
   const [selfPos, setSelfPos] = useState<[number, number] | null>(null);
   const [route, setRoute] = useState<RouteInfo | null>(null);
@@ -146,6 +163,8 @@ export function MobileMap({
   const points: [number, number][] = [
     ...(selfPos ? [selfPos] : []),
     ...jobs.map((j) => [j.lat, j.lng] as [number, number]),
+    ...(hq ? [[hq.lat, hq.lng] as [number, number]] : []),
+    ...warehouses.map((w) => [w.lat, w.lng] as [number, number]),
   ];
   const center = points[0] ?? FALLBACK_CENTER;
 
@@ -158,6 +177,9 @@ export function MobileMap({
         />
         <FitBounds points={route ? [...route.coords, ...points] : points} />
         <FlyTo target={flyTarget} />
+        {trail.length > 1 && (
+          <Polyline positions={trail} pathOptions={{ color: "#0369a1", weight: 3, opacity: 0.6, dashArray: "1 8" }} />
+        )}
         {route && <Polyline positions={route.coords} pathOptions={{ color: "#2F6FED", weight: 5, opacity: 0.85 }} />}
         {selfPos && (
           <Marker position={selfPos} icon={selfIcon}>
@@ -169,6 +191,11 @@ export function MobileMap({
             <Popup>Sediul administrativ</Popup>
           </Marker>
         )}
+        {warehouses.map((w) => (
+          <Marker key={w.id} position={[w.lat, w.lng]} icon={warehouseIcon(w.name)}>
+            <Popup>{w.name}</Popup>
+          </Marker>
+        ))}
         {jobs.map((j) => (
           <Marker key={j.id} position={[j.lat, j.lng]} icon={jobIcon(j.label)}>
             <Popup>
