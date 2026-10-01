@@ -14,6 +14,18 @@ export type Database = {
   }
   public: {
     Tables: {
+      _ddl_probe: {
+        Row: {
+          id: number | null
+        }
+        Insert: {
+          id?: number | null
+        }
+        Update: {
+          id?: number | null
+        }
+        Relationships: []
+      }
       arrival_prompts: {
         Row: {
           attempts: number
@@ -2270,6 +2282,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      _ddl_probe_fn2: { Args: never; Returns: number }
+      _ddl_probe_fn3: { Args: { x: string }; Returns: number }
       company_admin_create_employee: {
         Args: {
           employee_email: string
@@ -2326,6 +2340,30 @@ export type Database = {
         Args: { org_id: string }
         Returns: undefined
       }
+      platform_admin_get_user_detail: {
+        Args: { target_profile_id: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_sign_in_at: string
+          organization_id: string
+          organization_name: string
+          phone: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
+      platform_admin_get_user_last_position: {
+        Args: { target_profile_id: string }
+        Returns: {
+          accuracy_m: number
+          lat: number
+          lng: number
+          recorded_at: string
+        }[]
+      }
       platform_admin_list_companies: {
         Args: never
         Returns: {
@@ -2342,6 +2380,30 @@ export type Database = {
           user_count: number
         }[]
       }
+      platform_admin_list_company_clients: {
+        Args: { org_id: string }
+        Returns: {
+          company_name: string
+          email: string
+          id: string
+          job_count: number
+          name: string
+          phone: string
+          status: Database["public"]["Enums"]["client_status"]
+        }[]
+      }
+      platform_admin_list_company_jobs: {
+        Args: { org_id: string }
+        Returns: {
+          client_name: string
+          id: string
+          job_type: Database["public"]["Enums"]["job_type"]
+          priority: Database["public"]["Enums"]["job_priority"]
+          scheduled_date: string
+          status: Database["public"]["Enums"]["job_status"]
+          title: string
+        }[]
+      }
       platform_admin_list_company_users: {
         Args: { org_id: string }
         Returns: {
@@ -2350,6 +2412,38 @@ export type Database = {
           id: string
           is_active: boolean
           role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
+      platform_admin_list_company_users_v2: {
+        Args: { org_id: string }
+        Returns: {
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_sign_in_at: string
+          role: Database["public"]["Enums"]["user_role"]
+        }[]
+      }
+      platform_admin_list_user_jobs: {
+        Args: { target_profile_id: string }
+        Returns: {
+          client_name: string
+          id: string
+          scheduled_date: string
+          status: Database["public"]["Enums"]["job_status"]
+          title: string
+        }[]
+      }
+      platform_admin_list_user_sessions: {
+        Args: { target_profile_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          ip: string
+          not_after: string
+          refreshed_at: string
+          user_agent: string
         }[]
       }
       platform_admin_update_company: {

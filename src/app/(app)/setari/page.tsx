@@ -30,6 +30,40 @@ const SUBSCRIPTION_LABELS: Record<string, string> = {
   enterprise: "Enterprise",
 };
 
+type PlanKey = "starter" | "team" | "pro" | "enterprise";
+
+const PLAN_DETAILS: Record<
+  PlanKey,
+  {
+    priceLabel: string;
+    maxUsers: number | null;
+    features: string[];
+  }
+> = {
+  starter: {
+    priceLabel: "149 RON/lună",
+    maxUsers: 3,
+    features: ["Clienți & lucrări", "Pontaj & materiale", "Facturare internă"],
+  },
+  team: {
+    priceLabel: "349 RON/lună",
+    maxUsers: 8,
+    features: ["Tot ce e în Starter", "Hartă GPS live", "Concedii & absențe complet"],
+  },
+  pro: {
+    priceLabel: "599 RON/lună",
+    maxUsers: 15,
+    features: ["Tot ce e în Team", "AI la generarea lucrărilor", "Rapoarte avansate"],
+  },
+  enterprise: {
+    priceLabel: "Preț personalizat",
+    maxUsers: null,
+    features: ["Tot ce e în Pro", "Fără limită de utilizatori", "Integrări dedicate (SmartBill, Oblio etc.)"],
+  },
+};
+
+const PLAN_ORDER: PlanKey[] = ["starter", "team", "pro", "enterprise"];
+
 const ROLE_OPTIONS: UserRole[] = ["admin", "manager", "team_leader", "technician", "client"];
 
 export default async function SetariPage({
@@ -45,7 +79,7 @@ export default async function SetariPage({
 
   const monthStartStr = `${new Date().toISOString().slice(0, 7)}-01`;
 
-  const [{ data: org }, { data: profiles }, { count: jobsThisMonth }] = await Promise.all([
+  const [{ data: org }, { data: profiles }, { count: jobsThisMonth }, { count: activeUserCount }] = await Promise.all([
     supabase.from("organizations").select("*").eq("id", organization.id).single(),
     tab === "utilizatori" || tab === "gps"
       ? supabase
@@ -60,6 +94,13 @@ export default async function SetariPage({
           .select("id", { count: "exact", head: true })
           .eq("organization_id", organization.id)
           .gte("scheduled_date", monthStartStr)
+      : Promise.resolve({ count: null }),
+    tab === "abonament"
+      ? supabase
+          .from("profiles")
+          .select("id", { count: "exact", head: true })
+          .eq("organization_id", organization.id)
+          .eq("is_active", true)
       : Promise.resolve({ count: null }),
   ]);
 
@@ -279,24 +320,77 @@ export default async function SetariPage({
             )}
 
             {tab === "abonament" && org && (
-              <div className="rounded-[13px] border border-border bg-white p-[22px]">
-                <div className="mb-1 text-[15px] font-bold text-foreground">Abonament</div>
-                <p className="mb-4 text-[12.5px] text-muted-2">Planul actual al companiei.</p>
-                <div className="flex items-center justify-between rounded-[11px] border border-[#d9e6ff] bg-electric-soft p-4">
-                  <div>
-                    <div className="text-[15px] font-extrabold text-electric">
-                      Plan {SUBSCRIPTION_LABELS[org.subscription_plan] ?? org.subscription_plan}
-                    </div>
-                    <div className="mt-1 text-[12.5px] text-[#475467]">
-                      Limitele exacte per plan nu sunt încă configurate în platformă.
+              <div className="flex flex-col gap-4">
+                <div className="rounded-[13px] border border-border bg-white p-[22px]">
+                  <div className="mb-1 text-[15px] font-bold text-foreground">Abonament</div>
+                  <p className="mb-4 text-[12.5px] text-muted-2">Planul actual al companiei.</p>
+                  <div className="flex items-center justify-between rounded-[11px] border border-[#d9e6ff] bg-electric-soft p-4">
+                    <div>
+                      <div className="text-[15px] font-extrabold text-electric">
+                        Plan {SUBSCRIPTION_LABELS[org.subscription_plan] ?? org.subscription_plan} ·{" "}
+                        {PLAN_DETAILS[org.subscription_plan as PlanKey]?.priceLabel ?? "—"}
+                      </div>
+                      <div className="mt-1 text-[12.5px] text-[#475467]">
+                        {(() => {
+                          const maxUsers = PLAN_DETAILS[org.subscription_plan as PlanKey]?.maxUsers;
+                          return maxUsers
+                            ? `${activeUserCount ?? 0} din ${maxUsers} utilizatori incluși în plan`
+                            : `${activeUserCount ?? 0} utilizatori · fără limită`;
+                        })()}
+                      </div>
                     </div>
                   </div>
+                  <div className="mt-4 grid grid-cols-2 gap-3.5">
+                    <div>
+                      <div className="text-[11.5px] font-semibold text-muted-2">LUCRĂRI LUNA ACEASTA</div>
+                      <div className="mt-1 text-[13px] font-bold">{jobsThisMonth ?? 0}</div>
+                    </div>
+                    <div>
+                      <div className="text-[11.5px] font-semibold text-muted-2">UTILIZATORI ACTIVI</div>
+                      <div className="mt-1 text-[13px] font-bold">{activeUserCount ?? 0}</div>
+                    </div>
+                  </div>
+                  <p className="mt-4 border-t border-[#f2f4f7] pt-3.5 text-[11.5px] text-muted-2">
+                    Fără TVA — sub pragul de scutire (395.000 RON/an). Pentru schimbarea planului, contactează
+                    administratorul platformei.
+                  </p>
                 </div>
-                <div className="mt-4 grid grid-cols-2 gap-3.5">
-                  <div>
-                    <div className="text-[11.5px] font-semibold text-muted-2">LUCRĂRI LUNA ACEASTA</div>
-                    <div className="mt-1 text-[13px] font-bold">{jobsThisMonth ?? 0}</div>
-                  </div>
+
+                <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
+                  {PLAN_ORDER.map((planKey) => {
+                    const plan = PLAN_DETAILS[planKey];
+                    const isCurrent = org.subscription_plan === planKey;
+                    return (
+                      <div
+                        key={planKey}
+                        className={`flex flex-col rounded-[13px] border p-4 ${
+                          isCurrent ? "border-electric bg-electric-soft" : "border-border bg-white"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="text-[13.5px] font-extrabold text-foreground">
+                            {SUBSCRIPTION_LABELS[planKey]}
+                          </div>
+                          {isCurrent && (
+                            <span className="rounded-full bg-electric px-2 py-0.5 text-[10px] font-bold text-white">
+                              Activ
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 text-[14px] font-bold text-electric">{plan.priceLabel}</div>
+                        <div className="mt-0.5 text-[11.5px] text-muted-2">
+                          {plan.maxUsers ? `până la ${plan.maxUsers} utilizatori` : "utilizatori nelimitați"}
+                        </div>
+                        <ul className="mt-3 flex flex-col gap-1.5">
+                          {plan.features.map((f) => (
+                            <li key={f} className="text-[11.5px] text-[#475467]">
+                              · {f}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
