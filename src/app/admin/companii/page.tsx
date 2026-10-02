@@ -20,7 +20,7 @@ export default async function AdminCompaniesPage({
   const { q } = await searchParams;
   const supabase = await createClient();
 
-  const { data: companies } = await supabase.rpc("platform_admin_list_companies");
+  const { data: companies } = await supabase.rpc("platform_admin_list_companies_v2");
   const filtered = q
     ? (companies ?? []).filter((c) => c.name.toLowerCase().includes(q.toLowerCase()))
     : (companies ?? []);
@@ -72,6 +72,7 @@ export default async function AdminCompaniesPage({
                 <th className="px-5 py-3">Utilizatori</th>
                 <th className="px-5 py-3">Lucrări</th>
                 <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3">Termeni</th>
                 <th className="px-5 py-3">Creată</th>
               </tr>
             </thead>
@@ -97,6 +98,21 @@ export default async function AdminCompaniesPage({
                     >
                       {c.is_active ? "Activă" : "Suspendată"}
                     </span>
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {c.terms_accepted_at ? (
+                      <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
+                        Acceptați {new Date(c.terms_accepted_at).toLocaleDateString("ro-RO")}
+                      </span>
+                    ) : c.terms_declined_at ? (
+                      <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">
+                        Refuzați {new Date(c.terms_declined_at).toLocaleDateString("ro-RO")}
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
+                        În așteptare
+                      </span>
+                    )}
                   </td>
                   <td className="px-5 py-3.5 text-[12.5px] text-[#9b93b5]">
                     {new Date(c.created_at).toLocaleDateString("ro-RO")}

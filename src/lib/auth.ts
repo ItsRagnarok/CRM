@@ -113,11 +113,12 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
       (user.user_metadata?.full_name as string | undefined) ||
       user.email ||
       "Administrator";
-    const termsAccepted = Boolean(user.user_metadata?.terms_accepted);
-
+    // The real, detailed Terms & Conditions acceptance happens on the
+    // mandatory /accepta-termeni gate below, not at signup — so a
+    // newly-created organization always starts unaccepted here.
     const { error: rpcError } = await supabase.rpc(
       "create_organization_and_owner",
-      { org_name: orgName, owner_full_name: fullName, terms_accepted: termsAccepted }
+      { org_name: orgName, owner_full_name: fullName, terms_accepted: false }
     );
 
     // Defensive: two concurrent requests (e.g. two tabs) can both see "no
@@ -143,6 +144,23 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
   }
 
   const { organizations: organization, ...profile } = profileRow;
+
+  // Suspended (by platform admin, or because the organization declined the
+  // terms below) — blocked on every request, for every user in the org,
+  // until a platform admin reactivates it. This page does its own lighter
+  // session fetch instead of calling requireSessionContext, so it can't loop.
+  if (!organization.is_active) {
+    redirect("/cont-suspendat");
+  }
+
+  // Mandatory terms acceptance gate. Every page under (app) and mobil goes
+  // through this function, so putting the check here (rather than in each
+  // layout) covers both with one gate. /accepta-termeni itself fetches the
+  // session directly instead of calling requireSessionContext, so it never
+  // redirects to itself.
+  if (!organization.terms_accepted_at) {
+    redirect("/accepta-termeni");
+  }
 
   return {
     userId: user.id,

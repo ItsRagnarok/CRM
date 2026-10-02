@@ -22,7 +22,7 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
   const supabase = await createClient();
 
   const [{ data: companies }, { data: users }, { data: jobs }, { data: clients }] = await Promise.all([
-    supabase.rpc("platform_admin_list_companies"),
+    supabase.rpc("platform_admin_list_companies_v2"),
     supabase.rpc("platform_admin_list_company_users_v2", { org_id: id }),
     supabase.rpc("platform_admin_list_company_jobs", { org_id: id }),
     supabase.rpc("platform_admin_list_company_clients", { org_id: id }),
@@ -46,6 +46,19 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         >
           {company.is_active ? "Activă" : "Suspendată"}
         </span>
+        {company.terms_accepted_at ? (
+          <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
+            Termeni acceptați {new Date(company.terms_accepted_at).toLocaleDateString("ro-RO")}
+          </span>
+        ) : company.terms_declined_at ? (
+          <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">
+            Termeni refuzați {new Date(company.terms_declined_at).toLocaleDateString("ro-RO")}
+          </span>
+        ) : (
+          <span className="rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
+            Termeni în așteptare
+          </span>
+        )}
       </div>
       <div className="mt-1 text-[13px] text-[#9b93b5]">
         {company.user_count} utilizatori · {company.job_count} lucrări · creată{" "}

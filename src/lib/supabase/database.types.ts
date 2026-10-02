@@ -1471,6 +1471,7 @@ export type Database = {
           standard_workdays: number[]
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
           terms_accepted_at: string | null
+          terms_declined_at: string | null
           updated_at: string
         }
         Insert: {
@@ -1492,6 +1493,7 @@ export type Database = {
           standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           terms_accepted_at?: string | null
+          terms_declined_at?: string | null
           updated_at?: string
         }
         Update: {
@@ -1513,6 +1515,7 @@ export type Database = {
           standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
           terms_accepted_at?: string | null
+          terms_declined_at?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -2377,6 +2380,24 @@ export type Database = {
           name: string
           phone: string
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          user_count: number
+        }[]
+      }
+      platform_admin_list_companies_v2: {
+        Args: never
+        Returns: {
+          address: string
+          created_at: string
+          cui: string
+          email: string
+          id: string
+          is_active: boolean
+          job_count: number
+          name: string
+          phone: string
+          subscription_plan: Database["public"]["Enums"]["subscription_plan"]
+          terms_accepted_at: string
+          terms_declined_at: string
           user_count: number
         }[]
       }
