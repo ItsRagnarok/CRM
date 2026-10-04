@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Bell } from "lucide-react";
-import { markNotificationRead } from "@/app/(app)/notifications-actions";
+import { markNotificationRead, markAllNotificationsRead } from "@/app/(app)/notifications-actions";
 
 type Notification = {
   id: string;
@@ -29,7 +29,25 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
   const router = useRouter();
   const showSearch = pathname === "/dashboard";
   const [open, setOpen] = useState(false);
-  const unreadCount = notifications.filter((n) => !n.is_read).length;
+  // Opening the panel is "I've seen these" — optimistically clear the badge
+  // right away instead of waiting on each one to be clicked individually,
+  // which read as broken/stuck (notifications piling up with no way to
+  // dismiss them as a batch).
+  const [locallyRead, setLocallyRead] = useState<Set<string>>(new Set());
+  const [, startTransition] = useTransition();
+  const isRead = (n: Notification) => n.is_read || locallyRead.has(n.id);
+  const unreadCount = notifications.filter((n) => !isRead(n)).length;
+
+  function handleOpen() {
+    const willOpen = !open;
+    setOpen(willOpen);
+    if (willOpen && unreadCount > 0) {
+      setLocallyRead(new Set(notifications.map((n) => n.id)));
+      startTransition(() => {
+        markAllNotificationsRead();
+      });
+    }
+  }
 
   function handleClick(n: Notification) {
     setOpen(false);
@@ -54,7 +72,7 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
       <div className="relative">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={handleOpen}
           className="relative flex h-[34px] w-[34px] items-center justify-center rounded-[9px] bg-neutral-bg text-neutral"
           aria-label="Notificări"
         >
@@ -83,11 +101,11 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
                       type="button"
                       onClick={() => handleClick(n)}
                       className={`flex flex-col gap-0.5 px-4 py-3 text-left hover:bg-[#f9fafb] ${
-                        n.is_read ? "" : "bg-electric-soft/30"
+                        isRead(n) ? "" : "bg-electric-soft/30"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {!n.is_read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-electric" />}
+                        {!isRead(n) && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-electric" />}
                         <span className="text-[13px] font-bold text-foreground">{n.title}</span>
                       </div>
                       {n.body && <div className="text-[12px] text-[#475467]">{n.body}</div>}
