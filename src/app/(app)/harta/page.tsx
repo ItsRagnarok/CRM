@@ -7,10 +7,11 @@ import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import { JOB_STATUS_LABELS } from "@/lib/status";
 import type { Database } from "@/lib/supabase/database.types";
-import { MapPin, AlertTriangle, X, Phone, Camera, MessageSquare, Package } from "lucide-react";
+import { MapPin, AlertTriangle, X, Camera, MessageSquare, Package, Footprints } from "lucide-react";
 import { resolveJobAlert, requestCallFromTeam } from "./actions";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { todayInOrgTimeZone } from "@/lib/date";
+import { TeamCommsPanel } from "@/components/team-comms-panel";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 
@@ -27,7 +28,7 @@ export default async function HartaPage({
   searchParams: Promise<{ teamId?: string }>;
 }) {
   const { teamId: selectedTeamId } = await searchParams;
-  const { organization } = await requireSessionContext();
+  const { organization, profile } = await requireSessionContext();
   const supabase = await createClient();
   const today = todayInOrgTimeZone();
 
@@ -101,29 +102,72 @@ export default async function HartaPage({
   // current job, fetched only when a team is actually selected.
   const selectedTeam = selectedTeamId ? (teams ?? []).find((t) => t.id === selectedTeamId) ?? null : null;
   const selectedTeamJob = selectedTeamId ? activeByTeam.get(selectedTeamId) ?? null : null;
-  const [{ data: selectedRequiredItems }, { data: selectedPhotos }, { data: selectedNotes }] = selectedTeamJob
-    ? await Promise.all([
-        supabase
-          .from("job_required_items")
-          .select("id, kind, quantity_needed, taken, custom_name, materials(name, unit)")
-          .eq("job_id", selectedTeamJob.id)
-          .order("created_at"),
-        supabase
-          .from("photos")
-          .select("id, category, storage_path, taken_at")
-          .eq("job_id", selectedTeamJob.id)
-          .order("taken_at", { ascending: false })
-          .limit(12),
-        supabase
-          .from("job_notes")
-          .select("id, kind, text, created_at")
-          .eq("job_id", selectedTeamJob.id)
-          .order("created_at", { ascending: false })
-          .limit(10),
-      ])
-    : [{ data: null }, { data: null }, { data: null }];
+  const [{ data: selectedRequiredItems }, { data: selectedPhotos }, { data: selectedNotes }, { data: selectedSteps }] =
+    selectedTeamJob
+      ? await Promise.all([
+          supabase
+            .from("job_required_items")
+            .select("id, kind, quantity_needed, taken, custom_name, materials(name, unit)")
+            .eq("job_id", selectedTeamJob.id)
+            .order("created_at"),
+          supabase
+            .from("photos")
+            .select("id, category, storage_path, taken_at")
+            .eq("job_id", selectedTeamJob.id)
+            .order("taken_at", { ascending: false })
+            .limit(12),
+          supabase
+            .from("job_notes")
+            .select("id, kind, text, created_at")
+            .eq("job_id", selectedTeamJob.id)
+            .order("created_at", { ascending: false })
+            .limit(10),
+          supabase
+            .from("job_status_history")
+            .select("id, status, note, created_at, profiles(full_name)")
+            .eq("job_id", selectedTeamJob.id)
+            .order("created_at", { ascending: true }),
+        ])
+      : [{ data: null }, { data: null }, { data: null }, { data: null }];
   const selectedPhotoUrls = await signedAttachmentUrls(supabase, (selectedPhotos ?? []).map((p) => p.storage_path));
   const publicPhotoUrl = (path: string) => selectedPhotoUrls.get(path) ?? "";
+
+  // Team comms panel data — fetched only when a team is selected. The
+  // conversation row may not exist yet (lazily created on first message),
+  // so messages/unread stay empty until someone actually sends something.
+  let commsConversationId: string | null = null;
+  let commsMessages: { id: string; body: string; sender_profile_id: string; created_at: string }[] = [];
+  let commsUnreadCount = 0;
+  let orgProfileNames: Record<string, string> = {};
+  if (selectedTeamId) {
+    const [{ data: conv }, { data: orgProfiles }] = await Promise.all([
+      supabase.from("conversations").select("id").eq("team_id", selectedTeamId).eq("kind", "team").maybeSingle(),
+      supabase.from("profiles").select("id, full_name").eq("organization_id", organization.id),
+    ]);
+    orgProfileNames = Object.fromEntries((orgProfiles ?? []).map((p) => [p.id, p.full_name]));
+    if (conv) {
+      commsConversationId = conv.id;
+      const [{ data: msgs }, { data: read }] = await Promise.all([
+        supabase
+          .from("conversation_messages")
+          .select("id, body, sender_profile_id, created_at")
+          .eq("conversation_id", conv.id)
+          .order("created_at", { ascending: true })
+          .limit(100),
+        supabase
+          .from("conversation_reads")
+          .select("last_read_at")
+          .eq("conversation_id", conv.id)
+          .eq("profile_id", profile.id)
+          .maybeSingle(),
+      ]);
+      commsMessages = msgs ?? [];
+      const lastRead = read?.last_read_at ?? null;
+      commsUnreadCount = commsMessages.filter(
+        (m) => m.sender_profile_id !== profile.id && (!lastRead || m.created_at > lastRead)
+      ).length;
+    }
+  }
 
   type Row = {
     teamId: string;
@@ -379,32 +423,45 @@ export default async function HartaPage({
             <div className="flex-1 overflow-auto p-4">
               {selectedTeamJob ? (
                 <>
-                  <div className="mb-4 rounded-[12px] border border-[#eaecf0] p-3.5">
+                  <div className="mb-4">
+                    <TeamCommsPanel
+                      teamId={selectedTeamId!}
+                      jobId={selectedTeamJob.id}
+                      requestCallAction={requestCallFromTeam}
+                      memberPhones={(selectedTeam?.team_members ?? [])
+                        .map((m) => m.profiles)
+                        .filter((p): p is NonNullable<typeof p> => Boolean(p?.phone))
+                        .map((p) => ({ fullName: p!.full_name, phone: p!.phone! }))}
+                      conversationId={commsConversationId}
+                      initialMessages={commsMessages}
+                      currentProfileId={profile.id}
+                      participantNames={orgProfileNames}
+                      unreadCount={commsUnreadCount}
+                    />
+                  </div>
+
+                  <div className="mb-4">
                     <div className="mb-2 flex items-center gap-1.5 text-[11.5px] font-bold text-muted-2">
-                      <Phone className="h-3.5 w-3.5" /> SOLICITĂ APEL
+                      <Footprints className="h-3.5 w-3.5" /> PAȘI LUCRARE
                     </div>
-                    <form action={requestCallFromTeam} className="flex flex-col gap-2">
-                      <input type="hidden" name="teamId" value={selectedTeamId} />
-                      <input type="hidden" name="jobId" value={selectedTeamJob.id} />
-                      <button
-                        type="submit"
-                        className="rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white"
-                      >
-                        Trimite notificare de apel în aplicația mobilă
-                      </button>
-                    </form>
-                    {(selectedTeam?.team_members ?? [])
-                      .map((m) => m.profiles)
-                      .filter((p): p is NonNullable<typeof p> => Boolean(p?.phone))
-                      .map((p) => (
-                        <a
-                          key={p!.id}
-                          href={`tel:${p!.phone}`}
-                          className="mt-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-[#344054]"
-                        >
-                          <Phone className="h-3.5 w-3.5 text-muted-2" /> Sună direct — {p!.full_name} ({p!.phone})
-                        </a>
-                      ))}
+                    {selectedSteps && selectedSteps.length > 0 ? (
+                      <div className="flex flex-col gap-2.5 border-l-2 border-[#eaecf0] pl-3.5">
+                        {selectedSteps.map((s) => (
+                          <div key={s.id}>
+                            <div className="text-[12.5px] font-bold text-foreground">
+                              {JOB_STATUS_LABELS[s.status]}
+                            </div>
+                            <div className="text-[11px] text-muted-2">
+                              {new Date(s.created_at).toLocaleString("ro-RO")}
+                              {s.profiles?.full_name ? ` · ${s.profiles.full_name}` : ""}
+                            </div>
+                            {s.note && <div className="mt-0.5 text-[12px] text-[#475467]">{s.note}</div>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[12.5px] text-muted">Niciun pas înregistrat încă.</p>
+                    )}
                   </div>
 
                   <div className="mb-4">

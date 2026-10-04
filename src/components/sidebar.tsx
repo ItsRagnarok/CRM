@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   ClipboardCheck,
+  MessageSquare,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
@@ -45,6 +46,7 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
     items: [
       { href: "/materiale", label: "Materiale și scule", icon: Package },
       { href: "/harta", label: "Hartă & GPS", icon: MapPin },
+      { href: "/mesaje", label: "Mesaje", icon: MessageSquare },
     ],
   },
   {
@@ -66,9 +68,11 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
 export function Sidebar({
   fullName,
   roleLabel,
+  unreadMessages = 0,
 }: {
   fullName: string;
   roleLabel: string;
+  unreadMessages?: number;
 }) {
   const pathname = usePathname();
   const initials = fullName
@@ -122,7 +126,12 @@ export function Sidebar({
                   }`}
                 >
                   <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {href === "/mesaje" && unreadMessages > 0 && (
+                    <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-danger px-1 text-[9.5px] font-bold text-white">
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                    </span>
+                  )}
                 </Link>
               );
             })}
