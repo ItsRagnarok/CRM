@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Phone } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Phone, Check } from "lucide-react";
 import { MessagesThread, type ThreadMessage } from "@/components/messages-thread";
 import { sendTeamMessage } from "@/app/(app)/mesaje/actions";
 
@@ -29,6 +29,16 @@ export function TeamCommsPanel({
   unreadCount: number;
 }) {
   const [tab, setTab] = useState<"apel" | "mesaje">("apel");
+  const [callSent, setCallSent] = useState(false);
+  const [callPending, startCallTransition] = useTransition();
+
+  function handleRequestCall(formData: FormData) {
+    startCallTransition(async () => {
+      await requestCallAction(formData);
+      setCallSent(true);
+      setTimeout(() => setCallSent(false), 4000);
+    });
+  }
 
   return (
     <div className="flex flex-col overflow-hidden rounded-[12px] border border-[#eaecf0]">
@@ -58,11 +68,28 @@ export function TeamCommsPanel({
 
       {tab === "apel" ? (
         <div className="p-3.5">
-          <form action={requestCallAction} className="flex flex-col gap-2">
+          <form
+            action={handleRequestCall}
+            className="flex flex-col gap-2"
+          >
             <input type="hidden" name="teamId" value={teamId} />
             <input type="hidden" name="jobId" value={jobId} />
-            <button type="submit" className="rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white">
-              Trimite notificare de apel în aplicația mobilă
+            <button
+              type="submit"
+              disabled={callPending}
+              className={`flex items-center justify-center gap-1.5 rounded-[9px] px-3.5 py-2 text-[12.5px] font-bold text-white transition-colors disabled:opacity-70 ${
+                callSent ? "bg-success" : "bg-electric"
+              }`}
+            >
+              {callPending ? (
+                "Se trimite…"
+              ) : callSent ? (
+                <>
+                  <Check className="h-4 w-4" /> Notificare trimisă
+                </>
+              ) : (
+                "Trimite notificare de apel în aplicația mobilă"
+              )}
             </button>
           </form>
           {memberPhones.map((p) => (

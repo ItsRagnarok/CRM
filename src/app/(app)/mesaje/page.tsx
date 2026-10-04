@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { MessagesThread } from "@/components/messages-thread";
@@ -108,9 +109,10 @@ export default async function MesajePage({
             const unread = conv ? unreadCountFor(conv.id) : 0;
             const active = selectedTeamId === t.id;
             return (
-              <a
+              <Link
                 key={t.id}
                 href={`/mesaje?team=${t.id}`}
+                prefetch={false}
                 className={`flex items-center gap-2.5 border-b border-[#f2f4f7] px-4 py-3 ${active ? "bg-electric-soft/40" : "hover:bg-[#f9fafb]"}`}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-neutral-bg text-[12px] font-bold text-[#475467]">
@@ -130,7 +132,7 @@ export default async function MesajePage({
                     {unread}
                   </span>
                 )}
-              </a>
+              </Link>
             );
           })}
 
@@ -141,9 +143,10 @@ export default async function MesajePage({
             const unread = conv ? unreadCountFor(conv.id) : 0;
             const active = selectedProfileId === e.id;
             return (
-              <a
+              <Link
                 key={e.id}
                 href={`/mesaje?emp=${e.id}`}
+                prefetch={false}
                 className={`flex items-center gap-2.5 border-b border-[#f2f4f7] px-4 py-3 ${active ? "bg-electric-soft/40" : "hover:bg-[#f9fafb]"}`}
               >
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px] bg-neutral-bg text-[12px] font-bold text-[#475467]">
@@ -163,7 +166,7 @@ export default async function MesajePage({
                     {unread}
                   </span>
                 )}
-              </a>
+              </Link>
             );
           })}
         </div>
