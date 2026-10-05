@@ -386,23 +386,60 @@
 .journeyStep.on .journeyLabel { color: var(--fg); }
 
 /* ---------- modules core ---------- */
-.modulesWrap { position: relative; margin-top: 70px; min-height: 480px; display: flex; align-items: center; justify-content: center; }
+.modulesWrap { position: relative; margin-top: 70px; min-height: 480px; display: flex; align-items: center; justify-content: center; cursor: default; }
+.moduleRing {
+  position: absolute; width: 230px; height: 230px; border-radius: 50%;
+  border: 1px dashed rgba(198,255,74,.22); animation: spin 50s linear infinite; z-index: 2;
+}
+.moduleRing2 {
+  position: absolute; width: 300px; height: 300px; border-radius: 50%;
+  border: 1px dashed rgba(95,224,232,.14); animation: spin 70s linear infinite reverse; z-index: 2;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 .moduleCore {
   width: 150px; height: 150px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
   background: radial-gradient(circle at 35% 30%, rgba(198,255,74,.35), rgba(198,255,74,.04) 70%);
   border: 1px solid rgba(198,255,74,.4); box-shadow: 0 0 80px -10px rgba(198,255,74,.45);
   font-weight: 800; font-size: 14px; text-align: center; letter-spacing: -0.02em; position: relative; z-index: 3;
+  animation: corePulse 3.2s ease-in-out infinite; transition: box-shadow .3s ease;
 }
-.moduleOrbit { position: absolute; inset: 0; }
+.modulesWrap.active .moduleCore { box-shadow: 0 0 110px -5px rgba(198,255,74,.7); }
+@keyframes corePulse {
+  0%, 100% { box-shadow: 0 0 80px -10px rgba(198,255,74,.45); transform: scale(1); }
+  50% { box-shadow: 0 0 100px -6px rgba(198,255,74,.62); transform: scale(1.035); }
+}
+.moduleOrbit { position: absolute; inset: 0; z-index: 3; }
+.moduleLinesSvg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; overflow: visible; }
+.moduleLine {
+  stroke: rgba(198,255,74,.22); stroke-width: 1.3; fill: none;
+  stroke-dasharray: 5 7; animation: moduleDash 2.8s linear infinite; transition: stroke .25s ease, stroke-width .25s ease, opacity .25s ease;
+}
+.moduleLine.active { stroke: var(--lime); stroke-width: 2.2; filter: drop-shadow(0 0 6px rgba(198,255,74,.8)); }
+@keyframes moduleDash { to { stroke-dashoffset: -24; } }
 .moduleItem {
-  position: absolute; width: 128px; padding: 14px 15px; border-radius: 15px;
+  position: absolute; width: 128px; transform: translate(-50%, -50%);
+  opacity: 0; transition: opacity .55s ease, transform .55s cubic-bezier(.2,.8,.2,1);
+}
+.moduleItem.revealed { opacity: 1; }
+.moduleCard {
+  padding: 14px 15px; border-radius: 15px; cursor: pointer;
   background: var(--glass); backdrop-filter: blur(10px); border: 1px solid var(--line-bright);
   display: flex; flex-direction: column; gap: 8px; animation: floatY 6s ease-in-out infinite;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), border-color .25s ease, box-shadow .25s ease, background .25s ease;
 }
-.moduleItem svg { color: var(--lime); }
-.moduleItem .t { font-size: 12px; font-weight: 700; }
+.moduleItem.on .moduleCard {
+  transform: scale(1.1); border-color: var(--lime); background: rgba(198,255,74,.1);
+  box-shadow: 0 0 30px -4px rgba(198,255,74,.6); animation-play-state: paused;
+}
+.moduleCard svg { color: var(--lime); }
+.moduleCard .t { font-size: 12px; font-weight: 700; }
+.moduleDesc {
+  max-height: 0; opacity: 0; font-size: 10.5px; color: var(--fg-mute); line-height: 1.4; overflow: hidden;
+  transition: max-height .25s ease, opacity .2s ease;
+}
+.moduleItem.on .moduleDesc { max-height: 48px; opacity: 1; }
 @keyframes floatY { 0%, 100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
-.moduleLine { position: absolute; stroke: rgba(198,255,74,.25); stroke-width: 1; fill: none; }
+@media (max-width: 760px) { .moduleRing, .moduleRing2 { display: none; } }
 
 /* ---------- final CTA ---------- */
 .ctaSection { position: relative; min-height: 86vh; display: flex; align-items: center; overflow: hidden; }
