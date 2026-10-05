@@ -1,11 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
 import { PreventZoom } from "@/components/prevent-zoom";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const unbounded = Unbounded({
+  variable: "--font-unbounded",
+  subsets: ["latin"],
+  weight: ["500", "700", "800"],
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  weight: ["500", "700"],
 });
 
 export const metadata: Metadata = {
@@ -35,7 +47,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ro" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="ro"
+      className={`${inter.variable} ${unbounded.variable} ${jetbrainsMono.variable} h-full antialiased`}
+    >
       <body className="min-h-full">
         <PreventZoom />
         {children}

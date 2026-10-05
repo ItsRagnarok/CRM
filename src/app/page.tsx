@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { MarketingLanding } from "@/components/marketing/marketing-landing";
 
 export default async function RootPage() {
   const supabase = await createClient();
@@ -8,7 +9,7 @@ export default async function RootPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login");
+    return <MarketingLanding />;
   }
 
   const { data: platformAdmin } = await supabase
