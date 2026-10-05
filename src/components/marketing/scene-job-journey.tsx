@@ -15,16 +15,16 @@ const STEPS = [
 ];
 
 export function SceneJobJourney() {
-  const ref = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
   const [fill, setFill] = useState(0);
 
   useEffect(() => {
-    const el = ref.current;
+    const el = stageRef.current;
     if (!el) return;
     const onScroll = () => {
       const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      const p = (vh * 0.8 - rect.top) / (rect.height * 0.7);
+      const total = rect.height - window.innerHeight;
+      const p = total > 0 ? -rect.top / total : 0;
       setFill(Math.min(1, Math.max(0, p)));
     };
     onScroll();
@@ -35,7 +35,7 @@ export function SceneJobJourney() {
   const activeIdx = Math.floor(fill * STEPS.length);
 
   return (
-    <section id="cum-functioneaza" className={`${s.section} ${s.journeySection}`} ref={ref}>
+    <section id="cum-functioneaza" className={`${s.section} ${s.journeySection}`}>
       <div className={s.journeyBg}>
         <Image src="/marketing/pylons.jpg" alt="" fill sizes="100vw" style={{ objectFit: "cover" }} />
       </div>
@@ -50,18 +50,24 @@ export function SceneJobJourney() {
           </h2>
           <p>Fiecare etapă a unei lucrări, urmărită automat, fără hârtii și fără telefoane.</p>
         </div>
+      </div>
 
-        <div className={s.journeyTrack}>
-          <div className={s.journeyLine}>
-            <div className={s.journeyLineFill} style={{ width: `${fill * 100}%` }} />
-          </div>
-          <div className={s.journeyGrid}>
-            {STEPS.map((step, i) => (
-              <div key={step} className={`${s.journeyStep} ${i <= activeIdx ? s.on : ""}`}>
-                <div className={s.journeyDot}>{String(i + 1).padStart(2, "0")}</div>
-                <div className={s.journeyLabel}>{step}</div>
+      <div className={s.journeyStage} ref={stageRef}>
+        <div className={s.journeyStickyViewport}>
+          <div className={s.wrap}>
+            <div className={s.journeyTrack}>
+              <div className={s.journeyLine}>
+                <div className={s.journeyLineFill} style={{ width: `${fill * 100}%` }} />
               </div>
-            ))}
+              <div className={s.journeyGrid}>
+                {STEPS.map((step, i) => (
+                  <div key={step} className={`${s.journeyStep} ${i <= activeIdx ? s.on : ""}`}>
+                    <div className={s.journeyDot}>{String(i + 1).padStart(2, "0")}</div>
+                    <div className={s.journeyLabel}>{step}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
