@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/rapoarte-lucrare/[id]": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
   },
+  // Blog static: /blog arată public/blog/index.html,
+  // /blog/un-articol arată public/blog/un-articol.html
+  async rewrites() {
+    return [
+      { source: "/blog", destination: "/blog/index.html" },
+      { source: "/blog/:slug", destination: "/blog/:slug.html" },
+    ];
+  },
 };
 
 export default nextConfig;
