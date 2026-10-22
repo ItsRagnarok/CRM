@@ -38,3 +38,9 @@ a.card:hover{border-color:var(--ac);box-shadow:0 0 32px rgba(200,255,60,.10)}
 footer{border-top:1px solid var(--line);padding:32px 0;color:var(--mut);font-size:14px}
 footer a{color:var(--mut);margin-right:18px}
 :focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+/* Buton Înapoi (transformă primul link din .crumbs) */
+.crumbs{margin-bottom:20px}
+.crumbs a:first-child{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid var(--line);border-radius:999px;color:var(--tx);font-size:0;text-decoration:none;margin-right:10px;transition:border-color .15s,color .15s}
+.crumbs a:first-child::before{content:"←";font-size:15px}
+.crumbs a:first-child::after{content:"Înapoi la resurse";font-size:14px;font-weight:500}
+.crumbs a:first-child:hover{border-color:var(--ac);color:var(--ac)}
