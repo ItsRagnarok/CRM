@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cum faci o ofertă pentru lucrări electrice, fotovoltaice sau de supraveghere (cu calculator) | ElectroField</title>
+<meta name="description" content="Ce trebuie să conțină o ofertă pentru lucrări electrice, fotovoltaice și instalații de supraveghere, plus un calculator care îți arată prețul și marja după reducere.">
+<link rel="canonical" href="https://www.electrofield.ro/blog/model-oferta-lucrari-electrice-fotovoltaice">
+<meta property="og:title" content="Cum faci o ofertă pentru lucrări electrice, fotovoltaice sau de supraveghere (cu calculator)">
+<meta property="og:description" content="Ce trebuie să conțină o ofertă pentru lucrări electrice, fotovoltaice și instalații de supraveghere, plus un calculator care îți arată prețul și marja după reducere.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#1c1c22">
+<link rel="stylesheet" href="/blog-style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Cum faci o ofertă pentru lucrări electrice, fotovoltaice sau de supraveghere (cu calculator)","datePublished":"2026-10-26","inLanguage":"ro","author":{"@type":"Organization","name":"ElectroField"},"publisher":{"@type":"Organization","name":"ElectroField"},"mainEntityOfPage":"https://www.electrofield.ro/blog/model-oferta-lucrari-electrice-fotovoltaice"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap nav"><a class="logo" href="/">ElectroField</a><a class="l h" href="/#platforma">Platformă</a><a class="l h" href="/#functionalitati">Funcționalități</a><a class="l h" href="/#preturi">Prețuri</a><a class="l" href="/blog" aria-current="page">Blog</a><a class="btn ghost h" href="/login">Conectează-te</a><a class="btn" href="mailto:contact@electrofield.ro">Începe acum</a></div></header>
+<main>
+<article class="art">
+<p class="crumbs"><a href="/blog">Blog</a> / Oferte și prețuri</p>
+<h1>Cum faci o ofertă pentru lucrări electrice, fotovoltaice sau de supraveghere (cu calculator)</h1>
+<p class="meta">26 octombrie 2026 · 6 minute de citit</p>
+<p>Oferta este primul document pe care îl vede clientul. O ofertă vagă duce la discuții despre preț, la „ați zis altceva” și la lucrări făcute în pierdere. Una clară îți protejează și marja, și relația cu clientul.</p>
+<h2>Ce trebuie să conțină</h2>
+<ul>
+<li>datele beneficiarului și locul lucrării;</li>
+<li>descrierea lucrării, cu ce <strong>este inclus</strong> și ce <strong>nu este inclus</strong> (de exemplu spargeri, finisaje, acces);</li>
+<li>lista echipamentelor, cu mărci, modele și cantități;</li>
+<li>manopera, termenul de execuție și etapele;</li>
+<li>prețul, cu mențiunea dacă include sau nu TVA;</li>
+<li>valabilitatea ofertei (prețurile materialelor se schimbă);</li>
+<li>condițiile de plată și garanția;</li>
+<li>ce rămâne în sarcina clientului.</li>
+</ul>
+<h2>Cum calculezi prețul</h2>
+<p>Pornești de la costuri, nu de la ce „ți se pare” că plătește piața: <strong>materiale + manoperă + deplasare + costuri generale</strong>, apoi adaugi profitul dorit. Calculatorul de mai jos face asta și îți arată ce se întâmplă cu marja când clientul cere reducere. Cifrele inițiale sunt un exemplu, le schimbi cu ale tale.</p>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:24px 0">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;color:var(--tx);font-size:14px">
+<label>Materiale (lei)<input id="q1" type="number" min="0" value="1600" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Ore de manoperă<input id="q2" type="number" min="0" value="20" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Cost pe oră (lei)<input id="q3" type="number" min="0" value="55" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Deplasare (lei)<input id="q4" type="number" min="0" value="150" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Costuri generale (%)<input id="q5" type="number" min="0" value="10" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Profit dorit (% din preț)<input id="q6" type="number" min="0" max="90" value="20" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+<label>Reducere cerută (%)<input id="q7" type="number" min="0" max="50" value="10" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit"></label>
+</div>
+<div id="qo" style="margin-top:16px"></div>
+</div>
+<script>
+(function(){const g=i=>+document.getElementById(i).value||0,fm=n=>Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+function c(){const m=g('q1'),h=g('q2'),r=g('q3'),d=g('q4'),ge=g('q5')/100,p=Math.min(g('q6'),90)/100,rd=Math.min(g('q7'),50)/100;
+const man=h*r,dir=m+man+d,gen=dir*ge,cost=dir+gen,pr=cost/(1-p),prof=pr-cost,np=pr*(1-rd),nm=np>0?(np-cost)/np:0;
+const seg=[['Materiale',m,'#6b7280'],['Manoperă',man,'#9ca3af'],['Deplasare',d,'#d1d5db'],['Costuri generale',gen,'#e5e7eb'],['Profit',prof,'#c8ff3c']];
+document.getElementById('qo').innerHTML='<div style="font:800 28px Syne,Inter,sans-serif;color:var(--tx)">'+fm(pr)+' lei <span style="font-size:14px;color:var(--mut);font-weight:400">preț de ofertă, fără TVA</span></div><div role="img" aria-label="Structura prețului" style="display:flex;height:30px;border-radius:8px;overflow:hidden;margin:12px 0 8px">'+seg.map(s=>'<div title="'+s[0]+'" style="width:'+(pr?s[1]/pr*100:0)+'%;background:'+s[2]+'"></div>').join('')+'</div><p style="margin:0;color:var(--mut);font-size:14px">'+seg.map(s=>s[0]+' '+fm(s[1])+' lei').join(' · ')+'</p><p style="margin:12px 0 0;color:var(--tx)">Dacă clientul cere '+Math.round(rd*100)+'% reducere, prețul devine '+fm(np)+' lei, iar marja scade de la '+Math.round(p*100)+'% la <strong style="color:#c8ff3c">'+Math.round(nm*100)+'%</strong>.</p>'}
+document.querySelectorAll('input[id^=q]').forEach(e=>e.addEventListener('input',c));c()})();
+</script>
+<p>Observă cât de repede scade marja: o reducere de 10% la preț taie aproape jumătate din profit, pentru că costurile rămân aceleași. Înainte să negociezi, știi care e prețul minim sub care lucrarea nu mai merită.</p>
+<h2>Greșeli frecvente</h2>
+<p>Nu scrii ce nu este inclus. Nu pui o valabilitate. Estimezi orele „din ochi”, fără să compari cu lucrări similare făcute înainte. Sau oferta rămâne într-un mesaj și, când începe lucrarea, nu o mai găsește nimeni.</p>
+<h2>Cum legi oferta de lucrare</h2>
+<p>După ce clientul acceptă, oferta ar trebui să devină lucrarea: aceleași materiale, aceleași ore estimate, aceeași echipă. La final compari estimarea cu ce s-a întâmplat de fapt și îți ajustezi următoarele oferte. Fără această legătură, repeți aceleași greșeli de estimare.</p>
+<p>Citește și: <a href="/blog/cum-calculezi-profitul-pe-lucrare">Cum calculezi cât câștigi de fapt pe o lucrare</a>.</p>
+<div class="cta">
+<h2>De la ofertă la lucrare, fără să rescrii nimic</h2>
+<p>În ElectroField creezi lucrarea cu clientul, echipa, materialele și pașii, iar după ce o închizi o ai documentată, cu poze și semnătura clientului.</p>
+<a class="btn" href="mailto:contact@electrofield.ro">Scrie-ne</a> <a class="btn ghost" href="/blog">← Înapoi la resurse</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><a href="/">Acasă</a><a href="/blog">Blog</a><a href="/login">Conectează-te</a><p>© 2026 ElectroField</p></div></footer>
+</body>
+</html>
