@@ -114,8 +114,8 @@ export function TermsContent() {
         <h2 className="text-[16px] font-bold text-foreground">9. Contact</h2>
         <p className="mt-1.5">
           Pentru întrebări despre acești termeni, ne poți scrie la{" "}
-          <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">
-            contact@alpora.ro
+          <a href="mailto:contact@electrofield.ro" className="font-semibold text-electric">
+            contact@electrofield.ro
           </a>
           .
         </p>
