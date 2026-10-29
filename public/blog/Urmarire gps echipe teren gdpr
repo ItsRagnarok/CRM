@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Urmărirea echipelor cu GPS: ce trebuie să respecți ca angajator (GDPR) și cum o faci corect | ElectroField</title>
+<meta name="description" content="GPS pe mașină sau în telefon? Ce au reproșat autoritățile firmelor amendate, principiile de bază pentru urmărirea echipelor din teren și un checklist interactiv.">
+<link rel="canonical" href="https://www.electrofield.ro/blog/urmarire-gps-echipe-teren-gdpr">
+<meta property="og:title" content="Urmărirea echipelor cu GPS: ce trebuie să respecți ca angajator (GDPR) și cum o faci corect">
+<meta property="og:description" content="GPS pe mașină sau în telefon? Ce au reproșat autoritățile firmelor amendate, principiile de bază pentru urmărirea echipelor din teren și un checklist interactiv.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#1c1c22">
+<link rel="stylesheet" href="/blog-style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Urmărirea echipelor cu GPS: ce trebuie să respecți ca angajator (GDPR) și cum o faci corect","datePublished":"2026-10-28","inLanguage":"ro","author":{"@type":"Organization","name":"ElectroField"},"publisher":{"@type":"Organization","name":"ElectroField"},"mainEntityOfPage":"https://www.electrofield.ro/blog/urmarire-gps-echipe-teren-gdpr"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap nav"><a class="logo" href="/">ElectroField</a><a class="l h" href="/#platforma">Platformă</a><a class="l h" href="/#functionalitati">Funcționalități</a><a class="l h" href="/#preturi">Prețuri</a><a class="l" href="/blog" aria-current="page">Blog</a><a class="btn ghost h" href="/login">Conectează-te</a><a class="btn" href="mailto:contact@electrofield.ro">Începe acum</a></div></header>
+<main>
+<article class="art">
+<p class="crumbs"><a href="/blog">Blog</a> / GPS și conformitate</p>
+<h1>Urmărirea echipelor cu GPS: ce trebuie să respecți ca angajator (GDPR) și cum o faci corect</h1>
+<p class="meta">28 octombrie 2026 · 6 minute de citit</p>
+<p>Mulți administratori vor să știe unde sunt echipele: pentru coordonare, pentru siguranța oamenilor, pentru a răspunde clienților. E o nevoie legitimă. Dar locația unui angajat este dată personală, iar autoritatea de protecție a datelor a amendat firme care au urmărit-o greșit.</p>
+<h2>Ce au reproșat autoritățile în cazurile publice</h2>
+<ul>
+<li>urmărirea locației <strong>în afara programului de lucru</strong>, de exemplu cu mașina de serviciu folosită și în timpul liber;</li>
+<li>angajații <strong>nu au fost informați complet</strong> despre ce date se colectează și de ce;</li>
+<li>păstrarea datelor <strong>mai mult decât era justificat</strong>;</li>
+<li>folosirea datelor în alt scop decât cel declarat, de exemplu supravegherea sau profilarea angajatului.</li>
+</ul>
+<p>Sancțiunile raportate în presă au fost de ordinul a câtorva mii de euro per caz (sursele sunt la finalul articolului). Dincolo de amendă, o astfel de reclamație consumă timp și strică relația cu echipa.</p>
+<h2>GPS pe mașină sau în telefon?</h2>
+<p>Un sistem montat pe mașină urmărește vehiculul, deci și persoana care îl folosește, inclusiv când mașina e luată acasă sau în weekend. Locația din aplicația de pe telefon urmărește direct persoana, dar o poți lega de lucrare și o poți limita la programul de lucru. Indiferent de metodă, principiile sunt aceleași.</p>
+<h2>Principiile de bază</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:24px 0">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">1</span><br><strong>Scop clar</strong><br>de exemplu coordonarea lucrărilor și siguranța echipei, scris și justificat</div>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">2</span><br><strong>Informare completă</strong><br>angajații știu ce se colectează, de ce, cât timp și cine vede</div>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">3</span><br><strong>Doar în program</strong><br>nu urmărești oamenii în timpul liber</div>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">4</span><br><strong>Date minime</strong><br>doar ce ai nevoie pentru scopul declarat</div>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">5</span><br><strong>Păstrare limitată</strong><br>știi cât păstrezi datele și le ștergi apoi</div>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:14px;line-height:1.45;color:var(--tx)"><span style="display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ac);color:#0a0b0d;font-weight:700;font-size:13px;margin-bottom:8px">6</span><br><strong>Acces limitat</strong><br>locația o văd doar cei care au nevoie</div>
+</div>
+<p>Pentru <strong>temeiul legal</strong> (interes legitim, consimțământ sau altul) nu există un răspuns valabil pentru toate firmele. Specialiștii atrag atenția că în relațiile de muncă folosirea consimțământului ridică probleme, așa că stabilește temeiul împreună cu un jurist sau cu un responsabil cu protecția datelor.</p>
+<h2>Verifică-te: checklist interactiv</h2>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:24px 0;color:var(--tx);font-size:15px;line-height:1.5">
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Am stabilit și am scris scopul pentru care urmăresc locația.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Angajații au fost informați complet înainte de începerea urmăririi.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Urmăresc locația doar în timpul programului de lucru.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Colectez doar datele de care am nevoie pentru scopul declarat.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Știu cât timp păstrez datele de localizare și le șterg după acest termen.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Doar persoanele care au nevoie văd locația echipelor.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Am verificat temeiul legal cu un jurist sau cu un responsabil cu protecția datelor.</span></label>
+<label style="display:flex;gap:10px;margin:0 0 10px"><input type="checkbox" class="gq"><span>Am o procedură pentru cererile angajaților privind datele lor.</span></label>
+<div id="go" style="margin-top:16px"></div>
+</div>
+<script>
+(function(){const b=[...document.querySelectorAll('.gq')],o=document.getElementById('go');
+const V=[[3,'Ai multe lucruri de pus la punct','#ff6b5a','Începe cu informarea angajaților și cu limitarea urmăririi la programul de lucru. Sunt cele mai frecvente puncte reproșate.'],[6,'Ești pe drumul bun, dar mai ai de făcut','#f5a623','Mai verifică punctele nebifate, mai ales temeiul legal și perioada de păstrare a datelor.'],[8,'Ai acoperit esențialul','#c8ff3c','Păstrează documentele (scopul, informarea, termenul de păstrare) și revizuiește-le când schimbi ceva în sistem.']];
+function c(){const n=b.filter(x=>x.checked).length,v=V.find(x=>n<=x[0]);
+o.innerHTML='<div style="font:800 24px Syne,Inter,sans-serif;color:'+v[2]+'">'+n+' din 8: '+v[1]+'</div><div style="display:flex;gap:4px;margin:10px 0" role="img" aria-label="Scor '+n+' din 8">'+b.map((x,i)=>'<div style="flex:1;height:10px;border-radius:4px;background:'+(i<n?v[2]:'var(--bg)')+'"></div>').join('')+'</div><p style="margin:0">'+v[3]+' Acesta nu este un audit.</p>'}
+b.forEach(x=>x.addEventListener('change',c));c()})();
+</script>
+<h2>Cum arată o practică corectă</h2>
+<p>Într-o firmă cu echipe pe teren, locația se leagă de lucrare: de la plecarea spre client până la finalizare, nu non-stop. Tehnicianul știe ce se vede și cine vede. Regulile sunt scrise (notă de informare sau regulament intern), iar datele nu se păstrează la nesfârșit. Gândește-te mai întâi la ce decizie ai nevoie să iei cu locația, apoi colectează doar atât.</p>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:24px 0;font-size:15px"><strong>Notă:</strong> informațiile din articol sunt generale și nu înlocuiesc consultanța juridică. Verifică cerințele aplicabile firmei tale cu un jurist sau cu un responsabil cu protecția datelor.</div>
+<h2>Surse (cazuri raportate)</h2>
+<ul>
+<li><a href="https://hotnews.ro/?p=1836059" target="_blank" rel="noopener">HotNews: amendă GDPR pentru date colectate prin GPS în afara orelor de program</a></li>
+<li><a href="https://profit.ro/perspective/firma-din-bucuresti-amendata-pentru-gps-ul-de-pe-masina-de-serviciu-21073635" target="_blank" rel="noopener">Profit.ro: firmă amendată pentru GPS-ul de pe mașina de serviciu</a></li>
+<li><a href="https://startupcafe.ro/?p=28790" target="_blank" rel="noopener">StartupCafe: amendă pentru folosirea datelor GPS la profilarea unui angajat</a></li>
+</ul>
+<p>Citește și: <a href="/blog/evidenta-orelor-tehnicieni-teren-pontaj">Evidența orelor tehnicienilor din teren</a>.</p>
+<div class="cta">
+<h2>Control pe teren, cu setări pentru GPS și confidențialitate</h2>
+<p>ElectroField îți arată echipele și lucrările pe hartă și are setări dedicate pentru GPS și confidențialitate. Îți arătăm cum se configurează pentru firma ta.</p>
+<a class="btn" href="mailto:contact@electrofield.ro">Scrie-ne</a> <a class="btn ghost" href="/blog">← Înapoi la resurse</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><a href="/">Acasă</a><a href="/blog">Blog</a><a href="/login">Conectează-te</a><p>© 2026 ElectroField</p></div></footer>
+</body>
+</html>
