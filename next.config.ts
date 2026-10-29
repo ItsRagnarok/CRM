@@ -22,6 +22,8 @@ const nextConfig: NextConfig = {
     return [
       { source: "/blog", destination: "/blog/index.html" },
       { source: "/blog/:slug", destination: "/blog/:slug.html" },
+      // Pagina de programări: /programare arată public/programare.html
+      { source: "/programare", destination: "/programare.html" },
     ];
   },
 };
