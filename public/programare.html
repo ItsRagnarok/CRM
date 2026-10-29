@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Programează o discuție | ElectroField</title>
 <style>
-/* ===== Culori: schimbă-le aici ca să se potrivească cu site-ul ===== */
+/* = Culori: schimbă-le aici ca să se potrivească cu site-ul = */
 :root{--bg:#f4f5f7;--card:#fff;--ink:#101828;--muted:#667085;--line:#e3e7ee;--accent:#f5a400;--ok:#1a7f4b;--err:#c0392b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
@@ -53,7 +53,7 @@ details summary{cursor:pointer;font-weight:600}
 <body>
 <main>
 
-<!-- ============ PARTEA PUBLICĂ ============ -->
+<!--  PARTEA PUBLICĂ  -->
 <section id="pub">
   <h1>Programează o discuție</h1>
   <p class="sub">Alege o zi din calendar, apoi ora. Zilele cu linie galbenă au ore libere.</p>
@@ -71,7 +71,7 @@ details summary{cursor:pointer;font-weight:600}
   <button class="link" id="toAdmin">Administrare</button>
 </section>
 
-<!-- ============ PARTEA DE ADMIN ============ -->
+<!--  PARTEA DE ADMIN  -->
 <section id="adm" class="hidden">
   <h1>Administrare programări</h1>
   <div class="card" id="loginCard">
@@ -105,11 +105,11 @@ details summary{cursor:pointer;font-weight:600}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
-/* ===== COMPLETEAZĂ AICI (Supabase > Project Settings > API) ===== */
-const SUPABASE_URL = "https://XXXXXXXX.supabase.co";
-const SUPABASE_KEY = "PUNE_AICI_ANON_PUBLIC_KEY";
+/* = COMPLETEAZĂ AICI (Supabase > Project Settings > API) = */
+const SUPABASE_URL = "https://hrzpowmmbuqihtbkisyu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyenBvd21tYnVxaWh0Ymtpc3l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NDU1MDAsImV4cCI6MjEwNjEyMTUwMH0.XuGjlMo8DUFTNojNNxOlvhDr6DvpTdO_7CSEW7ifbMQ";
 const ADMIN_EMAIL  = "info@alpora.ro";
-/* ================================================================ */
+/*  */
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
@@ -141,7 +141,7 @@ function defaultTimes(d){
   for (let m = mins(w.from); m + S.slot_minutes <= mins(w.to); m += S.slot_minutes) out.push(tstr(m));
   return out;
 }
-const timesFor = d => OV[ymd(d)] !== undefined ? OV[ymd(d)] : defaultTimes(d);
+const timesFor = d => OV[ymd(d)] ! undefined ? OV[ymd(d)] : defaultTimes(d);
 const freeFor = d => timesFor(d).map(t => at(d,t)).filter(x => x > new Date() && !taken.has(+x));
 function inRange(d){ const t = todayD(); return d >= t && d <= new Date(t.getFullYear(), t.getMonth(), t.getDate()+S.days_ahead); }
 
@@ -171,18 +171,18 @@ function drawCal(el, mode){
   const lead = (new Date(y,m,1).getDay()+6)%7, today = todayD();
   let h = '<div class="calh"><button class="nav" data-n="-1" aria-label="Luna anterioară">‹</button><b>'+MONTHS[m]+' '+y+'</b><button class="nav" data-n="1" aria-label="Luna următoare">›</button></div><div class="grid">';
   WD.forEach(w => h += '<div class="wd">'+w+'</div>');
-  for (let i = 0; i < lead; i++) h += "<div></div>";
-  for (let d = 1; d <= n; d++){
+  for (let i = 0; i < lead; i) h += "<div></div>";
+  for (let d = 1; d <= n; d){
     const dt = new Date(y,m,d), k = ymd(dt); let cls = "day", dis = false, extra = "";
-    if (mode === "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
+    if (mode = "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
     else { dis = dt < today; cls += timesFor(dt).length ? " open" : " off"; const c = (BK[k]||[]).length; if (c) extra = "<i>"+c+"</i>"; }
-    if (k === sel[mode]) cls += " sel";
-    if (+dt === +today) cls += " today";
+    if (k = sel[mode]) cls += " sel";
+    if (+dt = +today) cls += " today";
     h += '<button class="'+cls+'" data-k="'+k+'"'+(dis?" disabled":"")+'>'+d+extra+'</button>';
   }
   el.innerHTML = h + "</div>";
   el.querySelectorAll(".nav").forEach(b => b.onclick = () => { month = new Date(y, m+Number(b.dataset.n), 1); redraw(); });
-  el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode === "pub") selSlot = null; redraw(); });
+  el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode = "pub") selSlot = null; redraw(); });
 }
 const redraw = () => adminOn ? drawAdm() : drawPub();
 
@@ -198,7 +198,7 @@ function drawPub(){
   if (!free.length) box.innerHTML = '<span class="muted">Nu mai sunt ore libere în această zi.</span>';
   free.forEach(x => {
     const b = document.createElement("button");
-    b.className = "chip"+(selSlot === +x ? " on" : ""); b.textContent = fmtTime(x);
+    b.className = "chip"+(selSlot = +x ? " on" : ""); b.textContent = fmtTime(x);
     b.onclick = () => { selSlot = +x; drawPub(); $("formCard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
     box.appendChild(b);
   });
@@ -212,7 +212,7 @@ $("bookBtn").onclick = async () => {
   const {error} = await sb.from("bookings").insert({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim()||null, note:$("f_note").value.trim()||null});
   $("bookBtn").disabled = false;
   if (error){
-    if (error.code === "23505"){ show($("pubMsg"),"err","Ora tocmai a fost ocupată. Alege altă oră."); selSlot = null; await loadPublicData(); drawPub(); }
+    if (error.code = "23505"){ show($("pubMsg"),"err","Ora tocmai a fost ocupată. Alege altă oră."); selSlot = null; await loadPublicData(); drawPub(); }
     else show($("pubMsg"),"err","Nu am putut salva programarea. Încearcă din nou sau sună-ne.");
     return;
   }
@@ -226,7 +226,7 @@ $("toAdmin").onclick = () => goAdmin(true);
 $("toPub").onclick = () => goAdmin(false);
 async function checkSession(){
   const {data} = await sb.auth.getSession();
-  const ok = data.session && data.session.user.email === ADMIN_EMAIL;
+  const ok = data.session && data.session.user.email = ADMIN_EMAIL;
   $("loginCard").classList.toggle("hidden", !!ok); $("adminPanel").classList.toggle("hidden", !ok);
   if (ok){ renderSettingsForm(); loadBookings(); }
 }
@@ -244,7 +244,7 @@ function drawAdm(){
   if (!k){ box.innerHTML = '<p class="muted" style="margin:0">Alege o zi din calendar ca să-i setezi orele.</p>'; return; }
   const d = parse(k), booked = BK[k] || [], bt = {};
   booked.forEach(b => bt[fmtTime(new Date(b.slot_start))] = b);
-  if (!edit || edit.k !== k) edit = {k, set:new Set(timesFor(d))};
+  if (!edit || edit.k ! k) edit = {k, set:new Set(timesFor(d))};
   const grid = []; for (let m = 420; m + S.slot_minutes <= 1260; m += S.slot_minutes) grid.push(tstr(m));
   const all = [...new Set([...grid, ...edit.set, ...Object.keys(bt)])].sort();
   box.innerHTML = "<h2>"+fmtDate(d)+"</h2><p class='muted' style='margin-top:-6px'>Apasă pe ore ca să le deschizi (închis la culoare) sau să le închizi.</p><div class='slots' id='edSlots'></div>"
@@ -271,7 +271,7 @@ function drawAdm(){
   };
   $("repDay").onclick = async () => {
     const rows = [], n = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
-    for (let i = 1; i <= n; i++){ const x = new Date(d.getFullYear(), d.getMonth(), i); if (x.getDay() === d.getDay() && x >= todayD()) rows.push({day:ymd(x), slots:withBooked(x, edit.set)}); }
+    for (let i = 1; i <= n; i){ const x = new Date(d.getFullYear(), d.getMonth(), i); if (x.getDay() = d.getDay() && x >= todayD()) rows.push({day:ymd(x), slots:withBooked(x, edit.set)}); }
     const {error} = await sb.from("booking_days").upsert(rows);
     if (error) return show($("dayMsg"),"err","Nu s-a salvat: "+error.message);
     rows.forEach(r => OV[r.day] = r.slots); drawAdm(); show($("dayMsg"),"ok","Salvat pe "+rows.length+" zile.");
@@ -293,7 +293,7 @@ function drawUpcoming(){
   box.innerHTML = ""; let last = "";
   bkAll.forEach(b => {
     const d = new Date(b.slot_start);
-    if (ymd(d) !== last){ last = ymd(d); const h = document.createElement("div"); h.className = "dayh"; h.textContent = fmtDate(d); box.appendChild(h); }
+    if (ymd(d) ! last){ last = ymd(d); const h = document.createElement("div"); h.className = "dayh"; h.textContent = fmtDate(d); box.appendChild(h); }
     box.appendChild(bkRow(b, true));
   });
 }
@@ -309,7 +309,7 @@ function renderSettingsForm(){
 }
 $("saveBtn").onclick = async () => {
   const weekly = {};
-  document.querySelectorAll("#weekly input").forEach(el => { const d = el.dataset.d; weekly[d] = weekly[d] || {}; weekly[d][el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
+  document.querySelectorAll("#weekly input").forEach(el => { const d = el.dataset.d; weekly[d] = weekly[d] || {}; weekly[d][el.dataset.k] = el.type = "checkbox" ? el.checked : el.value; });
   const row = {id:1, slot_minutes:+$("s_slot").value || 30, days_ahead:+$("s_ahead").value || 60, weekly};
   const {error} = await sb.from("booking_settings").upsert(row);
   if (error) return show($("setMsg"),"err","Nu s-a salvat: "+error.message);
@@ -321,12 +321,13 @@ $("saveBtn").onclick = async () => {
 (async () => {
   await loadPublicData();
   const t = todayD();
-  for (let i = 0; i <= S.days_ahead; i++){
+  for (let i = 0; i <= S.days_ahead; i){
     const d = new Date(t.getFullYear(), t.getMonth(), t.getDate()+i);
     if (freeFor(d).length){ sel.pub = ymd(d); month = new Date(d.getFullYear(), d.getMonth(), 1); break; }
   }
   if (location.hash === "#admin") goAdmin(true); else drawPub();
 })();
 </script>
+
 </body>
 </html>
