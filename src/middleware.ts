@@ -1,7 +1,20 @@
+
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/signup",
+  "/auth",
+  "/downloads",
+  "/confidentialitate",
+  "/termeni",
+  "/blog",
+  "/sitemap",
+  "/robots.txt",
+  "/programare.html",
+];
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -26,29 +39,29 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // getSession() decodes the already-validated JWT locally instead of
-  // re-checking it with Supabase over the network. Middleware runs on
-  // nearly every request in the app (see the matcher below), so a network
-  // round trip here was a fixed latency tax on every single navigation —
-  // by far the largest one, since nothing downstream can parallelize
-  // around it. requireSessionContext() (src/lib/auth.ts) already accepts
-  // this same trade-off for the authoritative per-page check, so this
-  // isn't a new risk, just a consistent one: a revoked session can stay
-  // valid here until its short-lived JWT expires, rather than being
-  // caught immediately.
+  // Citește sesiunea utilizatorului autentificat.
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
   const user = session?.user ?? null;
 
   const { pathname } = request.nextUrl;
-  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
+  const isPublicPath =
+    pathname === "/" ||
+    PUBLIC_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(path + "/")
+    );
+
+  // Redirecționează utilizatorii neautentificați
+  // către login dacă încearcă să acceseze o pagină privată.
   if (!user && !isPublicPath) {
     const loginUrl = new URL("/login", request.url);
     return NextResponse.redirect(loginUrl);
   }
 
+  // Utilizatorii autentificați nu au nevoie de paginile login/signup.
   if (user && (pathname === "/login" || pathname === "/signup")) {
     return NextResponse.redirect(new URL("/", request.url));
   }
@@ -57,5 +70,7 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)",
+  ],
 };
