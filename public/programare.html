@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Programează o discuție | ElectroField</title>
+<style>
+/* ===== Culori: schimbă-le aici ca să se potrivească cu site-ul ===== */
+:root{--bg:#f4f5f7;--card:#fff;--ink:#101828;--muted:#667085;--line:#e3e7ee;--accent:#f5a400;--ok:#1a7f4b;--err:#c0392b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+main{max-width:560px;margin:0 auto;padding:20px 14px 60px}
+h1{font-size:1.5rem;margin:6px 0 4px}h2{font-size:1.05rem;margin:0 0 10px}
+.sub,.muted{color:var(--muted)}.sub{margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.hidden{display:none}
+/* calendar */
+.calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.calh b{text-transform:capitalize;font-size:1.05rem}
+.nav{width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:1.3rem;cursor:pointer;color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.wd{text-align:center;font-size:.8rem;color:var(--muted);padding-bottom:2px}
+.day{position:relative;min-height:48px;border:1px solid var(--line);background:#fff;border-radius:9px;font:inherit;color:var(--ink);cursor:pointer;padding:0}
+.day.off{background:transparent;border-color:transparent;color:#a7afbd}
+.day.open::after{content:"";position:absolute;left:32%;right:32%;bottom:6px;height:3px;border-radius:2px;background:var(--accent)}
+.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.day.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
+.day:disabled{cursor:default;opacity:.4}
+.day i{position:absolute;top:3px;right:4px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:var(--ink);font:600 .7rem/17px system-ui;font-style:normal}
+.legend{font-size:.82rem;color:var(--muted);margin-top:10px}
+/* controale */
+.slots{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer;min-height:44px;min-width:70px}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.booked{background:#fff4d6;border-color:var(--accent);cursor:default}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+label{display:block;font-size:.9rem;margin:10px 0 4px}
+input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
+.btn{background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;margin:12px 8px 0 0}
+.btn.ghost{background:transparent;border:1px solid var(--line);font-weight:400}
+.btn.danger{background:transparent;color:var(--err);border:1px solid var(--err);padding:6px 10px;margin:0;font-weight:400}
+.msg{margin-top:12px;padding:10px 12px;border-radius:8px;display:none}
+.msg.ok{display:block;background:#e6f6ee;color:var(--ok)}.msg.err{display:block;background:#fdeceb;color:var(--err)}
+.link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;margin-top:20px;padding:6px 0}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.row .d{width:96px;margin:0}.row input[type=time]{width:auto}.row input[type=checkbox]{width:auto}
+.bk{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.bk:first-child{border-top:0}.bk b{display:block}
+.dayh{font-weight:600;margin:14px 0 2px}.dayh:first-child{margin-top:0}
+details summary{cursor:pointer;font-weight:600}
+</style>
+</head>
+<body>
+<main>
+
+<!-- ============ PARTEA PUBLICĂ ============ -->
+<section id="pub">
+  <h1>Programează o discuție</h1>
+  <p class="sub">Alege o zi din calendar, apoi ora. Zilele cu linie galbenă au ore libere.</p>
+  <div class="card"><div id="calPub"></div></div>
+  <div class="card"><h2 id="slotH">Ora</h2><div class="slots" id="slots"></div></div>
+  <div class="card hidden" id="formCard">
+    <h2 id="formH">Datele tale</h2>
+    <label for="f_name">Nume și firmă</label><input id="f_name" autocomplete="name">
+    <label for="f_phone">Telefon</label><input id="f_phone" type="tel" autocomplete="tel">
+    <label for="f_email">E-mail (opțional)</label><input id="f_email" type="email" autocomplete="email">
+    <label for="f_note">Ce vrei să discutăm? (opțional)</label><textarea id="f_note" rows="3"></textarea>
+    <button class="btn" id="bookBtn">Confirmă programarea</button>
+  </div>
+  <div class="msg" id="pubMsg" role="status"></div>
+  <button class="link" id="toAdmin">Administrare</button>
+</section>
+
+<!-- ============ PARTEA DE ADMIN ============ -->
+<section id="adm" class="hidden">
+  <h1>Administrare programări</h1>
+  <div class="card" id="loginCard">
+    <label for="a_email">E-mail</label><input id="a_email" type="email" value="info@alpora.ro" autocomplete="username">
+    <label for="a_pass">Parolă</label><input id="a_pass" type="password" autocomplete="current-password">
+    <button class="btn" id="loginBtn">Intră în cont</button>
+    <div class="msg" id="loginMsg" role="status"></div>
+  </div>
+
+  <div id="adminPanel" class="hidden">
+    <div class="card">
+      <div id="calAdm"></div>
+      <p class="legend">Linie galbenă = zi deschisă. Cifra galbenă = câte programări are ziua. Apasă pe o zi ca s-o editezi.</p>
+    </div>
+    <div class="card" id="dayEd"></div>
+    <div class="card"><h2>Următoarele programări</h2><div id="bkList" class="muted">Se încarcă...</div></div>
+    <details class="card">
+      <summary>Program standard (se aplică zilelor pe care nu le-ai editat)</summary>
+      <div id="weekly" style="margin-top:12px"></div>
+      <label for="s_slot">Durata unei programări (minute)</label><input id="s_slot" type="number" min="10" step="5">
+      <label for="s_ahead">Câte zile în avans se pot face programări</label><input id="s_ahead" type="number" min="1" max="365">
+      <button class="btn" id="saveBtn">Salvează programul standard</button>
+      <div class="msg" id="setMsg" role="status"></div>
+    </details>
+    <button class="btn ghost" id="logoutBtn">Ieși din cont</button>
+  </div>
+  <br><button class="link" id="toPub">Înapoi la programare</button>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===== COMPLETEAZĂ AICI (Supabase > Project Settings > API) ===== */
+const SUPABASE_URL = "https://XXXXXXXX.supabase.co";
+const SUPABASE_KEY = "PUNE_AICI_ANON_PUBLIC_KEY";
+const ADMIN_EMAIL  = "info@alpora.ro";
+/* ================================================================ */
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const MONTHS = ["ianuarie","februarie","martie","aprilie","mai","iunie","iulie","august","septembrie","octombrie","noiembrie","decembrie"];
+const WD = ["Lu","Ma","Mi","Jo","Vi","Sâ","Du"];
+const DAYS = ["duminică","luni","marți","miercuri","joi","vineri","sâmbătă"];
+const DEF = {on:true,from:"09:00",to:"17:00"};
+let S = {slot_minutes:30, days_ahead:60, weekly:{0:{...DEF,on:false},1:DEF,2:DEF,3:DEF,4:DEF,5:DEF,6:{...DEF,on:false}}};
+let OV = {}, taken = new Set(), BK = {}, bkAll = [];
+let month = new Date(); month.setDate(1);
+let sel = {pub:null, adm:null}, selSlot = null, edit = null, adminOn = false;
+
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y,m-1,d); };
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const mins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
+const tstr = m => pad(Math.floor(m/60))+":"+pad(m%60);
+const fmtTime = d => pad(d.getHours())+":"+pad(d.getMinutes());
+const fmtDate = d => DAYS[d.getDay()]+", "+d.getDate()+" "+MONTHS[d.getMonth()];
+const at = (d,t) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, mins(t));
+const todayD = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const show = (el, cls, text) => { el.className = "msg "+cls; el.textContent = text; };
+
+/* ---------- logica orelor ---------- */
+function defaultTimes(d){
+  const w = S.weekly[d.getDay()], out = [];
+  if (!w || !w.on) return out;
+  for (let m = mins(w.from); m + S.slot_minutes <= mins(w.to); m += S.slot_minutes) out.push(tstr(m));
+  return out;
+}
+const timesFor = d => OV[ymd(d)] !== undefined ? OV[ymd(d)] : defaultTimes(d);
+const freeFor = d => timesFor(d).map(t => at(d,t)).filter(x => x > new Date() && !taken.has(+x));
+function inRange(d){ const t = todayD(); return d >= t && d <= new Date(t.getFullYear(), t.getMonth(), t.getDate()+S.days_ahead); }
+
+/* ---------- date din Supabase ---------- */
+async function loadPublicData(){
+  try{
+    const a = await sb.from("booking_settings").select("*").eq("id",1).single();
+    if (a.data) S = {slot_minutes:a.data.slot_minutes, days_ahead:a.data.days_ahead, weekly:a.data.weekly};
+    const b = await sb.from("booking_days").select("*").gte("day", ymd(todayD()));
+    OV = {}; (b.data||[]).forEach(r => OV[r.day] = r.slots);
+    const to = new Date(Date.now() + (S.days_ahead+2)*864e5);
+    const c = await sb.rpc("taken_slots", {from_ts:new Date().toISOString(), to_ts:to.toISOString()});
+    taken = new Set((c.data||[]).map(s => +new Date(s)));
+  }catch(e){}
+}
+async function loadBookings(){
+  const {data, error} = await sb.from("bookings").select("*").gte("slot_start", todayD().toISOString()).order("slot_start");
+  if (error){ $("bkList").textContent = "Eroare la încărcare: "+error.message; return; }
+  bkAll = data; BK = {};
+  data.forEach(b => (BK[ymd(new Date(b.slot_start))] = BK[ymd(new Date(b.slot_start))] || []).push(b));
+  drawUpcoming(); drawAdm();
+}
+
+/* ---------- calendar (folosit și de public, și de admin) ---------- */
+function drawCal(el, mode){
+  const y = month.getFullYear(), m = month.getMonth(), n = new Date(y,m+1,0).getDate();
+  const lead = (new Date(y,m,1).getDay()+6)%7, today = todayD();
+  let h = '<div class="calh"><button class="nav" data-n="-1" aria-label="Luna anterioară">‹</button><b>'+MONTHS[m]+' '+y+'</b><button class="nav" data-n="1" aria-label="Luna următoare">›</button></div><div class="grid">';
+  WD.forEach(w => h += '<div class="wd">'+w+'</div>');
+  for (let i = 0; i < lead; i++) h += "<div></div>";
+  for (let d = 1; d <= n; d++){
+    const dt = new Date(y,m,d), k = ymd(dt); let cls = "day", dis = false, extra = "";
+    if (mode === "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
+    else { dis = dt < today; cls += timesFor(dt).length ? " open" : " off"; const c = (BK[k]||[]).length; if (c) extra = "<i>"+c+"</i>"; }
+    if (k === sel[mode]) cls += " sel";
+    if (+dt === +today) cls += " today";
+    h += '<button class="'+cls+'" data-k="'+k+'"'+(dis?" disabled":"")+'>'+d+extra+'</button>';
+  }
+  el.innerHTML = h + "</div>";
+  el.querySelectorAll(".nav").forEach(b => b.onclick = () => { month = new Date(y, m+Number(b.dataset.n), 1); redraw(); });
+  el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode === "pub") selSlot = null; redraw(); });
+}
+const redraw = () => adminOn ? drawAdm() : drawPub();
+
+/* ---------- partea publică ---------- */
+function drawPub(){
+  drawCal($("calPub"), "pub");
+  const box = $("slots"); box.innerHTML = "";
+  $("formCard").classList.toggle("hidden", !selSlot);
+  if (!sel.pub){ $("slotH").textContent = "Ora"; box.innerHTML = '<span class="muted">Alege o zi din calendar.</span>'; return; }
+  const d = parse(sel.pub);
+  $("slotH").textContent = "Ore libere: "+fmtDate(d);
+  const free = freeFor(d);
+  if (!free.length) box.innerHTML = '<span class="muted">Nu mai sunt ore libere în această zi.</span>';
+  free.forEach(x => {
+    const b = document.createElement("button");
+    b.className = "chip"+(selSlot === +x ? " on" : ""); b.textContent = fmtTime(x);
+    b.onclick = () => { selSlot = +x; drawPub(); $("formCard").scrollIntoView({behavior:"smooth",block:"nearest"}); };
+    box.appendChild(b);
+  });
+  if (selSlot) $("formH").textContent = "Datele tale pentru "+fmtDate(d)+", ora "+fmtTime(new Date(selSlot));
+}
+$("bookBtn").onclick = async () => {
+  const name = $("f_name").value.trim(), phone = $("f_phone").value.trim();
+  if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
+  $("bookBtn").disabled = true;
+  const when = new Date(selSlot);
+  const {error} = await sb.from("bookings").insert({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim()||null, note:$("f_note").value.trim()||null});
+  $("bookBtn").disabled = false;
+  if (error){
+    if (error.code === "23505"){ show($("pubMsg"),"err","Ora tocmai a fost ocupată. Alege altă oră."); selSlot = null; await loadPublicData(); drawPub(); }
+    else show($("pubMsg"),"err","Nu am putut salva programarea. Încearcă din nou sau sună-ne.");
+    return;
+  }
+  show($("pubMsg"),"ok","Programat: "+fmtDate(when)+", ora "+fmtTime(when)+". Te contactăm.");
+  selSlot = null; await loadPublicData(); drawPub();
+};
+
+/* ---------- admin ---------- */
+function goAdmin(on){ adminOn = on; $("pub").classList.toggle("hidden", on); $("adm").classList.toggle("hidden", !on); if (on) checkSession(); else drawPub(); }
+$("toAdmin").onclick = () => goAdmin(true);
+$("toPub").onclick = () => goAdmin(false);
+async function checkSession(){
+  const {data} = await sb.auth.getSession();
+  const ok = data.session && data.session.user.email === ADMIN_EMAIL;
+  $("loginCard").classList.toggle("hidden", !!ok); $("adminPanel").classList.toggle("hidden", !ok);
+  if (ok){ renderSettingsForm(); loadBookings(); }
+}
+$("loginBtn").onclick = async () => {
+  const {error} = await sb.auth.signInWithPassword({email:$("a_email").value.trim(), password:$("a_pass").value});
+  if (error) return show($("loginMsg"),"err","Email sau parolă greșită.");
+  checkSession();
+};
+$("logoutBtn").onclick = async () => { await sb.auth.signOut(); checkSession(); };
+
+function drawAdm(){
+  if (!adminOn) return;
+  drawCal($("calAdm"), "adm");
+  const box = $("dayEd"), k = sel.adm;
+  if (!k){ box.innerHTML = '<p class="muted" style="margin:0">Alege o zi din calendar ca să-i setezi orele.</p>'; return; }
+  const d = parse(k), booked = BK[k] || [], bt = {};
+  booked.forEach(b => bt[fmtTime(new Date(b.slot_start))] = b);
+  if (!edit || edit.k !== k) edit = {k, set:new Set(timesFor(d))};
+  const grid = []; for (let m = 420; m + S.slot_minutes <= 1260; m += S.slot_minutes) grid.push(tstr(m));
+  const all = [...new Set([...grid, ...edit.set, ...Object.keys(bt)])].sort();
+  box.innerHTML = "<h2>"+fmtDate(d)+"</h2><p class='muted' style='margin-top:-6px'>Apasă pe ore ca să le deschizi (închis la culoare) sau să le închizi.</p><div class='slots' id='edSlots'></div>"
+    + '<button class="btn" id="saveDay">Salvează ziua</button><button class="btn ghost" id="closeDay">Închide ziua</button><button class="btn ghost" id="stdDay">Program standard</button><button class="btn ghost" id="repDay">Repetă în toate zilele de '+DAYS[d.getDay()]+' din lună</button>'
+    + '<div class="msg" id="dayMsg" role="status"></div><div id="dayBk"></div>';
+  all.forEach(t => {
+    const b = document.createElement("button");
+    if (bt[t]){ b.className = "chip booked"; b.disabled = true; b.textContent = t+" · "+bt[t].name; }
+    else { b.className = "chip"+(edit.set.has(t) ? " on" : ""); b.textContent = t; b.onclick = () => { edit.set.has(t) ? edit.set.delete(t) : edit.set.add(t); drawAdm(); }; }
+    $("edSlots").appendChild(b);
+  });
+  if (booked.length){
+    $("dayBk").innerHTML = '<div class="dayh" style="margin-top:16px">Programări în această zi</div>';
+    booked.forEach(b => $("dayBk").appendChild(bkRow(b, false)));
+  }
+  $("closeDay").onclick = () => { edit.set = new Set(); drawAdm(); };
+  $("stdDay").onclick = () => { edit.set = new Set(defaultTimes(d)); drawAdm(); };
+  const withBooked = (dt, base) => [...new Set([...base, ...(BK[ymd(dt)]||[]).map(b => fmtTime(new Date(b.slot_start)))])].sort();
+  $("saveDay").onclick = async () => {
+    const slots = withBooked(d, edit.set);
+    const {error} = await sb.from("booking_days").upsert({day:k, slots});
+    if (error) return show($("dayMsg"),"err","Nu s-a salvat: "+error.message);
+    OV[k] = slots; drawAdm(); show($("dayMsg"),"ok","Ziua a fost salvată.");
+  };
+  $("repDay").onclick = async () => {
+    const rows = [], n = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+    for (let i = 1; i <= n; i++){ const x = new Date(d.getFullYear(), d.getMonth(), i); if (x.getDay() === d.getDay() && x >= todayD()) rows.push({day:ymd(x), slots:withBooked(x, edit.set)}); }
+    const {error} = await sb.from("booking_days").upsert(rows);
+    if (error) return show($("dayMsg"),"err","Nu s-a salvat: "+error.message);
+    rows.forEach(r => OV[r.day] = r.slots); drawAdm(); show($("dayMsg"),"ok","Salvat pe "+rows.length+" zile.");
+  };
+}
+function bkRow(b, withDate){
+  const d = new Date(b.slot_start), r = document.createElement("div"); r.className = "bk";
+  r.innerHTML = '<div><b>'+(withDate ? "" : "")+fmtTime(d)+' · '+esc(b.name)+'</b><a href="tel:'+esc(b.phone)+'">'+esc(b.phone)+'</a>'
+    + (b.email ? "<br>"+esc(b.email) : "") + (b.note ? '<br><span class="muted">'+esc(b.note)+'</span>' : "") + '</div><button class="btn danger">Anulează</button>';
+  r.querySelector("button").onclick = async () => {
+    if (!confirm("Anulezi programarea lui "+b.name+"?")) return;
+    await sb.from("bookings").delete().eq("id", b.id); loadBookings();
+  };
+  return r;
+}
+function drawUpcoming(){
+  const box = $("bkList");
+  if (!bkAll.length){ box.textContent = "Nu există programări viitoare."; return; }
+  box.innerHTML = ""; let last = "";
+  bkAll.forEach(b => {
+    const d = new Date(b.slot_start);
+    if (ymd(d) !== last){ last = ymd(d); const h = document.createElement("div"); h.className = "dayh"; h.textContent = fmtDate(d); box.appendChild(h); }
+    box.appendChild(bkRow(b, true));
+  });
+}
+function renderSettingsForm(){
+  $("weekly").innerHTML = "";
+  [1,2,3,4,5,6,0].forEach(i => {
+    const w = S.weekly[i] || DEF, r = document.createElement("div"); r.className = "row";
+    r.innerHTML = '<label class="d"><input type="checkbox" data-d="'+i+'" data-k="on" '+(w.on?"checked":"")+'> '+DAYS[i]+'</label>'
+      + '<input type="time" data-d="'+i+'" data-k="from" value="'+w.from+'" aria-label="De la"><span>–</span><input type="time" data-d="'+i+'" data-k="to" value="'+w.to+'" aria-label="Până la">';
+    $("weekly").appendChild(r);
+  });
+  $("s_slot").value = S.slot_minutes; $("s_ahead").value = S.days_ahead;
+}
+$("saveBtn").onclick = async () => {
+  const weekly = {};
+  document.querySelectorAll("#weekly input").forEach(el => { const d = el.dataset.d; weekly[d] = weekly[d] || {}; weekly[d][el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
+  const row = {id:1, slot_minutes:+$("s_slot").value || 30, days_ahead:+$("s_ahead").value || 60, weekly};
+  const {error} = await sb.from("booking_settings").upsert(row);
+  if (error) return show($("setMsg"),"err","Nu s-a salvat: "+error.message);
+  S = {slot_minutes:row.slot_minutes, days_ahead:row.days_ahead, weekly}; edit = null;
+  show($("setMsg"),"ok","Program standard salvat."); drawAdm();
+};
+
+/* ---------- pornire ---------- */
+(async () => {
+  await loadPublicData();
+  const t = todayD();
+  for (let i = 0; i <= S.days_ahead; i++){
+    const d = new Date(t.getFullYear(), t.getMonth(), t.getDate()+i);
+    if (freeFor(d).length){ sel.pub = ymd(d); month = new Date(d.getFullYear(), d.getMonth(), 1); break; }
+  }
+  if (location.hash === "#admin") goAdmin(true); else drawPub();
+})();
+</script>
+</body>
+</html>
