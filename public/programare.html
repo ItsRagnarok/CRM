@@ -176,8 +176,8 @@ function drawCal(el, mode){
     const dt = new Date(y,m,d), k = ymd(dt); let cls = "day", dis = false, extra = "";
     if (mode === "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
     else { dis = dt < today; cls += timesFor(dt).length ? " open" : " off"; const c = (BK[k]||[]).length; if (c) extra = "<i>"+c+"</i>"; }
-    if (k = sel[mode]) cls += " sel";
-    if (+dt = +today) cls += " today";
+    if (k === sel[mode]) cls += " sel";
+    if (+dt === +today) cls += " today";
     h += '<button class="'+cls+'" data-k="'+k+'"'+(dis?" disabled":"")+'>'+d+extra+'</button>';
   }
   el.innerHTML = h + "</div>";
