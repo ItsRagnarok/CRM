@@ -174,7 +174,7 @@ function drawCal(el, mode){
   for (let i = 0; i < lead; i) h += "<div></div>";
   for (let d = 1; d <= n; d){
     const dt = new Date(y,m,d), k = ymd(dt); let cls = "day", dis = false, extra = "";
-    if (mode = "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
+    if (mode === "pub"){ const open = inRange(dt) && freeFor(dt).length > 0; dis = !open; cls += open ? " open" : " off"; }
     else { dis = dt < today; cls += timesFor(dt).length ? " open" : " off"; const c = (BK[k]||[]).length; if (c) extra = "<i>"+c+"</i>"; }
     if (k = sel[mode]) cls += " sel";
     if (+dt = +today) cls += " today";
@@ -182,7 +182,7 @@ function drawCal(el, mode){
   }
   el.innerHTML = h + "</div>";
   el.querySelectorAll(".nav").forEach(b => b.onclick = () => { month = new Date(y, m+Number(b.dataset.n), 1); redraw(); });
-  el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode = "pub") selSlot = null; redraw(); });
+  el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode ==== "pub") selSlot = null; redraw(); });
 }
 const redraw = () => adminOn ? drawAdm() : drawPub();
 
