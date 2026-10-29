@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Evidența orelor tehnicienilor din teren: ce trebuie să conțină și cum o ții fără hârtii | ElectroField</title>
+<meta name="description" content="Ce spune Codul muncii despre evidența orelor, ce trebuie să conțină pontajul pentru angajații din teren, greșeli frecvente și un calculator de foaie de pontaj săptămânală.">
+<link rel="canonical" href="https://www.electrofield.ro/blog/evidenta-orelor-tehnicieni-teren-pontaj">
+<meta property="og:title" content="Evidența orelor tehnicienilor din teren: ce trebuie să conțină și cum o ții fără hârtii">
+<meta property="og:description" content="Ce spune Codul muncii despre evidența orelor, ce trebuie să conțină pontajul pentru angajații din teren, greșeli frecvente și un calculator de foaie de pontaj săptămânală.">
+<meta property="og:type" content="article">
+<meta name="theme-color" content="#1c1c22">
+<link rel="stylesheet" href="/blog-style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Evidența orelor tehnicienilor din teren: ce trebuie să conțină și cum o ții fără hârtii","datePublished":"2026-10-28","inLanguage":"ro","author":{"@type":"Organization","name":"ElectroField"},"publisher":{"@type":"Organization","name":"ElectroField"},"mainEntityOfPage":"https://www.electrofield.ro/blog/evidenta-orelor-tehnicieni-teren-pontaj"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap nav"><a class="logo" href="/">ElectroField</a><a class="l h" href="/#platforma">Platformă</a><a class="l h" href="/#functionalitati">Funcționalități</a><a class="l h" href="/#preturi">Prețuri</a><a class="l" href="/blog" aria-current="page">Blog</a><a class="btn ghost h" href="/login">Conectează-te</a><a class="btn" href="mailto:contact@electrofield.ro">Începe acum</a></div></header>
+<main>
+<article class="art">
+<p class="crumbs"><a href="/blog">Blog</a> / Pontaj și evidența orelor</p>
+<h1>Evidența orelor tehnicienilor din teren: ce trebuie să conțină și cum o ții fără hârtii</h1>
+<p class="meta">28 octombrie 2026 · 6 minute de citit</p>
+<p>Pentru echipele care lucrează la clienți, evidența orelor e mai greu de ținut: oamenii pornesc din locuri diferite, termină la ore diferite, iar patronul află abia seara cât s-a lucrat. În același timp, e o obligație care se verifică la control.</p>
+<h2>Ce spune legea, pe scurt</h2>
+<ul>
+<li>Angajatorul trebuie să țină <strong>evidența orelor de muncă prestate zilnic de fiecare salariat</strong>, cu ora de începere și ora de sfârșit a programului (Codul muncii, art. 119), și s-o prezinte inspectorilor de muncă la control.</li>
+<li><strong>Nu există un formular unic.</strong> Evidența poate fi condică de prezență, foaie de pontaj sau aplicație electronică.</li>
+<li>Obligația se aplică și angajaților <strong>fără loc de muncă fix</strong>, cum sunt tehnicienii din teren. Evidența trebuie să reflecte timpul efectiv lucrat, nu doar programul din contract.</li>
+</ul>
+<h2>Ce să conțină evidența ta</h2>
+<ul>
+<li>ora de început și de sfârșit, în fiecare zi;</li>
+<li>pauzele;</li>
+<li>orele suplimentare;</li>
+<li>concediile, absențele și învoirile;</li>
+<li>recomandat, nu obligatoriu: lucrarea la care s-a lucrat, ca să știi cât a costat fiecare.</li>
+</ul>
+<h2>Greșeli frecvente</h2>
+<p>Pontajul se completează la sfârșitul lunii, din memorie. Se copiază același program în fiecare zi, deși realitatea diferă. Timpul de deplasare nu apare nicăieri. Foile se pierd în mașină. Orice evidență care nu seamănă cu ce s-a întâmplat de fapt devine o problemă la control și la calculul salariilor.</p>
+<h2>Calculator: foaie de pontaj săptămânală</h2>
+<p>Completează orele unei săptămâni și vezi totalul față de normă. Valorile de pornire sunt un exemplu.</p>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:24px 0"><div id="tp"></div></div>
+<script>
+(function(){const D=['Luni','Marți','Miercuri','Joi','Vineri','Sâmbătă','Duminică'],t=document.getElementById('tp'),G='display:grid;grid-template-columns:1.1fr 1fr 1fr .8fr .8fr;gap:8px;align-items:center;margin-bottom:6px';
+t.innerHTML='<div style="'+G+';font-size:13px;color:var(--mut)"><span>Zi</span><span>Început</span><span>Sfârșit</span><span>Pauză (min)</span><span>Ore</span></div>'+D.map((d,i)=>{const w=i<5;return '<div style="'+G+'"><span style="color:var(--tx)">'+d+'</span><input id="ts'+i+'" type="time" value="'+(w?'08:00':'')+'" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit;margin:0"><input id="te'+i+'" type="time" value="'+(w?(i==0?'17:30':'16:30'):'')+'" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit;margin:0"><input id="tb'+i+'" type="number" min="0" value="'+(w?30:0)+'" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit;margin:0"><b id="th'+i+'" style="color:var(--tx)">0</b></div>'}).join('')+'<label style="display:block;margin-top:12px;color:var(--tx);font-size:14px">Norma săptămânală (ore)<input id="tn" type="number" min="0" value="40" style="width:100%;padding:9px 12px;margin-top:4px;background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:10px;font:inherit;width:140px"></label><div id="to" style="margin-top:14px"></div>';
+const g=id=>document.getElementById(id),m=v=>{if(!v)return null;const p=v.split(':');return +p[0]*60+ +p[1]},f=x=>x.toFixed(1).replace('.',',');
+function c(){let tot=0;for(let i=0;i<7;i++){const s=m(g('ts'+i).value),e=m(g('te'+i).value),b=+g('tb'+i).value||0;let h=0;if(s!=null&&e!=null){let d=e-s;if(d<=0)d+=1440;h=Math.max(0,d-b)/60}tot+=h;g('th'+i).textContent=f(h)}
+const n=+g('tn').value||0,df=tot-n;g('to').innerHTML='<div style="font:800 26px Syne,Inter,sans-serif;color:var(--tx)">'+f(tot)+' ore în săptămână</div><p style="margin:6px 0 0;color:var(--tx)">'+(df>0?'Cu <strong style="color:#f5a623">'+f(df)+' ore peste</strong> norma de '+n+' ore. Orele peste normă se tratează conform legii și contractului; stabilește cum cu un specialist.':df<0?'Cu '+f(-df)+' ore sub norma de '+n+' ore.':'Exact norma de '+n+' ore.')+'</p>'}
+t.addEventListener('input',c);c()})();
+</script>
+<h2>Cum o ții fără hârtii</h2>
+<p>Cea mai sigură evidență este cea înregistrată în momentul în care se întâmplă: tehnicianul marchează începutul când ajunge la lucrare și sfârșitul când termină, iar orele se adună automat pe zi, pe lucrare și pe lună. Astfel nu mai reconstruiești nimic din memorie, iar fiecare oră se poate lega de lucrarea la care s-a făcut.</p>
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 24px;margin:24px 0;font-size:15px"><strong>Notă:</strong> articolul oferă informații generale și nu înlocuiește consultanța de specialitate. Modul în care se tratează orele suplimentare și alte cerințe se stabilesc conform legii, contractelor și regulamentului intern, cu un specialist în legislația muncii.</div>
+<h2>Surse</h2>
+<ul>
+<li><a href="https://www.inspectiamuncii.ro/documents/606948/47538922/Clarificari+privind+obligatia+angajatorului+de+a+tine+evidenta+.pdf/595c318a-9ece-4163-baaf-d7bf83169cec" target="_blank" rel="noopener">Inspecția Muncii: clarificări privind obligația angajatorului de a ține evidența timpului de muncă</a></li>
+<li><a href="https://e-juridic.manager.ro/articole/condica-de-prezenta-la-locul-de-munca-e-obligatorie-sau-nu-semnatura-olografa-a-angajatului-29261.html" target="_blank" rel="noopener">e-Juridic: condica de prezență și formele evidenței</a></li>
+<li><a href="https://www.avocatnet.ro/t80914/pontaje.html" target="_blank" rel="noopener">Avocatnet: evidența timpului de muncă</a></li>
+</ul>
+<p>Citește și: <a href="/blog/urmarire-gps-echipe-teren-gdpr">Urmărirea echipelor cu GPS și GDPR</a>.</p>
+<div class="cta">
+<h2>Orele fiecărei lucrări, măsurate automat</h2>
+<p>În ElectroField, timpul de execuție al lucrărilor se măsoară automat, iar pontajul, concediile și absențele se țin în același loc. Îți arătăm pe lucrările firmei tale.</p>
+<a class="btn" href="mailto:contact@electrofield.ro">Scrie-ne</a> <a class="btn ghost" href="/blog">← Înapoi la resurse</a>
+</div>
+</article>
+</main>
+<footer><div class="wrap"><a href="/">Acasă</a><a href="/blog">Blog</a><a href="/login">Conectează-te</a><p>© 2026 ElectroField</p></div></footer>
+</body>
+</html>
