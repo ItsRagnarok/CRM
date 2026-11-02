@@ -1,24 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { PreventZoom } from "@/components/prevent-zoom";
 import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter-variable.ttf",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const unbounded = Unbounded({
+const unbounded = localFont({
+  src: "./fonts/unbounded-variable.ttf",
   variable: "--font-unbounded",
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  weight: "200 900",
+  display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-variable.ttf",
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: "100 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
