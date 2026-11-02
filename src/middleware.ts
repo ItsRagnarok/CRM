@@ -4,6 +4,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare"];
 export async function middleware(request: NextRequest) {
+  // Public SEO files and the blog stylesheet do not need a session lookup.
+  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css"].includes(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(

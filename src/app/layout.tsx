@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
 import { PreventZoom } from "@/components/prevent-zoom";
+import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 const inter = Inter({
@@ -22,7 +23,10 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "ElectroField",
-  description: "Echipă. Lucrări. Control.",
+  description: SITE_DESCRIPTION,
+  metadataBase: new URL(SITE_URL),
+  // Public marketing pages opt in explicitly. App and account pages stay out of search.
+  robots: { index: false, follow: false },
   manifest: "/manifest.json",
   icons: {
     icon: [

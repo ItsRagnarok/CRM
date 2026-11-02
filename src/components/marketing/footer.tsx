@@ -13,6 +13,10 @@ export function MarketingFooter() {
           <a href="#platforma">Platformă</a>
           <a href="#functionalitati">Funcționalități</a>
           <a href="#cum-functioneaza">Cum funcționează</a>
+          <a href="/blog">Ghiduri pentru firme de instalații</a>
+          <a href="/programare">Programează o discuție</a>
+          <a href="/termeni">Termeni și condiții</a>
+          <a href="/confidentialitate">Confidențialitate</a>
           <a href="/login">Conectează-te</a>
         </div>
         <div className={s.footCopy}>© {new Date().getFullYear()} ElectroField</div>

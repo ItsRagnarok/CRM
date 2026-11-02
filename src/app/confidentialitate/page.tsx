@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-export const metadata = { title: "Politica de confidențialitate — ElectroField" };
+import { publicPageMetadata } from "@/lib/seo";
+
+export const metadata = publicPageMetadata("Politica de confidențialitate — ElectroField", "Află cum sunt prelucrate datele personale în platforma ElectroField și cum poți contacta echipa pentru întrebări despre confidențialitate.", "/confidentialitate");
 
 export default function PrivacyPolicyPage() {
   return (

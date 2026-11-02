@@ -2,7 +2,9 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { TermsContent } from "@/components/terms-content";
 
-export const metadata = { title: "Termeni și condiții — ElectroField" };
+import { publicPageMetadata } from "@/lib/seo";
+
+export const metadata = publicPageMetadata("Termeni și condiții — ElectroField", "Termenii și condițiile de utilizare a platformei ElectroField pentru gestionarea lucrărilor și echipelor de teren.", "/termeni");
 
 export default function TermsPage() {
   return (
