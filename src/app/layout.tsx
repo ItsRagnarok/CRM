@@ -1,24 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Unbounded, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { PreventZoom } from "@/components/prevent-zoom";
 import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
-const inter = Inter({
+const inter = localFont({
+  src: "./fonts/inter-variable.ttf",
   variable: "--font-inter",
-  subsets: ["latin"],
+  weight: "100 900",
+  display: "swap",
 });
 
-const unbounded = Unbounded({
+const unbounded = localFont({
+  src: "./fonts/unbounded-variable.ttf",
   variable: "--font-unbounded",
-  subsets: ["latin"],
-  weight: ["500", "700", "800"],
+  weight: "200 900",
+  display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
+const jetbrainsMono = localFont({
+  src: "./fonts/jetbrains-mono-variable.ttf",
   variable: "--font-mono",
-  subsets: ["latin"],
-  weight: ["500", "700"],
+  weight: "100 800",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -30,10 +34,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
+      { url: "/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-icon.png",
+    shortcut: "/favicon.ico",
   },
 };
 
@@ -53,9 +60,11 @@ export default function RootLayout({
   return (
     <html
       lang="ro"
+      suppressHydrationWarning
       className={`${inter.variable} ${unbounded.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full">
+        <script dangerouslySetInnerHTML={{ __html: 'try{document.documentElement.dataset.theme=localStorage.getItem("ef-theme")==="dark"?"dark":"light"}catch(e){}' }} />
         <PreventZoom />
         {children}
       </body>

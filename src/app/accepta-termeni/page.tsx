@@ -18,7 +18,7 @@ export default async function AcceptTermsPage() {
 
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("role, full_name, organizations(id, name, is_active, terms_accepted_at)")
+    .select("role, full_name, organizations!profiles_organization_id_fkey(id, name, is_active, terms_accepted_at)")
     .eq("id", user.id)
     .maybeSingle();
 

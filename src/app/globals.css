@@ -78,3 +78,40 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+/* Only authenticated application surfaces adopt the selected theme. Marketing keeps its own palette. */
+html[data-theme="dark"] .ef-app-theme {
+  color-scheme: dark;
+  --background: #10141c;
+  --foreground: #e8edf5;
+  --color-border: #30394a;
+  --color-muted: #b0baca;
+  --color-muted-2: #9ba8bd;
+  --color-neutral: #c4cedd;
+  --color-neutral-bg: #242d3c;
+  --color-electric: #78adff;
+  --color-electric-soft: #1b3456;
+  --color-purple: #b39bff;
+  --color-purple-soft: #302647;
+  --color-amber-soft: #3a2d18;
+  --color-success: #83d9a1;
+  --color-success-bg: #183a2b;
+  --color-warning: #f7ce76;
+  --color-warning-bg: #3c3019;
+  --color-danger: #ffabab;
+  --color-danger-bg: #45242a;
+  --color-info: #9ec5ff;
+  --color-info-bg: #203653;
+  background-color: var(--background);
+  color: var(--foreground);
+}
+html[data-theme="dark"] .ef-app-theme :is(.bg-white, [class~="bg-[#fcfcfd]"], [class~="bg-[#fafafb]"], [class~="bg-[#faf9fd]"]) { background-color: #1a2130; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#f4f3f9]"], [class~="bg-[#f6f7fa]"], [class~="bg-[#f9fafb]"], [class~="bg-[#f2f4f7]"], [class~="bg-[#eef0f3]"], [class~="bg-[#f2f0f9]"], [class~="bg-[#f0f5ff]"]) { background-color: #242d3c; }
+html[data-theme="dark"] .ef-app-theme :is([class~="text-[#101828]"], [class~="text-[#17151f]"], [class~="text-[#1c1c22]"], [class~="text-[#0b1530]"], [class~="text-[#344054]"]) { color: #e8edf5; }
+html[data-theme="dark"] .ef-app-theme :is([class~="text-[#475467]"], [class~="text-[#5c5670]"], [class~="text-[#667085]"], [class~="text-[#6f727c]"], [class~="text-[#9b93b5]"], [class~="text-[#98a2b3]"], [class~="text-[#9da0a8]"]) { color: #b0baca; }
+html[data-theme="dark"] .ef-app-theme :is([class~="border-[#d0d5dd]"], [class~="border-[#e7e3f5]"], [class~="border-[#eaecf0]"], [class~="border-[#f2f4f7]"], [class~="border-[#f2f0f9]"]) { border-color: #30394a; }
+html[data-theme="dark"] .ef-app-theme :is([class~="divide-[#f2f4f7]"], [class~="divide-[#f2f0f9]"]) > :not(:last-child) { border-color: #30394a; }
+html[data-theme="dark"] .ef-app-theme :is([class~="hover:bg-[#f9fafb]"], [class~="hover:bg-[#faf9fd]"]):hover { background-color: #2b3548; }
+html[data-theme="dark"] .ef-app-theme :is(input, select, textarea) { color: #e8edf5; background-color: #151c28; }
+html[data-theme="dark"] .ef-app-theme :is(.bg-purple, .bg-electric, .bg-success, .bg-warning, .bg-danger, .bg-info) { color: #10141c; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[#fef9ec]"]) { background-color: #3c3019; }

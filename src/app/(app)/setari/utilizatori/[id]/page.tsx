@@ -9,7 +9,7 @@ import { AccountForm } from "./account-form";
 
 export default async function UserDocumentsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { organization } = await requireSessionContext();
+  const { organization, readOnly } = await requireSessionContext();
   const supabase = await createClient();
 
   const [{ data: profile }, { data: email }] = await Promise.all([
@@ -19,7 +19,7 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
       .eq("id", id)
       .eq("organization_id", organization.id)
       .maybeSingle(),
-    supabase.rpc("company_admin_get_employee_email", { target_profile_id: id }),
+    readOnly ? supabase.rpc("ef_preview_employee_email", { target_profile_id: id }) : supabase.rpc("company_admin_get_employee_email", { target_profile_id: id }),
   ]);
   if (!profile) notFound();
 

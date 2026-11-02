@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Search, Bell } from "lucide-react";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { markNotificationRead, markAllNotificationsRead } from "@/app/(app)/notifications-actions";
 
 type Notification = {
@@ -24,7 +25,7 @@ function timeAgo(iso: string) {
   return `acum ${Math.round(hours / 24)} zile`;
 }
 
-export function Topbar({ notifications }: { notifications: Notification[] }) {
+export function Topbar({ notifications, readOnly }: { notifications: Notification[]; readOnly?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const showSearch = pathname === "/dashboard";
@@ -41,7 +42,7 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
   function handleOpen() {
     const willOpen = !open;
     setOpen(willOpen);
-    if (willOpen && unreadCount > 0) {
+    if (willOpen && unreadCount > 0 && !readOnly) {
       setLocallyRead(new Set(notifications.map((n) => n.id)));
       startTransition(() => {
         markAllNotificationsRead();
@@ -51,7 +52,7 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
 
   function handleClick(n: Notification) {
     setOpen(false);
-    if (!n.is_read) markNotificationRead(n.id);
+    if (!n.is_read && !readOnly) markNotificationRead(n.id);
     if (n.related_job_id) router.push(`/lucrari/${n.related_job_id}`);
   }
 
@@ -68,6 +69,7 @@ export function Topbar({ notifications }: { notifications: Notification[] }) {
       )}
 
       <div className="flex-1" />
+      <ThemeToggle />
 
       <div className="relative">
         <button
