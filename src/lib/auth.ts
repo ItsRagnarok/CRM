@@ -44,11 +44,13 @@ export async function requireAdminContext(): Promise<AdminContext> {
     redirect("/login");
   }
 
-  const { data: admin } = await supabase
+  const { data: admin, error: adminError } = await supabase
     .from("platform_admins")
     .select("*")
     .eq("id", user.id)
     .maybeSingle();
+
+  if (adminError) throw new Error("Nu am putut verifica accesul de administrator. Reîncearcă.");
 
   if (!admin) {
     redirect("/dashboard");
@@ -88,29 +90,37 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
 
   const preview = parsePreview((await cookies()).get(PREVIEW_COOKIE)?.value);
   if (preview) {
-    await requireAdminContext();
+    const identity = await createClient({ ignorePreview: true });
+    const { data: admin, error: adminError } = await identity.from("platform_admins").select("id").eq("id", user.id).maybeSingle();
+    if (adminError) throw new Error("Nu am putut verifica accesul de administrator.");
+    if (!admin) redirect("/auth/clear-preview");
     if ((await headers()).has("next-action")) throw new Error("Modul de vizualizare nu permite modificări.");
-    const { data: previewProfile } = await supabase.from("profiles").select("*, organizations(*)")
+    const { data: previewProfile, error: previewError } = await supabase.from("profiles").select("*, organizations!profiles_organization_id_fkey(*)")
       .eq("id", preview.profileId).eq("organization_id", preview.organizationId).maybeSingle();
-    if (!previewProfile?.organizations) redirect("/admin");
+    if (previewError) throw new Error("Nu am putut încărca vizualizarea companiei. Reîncearcă sau închide vizualizarea.");
+    if (!previewProfile?.organizations) redirect("/auth/clear-preview");
     const { organizations, ...profile } = previewProfile;
     return { userId: user.id, email: user.email ?? null, profile: profile as Profile, organization: organizations, readOnly: true };
   }
 
   // profiles.organization_id is a to-one FK, so this embed fetches both
   // rows in a single round trip instead of two sequential ones.
-  let { data: profileRow } = await supabase
+  const profileResult = await supabase
     .from("profiles")
-    .select("*, organizations(*)")
+    .select("*, organizations!profiles_organization_id_fkey(*)")
     .eq("id", user.id)
     .maybeSingle();
+  if (profileResult.error) throw new Error("Nu am putut încărca profilul companiei. Reîncearcă.");
+  let profileRow = profileResult.data;
 
   if (!profileRow) {
-    const { data: platformAdmin } = await supabase
+    const { data: platformAdmin, error: platformAdminError } = await supabase
       .from("platform_admins")
       .select("id")
       .eq("id", user.id)
       .maybeSingle();
+
+    if (platformAdminError) throw new Error("Nu am putut verifica accesul la platformă.");
 
     if (platformAdmin) {
       redirect("/admin");
@@ -140,16 +150,17 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
       throw rpcError;
     }
 
-    const { data: createdProfileRow } = await supabase
+    const { data: createdProfileRow, error: createdProfileError } = await supabase
       .from("profiles")
-      .select("*, organizations(*)")
+      .select("*, organizations!profiles_organization_id_fkey(*)")
       .eq("id", user.id)
       .single();
+    if (createdProfileError) throw new Error("Nu am putut încărca profilul creat. Reîncearcă.");
     profileRow = createdProfileRow;
   }
 
   if (!profileRow || !profileRow.organizations) {
-    redirect("/login");
+    throw new Error("Contul autentificat nu are o companie disponibilă. Contactează administratorul platformei.");
   }
 
   const { organizations: organization, ...profile } = profileRow;

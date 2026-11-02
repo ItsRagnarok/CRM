@@ -16,7 +16,7 @@ async function requireAdminOfUnacceptedOrg() {
 
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("role, organization_id, organizations(id, is_active, terms_accepted_at)")
+    .select("role, organization_id, organizations!profiles_organization_id_fkey(id, is_active, terms_accepted_at)")
     .eq("id", user.id)
     .maybeSingle();
 

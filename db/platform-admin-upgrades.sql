@@ -95,13 +95,14 @@ create table if not exists public.platform_usage_sessions(
 );
 create index if not exists platform_usage_sessions_org_seen on public.platform_usage_sessions(organization_id,last_seen_at desc);
 create table if not exists public.platform_usage_daily(
+ id uuid primary key default gen_random_uuid(),
  organization_id uuid not null references public.organizations(id) on delete cascade,
  profile_id uuid not null references public.profiles(id) on delete cascade,
  day date not null,
  channel text not null check(channel in ('web','mobile')),
  active_seconds integer not null default 0,
  sessions integer not null default 0,
- primary key(organization_id,profile_id,day,channel)
+ constraint platform_usage_daily_scope_key unique(organization_id,profile_id,day,channel)
 );
 alter table public.platform_usage_sessions enable row level security;
 alter table public.platform_usage_daily enable row level security;

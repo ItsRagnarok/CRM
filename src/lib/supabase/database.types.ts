@@ -1808,6 +1808,7 @@ export type Database = {
           active_seconds: number
           channel: string
           day: string
+          id: string
           organization_id: string
           profile_id: string
           sessions: number
@@ -1816,6 +1817,7 @@ export type Database = {
           active_seconds?: number
           channel: string
           day: string
+          id?: string
           organization_id: string
           profile_id: string
           sessions?: number
@@ -1824,6 +1826,7 @@ export type Database = {
           active_seconds?: number
           channel?: string
           day?: string
+          id?: string
           organization_id?: string
           profile_id?: string
           sessions?: number
@@ -2594,7 +2597,6 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      ef_close_usage: { Args: never; Returns: undefined }
       _ddl_probe_fn2: { Args: never; Returns: number }
       _ddl_probe_fn3: { Args: { x: string }; Returns: number }
       company_admin_create_employee: {
@@ -2634,6 +2636,7 @@ export type Database = {
       current_client_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
+      ef_close_usage: { Args: never; Returns: undefined }
       ef_is_platform_admin: { Args: never; Returns: boolean }
       ef_preview_employee_email: {
         Args: { target_profile_id: string }
