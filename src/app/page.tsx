@@ -1,6 +1,39 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { MarketingLanding } from "@/components/marketing/marketing-landing";
+import { publicPageMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
+
+export const metadata = publicPageMetadata(
+  "CRM pentru firme de instalații și echipe de teren | ElectroField",
+  SITE_DESCRIPTION,
+  "/",
+);
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "ElectroField",
+      url: SITE_URL,
+      logo: `${SITE_URL}/icon-512.png`,
+      email: "contact@electrofield.ro",
+      areaServed: { "@type": "Country", name: "Romania" },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "ElectroField",
+      url: SITE_URL,
+      description: SITE_DESCRIPTION,
+      applicationCategory: "BusinessApplication",
+      operatingSystem: "Web, Android",
+      inLanguage: "ro-RO",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+      featureList: ["Gestionare lucrări", "Programări", "Clienți", "Echipe de teren", "Pontaj", "Materiale", "Rapoarte"],
+    },
+  ],
+};
 
 export default async function RootPage() {
   const supabase = await createClient();
@@ -9,7 +42,12 @@ export default async function RootPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <MarketingLanding />;
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+        <MarketingLanding />
+      </>
+    );
   }
 
   const { data: platformAdmin } = await supabase

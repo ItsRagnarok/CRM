@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      { source: "/blog/index.html", destination: "/blog", permanent: true },
+      { source: "/blog/index", destination: "/blog", permanent: true },
+      { source: "/blog/:slug.html", destination: "/blog/:slug", permanent: true },
+      { source: "/programare.html", destination: "/programare", permanent: true },
+    ];
+  },
   experimental: {
     // Server Actions default to a 1 MB body limit, which a real phone
     // camera photo or a scanned PDF document blows past immediately.

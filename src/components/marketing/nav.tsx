@@ -10,7 +10,6 @@ const LINKS = [
   { href: "#platforma", label: "Platformă" },
   { href: "#functionalitati", label: "Funcționalități" },
   { href: "#cum-functioneaza", label: "Cum funcționează" },
-  { href: "#preturi", label: "Prețuri" },
   { href: "#contact", label: "Contact" },
 ];
 

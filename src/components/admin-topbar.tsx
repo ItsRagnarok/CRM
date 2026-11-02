@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { Zap } from "lucide-react";
 import { signOutAdmin } from "@/app/admin/actions";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const NAV = [
   { href: "/admin", label: "Prezentare generală" },
   { href: "/admin/companii", label: "Companii" },
+  { href: "/admin/programari", label: "Programări" },
+  { href: "/admin/activitate", label: "Activitate" },
 ];
 
 export function AdminTopbar({ fullName }: { fullName: string }) {
@@ -35,6 +38,7 @@ export function AdminTopbar({ fullName }: { fullName: string }) {
         </nav>
       </div>
       <div className="flex items-center gap-4">
+        <ThemeToggle />
         <span className="text-[13px] text-[#a39bc4]">{fullName}</span>
         <form action={signOutAdmin}>
           <button

@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Programează o discuție | ElectroField</title>
+<meta name="description" content="Programează o discuție despre ElectroField, CRM pentru firme de instalații și echipe de teren din România. Alege o zi și un interval disponibil.">
+<link rel="canonical" href="https://www.electrofield.ro/programare">
+<meta property="og:title" content="Programează o discuție | ElectroField">
+<meta property="og:description" content="Descoperă cum gestionezi lucrările și echipele de teren cu ElectroField.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.electrofield.ro/programare">
+<meta property="og:locale" content="ro_RO">
+<meta property="og:image" content="https://www.electrofield.ro/marketing/van-dusk.jpg">
 <style>
 /* = Culori: schimbă-le aici ca să se potrivească cu site-ul = */
 :root{--bg:#f4f5f7;--card:#fff;--ink:#101828;--muted:#667085;--line:#e3e7ee;--accent:#f5a400;--ok:#1a7f4b;--err:#c0392b}
@@ -14,7 +22,6 @@ h1{font-size:1.5rem;margin:6px 0 4px}h2{font-size:1.05rem;margin:0 0 10px}
 .sub,.muted{color:var(--muted)}.sub{margin:0 0 16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
 .hidden{display:none}
-#toAdmin{-webkit-tap-highlight-color:transparent}
 /* calendar */
 .calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calh b{text-transform:capitalize;font-size:1.05rem}
@@ -50,6 +57,8 @@ input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radiu
 .dayh{font-weight:600;margin:14px 0 2px}.dayh:first-child{margin-top:0}
 details summary{cursor:pointer;font-weight:600}
 </style>
+<link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
+<link rel="shortcut icon" href="/favicon.ico">
 </head>
 <body>
 <main>
@@ -71,52 +80,6 @@ details summary{cursor:pointer;font-weight:600}
   <div class="msg" id="pubMsg" role="status"></div>
 </section>
 
-<!--  PARTEA DE ADMIN  -->
-<section id="adm" class="hidden">
-  <h1>Administrare programări</h1>
-  <div class="card" id="loginCard">
-    <label for="a_email">E-mail</label><input id="a_email" type="email" autocomplete="username">
-    <label for="a_pass">Parolă</label><input id="a_pass" type="password" autocomplete="current-password">
-    <button class="btn" id="loginBtn">Intră în cont</button>
-    <div class="msg" id="loginMsg" role="status"></div>
-  </div>
-
-  <div id="adminPanel" class="hidden">
-    <div class="card">
-      <div id="calAdm"></div>
-      <p class="legend">Linie galbenă = zi deschisă. Cifra galbenă = câte programări are ziua. Apasă pe o zi ca s-o editezi.</p>
-    </div>
-    <div class="card" id="dayEd"></div>
-    <div class="card"><h2>Următoarele programări</h2><div id="bkList" class="muted">Se încarcă...</div></div>
-    <details class="card">
-      <summary>Blochează o perioadă (concediu, zile ocupate)</summary>
-      <p class="muted" style="margin:8px 0 0">Zilele din perioadă dispar din calendarul public. Programările deja făcute rămân.</p>
-      <label for="b_from">De la</label><input id="b_from" type="date">
-      <label for="b_to">Până la (inclusiv)</label><input id="b_to" type="date">
-      <button class="btn" id="blockBtn">Blochează perioada</button>
-      <button class="btn ghost" id="unblockBtn">Revino la programul standard</button>
-      <div class="msg" id="blkMsg" role="status"></div>
-    </details>
-    <details class="card">
-      <summary>Texte afișate pe pagina de programare</summary>
-      <p class="muted" style="margin:8px 0 0">Poți folosi {data} și {ora}, acolo unde sunt în text. Lasă gol ca să revii la textul inițial.</p>
-      <div id="textsForm"></div>
-      <button class="btn" id="saveTexts">Salvează textele</button>
-      <div class="msg" id="txtMsg" role="status"></div>
-    </details>
-    <details class="card">
-      <summary>Program standard (se aplică zilelor pe care nu le-ai editat)</summary>
-      <div id="weekly" style="margin-top:12px"></div>
-      <label for="s_slot">Durata unei programări (minute)</label><input id="s_slot" type="number" min="10" step="5">
-      <label for="s_ahead">Câte zile în avans se pot face programări</label><input id="s_ahead" type="number" min="1" max="365">
-      <button class="btn" id="saveBtn">Salvează programul standard</button>
-      <div class="msg" id="setMsg" role="status"></div>
-    </details>
-    <button class="btn ghost" id="logoutBtn">Ieși din cont</button>
-  </div>
-  <br><button class="link" id="toPub">Înapoi la programare</button>
-</section>
-
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -124,7 +87,6 @@ details summary{cursor:pointer;font-weight:600}
 /* = COMPLETEAZĂ AICI (Supabase > Project Settings > API) = */
 const SUPABASE_URL = "https://hrzpowmmbuqihtbkisyu.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyenBvd21tYnVxaWh0Ymtpc3l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NDU1MDAsImV4cCI6MjEwNjEyMTUwMH0.XuGjlMo8DUFTNojNNxOlvhDr6DvpTdO_7CSEW7ifbMQ";
-const ADMIN_EMAIL  = "info@alpora.ro";
 /* ------------------------------------------------------- */
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -149,29 +111,11 @@ const DEFT = {
   book:"Confirmă programarea",
   ok:"Programat: {data}, ora {ora}. Te contactăm."
 };
-const TLAB = {
-  title:"Titlul paginii",
-  sub:"Text sub titlu",
-  slotsEmpty:"Titlul casetei cu ore (înainte de a alege o zi)",
-  pickDay:"Mesaj când nu e aleasă nicio zi",
-  slotsTitle:"Titlul orelor libere ({data})",
-  noSlots:"Mesaj când nu mai sunt ore libere",
-  formTitle:"Titlul formularului ({data}, {ora})",
-  book:"Textul butonului de confirmare",
-  ok:"Mesaj după programare ({data}, {ora})"
-};
 const T = () => ({...DEFT, ...((S.weekly && S.weekly._texts) || {})});
 const fill = (s,d,t) => String(s).replace(/\{data\}/g, d||"").replace(/\{ora\}/g, t||"");
 function applyTexts(){
   const t = T(); $("tTitle").textContent = t.title; $("bookBtn").textContent = t.book;
-  const sub = $("tSub"); sub.textContent = "";
-  const m = /\bore\b/i.exec(t.sub);
-  if (!m){ sub.textContent = t.sub; return; }
-  const a = document.createElement("span");
-  a.id = "toAdmin"; a.textContent = m[0]; a.tabIndex = 0; a.setAttribute("role","button");
-  a.onclick = () => goAdmin(true);
-  a.onkeydown = e => { if (e.key === "Enter" || e.key === " "){ e.preventDefault(); goAdmin(true); } };
-  sub.append(t.sub.slice(0, m.index), a, t.sub.slice(m.index + m[0].length));
+  $("tSub").textContent = t.sub;
 }
 const mutedMsg = (box, text) => { const sp = document.createElement("span"); sp.className = "muted"; sp.textContent = text; box.appendChild(sp); };
 
@@ -211,14 +155,6 @@ async function loadPublicData(){
     taken = new Set((c.data||[]).map(s => +new Date(s)));
   }catch(e){ console.error(e); }
 }
-async function loadBookings(){
-  const {data, error} = await sb.from("bookings").select("*").gte("slot_start", todayD().toISOString()).order("slot_start");
-  if (error){ $("bkList").textContent = "Eroare la încărcare: "+error.message; return; }
-  bkAll = data; BK = {};
-  data.forEach(b => (BK[ymd(new Date(b.slot_start))] = BK[ymd(new Date(b.slot_start))] || []).push(b));
-  drawUpcoming(); drawAdm();
-}
-
 /* ---------- calendar (folosit și de public, și de admin) ---------- */
 function drawCal(el, mode){
   const y = month.getFullYear(), m = month.getMonth(), n = new Date(y,m+1,0).getDate();
@@ -238,7 +174,7 @@ function drawCal(el, mode){
   el.querySelectorAll(".nav").forEach(b => b.onclick = () => { month = new Date(y, m+Number(b.dataset.n), 1); redraw(); });
   el.querySelectorAll(".day").forEach(b => b.onclick = () => { sel[mode] = b.dataset.k; if (mode === "pub") selSlot = null; redraw(); });
 }
-const redraw = () => adminOn ? drawAdm() : drawPub();
+const redraw = () => drawPub();
 
 /* ---------- partea publică ---------- */
 function drawPub(){
@@ -275,136 +211,6 @@ $("bookBtn").onclick = async () => {
   selSlot = null; await loadPublicData(); drawPub();
 };
 
-/* ---------- admin ---------- */
-function goAdmin(on){ adminOn = on; $("pub").classList.toggle("hidden", on); $("adm").classList.toggle("hidden", !on); if (on) checkSession(); else drawPub(); }
-$("toPub").onclick = () => goAdmin(false);
-async function checkSession(){
-  const {data} = await sb.auth.getSession();
-  const ok = data.session && data.session.user.email === ADMIN_EMAIL;
-  $("loginCard").classList.toggle("hidden", !!ok); $("adminPanel").classList.toggle("hidden", !ok);
-  if (ok){ renderSettingsForm(); loadBookings(); }
-}
-$("loginBtn").onclick = async () => {
-  const {error} = await sb.auth.signInWithPassword({email:$("a_email").value.trim(), password:$("a_pass").value});
-  if (error) return show($("loginMsg"),"err","Email sau parolă greșită.");
-  checkSession();
-};
-$("logoutBtn").onclick = async () => { await sb.auth.signOut(); checkSession(); };
-
-function drawAdm(){
-  if (!adminOn) return;
-  drawCal($("calAdm"), "adm");
-  const box = $("dayEd"), k = sel.adm;
-  if (!k){ box.innerHTML = '<p class="muted" style="margin:0">Alege o zi din calendar ca să-i setezi orele.</p>'; return; }
-  const d = parse(k), booked = BK[k] || [], bt = {};
-  booked.forEach(b => bt[fmtTime(new Date(b.slot_start))] = b);
-  if (!edit || edit.k !== k) edit = {k, set:new Set(timesFor(d))};
-  const grid = []; for (let m = 420; m + S.slot_minutes <= 1260; m += S.slot_minutes) grid.push(tstr(m));
-  const all = [...new Set([...grid, ...edit.set, ...Object.keys(bt)])].sort();
-  box.innerHTML = "<h2>"+fmtDate(d)+"</h2><p class='muted' style='margin-top:-6px'>Apasă pe ore ca să le deschizi sau să le închizi. Orele luate de clienți nu se pot schimba.</p><div class='slots' id='edSlots'></div>"
-    + '<button class="btn" id="saveDay">Salvează ziua</button><button class="btn ghost" id="closeDay">Marchează ziua ocupată</button><button class="btn ghost" id="stdDay">Program standard</button><button class="btn ghost" id="repDay">Repetă în toate zilele de '+DAYS[d.getDay()]+' din lună</button>'
-    + '<div class="msg" id="dayMsg" role="status"></div><div id="dayBk"></div>';
-  all.forEach(t => {
-    const b = document.createElement("button");
-    if (bt[t]){ b.className = "chip booked"; b.disabled = true; b.textContent = t+" · "+bt[t].name; }
-    else { b.className = "chip"+(edit.set.has(t) ? " on" : ""); b.textContent = t; b.onclick = () => { edit.set.has(t) ? edit.set.delete(t) : edit.set.add(t); drawAdm(); }; }
-    $("edSlots").appendChild(b);
-  });
-  if (booked.length){
-    $("dayBk").innerHTML = '<div class="dayh" style="margin-top:16px">Programări în această zi</div>';
-    booked.forEach(b => $("dayBk").appendChild(bkRow(b, false)));
-  }
-  $("closeDay").onclick = async () => { edit.set = new Set(); await $("saveDay").onclick(); };
-  $("stdDay").onclick = () => { edit.set = new Set(defaultTimes(d)); drawAdm(); };
-  $("saveDay").onclick = async () => {
-    const slots = withBooked(d, edit.set);
-    const {error} = await sb.from("booking_days").upsert({day:k, slots});
-    if (error) return show($("dayMsg"),"err","Nu s-a salvat: "+error.message);
-    OV[k] = slots; drawAdm(); show($("dayMsg"),"ok",slots.length && slots.every(x => bt[x]) ? "Ziua e ocupată: nu mai apare în calendarul public." : slots.length ? "Ziua a fost salvată." : "Ziua e ocupată: nu mai apare în calendarul public.");
-  };
-  $("repDay").onclick = async () => {
-    const rows = [], n = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
-    for (let i = 1; i <= n; i++){ const x = new Date(d.getFullYear(), d.getMonth(), i); if (x.getDay() === d.getDay() && x >= todayD()) rows.push({day:ymd(x), slots:withBooked(x, edit.set)}); }
-    const {error} = await sb.from("booking_days").upsert(rows);
-    if (error) return show($("dayMsg"),"err","Nu s-a salvat: "+error.message);
-    rows.forEach(r => OV[r.day] = r.slots); drawAdm(); show($("dayMsg"),"ok","Salvat pe "+rows.length+" zile.");
-  };
-}
-function bkRow(b, withDate){
-  const d = new Date(b.slot_start), r = document.createElement("div"); r.className = "bk";
-  r.innerHTML = '<div><b>'+fmtTime(d)+' · '+esc(b.name)+'</b><a href="tel:'+esc(b.phone)+'">'+esc(b.phone)+'</a>'
-    + (b.email ? "<br>"+esc(b.email) : "") + (b.note ? '<br><span class="muted">'+esc(b.note)+'</span>' : "") + '</div><button class="btn danger">Anulează</button>';
-  r.querySelector("button").onclick = async () => {
-    if (!confirm("Anulezi programarea lui "+b.name+"?")) return;
-    await sb.from("bookings").delete().eq("id", b.id); loadBookings();
-  };
-  return r;
-}
-function drawUpcoming(){
-  const box = $("bkList");
-  if (!bkAll.length){ box.textContent = "Nu există programări viitoare."; return; }
-  box.innerHTML = ""; let last = "";
-  bkAll.forEach(b => {
-    const d = new Date(b.slot_start);
-    if (ymd(d) !== last){ last = ymd(d); const h = document.createElement("div"); h.className = "dayh"; h.textContent = fmtDate(d); box.appendChild(h); }
-    box.appendChild(bkRow(b, true));
-  });
-}
-function renderSettingsForm(){
-  $("weekly").innerHTML = "";
-  [1,2,3,4,5,6,0].forEach(i => {
-    const w = S.weekly[i] || DEF, r = document.createElement("div"); r.className = "row";
-    r.innerHTML = '<label class="d"><input type="checkbox" data-d="'+i+'" data-k="on" '+(w.on?"checked":"")+'> '+DAYS[i]+'</label>'
-      + '<input type="time" data-d="'+i+'" data-k="from" value="'+w.from+'" aria-label="De la"><span>–</span><input type="time" data-d="'+i+'" data-k="to" value="'+w.to+'" aria-label="Până la">';
-    $("weekly").appendChild(r);
-  });
-  $("s_slot").value = S.slot_minutes; $("s_ahead").value = S.days_ahead;
-  const tf = $("textsForm"), cur = T(); tf.innerHTML = "";
-  Object.keys(DEFT).forEach(k => {
-    const l = document.createElement("label"); l.textContent = TLAB[k]; l.htmlFor = "t_"+k;
-    const a = document.createElement("textarea"); a.id = "t_"+k; a.rows = 2; a.dataset.t = k; a.value = cur[k];
-    tf.appendChild(l); tf.appendChild(a);
-  });
-}
-$("saveBtn").onclick = async () => {
-  const weekly = {};
-  document.querySelectorAll("#weekly input").forEach(el => { const d = el.dataset.d; weekly[d] = weekly[d] || {}; weekly[d][el.dataset.k] = el.type === "checkbox" ? el.checked : el.value; });
-  if (S.weekly && S.weekly._texts) weekly._texts = S.weekly._texts;
-  const row = {id:1, slot_minutes:+$("s_slot").value || 30, days_ahead:+$("s_ahead").value || 60, weekly};
-  const {error} = await sb.from("booking_settings").upsert(row);
-  if (error) return show($("setMsg"),"err","Nu s-a salvat: "+error.message);
-  S = {slot_minutes:row.slot_minutes, days_ahead:row.days_ahead, weekly}; edit = null;
-  show($("setMsg"),"ok","Program standard salvat."); drawAdm();
-};
-
-$("saveTexts").onclick = async () => {
-  const texts = {};
-  document.querySelectorAll("#textsForm textarea").forEach(a => { const v = a.value.trim(); if (v && v !== DEFT[a.dataset.t]) texts[a.dataset.t] = v; });
-  const weekly = {...S.weekly, _texts:texts};
-  const row = {id:1, slot_minutes:S.slot_minutes, days_ahead:S.days_ahead, weekly};
-  const {error} = await sb.from("booking_settings").upsert(row);
-  if (error) return show($("txtMsg"),"err","Nu s-a salvat: "+error.message);
-  S = {...S, weekly}; applyTexts(); show($("txtMsg"),"ok","Textele au fost salvate.");
-};
-async function blockRange(block){
-  const f = $("b_from").value, t = $("b_to").value || f;
-  if (!f) return show($("blkMsg"),"err","Alege data de început.");
-  const a = parse(f), z = parse(t);
-  if (z < a) return show($("blkMsg"),"err","Data de final e înaintea celei de început.");
-  const rows = [];
-  for (let x = a; x <= z && rows.length < 366; x = new Date(x.getFullYear(), x.getMonth(), x.getDate()+1)){
-    if (x < todayD()) continue;
-    rows.push({day:ymd(x), slots:withBooked(x, block ? [] : defaultTimes(x))});
-  }
-  if (!rows.length) return show($("blkMsg"),"err","Perioada aleasă e în trecut.");
-  const {error} = await sb.from("booking_days").upsert(rows);
-  if (error) return show($("blkMsg"),"err","Nu s-a salvat: "+error.message);
-  rows.forEach(r => OV[r.day] = r.slots); edit = null; drawAdm();
-  show($("blkMsg"),"ok", (block ? "Blocat pe " : "Program standard pe ")+rows.length+" zile.");
-}
-$("blockBtn").onclick = () => blockRange(true);
-$("unblockBtn").onclick = () => blockRange(false);
-
 /* ---------- pornire ---------- */
 (async () => {
   await loadPublicData();
@@ -413,7 +219,7 @@ $("unblockBtn").onclick = () => blockRange(false);
     const d = new Date(t.getFullYear(), t.getMonth(), t.getDate()+i);
     if (freeFor(d).length){ sel.pub = ymd(d); month = new Date(d.getFullYear(), d.getMonth(), 1); break; }
   }
-  if (location.hash === "#admin") goAdmin(true); else drawPub();
+  drawPub();
 })();
 </script>
 

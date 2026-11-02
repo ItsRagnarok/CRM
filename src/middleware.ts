@@ -1,9 +1,17 @@
 
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { parsePreview, PREVIEW_COOKIE } from "@/lib/preview";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare"];
 export async function middleware(request: NextRequest) {
+  if (parsePreview(request.cookies.get(PREVIEW_COOKIE)?.value) && !["GET", "HEAD"].includes(request.method) && request.nextUrl.pathname !== "/api/admin/preview-exit") {
+    return NextResponse.json({ error: "Modul de vizualizare nu permite modificări." }, { status: 403 });
+  }
+  // Public SEO files and the blog stylesheet do not need a session lookup.
+  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css"].includes(request.nextUrl.pathname)) {
+    return NextResponse.next({ request });
+  }
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -27,20 +35,10 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // getSession() decodes the already-validated JWT locally instead of
-  // re-checking it with Supabase over the network. Middleware runs on
-  // nearly every request in the app (see the matcher below), so a network
-  // round trip here was a fixed latency tax on every single navigation —
-  // by far the largest one, since nothing downstream can parallelize
-  // around it. requireSessionContext() (src/lib/auth.ts) already accepts
-  // this same trade-off for the authoritative per-page check, so this
-  // isn't a new risk, just a consistent one: a revoked session can stay
-  // valid here until its short-lived JWT expires, rather than being
-  // caught immediately.
+  // Verify the identity before making authentication routing decisions.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
   const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));

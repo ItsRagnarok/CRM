@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -122,6 +122,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      booking_days: {
+        Row: {
+          day: string
+          slots: Json
+        }
+        Insert: {
+          day: string
+          slots?: Json
+        }
+        Update: {
+          day?: string
+          slots?: Json
+        }
+        Relationships: []
+      }
+      booking_settings: {
+        Row: {
+          days_ahead: number
+          id: number
+          slot_minutes: number
+          weekly: Json
+        }
+        Insert: {
+          days_ahead?: number
+          id?: number
+          slot_minutes?: number
+          weekly?: Json
+        }
+        Update: {
+          days_ahead?: number
+          id?: number
+          slot_minutes?: number
+          weekly?: Json
+        }
+        Relationships: []
+      }
+      bookings: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          note: string | null
+          phone: string
+          slot_start: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          note?: string | null
+          phone: string
+          slot_start: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          note?: string | null
+          phone?: string
+          slot_start?: string
+        }
+        Relationships: []
       }
       checklist_template_items: {
         Row: {
@@ -1737,6 +1803,108 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_usage_daily: {
+        Row: {
+          active_seconds: number
+          channel: string
+          day: string
+          id: string
+          organization_id: string
+          profile_id: string
+          sessions: number
+        }
+        Insert: {
+          active_seconds?: number
+          channel: string
+          day: string
+          id?: string
+          organization_id: string
+          profile_id: string
+          sessions?: number
+        }
+        Update: {
+          active_seconds?: number
+          channel?: string
+          day?: string
+          id?: string
+          organization_id?: string
+          profile_id?: string
+          sessions?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_usage_daily_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_usage_daily_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_usage_sessions: {
+        Row: {
+          active_seconds: number
+          channel: string
+          end_reason: string | null
+          ended_at: string | null
+          id: string
+          last_active_at: string | null
+          last_route: string
+          last_seen_at: string
+          organization_id: string
+          profile_id: string
+          started_at: string
+        }
+        Insert: {
+          active_seconds?: number
+          channel: string
+          end_reason?: string | null
+          ended_at?: string | null
+          id: string
+          last_active_at?: string | null
+          last_route?: string
+          last_seen_at?: string
+          organization_id: string
+          profile_id: string
+          started_at?: string
+        }
+        Update: {
+          active_seconds?: number
+          channel?: string
+          end_reason?: string | null
+          ended_at?: string | null
+          id?: string
+          last_active_at?: string | null
+          last_route?: string
+          last_seen_at?: string
+          organization_id?: string
+          profile_id?: string
+          started_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_usage_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_usage_sessions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2468,6 +2636,23 @@ export type Database = {
       current_client_id: { Args: never; Returns: string }
       current_org_id: { Args: never; Returns: string }
       current_role: { Args: never; Returns: string }
+      ef_close_usage: { Args: never; Returns: undefined }
+      ef_is_platform_admin: { Args: never; Returns: boolean }
+      ef_preview_employee_email: {
+        Args: { target_profile_id: string }
+        Returns: string
+      }
+      ef_preview_org: { Args: never; Returns: string }
+      ef_record_usage: {
+        Args: {
+          p_active_seconds: number
+          p_channel: string
+          p_event?: string
+          p_route: string
+          session_id: string
+        }
+        Returns: undefined
+      }
       is_staff: { Args: never; Returns: boolean }
       next_invoice_number: {
         Args: { p_organization_id: string }
@@ -2625,6 +2810,10 @@ export type Database = {
         Returns: undefined
       }
       purge_old_technician_positions: { Args: never; Returns: undefined }
+      taken_slots: {
+        Args: { from_ts: string; to_ts: string }
+        Returns: string[]
+      }
     }
     Enums: {
       client_status: "active" | "inactive"

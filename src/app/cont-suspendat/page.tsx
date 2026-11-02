@@ -17,7 +17,7 @@ export default async function AccountSuspendedPage() {
 
   const { data: profileRow } = await supabase
     .from("profiles")
-    .select("organizations(name, is_active, terms_declined_at)")
+    .select("organizations!profiles_organization_id_fkey(name, is_active, terms_declined_at)")
     .eq("id", user.id)
     .maybeSingle();
 
