@@ -2,6 +2,8 @@ import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import type { Database } from "@/lib/supabase/database.types";
+import { cookies, headers } from "next/headers";
+import { parsePreview, PREVIEW_COOKIE } from "@/lib/preview";
 
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 type Organization = Database["public"]["Tables"]["organizations"]["Row"];
@@ -17,6 +19,7 @@ export type SessionContext = {
   email: string | null;
   profile: Profile;
   organization: Organization;
+  readOnly?: boolean;
 };
 
 export type AdminContext = {
@@ -32,11 +35,10 @@ export type AdminContext = {
  * manages every tenant, not one of them. See public.platform_admins.
  */
 export async function requireAdminContext(): Promise<AdminContext> {
-  const supabase = await createClient();
+  const supabase = await createClient({ ignorePreview: true });
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
@@ -75,17 +77,24 @@ export async function requireAdminContext(): Promise<AdminContext> {
  */
 async function requireSessionContextUncached(): Promise<SessionContext> {
   const supabase = await createClient();
-  // getSession() decodes the already-validated cookie locally (no network
-  // round trip); middleware is the one place that calls the slower
-  // getUser() (which re-checks the token with Supabase) on every request,
-  // so re-doing that check here would just double the latency of every page.
+  // Never use an unverified cookie to choose a company or administrator context.
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const user = session?.user ?? null;
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!user) {
     redirect("/login");
+  }
+
+  const preview = parsePreview((await cookies()).get(PREVIEW_COOKIE)?.value);
+  if (preview) {
+    await requireAdminContext();
+    if ((await headers()).has("next-action")) throw new Error("Modul de vizualizare nu permite modificări.");
+    const { data: previewProfile } = await supabase.from("profiles").select("*, organizations(*)")
+      .eq("id", preview.profileId).eq("organization_id", preview.organizationId).maybeSingle();
+    if (!previewProfile?.organizations) redirect("/admin");
+    const { organizations, ...profile } = previewProfile;
+    return { userId: user.id, email: user.email ?? null, profile: profile as Profile, organization: organizations, readOnly: true };
   }
 
   // profiles.organization_id is a to-one FK, so this embed fetches both

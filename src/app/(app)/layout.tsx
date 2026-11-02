@@ -3,6 +3,8 @@ import { requireSessionContext, ROLE_LABELS, FIELD_ROLES } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
+import { PreviewBoundary } from "@/components/preview-boundary";
+import { UsageTracker } from "@/components/usage-tracker";
 
 // Every page in this group reads the signed-in user's session; never serve a
 // cached/prerendered response for someone else's data.
@@ -13,7 +15,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { profile } = await requireSessionContext();
+  const { profile, organization, readOnly } = await requireSessionContext();
 
   // requireSessionContext only checks org membership, not role — without this,
   // a technician/team_leader could type /facturare or /setari directly and the
@@ -47,11 +49,12 @@ export default async function AppLayout({
   }).length;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="ef-app-theme flex h-screen overflow-hidden bg-background">
+      {!readOnly && <UsageTracker channel="web" />}
       <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar notifications={notifications ?? []} />
-        <main className="flex-1 overflow-auto">{children}</main>
+        <Topbar notifications={notifications ?? []} readOnly={readOnly} />
+        {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="flex-1 overflow-auto">{children}</main>}
       </div>
     </div>
   );

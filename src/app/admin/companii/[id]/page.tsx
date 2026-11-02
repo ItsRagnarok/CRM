@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext, ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { CompanyDetailForm } from "./company-detail-form";
+import { startCompanyPreview } from "@/app/admin/preview-actions";
 
 const CLIENT_STATUS_LABELS: Record<string, string> = {
   active: "Activ",
@@ -66,6 +67,18 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
       </div>
 
       <div className="mt-6">
+        <div className="mb-5 rounded-xl border border-border bg-white p-5">
+          <h2 className="font-bold">Vizualizează interfața companiei</h2>
+          <p className="mt-1 text-sm text-muted">Selectează utilizatorul pentru a vedea aceleași pagini și date. Modificările sunt blocate; contul și sesiunea lui nu sunt schimbate.</p>
+          <form action={startCompanyPreview} className="mt-3 flex flex-wrap gap-3">
+            <input type="hidden" name="organizationId" value={id} />
+            <select name="profileId" aria-label="Utilizator pentru vizualizare" className="rounded-lg border border-border bg-white p-2" required>
+              {(users ?? []).map((u) => <option key={u.id} value={u.id}>{u.full_name} · {ROLE_LABELS[u.role]}</option>)}
+            </select>
+            <button disabled={!users?.length} className="rounded-lg bg-purple px-4 py-2 text-sm font-bold text-white disabled:opacity-50">Vizualizează compania · doar citire</button>
+          </form>
+          <Link href={`/admin/activitate?company=${id}`} className="mt-3 inline-block text-sm font-semibold text-purple">Vezi activitatea zilnică și săptămânală →</Link>
+        </div>
         <CompanyDetailForm company={company} />
       </div>
 

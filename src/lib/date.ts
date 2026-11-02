@@ -6,6 +6,14 @@
 // this timezone instead of Date.prototype.toISOString().
 export const ORG_TIME_ZONE = "Europe/Bucharest";
 
+export function startOfOrgDay(date: string): string {
+  const utcMidnight = new Date(`${date}T00:00:00Z`);
+  // Romania's UTC offset at this instant is also the offset at local midnight,
+  // including the March/October transition dates (the change happens later).
+  const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: ORG_TIME_ZONE, hour: "2-digit", hourCycle: "h23" }).format(utcMidnight));
+  return new Date(utcMidnight.getTime() - hour * 3_600_000).toISOString();
+}
+
 export function todayInOrgTimeZone(date: Date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: ORG_TIME_ZONE,

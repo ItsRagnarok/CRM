@@ -7,6 +7,7 @@ import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { signOut } from "@/app/(app)/actions";
 import { NotificationsToggle } from "./notifications-toggle";
 import { todayInOrgTimeZone } from "@/lib/date";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function toISODate(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -88,6 +89,9 @@ export default async function MobileProfilePage() {
         <StatBox value={String(jobsThisWeek)} label="LUCRĂRI SĂPT." />
         <StatBox value={String(jobsCompleted)} label="FINALIZATE" />
       </div>
+
+      <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-white p-4 text-sm"><span>Aspectul aplicației</span><ThemeToggle /></div>
+      <p className="mt-3 text-xs text-muted">Platforma înregistrează interfața folosită, vizitele și timpul activ estimat pentru administrarea serviciului. Nu înregistrează conținutul tastat.</p>
 
       <div className="mt-5 overflow-hidden rounded-[13px] border border-[#eaecf0] bg-white">
         <Link href="/mobil/confidentialitate" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">

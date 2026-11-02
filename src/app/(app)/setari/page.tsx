@@ -323,7 +323,7 @@ export default async function SetariPage({
               <div className="flex flex-col gap-4">
                 <div className="rounded-[13px] border border-border bg-white p-[22px]">
                   <div className="mb-1 text-[15px] font-bold text-foreground">Abonament</div>
-                  <p className="mb-4 text-[12.5px] text-muted-2">Planul actual al companiei.</p>
+                  <p className="mb-4 text-[12.5px] text-muted-2">Planul actual al companiei. Platforma înregistrează vizitele și timpul activ estimat pentru administrarea serviciului, separat pe web și mobil; nu înregistrează conținutul tastat.</p>
                   <div className="flex items-center justify-between rounded-[11px] border border-[#d9e6ff] bg-electric-soft p-4">
                     <div>
                       <div className="text-[15px] font-extrabold text-electric">
