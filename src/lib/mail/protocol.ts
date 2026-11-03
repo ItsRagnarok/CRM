@@ -67,7 +67,7 @@ function summary(row: FetchMessageObject, accountId: string, folder: MailFolder,
   const person = (outgoing ? e?.to : e?.from)?.[0];
   return { id: `${accountId}:${folder}:${validity}:${row.uid}`, accountId, folder, uid: row.uid, uidValidity: validity,
     name: person?.name || person?.address || "Expeditor necunoscut", address: person?.address || "", to: e?.to?.map((p) => p.address).filter(Boolean).join(", ") || "",
-    replyTo: e?.replyTo?.[0]?.address || e?.from?.[0]?.address || "", subject: e?.subject || "(Fără subiect)",
+    replyTo: outgoing ? e?.to?.[0]?.address || "" : e?.replyTo?.[0]?.address || e?.from?.[0]?.address || "", subject: e?.subject || "(Fără subiect)",
     timestamp: date(e?.date || row.internalDate), unread: !row.flags?.has("\\Seen"), messageId: e?.messageId };
 }
 export async function listMailbox(settings: MailCredentials, accountId: string, folder: MailFolder, page: number) {

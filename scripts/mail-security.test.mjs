@@ -1,7 +1,8 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
+import { relative, isAbsolute } from "node:path";
 import dns from "node:dns/promises";
 import { mock } from "node:test";
 import ts from "typescript";
@@ -17,8 +18,13 @@ const source = (await readFile(new URL("../src/lib/mail/protocol.ts", import.met
   .replace('"./validation"', JSON.stringify(new URL("../src/lib/mail/validation.ts", import.meta.url).href));
 const modulePath = new URL("protocol.mjs", cache);
 await writeFile(modulePath, ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } }).outputText);
-const protocol = await import(pathToFileURL(modulePath.pathname.replace(/^\/([A-Za-z]:)/, "$1")).href).catch(() => import(modulePath.href));
-after(async () => { mock.restoreAll(); await rm(cache, { recursive: true, force: true }); });
+const protocol = await import(modulePath.href);
+after(async () => {
+  mock.restoreAll();
+  const target = fileURLToPath(cache), within = relative(fileURLToPath(new URL("../node_modules/.cache/", import.meta.url)), target);
+  if (!within || within.startsWith("..") || isAbsolute(within)) throw new Error("Test cache cleanup escaped its workspace");
+  await rm(target, { recursive: true, force: true });
+});
 const settings = { name: "Test", address: "contact@example.com", username: "contact@example.com", password: " secret with spaces ", outgoingPassword: "smtp-secret", incomingHost: "mail.example.com", incomingPort: 993, incomingSecurity: "tls", outgoingHost: "mail.example.com", outgoingPort: 465, outgoingSecurity: "tls", outgoingUsername: "contact@example.com", separateSmtp: true };
 const ref = { accountId: "11111111-1111-4111-8111-111111111111", folder: "inbox", uid: 9, uidValidity: "123" };
 
@@ -134,4 +140,15 @@ test("trash refuses servers whose MOVE fallback could expunge other deleted mess
     await assert.rejects(protocol.mutateMailboxMessage(settings, ref, "trash"), /în siguranță/);
     assert.equal(move.mock.callCount(), 0);
   } finally { mock.restoreAll(); }
+});
+test("replying to a sent message targets its recipient instead of the sender account", async () => {
+  mock.method(dns, "lookup", async () => [{ address: "1.1.1.1", family: 4 }]);
+  mock.method(ImapFlow.prototype, "connect", async () => {});
+  mock.method(ImapFlow.prototype, "close", () => {});
+  mock.method(ImapFlow.prototype, "status", async () => ({ unseen: 0 }));
+  mock.method(ImapFlow.prototype, "list", async () => [{ path: "Sent", specialUse: "\\Sent" }]);
+  mock.method(ImapFlow.prototype, "mailboxOpen", async () => ({ exists: 1, uidValidity: 123n }));
+  mock.method(ImapFlow.prototype, "fetchAll", async () => [{ uid: 9, flags: new Set(["\\Seen"]), envelope: { from: [{ address: settings.address }], to: [{ address: "recipient@example.com" }] } }]);
+  try { assert.equal((await protocol.listMailbox(settings, ref.accountId, "sent", 0)).messages[0].replyTo, "recipient@example.com"); }
+  finally { mock.restoreAll(); }
 });
