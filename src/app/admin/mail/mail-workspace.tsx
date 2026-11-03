@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Download, FilePenLine, Forward, Inbox, LayoutGrid, Mail, MailOpen, MessagesSquare, RefreshCw, Reply, Search, Send, Settings2, ShieldAlert, ShieldCheck, SquarePen, Trash2, X } from "lucide-react";
-import type { MailAccount, MailFolder, MailMessage, MailReference, MailView } from "@/lib/mail/types";
-import { changeMailMessage, fetchMailFolders, fetchMailMessage, submitMail } from "./actions";
+import { ArrowLeft, Download, FilePenLine, Forward, Inbox, LayoutGrid, Mail, MailOpen, MessagesSquare, RefreshCw, Reply, Search, Send, Settings2, ShieldAlert, ShieldCheck, SquarePen, Trash2 } from "lucide-react";
+import type { MailAccount, MailComposeInput, MailFolder, MailMessage, MailView } from "@/lib/mail/types";
+import { changeMailMessage, fetchMailFolders, fetchMailMessage } from "./actions";
 import { AccountSettings } from "./account-settings";
+import { MailComposerDialog } from "./mail-composer";
 import s from "./mail.module.css";
 
 const FOLDERS = [
   { id: "inbox", name: "Primite", icon: Inbox }, { id: "sent", name: "Trimise", icon: Send },
   { id: "draft", name: "Ciorne", icon: FilePenLine }, { id: "spam", name: "Spam", icon: ShieldAlert }, { id: "trash", name: "Coș", icon: Trash2 },
 ] satisfies { id: MailFolder; name: string; icon: typeof Mail }[];
-type Draft = { accountId: string; to: string; subject: string; body: string; deliveryId: string; reply?: MailReference; draftRef?: MailReference };
 function when(timestamp: string, detailed = false) { return new Date(timestamp).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", ...(detailed ? { dateStyle: "medium", timeStyle: "short" } : { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) }); }
 function initials(name: string) { return name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase(); }
 
-export function MailWorkspace({ initialAccounts }: { initialAccounts: MailAccount[] }) {
+export function MailWorkspace({ initialAccounts, ownerId }: { initialAccounts: MailAccount[]; ownerId: string }) {
   const [accounts, setAccounts] = useState(initialAccounts);
   const [view, setView] = useState<MailView>("unified");
   const [accountId, setAccountId] = useState("all");
@@ -32,14 +32,11 @@ export function MailWorkspace({ initialAccounts }: { initialAccounts: MailAccoun
   const [working, setWorking] = useState(false);
   const [notice, setNotice] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
-  const [draft, setDraft] = useState<Draft | null>(null);
+  const [draft, setDraft] = useState<MailComposeInput | null>(null);
   const [showAccounts, setShowAccounts] = useState(false);
-  const composeRef = useRef<HTMLDialogElement>(null);
   const readVersion = useRef(0);
-  const submitting = useRef(false);
 
   useEffect(() => { try { if (localStorage.getItem("ef-mail-view") === "accounts") setView("accounts"); } catch {} }, []);
-  useEffect(() => { if (draft && !composeRef.current?.open) composeRef.current?.showModal(); if (!draft && composeRef.current?.open) composeRef.current.close(); }, [draft]);
   useEffect(() => {
     let active = true;
     setLoading(true); setErrors([]);
@@ -87,24 +84,14 @@ export function MailWorkspace({ initialAccounts }: { initialAccounts: MailAccoun
     if (!accounts.length || (mode !== "new" && (!selected || selected.body === undefined))) return;
     const m = mode === "new" ? null : selected;
     setDraft({ accountId: m?.accountId ?? (accountId === "all" ? accounts[0].id : accountId),
+      ...(mode === "edit" ? m?.composeOptions : {}),
+      cc: mode === "edit" ? m?.cc || "" : "", bcc: mode === "edit" ? m?.bcc || "" : "",
+      bodyHtml: mode === "edit" ? m?.bodyHtml || "" : "", format: mode === "edit" ? m?.composeOptions?.format || (m?.bodyHtml ? "html" : "plain") : "plain",
+      existingAttachments: mode === "edit" || mode === "forward" ? m?.attachments ?? [] : [], attachmentSource: mode === "edit" || mode === "forward" ? m ?? undefined : undefined,
       to: mode === "reply" ? m?.replyTo || m?.address || "" : mode === "edit" ? m?.to || "" : "",
       subject: mode === "reply" ? `Re: ${(m?.subject || "").replace(/^Re:\s*/i, "")}` : mode === "forward" ? `Fwd: ${m?.subject || ""}` : mode === "edit" ? m?.subject || "" : "",
       body: mode === "forward" ? `\n\n—— Mesaj redirecționat ——\n${m?.body || ""}` : mode === "edit" ? m?.body || "" : "",
       deliveryId: crypto.randomUUID(), reply: mode === "reply" ? m ?? undefined : undefined, draftRef: mode === "edit" ? m ?? undefined : undefined });
-  }
-  function closeCompose() { if (working) return; if (draft && (draft.to || draft.subject || draft.body) && !confirm("Închizi fără să salvezi ciorna?")) return; setDraft(null); }
-  async function storeDraft(saveDraft: boolean) {
-    if (!draft || submitting.current) return;
-    submitting.current = true; setWorking(true); setNotice("");
-    try {
-      const result = await submitMail(draft, saveDraft);
-      if (result.error) setNotice(result.error);
-      else if (result.data) {
-        setNotice(result.data.warning || (saveDraft ? "Ciornă salvată pe server." : "Mesaj acceptat de serverul SMTP."));
-        setAccountId(draft.accountId); setFolder(saveDraft ? "draft" : "sent"); setDraft(null); setQuery(""); reload();
-      }
-    } catch { setNotice(saveDraft ? "Salvarea nu a putut fi confirmată. Verifică dosarul Ciorne înainte de a salva din nou." : "Trimiterea nu a putut fi confirmată. Verifică dosarul Trimise înainte de a reîncerca."); }
-    finally { setWorking(false); submitting.current = false; }
   }
   async function updateMessage(action: "unread" | "trash") {
     if (!selected || working) return;
@@ -135,8 +122,9 @@ export function MailWorkspace({ initialAccounts }: { initialAccounts: MailAccoun
       <section className={s.messageList} aria-label="Lista mesajelor" aria-busy={loading}><div className={s.search}><Search size={16} /><input type="search" placeholder="Caută în mesajele încărcate…" aria-label="Caută în expeditori și subiectele mesajelor încărcate" value={query} onChange={(e) => setQuery(e.target.value)} /><button className={s.iconButton} disabled={loading || !accounts.length} onClick={reload} aria-label="Actualizează mesajele"><RefreshCw size={16} /></button></div>
         <div className={s.listHeading}><span>{accountId === "all" ? "Toate adresele" : accounts.find((a) => a.id === accountId)?.name}<small>{FOLDERS.find((f) => f.id === folder)?.name}</small></span><span>{loading ? "Se încarcă…" : `${filtered.length} mesaje`}</span></div>
         {!filtered.length && <div className={s.emptyList}><Inbox size={28} /><strong>{loading ? "Se încarcă mesajele…" : accounts.length ? "Niciun mesaj afișat" : "Conectează adresele tale"}</strong><p>{accounts.length ? "Verifică dosarul, filtrul și starea conexiunilor." : "Adaugă datele din Mail Client Manual Settings pentru a vedea corespondența reală."}</p>{!accounts.length && <button className={`${s.button} ${s.primary}`} onClick={() => setShowAccounts(true)}>Adaugă adresă</button>}</div>}
-        {filtered.map((m) => <button key={m.id} className={`${s.message} ${selected?.id === m.id ? s.selectedMessage : ""}`} aria-pressed={selected?.id === m.id} onClick={() => openMessage(m)}><span className={s.messageTop}><strong>{m.name}</strong><time dateTime={m.timestamp}>{when(m.timestamp)}</time></span><span className={s.subject}>{m.subject}</span><span className={s.snippet}>{m.address}</span><span className={s.messageFoot}>{m.unread && <span className={s.unreadDot} aria-label="Necitit" />}<span>{accounts.find((a) => a.id === m.accountId)?.name}</span></span></button>)}
+        <div className={s.messageRows} tabIndex={0} aria-label="Mesaje — listă derulabilă">{filtered.map((m) => <button key={m.id} className={`${s.message} ${selected?.id === m.id ? s.selectedMessage : ""}`} aria-pressed={selected?.id === m.id} onClick={() => openMessage(m)}><span className={s.messageTop}><strong>{m.name}</strong><time dateTime={m.timestamp}>{when(m.timestamp)}</time></span><span className={s.subject}>{m.subject}</span><span className={s.snippet}>{m.address}</span><span className={s.messageFoot}>{m.unread && <span className={s.unreadDot} aria-label="Necitit" />}<span>{accounts.find((a) => a.id === m.accountId)?.name}</span></span></button>)}
         {hasMore && <div className={s.loadMore}><button className={s.button} disabled={loading} onClick={() => setPage((v) => v + 1)}>{loading ? "Se încarcă…" : "Încarcă mesaje mai vechi"}</button></div>}
+        </div>
       </section>
       <section className={s.reader} aria-label="Citire mesaj" aria-busy={reading}>{!selected || !selectedAccount ? <div className={s.emptyReader}><MailOpen size={38} /><h2>{accounts.length ? "Alege un mesaj" : "Corespondența ta, organizată"}</h2><p>{accounts.length ? "Citește și răspunde direct de pe adresa care a primit mesajul." : "Inbox comun sau câte o adresă. Adaugă căsuțele tale Hostico pentru a începe."}</p>{!accounts.length && <button className={`${s.button} ${s.primary}`} onClick={() => setShowAccounts(true)}>Conectează o adresă</button>}</div> : <>
         <div className={s.readerToolbar}><div><button className={`${s.iconButton} ${s.backButton}`} aria-label="Înapoi la mesaje" onClick={() => { setSelected(null); readVersion.current++; setReading(false); }}><ArrowLeft size={18} /></button><button className={s.button} disabled={!messageReady || working} onClick={() => compose(selected.folder === "draft" ? "edit" : "reply")}><Reply size={16} />{selected.folder === "draft" ? "Editează ciorna" : "Răspunde"}</button></div><div><button className={s.iconButton} disabled={!messageReady || working} aria-label="Redirecționează textul mesajului" onClick={() => compose("forward")}><Forward size={17} /></button><button className={s.iconButton} disabled={working || reading} aria-label="Marchează ca necitit" onClick={() => updateMessage("unread")}><Mail size={17} /></button><button className={s.iconButton} disabled={working || reading || folder === "trash"} aria-label="Mută în Coș" onClick={() => updateMessage("trash")}><Trash2 size={17} /></button></div></div>
@@ -148,10 +136,10 @@ export function MailWorkspace({ initialAccounts }: { initialAccounts: MailAccoun
     </div>
     <div className={s.footer}><span><ShieldCheck size={14} />{accounts.length} adrese configurate · IMAP / SMTP securizat</span><span role="status" aria-live="polite">{notice}</span></div>
     {showAccounts && <AccountSettings accounts={accounts} onAccounts={updateAccounts} onClose={() => setShowAccounts(false)} />}
-    <dialog ref={composeRef} className={s.dialog} aria-labelledby="mail-compose-title" onCancel={(e) => { e.preventDefault(); closeCompose(); }}>{draft && <form onSubmit={(e) => { e.preventDefault(); void storeDraft(false); }}>
-      <div className={s.dialogHeading}><h2 id="mail-compose-title">{draft.draftRef ? "Editează ciorna" : "Mesaj nou"}</h2><button type="button" className={s.iconButton} disabled={working} onClick={closeCompose} aria-label="Închide compunerea"><X size={19} /></button></div>
-      <fieldset disabled={working} className={s.composeFields}><label><span>De la</span><select value={draft.accountId} disabled={!!draft.reply || !!draft.draftRef} onChange={(e) => setDraft({ ...draft, accountId: e.target.value })}>{accounts.map((a) => <option key={a.id} value={a.id}>{a.address}</option>)}</select></label><label><span>Către</span><input type="email" required value={draft.to} onChange={(e) => setDraft({ ...draft, to: e.target.value })} /></label><label><span>Subiect</span><input required maxLength={500} value={draft.subject} onChange={(e) => setDraft({ ...draft, subject: e.target.value })} /></label><textarea aria-label="Conținutul mesajului" placeholder="Scrie mesajul…" maxLength={200000} value={draft.body} onChange={(e) => setDraft({ ...draft, body: e.target.value })} /><p className={s.formNotice} role="status">{notice}</p></fieldset>
-      <div className={s.dialogFooter}><button type="submit" className={`${s.button} ${s.primary}`} disabled={working}><Send size={16} />{working ? "Se procesează…" : "Trimite"}</button><button type="button" className={s.button} disabled={working} onClick={() => storeDraft(true)}>Salvează ciorna</button></div>
-    </form>}</dialog>
+    {draft && <MailComposerDialog initial={draft} accounts={accounts} ownerId={ownerId} onClose={() => setDraft(null)} onSubmitted={(result) => {
+      setNotice(result.warning || (result.draft ? "Ciornă salvată pe server, inclusiv atașamentele." : result.saveSent ? `Mesaj acceptat de SMTP. Copia a fost salvată în ${result.sentFolder || "Trimise"}.` : "Mesaj acceptat de SMTP, fără copie în Trimise, conform opțiunii alese."));
+      setAccountId(result.accountId); if (result.draft) setFolder("draft"); else if (result.saveSent && !result.sentFolder) setFolder("sent");
+      setDraft(null); setQuery(""); reload();
+    }} />}
   </div>;
 }

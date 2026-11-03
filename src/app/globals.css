@@ -79,6 +79,12 @@ body {
   color: var(--foreground);
 }
 
+html:has([data-mail-viewport="true"]),
+body:has(> [data-mail-viewport="true"]) {
+  overflow: hidden;
+  min-height: 0;
+}
+
 /* Only authenticated application surfaces adopt the selected theme. Marketing keeps its own palette. */
 html[data-theme="dark"] .ef-app-theme {
   color-scheme: dark;
