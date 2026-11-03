@@ -124,3 +124,14 @@ test("real MIME parser returns text and downloadable attachment without exposing
     assert.equal(attachment.content.toString(), "test attachment");
   } finally { mock.restoreAll(); }
 });
+test("trash refuses servers whose MOVE fallback could expunge other deleted messages", async () => {
+  mock.method(dns, "lookup", async () => [{ address: "1.1.1.1", family: 4 }]);
+  mock.method(ImapFlow.prototype, "connect", async () => {});
+  mock.method(ImapFlow.prototype, "close", () => {});
+  mock.method(ImapFlow.prototype, "mailboxOpen", async () => ({ exists: 1, uidValidity: 123n }));
+  const move = mock.method(ImapFlow.prototype, "messageMove", async () => true);
+  try {
+    await assert.rejects(protocol.mutateMailboxMessage(settings, ref, "trash"), /în siguranță/);
+    assert.equal(move.mock.callCount(), 0);
+  } finally { mock.restoreAll(); }
+});

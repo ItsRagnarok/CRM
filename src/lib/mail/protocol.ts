@@ -119,9 +119,14 @@ export async function mailboxAttachment(settings: MailCredentials, ref: MailRefe
 export async function mutateMailboxMessage(settings: MailCredentials, ref: MailReference, action: "unread" | "trash") {
   return withMailbox(settings, async (client) => {
     await openReference(client, ref);
-    if (action === "unread") await client.messageFlagsRemove(String(ref.uid), ["\\Seen"], { uid: true });
+    if (action === "unread") {
+      if (!(await client.messageFlagsRemove(String(ref.uid), ["\\Seen"], { uid: true }))) throw new MailError("Mesajul nu a putut fi marcat. Reîncarcă lista.");
+    }
     else {
       if (ref.folder === "trash") throw new MailError("Mesajul este deja în Coș.");
+      // Without MOVE or UIDPLUS, the library's fallback can expunge unrelated
+      // messages already flagged Deleted by another mail client.
+      if (!client.capabilities.has("MOVE") && !client.capabilities.has("UIDPLUS")) throw new MailError("Serverul nu permite mutarea în siguranță a unui singur mesaj. Folosește webmailul pentru această operație.");
       const trash = await folderPath(client, "trash", true);
       if (!trash || !(await client.messageMove(String(ref.uid), trash, { uid: true }))) throw new MailError("Mesajul nu a putut fi mutat în Coș.");
     }

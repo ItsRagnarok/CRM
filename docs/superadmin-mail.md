@@ -14,7 +14,7 @@ Testează conexiunea verifică autentificarea și accesul la INBOX, precum și a
 - Căutare în expeditori și subiectele mesajelor încărcate. Nu reprezintă o căutare în întreaga arhivă de pe server.
 - Citire și marcarea ca citit, răspuns de pe adresa destinatară cu antete de conversație, redirecționarea textului, compunere text simplu, un destinatar.
 - Ciorne persistate în dosarul IMAP. La editare se salvează noua versiune, iar cea veche se mută în Coș; nu se expunge întregul dosar.
-- Mutare în Coș și marcarea ca necitit persistă pe server. Nu există ștergere definitivă.
+- Mutare în Coș și marcarea ca necitit persistă pe server. Nu există ștergere definitivă. Mutarea necesită MOVE sau UIDPLUS, pentru a evita expungerea altor mesaje marcate pentru ștergere de un alt client.
 - Mesajele de maximum 10 MB pot fi citite și atașamentele lor descărcate. Cele mai mari se deschid în webmail. Citirea afișează text simplu, inclusiv conversia HTML în text; nu încarcă imagini externe și nu execută HTML.
 - Atașamentele primite pot fi descărcate printr-o rută cu autentificare și autorizare. Compunerea nu include încă încărcare de atașamente, CC/BCC sau redirecționarea atașamentelor.
 - SMTP acceptat nu înseamnă confirmarea livrării la destinatar. Dacă salvarea copiei în Trimise eșuează după acceptarea SMTP, se afișează avertizare de succes parțial și mesajul nu se retrimite automat.
