@@ -18,3 +18,61 @@
 @media(max-width:850px){.mail{padding:12px}.heading{margin-bottom:12px;gap:10px}.heading h1{font-size:22px}.heading p{font-size:11px}.workspace,.accountsView{min-height:0;grid-template-rows:auto minmax(0,1fr)}.sidebar{max-height:150px;padding:8px 12px}.accountList{flex:none;min-height:56px;max-height:65px;overflow-x:auto;overflow-y:hidden;margin-bottom:5px}.folders{flex-shrink:0;max-height:66px}.mobileReading{grid-template-rows:minmax(0,1fr)}.messageList{min-height:0;max-height:none}.accountCards{max-height:110px;gap:6px;margin-bottom:10px}.folderBar{gap:4px;margin-bottom:9px}.footer{font-size:9px;gap:4px;max-height:48px}.footer>span:last-child{max-width:100%}.readerToolbar{padding-top:10px;padding-bottom:10px}.composerDialog{height:94dvh;max-height:94dvh}.optionGrid{grid-template-columns:1fr}.composerStatus{padding-left:16px;padding-right:16px}}
 @media(max-height:600px){.mail{padding-top:10px;padding-bottom:6px}.heading{margin-bottom:8px}.heading p,.permission{display:none}.accountCards{max-height:75px}.folderBar{margin-bottom:8px}.footer{max-height:30px;padding-top:5px;padding-bottom:2px}.search{padding-top:6px;padding-bottom:6px}}
 @media(max-width:850px){.accountsView{grid-template-rows:minmax(0,1fr)}}
+
+@media (max-width: 600px) {
+  .mail { padding: 8px; }
+  .heading { gap: 6px; margin-bottom: 8px; }
+  .heading h1 { margin: 0; }
+  .heading p { display: none; }
+  .headingActions { gap: 4px; }
+  .viewSwitch { padding: 2px; }
+  .viewSwitch button,
+  .headingActions > .button { min-height: 44px; padding: 6px 8px; }
+  .viewSwitch button svg,
+  .headingActions > .button svg { display: none; }
+
+  .sidebar { max-height: none; padding: 6px; }
+  .accountList,
+  .accountCards,
+  .folders,
+  .folderBar {
+    display: flex;
+    flex-wrap: nowrap;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+  .accountCards { margin-bottom: 4px; }
+  .accountCard { flex: 0 0 165px; }
+  .folders,
+  .folderBar { padding-bottom: 3px; }
+  .folder { flex: 0 0 auto; min-height: 44px; white-space: nowrap; }
+  .footer { padding: 4px 0 0; }
+  .footer > span:first-child { display: none; }
+  .footer:has([role="status"]:empty) { display: none; }
+
+  .mail:has(.mobileReading) > .heading,
+  .mail:has(.mobileReading) > .accountCards,
+  .mail:has(.mobileReading) > .folderBar { display: none; }
+  .reader { padding: 0 12px 16px; }
+  .readerToolbar .iconButton,
+  .readerToolbar .button,
+  .dialogHeading .iconButton,
+  .dialogFooter .button { min-height: 44px; }
+  .readerToolbar .iconButton { min-width: 44px; }
+  .reader h2 { margin-bottom: 14px; font-size: 18px; }
+
+  .dialog { width: calc(100% - 12px); max-height: 94dvh; }
+  .dialogHeading,
+  .dialogFooter { padding: 8px 12px; }
+  .composeFields,
+  .settingsBody { padding-inline: 12px; }
+  .settingsAccounts > div { flex-wrap: wrap; }
+  .mail .search input,
+  .mail .formGrid input,
+  .mail .formGrid select,
+  .mail .composeFields input,
+  .mail .composeFields select,
+  .mail .composeFields textarea,
+  .mail .richEditor { font-size: 16px; }
+}
