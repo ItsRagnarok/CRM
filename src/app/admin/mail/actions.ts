@@ -3,14 +3,15 @@
 import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { requireMailAdmin, mailStore, getMailCredentials, listMailAccounts } from "@/lib/mail/store";
-import { deliverMessage, listMailbox, mutateMailboxMessage, readMailboxMessage, verifyMailbox } from "@/lib/mail/protocol";
-import { accountId, composeInput, mailFolder, MailError, reference, safeMailError, validateCredentials } from "@/lib/mail/validation";
-import type { MailReference, MailResult } from "@/lib/mail/types";
+import { deliverMessage, listMailbox, mailboxAttachments, mailboxSendFolders, mutateMailboxMessage, readMailboxMessage, verifyMailbox } from "@/lib/mail/protocol";
+import { accountId, composeInput, composeOptions, mailFolder, MailError, reference, safeMailError, uploadManifest, validateCredentials } from "@/lib/mail/validation";
+import { MAIL_UPLOAD_BUCKET, MAX_ATTACHMENTS_BYTES, type MailComposeInput, type MailReference, type MailResult } from "@/lib/mail/types";
+import { createClient } from "@/lib/supabase/server";
 
-async function run<T>(work: () => Promise<T>): Promise<MailResult<T>> {
+async function run<T>(work: (admin: Awaited<ReturnType<typeof requireMailAdmin>>) => Promise<T>): Promise<MailResult<T>> {
   // Authentication redirects must retain Next's redirect semantics.
-  await requireMailAdmin();
-  try { return { data: await work() }; } catch (error) { return { error: safeMailError(error) }; }
+  const admin = await requireMailAdmin();
+  try { return { data: await work(admin) }; } catch (error) { return { error: safeMailError(error) }; }
 }
 export async function configureMailAccount(input: unknown, id: string | null, save: boolean) {
   return run(async () => {
@@ -58,17 +59,38 @@ export async function changeMailMessage(ref: MailReference, action: "unread" | "
     return true;
   });
 }
-export async function submitMail(input: { accountId: string; to: string; subject: string; body: string; deliveryId: string; reply?: MailReference; draftRef?: MailReference }, draft: boolean) {
-  return run(async () => {
-    const id = accountId(input.accountId), deliveryId = accountId(input.deliveryId), content = composeInput(input, draft === true);
+export async function fetchMailSendFolders(id: string) {
+  return run(async () => mailboxSendFolders(await getMailCredentials(accountId(id))));
+}
+export async function cleanupMailUploads() {
+  return run(async ({ userId }) => {
+    const client = await createClient();
+    const { data } = await client.storage.from(MAIL_UPLOAD_BUCKET).list(userId, { limit: 100, sortBy: { column: "created_at", order: "asc" } });
+    const expired = (data ?? []).filter((f) => f.created_at && new Date(f.created_at).getTime() < Date.now() - 24 * 3600_000).map((f) => `${userId}/${f.name}`);
+    if (expired.length) await client.storage.from(MAIL_UPLOAD_BUCKET).remove(expired);
+    return true;
+  });
+}
+export async function submitMail(input: MailComposeInput, draft: boolean) {
+  return run(async ({ userId }) => {
+    if (typeof draft !== "boolean") throw new MailError("Operație de compunere invalidă.");
+    const id = accountId(input.accountId), deliveryId = accountId(input.deliveryId);
+    const content = { ...composeInput(input, draft, true), ...composeOptions(input) };
+    const recipients = [content.to, content.cc, content.bcc].flatMap((v) => v.split(",").map((a) => a.trim()).filter(Boolean));
+    if ((!draft && !recipients.length) || recipients.length > 50) throw new MailError("Alege cel puțin un destinatar; sunt permise cel mult 50 de adrese în total.");
+    const uploads = uploadManifest(input.uploads ?? [], userId);
+    const source = input.attachmentSource ? reference(input.attachmentSource) : null;
+    const retained = input.existingAttachments ?? [];
+    if (!Array.isArray(retained) || retained.length + uploads.length > 20 || retained.some((a) => !Number.isSafeInteger(a.index) || a.index < 0 || a.index > 1000) || new Set(retained.map((a) => a.index)).size !== retained.length || (retained.length && !source)) throw new MailError("Lista atașamentelor originale este invalidă.");
     const settings = await getMailCredentials(id);
     const reply = input.reply ? reference(input.reply) : null;
     if (reply && reply.accountId !== id) throw new MailError("Răspunsul trebuie trimis de pe adresa care a primit mesajul.");
     const draftRef = input.draftRef ? reference(input.draftRef) : null;
     if (draftRef && (draftRef.accountId !== id || draftRef.folder !== "draft")) throw new MailError("Ciorna aparține altei adrese.");
     const original = reply ? await readMailboxMessage(settings, reply) : null;
+    if (!draft && content.saveSent && content.sentFolder && !(await mailboxSendFolders(settings)).includes(content.sentFolder)) throw new MailError("Dosarul ales pentru copia trimisă nu mai există. Alege alt dosar.");
     if (!draft) {
-      const fingerprint = createHash("sha256").update(JSON.stringify({ id, ...content })).digest("hex");
+      const fingerprint = createHash("sha256").update(JSON.stringify({ id, ...content, uploads, source, reply, draftRef, retained: retained.map((a) => a.index) })).digest("hex");
       const claim = await mailStore<{ claimed: boolean; status?: string }>("claim_send", id, { deliveryId, fingerprint });
       if (!claim.claimed) {
         if (claim.status === "accepted") return { warning: "Acest mesaj a fost deja acceptat de serverul SMTP. Nu a fost retrimis." };
@@ -77,7 +99,20 @@ export async function submitMail(input: { accountId: string; to: string; subject
     }
     let result;
     try {
+      const storage = (await createClient()).storage.from(MAIL_UPLOAD_BUCKET);
+      const attachments = source && retained.length ? await mailboxAttachments(await getMailCredentials(source.accountId), source, retained.map((a) => a.index)) : [];
+      let total = attachments.reduce((sum, a) => sum + a.content.length, 0);
+      for (const upload of uploads) {
+        const { data, error } = await storage.download(upload.path);
+        if (error || !data) throw new MailError("Un atașament încărcat nu mai este disponibil. Atașează-l din nou.");
+        if (data.size !== upload.size) throw new MailError("Dimensiunea unui atașament s-a schimbat. Atașează-l din nou.");
+        total += data.size;
+        if (total > MAX_ATTACHMENTS_BYTES) throw new MailError("Atașamentele pot avea cel mult 15 MB în total.");
+        attachments.push({ filename: upload.name, content: Buffer.from(await data.arrayBuffer()) });
+      }
+      if (total > MAX_ATTACHMENTS_BYTES) throw new MailError("Atașamentele pot avea cel mult 15 MB în total.");
       result = await deliverMessage(settings, { ...content, messageId: `<${deliveryId}@${settings.address.split("@")[1]}>`,
+        attachments,
         inReplyTo: original?.messageId, references: original ? [...(original.references ?? []), ...(original.messageId ? [original.messageId] : [])] : undefined }, draft);
     } catch (error) {
       if (draft) throw error;
