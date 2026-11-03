@@ -13,7 +13,7 @@ export function MailComposerDialog({ initial, accounts, ownerId, onClose, onSubm
   initial: MailComposeInput; accounts: MailAccount[]; ownerId: string; onClose: () => void;
   onSubmitted: (result: { accountId: string; draft: boolean; saveSent: boolean; sentFolder: string; warning: string }) => void;
 }) {
-  const [value, setValue] = useState<MailComposeInput>({ cc: "", bcc: "", replyTo: "", followUpTo: "", priority: "normal", format: "plain", readReceipt: false, deliveryNotification: false, saveSent: true, sentFolder: "", existingAttachments: [], ...initial });
+  const [value, setValue] = useState<MailComposeInput>({ cc: "", bcc: "", replyTo: "", followUpTo: "", priority: "normal", format: "plain", readReceipt: true, deliveryNotification: true, saveSent: true, sentFolder: "", existingAttachments: [], ...initial });
   const [uploads, setUploads] = useState<Upload[]>([]);
   const [folders, setFolders] = useState<string[]>([]);
   const [folderError, setFolderError] = useState("");
