@@ -62,7 +62,7 @@ export function composeInput(input: { to: string; subject: string; body: string 
 }
 export function emailList(value: unknown, required = false): string {
   if (typeof value !== "string" || value.length > 15000 || /[\r\n\x00]/.test(value)) throw new MailError("Verifică lista de adrese de email.");
-  const entries = value.split(/[,;]/).map((v) => v.trim()).filter(Boolean);
+  const entries = value.split(/[,; \t]+/).filter(Boolean);
   if ((required && !entries.length) || entries.length > 50) throw new MailError("Completează destinatarii; sunt permise cel mult 50 de adrese pe mesaj.");
   return [...new Set(entries.map(email))].join(", ");
 }
