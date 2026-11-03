@@ -156,6 +156,7 @@ test("replying to a sent message targets its recipient instead of the sender acc
   finally { mock.restoreAll(); }
 });
 test("advanced compose validates address lists, options, upload ownership and limits", () => {
+  assert.equal(composeOptions({ bcc: "a@example.com b@example.com" }).bcc, "a@example.com, b@example.com");
   assert.equal(composeInput({ to: "a@example.com; b@example.com", subject: "Test", body: "" }).to, "a@example.com, b@example.com");
   assert.equal(composeOptions({ cc: "a@example.com, a@example.com", priority: "high", deliveryNotification: true }).cc, "a@example.com");
   for (const options of [{ bcc: "a@example.com\r\nTo: victim@example.com" }, { followUpTo: "not-mail" }, { priority: "urgent\r\nX: bad" }, { sentFolder: "Sent\nOther" }]) assert.throws(() => composeOptions(options));
