@@ -31,7 +31,7 @@ Doar un Super Admin autorizat poate recupera secretul prin RPC; aplicația îl c
 
 Serverele configurate trebuie să aibă exclusiv IP-uri publice. Conexiunea folosește IP-ul verificat, fără a rezolva din nou DNS, și păstrează hostname-ul pentru SNI și verificarea certificatului. Nu sunt permise IP-uri private, loopback, link-local sau URL-uri cu credențiale. Conexiunile au timeout, iar citirea are limită de volum.
 
-Migrarea este `supabase/migrations/20261103005330_platform_mail_vault.sql`. Nu sunt necesare chei suplimentare în Vercel; se utilizează sesiunea Supabase verificată și Vault-ul proiectului.
+Migrarea este `supabase/migrations/20261103010031_platform_mail_vault.sql`, cu versiunea confirmată în istoricul bazei găzduite. Nu sunt necesare chei suplimentare în Vercel; se utilizează sesiunea Supabase verificată și Vault-ul proiectului. Proiectul avea migrări mai vechi înainte de acest repository; nu folosi acest dosar ca istoric complet pentru un `db push` sau reset fără reconcilierea istoricului existent.
 
 ## Verificări
 

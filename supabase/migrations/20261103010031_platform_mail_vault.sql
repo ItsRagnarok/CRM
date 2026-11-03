@@ -1,4 +1,5 @@
 -- Credentials are encrypted by Supabase Vault. No mailbox data belongs to a tenant.
+-- Filename matches the version recorded by the hosted migration tool.
 create schema if not exists private;
 create table private.platform_mail_accounts (
   id uuid primary key default gen_random_uuid(),
