@@ -8,12 +8,13 @@ const NAV = [
   { href: "/admin/companii", label: "Companii" },
   { href: "/admin/programari", label: "Programări" },
   { href: "/admin/activitate", label: "Activitate" },
+  { href: "/admin/mail", label: "Mail" },
 ];
 
 export function AdminTopbar({ fullName }: { fullName: string }) {
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-graphite-border bg-graphite px-7">
-      <div className="flex items-center gap-7">
+    <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-graphite-border bg-graphite px-5 py-3">
+      <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-purple">
             <Zap className="h-4 w-4 text-white" />
@@ -25,7 +26,7 @@ export function AdminTopbar({ fullName }: { fullName: string }) {
             Super Admin
           </span>
         </div>
-        <nav className="flex items-center gap-1">
+        <nav className="flex flex-wrap items-center gap-1" aria-label="Administrare platformă">
           {NAV.map((item) => (
             <Link
               key={item.href}
