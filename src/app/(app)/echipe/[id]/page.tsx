@@ -13,6 +13,7 @@ import {
   toggleTeamActive,
 } from "../actions";
 import { AddTeamMember } from "./add-team-member";
+import { ManageTeam } from "./manage-team";
 import { DriverSelect } from "../driver-select";
 import {
   ArrowLeft,
@@ -30,7 +31,7 @@ export default async function TeamDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { organization } = await requireSessionContext();
+  const { organization, profile, readOnly } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: team } = await supabase
@@ -321,6 +322,9 @@ export default async function TeamDetailPage({
           </p>
         )}
       </div>
+      {!readOnly && (profile.role === "admin" || profile.role === "manager") && (
+        <ManageTeam teamId={team.id} name={team.name} />
+      )}
     </div>
   );
 }
