@@ -1661,6 +1661,12 @@ export type Database = {
           },
         ]
       }
+      company_demos: {
+        Row: { organization_id: string; duration_hours: number; expires_at: string | null; converted_at: string | null }
+        Insert: { organization_id: string; duration_hours: number; expires_at?: string | null; converted_at?: string | null }
+        Update: { duration_hours?: number; expires_at?: string | null; converted_at?: string | null }
+        Relationships: []
+      }
       organizations: {
         Row: {
           address: string | null
@@ -2597,6 +2603,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      company_demo_session: {
+        Args: Record<PropertyKey, never>
+        Returns: { company_name: string; is_admin: boolean; state: string; duration_hours: number }[]
+      }
+      company_demo_decide_terms: { Args: { accept_terms: boolean }; Returns: boolean }
+      platform_admin_convert_demo: { Args: { p_org_id: string }; Returns: boolean }
+      platform_admin_create_demo_company: {
+        Args: { company_cui: string; company_name: string; owner_email: string; owner_full_name: string; owner_password: string; demo_hours: number }
+        Returns: string
+      }
       ef_platform_mail: { Args: { operation: string; p_id?: string; config?: Json }; Returns: Json }
       _ddl_probe_fn2: { Args: never; Returns: number }
       _ddl_probe_fn3: { Args: { x: string }; Returns: number }

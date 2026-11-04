@@ -113,6 +113,12 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
   if (profileResult.error) throw new Error("Nu am putut încărca profilul companiei. Reîncearcă.");
   let profileRow = profileResult.data;
 
+  if (!profileRow?.organizations) {
+    const { data: demo } = await supabase.rpc("company_demo_session").maybeSingle();
+    if (demo?.state === "pending") redirect("/accepta-termeni");
+    if (demo?.state === "expired" || demo?.state === "suspended") redirect("/cont-suspendat");
+  }
+
   if (!profileRow) {
     const { data: platformAdmin, error: platformAdminError } = await supabase
       .from("platform_admins")
