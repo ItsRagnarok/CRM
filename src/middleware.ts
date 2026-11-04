@@ -8,6 +8,9 @@ export async function middleware(request: NextRequest) {
   if (parsePreview(request.cookies.get(PREVIEW_COOKIE)?.value) && !["GET", "HEAD"].includes(request.method) && request.nextUrl.pathname !== "/api/admin/preview-exit") {
     return NextResponse.json({ error: "Modul de vizualizare nu permite modificări." }, { status: 403 });
   }
+  if (request.method === "POST" && request.nextUrl.pathname === "/api/programari") {
+    return NextResponse.next({ request });
+  }
   // Public site assets do not need a session lookup.
   if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css", "/public-web-analytics.js"].includes(request.nextUrl.pathname)) {
     return NextResponse.next({ request });

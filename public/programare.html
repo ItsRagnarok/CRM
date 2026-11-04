@@ -74,7 +74,7 @@ details summary{cursor:pointer;font-weight:600}
     <h2 id="formH">Datele tale</h2>
     <label for="f_name">Nume și firmă</label><input id="f_name" autocomplete="name">
     <label for="f_phone">Telefon</label><input id="f_phone" type="tel" autocomplete="tel">
-    <label for="f_email">E-mail (opțional)</label><input id="f_email" type="email" autocomplete="email">
+    <label for="f_email">E-mail pentru confirmare</label><input id="f_email" type="email" autocomplete="email" maxlength="254" required>
     <label for="f_note">Ce vrei să discutăm? (opțional)</label><textarea id="f_note" rows="3"></textarea>
     <button class="btn" id="bookBtn">Confirmă programarea</button>
   </div>
@@ -123,13 +123,27 @@ const mutedMsg = (box, text) => { const sp = document.createElement("span"); sp.
 const pad = n => String(n).padStart(2,"0");
 const ymd = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
 const parse = k => { const [y,m,d] = k.split("-").map(Number); return new Date(y,m-1,d); };
+const bookingClock = new Intl.DateTimeFormat("en-GB", {
+  timeZone:"Europe/Bucharest", year:"numeric", month:"2-digit", day:"2-digit",
+  hour:"2-digit", minute:"2-digit", hourCycle:"h23"
+});
+const bookingParts = instant => Object.fromEntries(bookingClock.formatToParts(instant).map(p => [p.type,p.value]));
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const mins = t => { const [h,m] = t.split(":").map(Number); return h*60+m; };
 const tstr = m => pad(Math.floor(m/60))+":"+pad(m%60);
-const fmtTime = d => pad(d.getHours())+":"+pad(d.getMinutes());
+const fmtTime = d => { const p = bookingParts(d); return p.hour+":"+p.minute; };
 const fmtDate = d => DAYS[d.getDay()]+", "+d.getDate()+" "+MONTHS[d.getMonth()];
-const at = (d,t) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, mins(t));
-const todayD = () => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); };
+const at = (d,t) => {
+  const wall = Date.parse(ymd(d)+"T"+t+":00Z");
+  const p = bookingParts(new Date(wall));
+  const local = Date.parse(p.year+"-"+p.month+"-"+p.day+"T"+p.hour+":"+p.minute+":00Z");
+  return new Date(wall - (local - wall));
+};
+const bookingDate = instant => {
+  const p = bookingParts(instant);
+  return parse(p.year+"-"+p.month+"-"+p.day);
+};
+const todayD = () => bookingDate(new Date());
 const withBooked = (dt, base) => [...new Set([...base, ...(BK[ymd(dt)]||[]).map(b => fmtTime(new Date(b.slot_start)))])].sort();
 const show = (el, cls, text) => { el.className = "msg "+cls; el.textContent = text; };
 
@@ -149,12 +163,26 @@ async function loadPublicData(){
   try{
     const a = await sb.from("booking_settings").select("*").eq("id",1).single();
     if (a.data) S = {slot_minutes:a.data.slot_minutes, days_ahead:a.data.days_ahead, weekly:a.data.weekly};
-    const b = await sb.from("booking_days").select("*").gte("day", ymd(todayD()));
+    if (a.error) throw a.error;
+    const lastDay = todayD();
+    lastDay.setDate(lastDay.getDate() + S.days_ahead);
+    const b = await sb.from("booking_days").select("*").gte("day", ymd(todayD())).lte("day", ymd(lastDay));
+    if (b.error) throw b.error;
     OV = {}; (b.data||[]).forEach(r => OV[r.day] = r.slots);
     const to = new Date(Date.now() + (S.days_ahead+2)*864e5);
-    const c = await sb.rpc("taken_slots", {from_ts:new Date().toISOString(), to_ts:to.toISOString()});
-    taken = new Set((c.data||[]).map(s => +new Date(s)));
-  }catch(e){ console.error(e); }
+    const range = {from_ts:new Date().toISOString(), to_ts:to.toISOString()};
+    const occupied = new Set();
+    for (let offset = 0; ; offset += 500){
+      const c = await sb.rpc("taken_slots", range).range(offset, offset + 499);
+      if (c.error) throw c.error;
+      for (const slot of c.data||[]) occupied.add(+new Date(slot));
+      if ((c.data||[]).length < 500) break;
+    }
+    taken = occupied;
+  }catch(e){
+    console.error(e);
+    OV = {}; taken = new Set(); S = {...S, days_ahead:0, weekly:{_texts:S.weekly._texts}};
+  }
 }
 /* ---------- calendar (folosit și de public, și de admin) ---------- */
 function drawCal(el, mode){
@@ -199,16 +227,28 @@ function drawPub(){
 $("bookBtn").onclick = async () => {
   const name = $("f_name").value.trim(), phone = $("f_phone").value.trim();
   if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
+  const email = $("f_email").value.trim();
+  if (!email || !$("f_email").checkValidity()) return show($("pubMsg"),"err","Introdu o adresă de e-mail validă pentru confirmare.");
   $("bookBtn").disabled = true;
   const when = new Date(selSlot);
-  const {error} = await sb.from("bookings").insert({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim()||null, note:$("f_note").value.trim()||null});
-  $("bookBtn").disabled = false;
-  if (error){
-    if (error.code === "23505"){ show($("pubMsg"),"err","Ora tocmai a fost ocupată. Alege altă oră."); selSlot = null; await loadPublicData(); drawPub(); }
-    else show($("pubMsg"),"err","Nu am putut salva programarea. Încearcă din nou sau sună-ne.");
+  try {
+    const response = await fetch("/api/programari", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:$("f_note").value.trim()})
+    });
+    if (response.status === 409){
+      show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră.");
+      selSlot = null; await loadPublicData(); drawPub();
+      return;
+    }
+    if (!response.ok) throw new Error("Booking failed");
+  } catch {
+    show($("pubMsg"),"err","Nu am putut confirma programarea. Verifică disponibilitatea sau sună-ne.");
     return;
+  } finally {
+    $("bookBtn").disabled = false;
   }
-  show($("pubMsg"),"ok", fill(T().ok, fmtDate(when), fmtTime(when)));
+  show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)));
   selSlot = null; await loadPublicData(); drawPub();
 };
 
