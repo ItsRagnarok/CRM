@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PreventZoom } from "@/components/prevent-zoom";
-import { PublicWebAnalytics } from "@/components/public-web-analytics";
+import { Analytics } from "@vercel/analytics/next";
 import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
@@ -68,7 +68,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: 'try{document.documentElement.dataset.theme=localStorage.getItem("ef-theme")==="dark"?"dark":"light"}catch(e){}' }} />
         <PreventZoom />
         {children}
-        <PublicWebAnalytics />
+        <Analytics />
       </body>
     </html>
   );
