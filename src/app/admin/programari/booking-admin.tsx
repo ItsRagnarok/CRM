@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { BookingRotation, type Rotation } from "./booking-rotation";
+import { BookingCalendar } from "./booking-calendar";
 
 type Settings = Database["public"]["Tables"]["booking_settings"]["Row"];
 type Booking = Database["public"]["Tables"]["bookings"]["Row"];
@@ -52,9 +53,11 @@ export function BookingAdmin({ settings, days, bookings }: { settings: Settings;
   const [to, setTo] = useState(today);
   const [message, setMessage] = useState("");
   const [pending, startTransition] = useTransition();
-  const dayBookings = bookings.filter((b) => dayKey(new Date(b.slot_start)) === selectedDay);
-  const stored = days.find((d) => d.day === selectedDay)?.slots as string[] | undefined;
-  const selectedSlots = customSlots ?? stored ?? standardSlots(selectedDay, weekly, slotMinutes);
+  const slotsByDay = new Map(days.map(({ day, slots }) => [day, slots as string[]]));
+  const getSlots = (day: string) => slotsByDay.get(day) ?? standardSlots(day, weekly, slotMinutes);
+  const getBookings = (day: string) => bookings.filter((booking) => dayKey(new Date(booking.slot_start)) === day);
+  const dayBookings = getBookings(selectedDay);
+  const selectedSlots = customSlots ?? getSlots(selectedDay);
   const safeMinutes = Number.isInteger(slotMinutes) && slotMinutes >= 10 && slotMinutes <= 240 ? slotMinutes : 30;
   const allSlots = [...new Set([...Array.from({ length: Math.floor(24 * 60 / safeMinutes) }, (_, n) => `${Math.floor(n * safeMinutes / 60).toString().padStart(2, "0")}:${(n * safeMinutes % 60).toString().padStart(2, "0")}`), ...selectedSlots, ...dayBookings.map((b) => clock(b.slot_start))])].sort();
 
@@ -94,19 +97,24 @@ export function BookingAdmin({ settings, days, bookings }: { settings: Settings;
       setDaysAhead((previous) => Math.max(previous, (Date.parse(rotation.end) - Date.parse(today)) / 864e5));
     });
   }
+  function selectDay(day: string) {
+    setSelectedDay(day);
+    setCustomSlots(null);
+  }
   return <div className="mx-auto max-w-5xl space-y-5 p-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-extrabold">Administrare programări</h1><a href="/programare" target="_blank" rel="noreferrer" className="text-sm font-semibold text-purple">Vezi pagina publică ↗</a></div>
     <p className="text-sm text-muted">Programul este afișat în ora României. Doar super administratorii pot modifica disponibilitatea și programările.</p>
     {message && <p role="status" className="rounded-lg border border-border bg-neutral-bg p-3 text-sm">{message}</p>}
     <fieldset disabled={pending} className="space-y-5 disabled:opacity-70">
       <BookingRotation saved={weekly._rotation} today={today} onApply={applyRotation} />
-      <section className={card}><h2 className="text-lg font-bold">Disponibilitate pe zi</h2>
-        <label className="flex flex-wrap items-center gap-3 text-sm">Ziua <input type="date" min={today} value={selectedDay} onChange={(e) => { setSelectedDay(e.target.value || today); setCustomSlots(null); }} className={input} /></label>
+      <BookingCalendar today={today} selectedDay={selectedDay} onSelectDay={selectDay}
+        getSummary={(day) => ({ slots: getSlots(day).length, bookings: getBookings(day).length })}>
+        <label className="flex flex-wrap items-center gap-3 text-sm">Ziua <input type="date" min={today} value={selectedDay} onChange={(e) => { if (e.target.validity.valid) selectDay(e.target.value || today); }} className={input} /></label>
         <div className="grid grid-cols-4 gap-2 sm:grid-cols-8">{allSlots.map((time) => { const booking = dayBookings.find((b) => clock(b.slot_start) === time); const selected = selectedSlots.includes(time); return <button key={time} type="button" disabled={!!booking} title={booking ? `Rezervat: ${booking.name}` : undefined} aria-pressed={selected} onClick={() => setCustomSlots(selected ? selectedSlots.filter((t) => t !== time) : [...selectedSlots, time])} className={`rounded-lg border p-2 text-xs ${booking ? "border-border bg-amber-soft" : selected ? "border-purple bg-purple-soft text-purple" : "border-border"}`}>{time}{booking ? " · rezervat" : ""}</button>; })}</div>
         <div className="flex flex-wrap gap-2"><button className={button} onClick={() => saveDays([selectedDay], () => selectedSlots)}>Salvează ziua</button><button className={input} onClick={() => saveDays([selectedDay], () => [])}>Închide ziua</button><button className={input} onClick={() => run(async () => await createClient().from("booking_days").delete().eq("day", selectedDay), "Ziua folosește din nou programul standard.")}>Revino la programul standard</button>
         <button className={input} onClick={() => { const date = new Date(`${selectedDay}T12:00:00Z`); const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 0, 12)).toISOString().slice(0, 10); saveDays(datesBetween(selectedDay, end).filter((d) => new Date(`${d}T12:00:00Z`).getUTCDay() === date.getUTCDay()), () => selectedSlots); }}>Repetă în aceeași zi a săptămânii, până la sfârșitul lunii</button></div>
         {!!dayBookings.length && <p className="text-sm text-muted">Rezervări: {dayBookings.map((b) => `${clock(b.slot_start)} — ${b.name}`).join("; ")}</p>}
-      </section>
+      </BookingCalendar>
       <section className={card}><h2 className="text-lg font-bold">Următoarele programări · {bookings.length}</h2>
         {!bookings.length && <p className="text-sm text-muted">Nu există programări viitoare.</p>}
         {bookings.map((b) => <div key={b.id} className="flex flex-wrap justify-between gap-3 border-t border-border pt-3 text-sm"><div><p className="font-bold">{new Date(b.slot_start).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", dateStyle: "medium", timeStyle: "short" })} · {b.name}</p><a href={`tel:${b.phone}`} className="text-purple">{b.phone}</a>{b.email && <p>{b.email}</p>}{b.note && <p className="text-muted">{b.note}</p>}</div><button className="h-fit rounded-lg border border-danger px-3 py-2 text-danger" onClick={() => { if (confirm(`Anulezi programarea lui ${b.name}?`)) run(async () => await createClient().from("bookings").delete().eq("id", b.id), "Programarea a fost anulată."); }}>Anulează programarea</button></div>)}
