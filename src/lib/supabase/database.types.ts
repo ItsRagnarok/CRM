@@ -2597,6 +2597,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_team_without_conversation: { Args: { p_team_id: string }; Returns: string }
       ef_platform_mail: { Args: { operation: string; p_id?: string; config?: Json }; Returns: Json }
       _ddl_probe_fn2: { Args: never; Returns: number }
       _ddl_probe_fn3: { Args: { x: string }; Returns: number }

@@ -47,6 +47,44 @@ export async function toggleTeamActive(formData: FormData) {
   revalidatePath("/echipe");
 }
 
+type ManageTeamState = { error?: string; saved?: boolean };
+
+export async function manageTeam(_state: ManageTeamState, formData: FormData): Promise<ManageTeamState> {
+  const { organization, profile, readOnly } = await requireSessionContext();
+  if (readOnly || (profile.role !== "admin" && profile.role !== "manager")) {
+    return { error: "Nu ai permisiunea să modifici această echipă." };
+  }
+
+  const teamId = String(formData.get("teamId") ?? "");
+  const supabase = await createClient();
+
+  if (formData.get("intent") === "delete") {
+    const { data, error } = await supabase.rpc("delete_team_without_conversation", {
+      p_team_id: teamId,
+    });
+    if (!error && data === "has_conversation") {
+      return { error: "Echipa are o conversație. O poți dezactiva pentru a păstra istoricul." };
+    }
+    if (error || data !== "deleted") return { error: "Nu am putut șterge echipa." };
+    revalidatePath("/echipe");
+    redirect("/echipe");
+  }
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { error: "Numele echipei este obligatoriu." };
+  const { data, error } = await supabase
+    .from("teams")
+    .update({ name })
+    .eq("id", teamId)
+    .eq("organization_id", organization.id)
+    .select("id")
+    .maybeSingle();
+  if (error || !data) return { error: "Nu am putut salva numele echipei." };
+  revalidatePath("/echipe");
+  revalidatePath(`/echipe/${teamId}`);
+  return { saved: true };
+}
+
 export async function addMember(formData: FormData) {
   const teamId = String(formData.get("teamId") ?? "");
   const profileId = String(formData.get("profileId") ?? "");
