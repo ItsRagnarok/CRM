@@ -6,6 +6,7 @@ import { requireAdminContext, ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { CompanyDetailForm } from "./company-detail-form";
 import { startCompanyPreview } from "@/app/admin/preview-actions";
+import { convertDemoCompany } from "@/app/admin/actions";
 
 const CLIENT_STATUS_LABELS: Record<string, string> = {
   active: "Activ",
@@ -22,15 +23,18 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: companies }, { data: users }, { data: jobs }, { data: clients }] = await Promise.all([
+  const [{ data: companies }, { data: users }, { data: jobs }, { data: clients }, { data: demo }] = await Promise.all([
     supabase.rpc("platform_admin_list_companies_v2"),
     supabase.rpc("platform_admin_list_company_users_v2", { org_id: id }),
     supabase.rpc("platform_admin_list_company_jobs", { org_id: id }),
     supabase.rpc("platform_admin_list_company_clients", { org_id: id }),
+    supabase.from("company_demos").select("duration_hours, expires_at, converted_at").eq("organization_id", id).maybeSingle(),
   ]);
 
   const company = (companies ?? []).find((c) => c.id === id);
   if (!company) notFound();
+  const demoExpired = Boolean(demo && !demo.converted_at && demo.expires_at && Date.parse(demo.expires_at) <= Date.now());
+  const active = company.is_active && !demoExpired;
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -42,10 +46,10 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         <h1 className="text-[22px] font-extrabold text-[#17151f]">{company.name}</h1>
         <span
           className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-            company.is_active ? "bg-success-bg text-success" : "bg-danger-bg text-danger"
+            active ? "bg-success-bg text-success" : "bg-danger-bg text-danger"
           }`}
         >
-          {company.is_active ? "Activă" : "Suspendată"}
+          {active ? "Activă" : "Suspendată"}
         </span>
         {company.terms_accepted_at ? (
           <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
@@ -67,6 +71,21 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
       </div>
 
       <div className="mt-6">
+        {demo && (
+          <section className="mb-5 rounded-xl border border-border bg-white p-5">
+            <h2 className="font-bold">Cont demo · {demo.duration_hours} ore</h2>
+            <p className="mt-1 text-sm text-muted">
+              {demo.converted_at ? "Convertit în cont standard." : demoExpired ? "Perioada demo a expirat." : demo.expires_at
+                ? `Expiră la ${new Date(demo.expires_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}.`
+                : "Intervalul începe la acceptarea termenilor."}
+            </p>
+            {!demo.converted_at && (
+              <form action={convertDemoCompany.bind(null, id)} className="mt-3">
+                <button className="rounded-lg bg-purple px-4 py-2 text-sm font-bold text-white">Confirmă plata și activează contul standard</button>
+              </form>
+            )}
+          </section>
+        )}
         <div className="mb-5 rounded-xl border border-border bg-white p-5">
           <h2 className="font-bold">Vizualizează interfața companiei</h2>
           <p className="mt-1 text-sm text-muted">Selectează utilizatorul pentru a vedea aceleași pagini și date. Modificările sunt blocate; contul și sesiunea lui nu sunt schimbate.</p>

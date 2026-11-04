@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdminContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 
 type SubscriptionPlan = Database["public"]["Enums"]["subscription_plan"];
@@ -30,14 +31,22 @@ export async function createCompany(
     return { error: "Parola trebuie să aibă cel puțin 6 caractere." };
   }
 
+  const isDemo = formData.get("isDemo") === "on";
+  const demoHours = Number(formData.get("demoHours"));
+  if (isDemo && ![12, 16, 24, 48].includes(demoHours)) return { error: "Alege durata contului demo." };
+
+  await requireAdminContext();
   const supabase = await createClient();
-  const { data: newOrgId, error } = await supabase.rpc("platform_admin_create_company", {
+  const args = {
     company_name: companyName,
     company_cui: cui,
     owner_full_name: ownerFullName,
     owner_email: ownerEmail,
     owner_password: ownerPassword,
-  });
+  };
+  const { data: newOrgId, error } = isDemo
+    ? await supabase.rpc("platform_admin_create_demo_company", { ...args, demo_hours: demoHours })
+    : await supabase.rpc("platform_admin_create_company", args);
 
   if (error) {
     return { error: error.message.includes("Există deja") ? error.message : "Nu am putut crea compania. Încearcă din nou." };
@@ -45,6 +54,15 @@ export async function createCompany(
 
   revalidatePath("/admin/companii");
   redirect(`/admin/companii/${newOrgId}`);
+}
+
+export async function convertDemoCompany(orgId: string) {
+  await requireAdminContext();
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("platform_admin_convert_demo", { p_org_id: orgId });
+  if (error) throw new Error("Contul demo nu a putut fi convertit.");
+  revalidatePath("/admin/companii");
+  revalidatePath(`/admin/companii/${orgId}`);
 }
 
 export async function deleteCompany(orgId: string) {

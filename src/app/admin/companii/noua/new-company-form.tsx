@@ -1,12 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createCompany } from "@/app/admin/actions";
 
 export function NewCompanyForm() {
   const [state, formAction, pending] = useActionState(createCompany, undefined);
+  const [isDemo, setIsDemo] = useState(false);
 
   return (
     <div className="mx-auto max-w-xl px-6 py-10">
@@ -36,6 +37,19 @@ export function NewCompanyForm() {
           />
         </Field>
 
+        <label className="flex items-center gap-2 text-sm font-bold">
+          <input type="checkbox" name="isDemo" checked={isDemo} onChange={(event) => setIsDemo(event.target.checked)} />
+          Cont demo
+        </label>
+        {isDemo && (
+          <label className="flex flex-col gap-2 text-sm font-semibold">
+            Durata accesului demo
+            <select name="demoHours" defaultValue="24" className="rounded-[10px] border border-border bg-white px-3 py-2">
+              {[12, 16, 24, 48].map((hours) => <option key={hours} value={hours}>{hours} ore</option>)}
+            </select>
+            <span className="text-xs font-normal text-muted">Intervalul începe când administratorul companiei acceptă termenii după autentificare.</span>
+          </label>
+        )}
         <div className="mt-2 border-t border-[#f2f0f9] pt-4">
           <div className="text-[12.5px] font-bold uppercase tracking-wide text-[#9b93b5]">
             Cont administrator firmă
