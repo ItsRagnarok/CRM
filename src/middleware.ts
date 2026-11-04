@@ -11,8 +11,8 @@ export async function middleware(request: NextRequest) {
   if (request.method === "POST" && request.nextUrl.pathname === "/api/programari") {
     return NextResponse.next({ request });
   }
-  // Public SEO files and the blog stylesheet do not need a session lookup.
-  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css"].includes(request.nextUrl.pathname)) {
+  // Public site assets do not need a session lookup.
+  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css", "/public-web-analytics.js"].includes(request.nextUrl.pathname)) {
     return NextResponse.next({ request });
   }
   let response = NextResponse.next({ request });
