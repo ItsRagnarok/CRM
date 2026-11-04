@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { BookingRotation, type Rotation } from "./booking-rotation";
+import { bookingConfirmation } from "@/lib/booking-confirmation";
+import { PersonalConfirmation } from "./personal-confirmation";
 
 type Settings = Database["public"]["Tables"]["booking_settings"]["Row"];
 type Booking = Database["public"]["Tables"]["bookings"]["Row"];
@@ -44,6 +46,7 @@ export function BookingAdmin({ settings, days, bookings }: { settings: Settings;
   const [weekly, setWeekly] = useState(settings.weekly as unknown as Weekly);
   const [texts, setTexts] = useState({ ...DEFAULT_TEXTS, ...((settings.weekly as unknown as Weekly)._texts ?? {}) });
   const [slotMinutes, setSlotMinutes] = useState(settings.slot_minutes);
+  const [confirmation, setConfirmation] = useState(() => bookingConfirmation(settings.weekly));
   const [daysAhead, setDaysAhead] = useState(settings.days_ahead);
   const today = dayKey(new Date());
   const [selectedDay, setSelectedDay] = useState(today);
@@ -66,9 +69,10 @@ export function BookingAdmin({ settings, days, bookings }: { settings: Settings;
     });
   }
   function saveSettings() {
+    if (!confirmation.subject.trim() || !confirmation.message.trim()) { setMessage("Completează subiectul și textul confirmării."); return; }
     if (!Number.isInteger(slotMinutes) || slotMinutes < 10 || slotMinutes > 240 || !Number.isInteger(daysAhead) || daysAhead < 1 || daysAhead > 731) { setMessage("Durata trebuie să fie 10–240 minute, iar intervalul 1–731 zile."); return; }
     if ([0, 1, 2, 3, 4, 5, 6].some((key) => { const d = weekly[String(key) as "0"]; return d?.on && d.from >= d.to; })) { setMessage("Ora de început trebuie să fie înainte de ora de final."); return; }
-    run(async () => await createClient().from("booking_settings").upsert({ id: 1, slot_minutes: slotMinutes, days_ahead: daysAhead, weekly: { ...weekly, _texts: texts } as unknown as Json }), "Programul și textele au fost salvate.");
+    run(async () => await createClient().from("booking_settings").upsert({ id: 1, slot_minutes: slotMinutes, days_ahead: daysAhead, weekly: { ...weekly, _texts: texts, _confirmation: confirmation } as unknown as Json }), "Programul și textele au fost salvate.");
   }
   function saveDays(keys: string[], getSlots: (key: string) => string[]) {
     if (!keys.length || keys.some((key) => key < today)) { setMessage("Alege o perioadă validă, începând de astăzi."); return; }
@@ -109,11 +113,22 @@ export function BookingAdmin({ settings, days, bookings }: { settings: Settings;
       </section>
       <section className={card}><h2 className="text-lg font-bold">Următoarele programări · {bookings.length}</h2>
         {!bookings.length && <p className="text-sm text-muted">Nu există programări viitoare.</p>}
-        {bookings.map((b) => <div key={b.id} className="flex flex-wrap justify-between gap-3 border-t border-border pt-3 text-sm"><div><p className="font-bold">{new Date(b.slot_start).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", dateStyle: "medium", timeStyle: "short" })} · {b.name}</p><a href={`tel:${b.phone}`} className="text-purple">{b.phone}</a>{b.email && <p>{b.email}</p>}{b.note && <p className="text-muted">{b.note}</p>}</div><button className="h-fit rounded-lg border border-danger px-3 py-2 text-danger" onClick={() => { if (confirm(`Anulezi programarea lui ${b.name}?`)) run(async () => await createClient().from("bookings").delete().eq("id", b.id), "Programarea a fost anulată."); }}>Anulează programarea</button></div>)}
+        {bookings.map((b) => <div key={b.id} className="flex flex-wrap justify-between gap-3 border-t border-border pt-3 text-sm"><div><p className="font-bold">{new Date(b.slot_start).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", dateStyle: "medium", timeStyle: "short" })} · {b.name}</p><a href={`tel:${b.phone}`} className="text-purple">{b.phone}</a>{b.email && <p>{b.email}</p>}{b.note && <p className="text-muted">{b.note}</p>}</div><button className="h-fit rounded-lg border border-danger px-3 py-2 text-danger" onClick={() => { if (confirm(`Anulezi programarea lui ${b.name}?`)) run(async () => await createClient().from("bookings").delete().eq("id", b.id), "Programarea a fost anulată."); }}>Anulează programarea</button>{b.email && <PersonalConfirmation id={b.id} email={b.email} template={confirmation} />}</div>)}
       </section>
       <section className={card}><h2 className="text-lg font-bold">Blochează o perioadă</h2><p className="text-sm text-muted">Programările confirmate se păstrează.</p><div className="flex flex-wrap gap-3"><label className="text-sm">De la <input aria-label="Prima zi" type="date" min={today} value={from} onChange={(e) => setFrom(e.target.value)} className={input} /></label><label className="text-sm">Până la <input aria-label="Ultima zi" type="date" min={from} value={to} onChange={(e) => setTo(e.target.value)} className={input} /></label></div><div className="flex flex-wrap gap-3"><button className={button} onClick={() => saveDays(datesBetween(from, to), () => [])}>Blochează perioada</button><button className={input} onClick={() => { if (!from || !to || to < from || datesBetween(from, to).length > 365) { setMessage("Alege o perioadă de maximum 365 de zile."); return; } run(async () => await createClient().from("booking_days").delete().gte("day", from).lte("day", to), "Perioada folosește programul standard."); }}>Revino la programul standard</button></div></section>
       <section className={card}><h2 className="text-lg font-bold">Program standard</h2>{[1, 2, 3, 4, 5, 6, 0].map((n) => { const day = weekly[String(n) as "0"] ?? { on: false, from: "09:00", to: "17:00" }; return <div key={n} className="flex flex-wrap items-center gap-3 text-sm"><label className="w-28"><input type="checkbox" checked={day.on} onChange={(e) => setWeekly({ ...weekly, [n]: { ...day, on: e.target.checked } })} /> {WEEKDAYS[n]}</label><input aria-label={`${WEEKDAYS[n]} început`} type="time" value={day.from} onChange={(e) => setWeekly({ ...weekly, [n]: { ...day, from: e.target.value } })} className={input} /><span>–</span><input aria-label={`${WEEKDAYS[n]} final`} type="time" value={day.to} onChange={(e) => setWeekly({ ...weekly, [n]: { ...day, to: e.target.value } })} className={input} /></div>; })}<div className="flex flex-wrap gap-4"><label className="text-sm">Durată (minute) <input type="number" min={10} max={240} value={slotMinutes} onChange={(e) => setSlotMinutes(Number(e.target.value))} className={`${input} w-24`} /></label><label className="text-sm">Zile în avans <input type="number" min={1} max={731} value={daysAhead} onChange={(e) => setDaysAhead(Number(e.target.value))} className={`${input} w-24`} /></label></div><button className={button} onClick={saveSettings}>Salvează programul și textele</button></section>
       <details className={card}><summary className="cursor-pointer text-lg font-bold">Textele paginii publice</summary><p className="text-sm text-muted">Poți păstra variabilele {"{data}"} și {"{ora}"} pentru afișarea datei și orei.</p>{Object.keys(DEFAULT_TEXTS).map((key) => <label key={key} className="block space-y-1 text-sm">{TEXT_LABELS[key]}<textarea rows={2} value={texts[key]} onChange={(e) => setTexts({ ...texts, [key]: e.target.value })} className={`${input} block w-full`} /></label>)}<button className={button} onClick={saveSettings}>Salvează programul și textele</button></details>
+      <details className={card}>
+        <summary className="cursor-pointer text-lg font-bold">Email de confirmare pentru client</summary>
+        <p className="text-sm text-muted">Textul se trimite automat în format HTML după rezervare. Folosește {"{nume}"}, {"{data}"} și {"{ora}"} pentru personalizare. Adaugă detaliile individuale și linkul Meet din programarea clientului.</p>
+        <label className="block space-y-1 text-sm">Subiect
+          <input className={`${input} block w-full`} maxLength={160} value={confirmation.subject} onChange={(event) => setConfirmation({ ...confirmation, subject: event.target.value })} />
+        </label>
+        <label className="block space-y-1 text-sm">Mesaj
+          <textarea className={`${input} block w-full`} rows={5} maxLength={3000} value={confirmation.message} onChange={(event) => setConfirmation({ ...confirmation, message: event.target.value })} />
+        </label>
+        <button className={button} onClick={saveSettings}>Salvează șablonul de confirmare</button>
+      </details>
     </fieldset>
   </div>;
 }

@@ -73,7 +73,7 @@ details summary{cursor:pointer;font-weight:600}
     <h2 id="formH">Datele tale</h2>
     <label for="f_name">Nume și firmă</label><input id="f_name" autocomplete="name">
     <label for="f_phone">Telefon</label><input id="f_phone" type="tel" autocomplete="tel">
-    <label for="f_email">E-mail (opțional)</label><input id="f_email" type="email" autocomplete="email">
+    <label for="f_email">E-mail pentru confirmare</label><input id="f_email" type="email" autocomplete="email" maxlength="254" required>
     <label for="f_note">Ce vrei să discutăm? (opțional)</label><textarea id="f_note" rows="3"></textarea>
     <button class="btn" id="bookBtn">Confirmă programarea</button>
   </div>
@@ -226,12 +226,14 @@ function drawPub(){
 $("bookBtn").onclick = async () => {
   const name = $("f_name").value.trim(), phone = $("f_phone").value.trim();
   if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
+  const email = $("f_email").value.trim();
+  if (!email || !$("f_email").checkValidity()) return show($("pubMsg"),"err","Introdu o adresă de e-mail validă pentru confirmare.");
   $("bookBtn").disabled = true;
   const when = new Date(selSlot);
   try {
     const response = await fetch("/api/programari", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim(), note:$("f_note").value.trim()})
+      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:$("f_note").value.trim()})
     });
     if (response.status === 409){
       show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră.");
