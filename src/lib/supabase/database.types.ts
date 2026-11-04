@@ -2158,6 +2158,20 @@ export type Database = {
           },
         ]
       }
+      subscription_requests: {
+        Row: {
+          id: string
+          organization_id: string
+          requested_by: string | null
+          kind: string
+          details: string
+          created_at: string
+          resolved_at: string | null
+        }
+        Insert: { organization_id: string; kind: string; details: string }
+        Update: { resolved_at?: string | null }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           ai_credits: number
