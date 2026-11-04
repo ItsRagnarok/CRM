@@ -228,12 +228,22 @@ $("bookBtn").onclick = async () => {
   if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
   $("bookBtn").disabled = true;
   const when = new Date(selSlot);
-  const {error} = await sb.from("bookings").insert({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim()||null, note:$("f_note").value.trim()||null});
-  $("bookBtn").disabled = false;
-  if (error){
-    if (error.code === "23505" || error.code === "23514"){ show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră."); selSlot = null; await loadPublicData(); drawPub(); }
-    else show($("pubMsg"),"err","Nu am putut salva programarea. Încearcă din nou sau sună-ne.");
+  try {
+    const response = await fetch("/api/programari", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email:$("f_email").value.trim(), note:$("f_note").value.trim()})
+    });
+    if (response.status === 409){
+      show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră.");
+      selSlot = null; await loadPublicData(); drawPub();
+      return;
+    }
+    if (!response.ok) throw new Error("Booking failed");
+  } catch {
+    show($("pubMsg"),"err","Nu am putut confirma programarea. Verifică disponibilitatea sau sună-ne.");
     return;
+  } finally {
+    $("bookBtn").disabled = false;
   }
   show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)));
   selSlot = null; await loadPublicData(); drawPub();
