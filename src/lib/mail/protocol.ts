@@ -30,7 +30,7 @@ async function imap(settings: MailCredentials) {
   client.on("error", () => {});
   return client;
 }
-async function smtp(settings: MailCredentials) {
+export async function createMailTransport(settings: MailCredentials) {
   return nodemailer.createTransport({ host: await publicHost(settings.outgoingHost), port: settings.outgoingPort,
     secure: settings.outgoingSecurity === "tls", requireTLS: true,
     tls: { servername: settings.outgoingHost, minVersion: "TLSv1.2", rejectUnauthorized: true },
@@ -46,7 +46,7 @@ export async function withMailbox<T>(settings: MailCredentials, work: (client: I
 }
 export async function verifyMailbox(settings: MailCredentials) {
   await withMailbox(settings, async (client) => { await client.mailboxOpen("INBOX", { readOnly: true }); });
-  const transport = await smtp(settings);
+  const transport = await createMailTransport(settings);
   try { await transport.verify(); } finally { transport.close(); }
 }
 async function folderPath(client: ImapFlow, folder: MailFolder, create = false) {
@@ -190,7 +190,7 @@ export async function deliverMessage(settings: MailCredentials, input: DeliveryI
   }
   const recipients = [...new Set([input.to, opts.cc, opts.bcc].flatMap((v) => v.split(/[,;]/).map((a) => a.trim()).filter(Boolean)))];
   const warnings: string[] = [];
-  const transport = await smtp(settings);
+  const transport = await createMailTransport(settings);
   try {
     const result = await transport.sendMail({ envelope: { from: settings.address, to: recipients }, raw,
       ...(opts.deliveryNotification ? { dsn: { id: input.messageId, return: "headers" as const, notify: ["success", "failure", "delay"] as ("success" | "failure" | "delay")[] } } : {}),

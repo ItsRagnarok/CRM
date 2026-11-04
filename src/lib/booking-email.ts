@@ -2,22 +2,23 @@ import "server-only";
 import nodemailer from "nodemailer";
 import type { Database } from "@/lib/supabase/database.types";
 import type { defaultConfirmation } from "./booking-confirmation";
+import type { MailCredentials } from "./mail/types";
 
-const inbox = "programare@electrofield.ro";
+export const bookingMailbox = "programare@electrofield.ro";
 type Booking = Database["public"]["Tables"]["bookings"]["Insert"];
 const dateFormat = new Intl.DateTimeFormat("ro-RO", { dateStyle: "full", timeZone: "Europe/Bucharest" });
 const timeFormat = new Intl.DateTimeFormat("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
 const escapes: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escape = (text: string) => text.replace(/[&<>"']/g, (character) => escapes[character]);
 
-async function sendBookingEmail(to: string, subject: string, text: string, html?: string) {
+async function sendBookingEmail(to: string, subject: string, text: string, html?: string, account?: MailCredentials) {
   const host = process.env.BOOKING_SMTP_HOST;
   const password = process.env.BOOKING_SMTP_PASSWORD;
-  if (!host || !password) throw new Error("SMTP not configured");
-  const sender = process.env.BOOKING_SMTP_USER || inbox;
-  const transport = nodemailer.createTransport({
+  if (!account && (!host || !password)) throw new Error("SMTP not configured");
+  const sender = account?.address || process.env.BOOKING_SMTP_USER || bookingMailbox;
+  const transport = account ? await (await import("./mail/protocol")).createMailTransport(account) : nodemailer.createTransport({
     host, port: 465, secure: true,
-    auth: { user: sender, pass: password },
+    auth: { user: sender, pass: password! },
     connectionTimeout: 8_000, greetingTimeout: 8_000, socketTimeout: 10_000,
   });
   try {
@@ -35,7 +36,7 @@ async function sendBookingEmail(to: string, subject: string, text: string, html?
 export async function notifyBooking(booking: Booking) {
   const when = new Date(booking.slot_start);
   const slot = `${dateFormat.format(when)}, ${timeFormat.format(when)}`;
-  await sendBookingEmail(inbox, `Programare nouă ElectroField · ${slot}`, [
+  await sendBookingEmail(bookingMailbox, `Programare nouă ElectroField · ${slot}`, [
     `Programare: ${slot} (ora României)`,
     `Nume: ${booking.name}`,
     `Telefon: ${booking.phone}`,
@@ -44,7 +45,7 @@ export async function notifyBooking(booking: Booking) {
   ].filter(Boolean).join("\n"));
 }
 
-export async function confirmBooking(booking: Booking, template: typeof defaultConfirmation, meet?: string) {
+export async function confirmBooking(booking: Booking, template: typeof defaultConfirmation, meet?: string, account?: MailCredentials) {
   if (!booking.email) throw new Error("Booking has no email");
   const when = new Date(booking.slot_start);
   const values: Record<string, string> = { nume: booking.name, data: dateFormat.format(when), ora: timeFormat.format(when) };
@@ -62,5 +63,5 @@ export async function confirmBooking(booking: Booking, template: typeof defaultC
         ${meet ? `<p><a href="${escape(meet)}" style="display:inline-block;background:#214cc0;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:bold">Deschide Google Meet</a></p>` : ""}
       </div>
     </div></body></html>`;
-  await sendBookingEmail(booking.email, subject, [slot, message, meet && `Google Meet: ${meet}`].filter(Boolean).join("\n\n"), html);
+  await sendBookingEmail(booking.email, subject, [slot, message, meet && `Google Meet: ${meet}`].filter(Boolean).join("\n\n"), html, account);
 }

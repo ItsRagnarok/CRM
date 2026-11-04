@@ -3,7 +3,9 @@
 import { cookies } from "next/headers";
 import { requireAdminContext } from "@/lib/auth";
 import { validBookingEmail } from "@/lib/booking-confirmation";
-import { confirmBooking } from "@/lib/booking-email";
+import { bookingMailbox, confirmBooking } from "@/lib/booking-email";
+import { getMailCredentials, listMailAccounts } from "@/lib/mail/store";
+import { safeMailError } from "@/lib/mail/validation";
 import { parsePreview, PREVIEW_COOKIE, UUID } from "@/lib/preview";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,9 +33,13 @@ export async function sendPersonalConfirmation(id: string, _state: State, form: 
     return { error: "Programarea nu mai este disponibilă sau nu are o adresă de email validă." };
   }
   try {
-    await confirmBooking(booking, { subject, message }, meet);
+    const account = (await listMailAccounts()).find(({ address }) => address.toLowerCase() === bookingMailbox);
+    if (!account && (!process.env.BOOKING_SMTP_HOST || !process.env.BOOKING_SMTP_PASSWORD)) {
+      return { error: `Conectează ${bookingMailbox} în Super Admin → Mail → Adrese.` };
+    }
+    await confirmBooking(booking, { subject, message }, meet, account ? await getMailCredentials(account.id) : undefined);
     return { sent: true };
-  } catch {
-    return { error: "Serverul SMTP nu a confirmat trimiterea. Verifică setările de email." };
+  } catch (error) {
+    return { error: safeMailError(error) };
   }
 }
