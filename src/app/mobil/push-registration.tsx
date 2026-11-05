@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { Capacitor } from "@capacitor/core";
+import { Capacitor, registerPlugin } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { registerPushToken } from "./push-actions";
+
+const PushConfiguration = registerPlugin<{ isReady(): Promise<{ ready: boolean }> }>("PushConfiguration");
 
 // Real (system-tray) push notifications only exist inside the native
 // Android app — a browser tab has no equivalent, so this is a no-op there.
@@ -17,6 +19,14 @@ export function PushRegistration() {
 
     async function setup() {
       try {
+        // Older APKs have no Firebase configuration or native readiness check.
+        // Calling register() in those APKs can throw on the Android bridge thread.
+        if (Capacitor.getPlatform() === "android") {
+          if (!Capacitor.isPluginAvailable("PushConfiguration")) return;
+          const { ready } = await PushConfiguration.isReady();
+          if (!ready || cancelled) return;
+        }
+        if (cancelled) return;
         const perm = await PushNotifications.checkPermissions();
         let granted = perm.receive === "granted";
         if (!granted && perm.receive !== "denied") {
