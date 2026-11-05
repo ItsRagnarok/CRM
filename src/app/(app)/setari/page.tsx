@@ -6,6 +6,7 @@ import { CompanyForm } from "./company-form";
 import { StandardScheduleForm } from "./standard-schedule-form";
 import { NewEmployeeForm } from "./new-employee-form";
 import { updateUserRole, updateGpsSettings } from "./actions";
+import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
@@ -19,50 +20,9 @@ const NAV = [
   { id: "tipuri", label: "Tipuri de lucrări" },
   { id: "notificari", label: "Notificări" },
   { id: "gps", label: "GPS & confidențialitate" },
-  { id: "abonament", label: "Abonament & facturare" },
+  { id: "abonament", label: "Abonamente și facturare" },
   { id: "integrari", label: "Integrări" },
 ] as const;
-
-const SUBSCRIPTION_LABELS: Record<string, string> = {
-  starter: "Starter",
-  team: "Team",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
-
-type PlanKey = "starter" | "team" | "pro" | "enterprise";
-
-const PLAN_DETAILS: Record<
-  PlanKey,
-  {
-    priceLabel: string;
-    maxUsers: number | null;
-    features: string[];
-  }
-> = {
-  starter: {
-    priceLabel: "149 RON/lună",
-    maxUsers: 3,
-    features: ["Clienți & lucrări", "Pontaj & materiale", "Facturare internă"],
-  },
-  team: {
-    priceLabel: "349 RON/lună",
-    maxUsers: 8,
-    features: ["Tot ce e în Starter", "Hartă GPS live", "Concedii & absențe complet"],
-  },
-  pro: {
-    priceLabel: "599 RON/lună",
-    maxUsers: 15,
-    features: ["Tot ce e în Team", "AI la generarea lucrărilor", "Rapoarte avansate"],
-  },
-  enterprise: {
-    priceLabel: "Preț personalizat",
-    maxUsers: null,
-    features: ["Tot ce e în Pro", "Fără limită de utilizatori", "Integrări dedicate (SmartBill, Oblio etc.)"],
-  },
-};
-
-const PLAN_ORDER: PlanKey[] = ["starter", "team", "pro", "enterprise"];
 
 const ROLE_OPTIONS: UserRole[] = ["admin", "manager", "team_leader", "technician", "client"];
 
@@ -74,7 +34,7 @@ export default async function SetariPage({
   const { tab: tabParam, jt } = await searchParams;
   const tab = NAV.some((n) => n.id === tabParam) ? tabParam! : "companie";
   const selectedJobType = (jt as JobType) || null;
-  const { organization } = await requireSessionContext();
+  const { organization, profile, readOnly } = await requireSessionContext();
   const supabase = await createClient();
 
   const monthStartStr = `${new Date().toISOString().slice(0, 7)}-01`;
@@ -321,24 +281,12 @@ export default async function SetariPage({
 
             {tab === "abonament" && org && (
               <div className="flex flex-col gap-4">
-                <div className="rounded-[13px] border border-border bg-white p-[22px]">
-                  <div className="mb-1 text-[15px] font-bold text-foreground">Abonament</div>
-                  <p className="mb-4 text-[12.5px] text-muted-2">Planul actual al companiei. Platforma înregistrează vizitele și timpul activ estimat pentru administrarea serviciului, separat pe web și mobil; nu înregistrează conținutul tastat.</p>
-                  <div className="flex items-center justify-between rounded-[11px] border border-[#d9e6ff] bg-electric-soft p-4">
-                    <div>
-                      <div className="text-[15px] font-extrabold text-electric">
-                        Plan {SUBSCRIPTION_LABELS[org.subscription_plan] ?? org.subscription_plan} ·{" "}
-                        {PLAN_DETAILS[org.subscription_plan as PlanKey]?.priceLabel ?? "—"}
-                      </div>
-                      <div className="mt-1 text-[12.5px] text-[#475467]">
-                        {(() => {
-                          const maxUsers = PLAN_DETAILS[org.subscription_plan as PlanKey]?.maxUsers;
-                          return maxUsers
-                            ? `${activeUserCount ?? 0} din ${maxUsers} utilizatori incluși în plan`
-                            : `${activeUserCount ?? 0} utilizatori · fără limită`;
-                        })()}
-                      </div>
-                    </div>
+                <section className="rounded-[13px] border border-border bg-white p-[22px]">
+                  <h2 className="mb-3 text-[15px] font-bold text-foreground">Abonament și facturare</h2>
+                  <div className="rounded-[11px] border border-electric/20 bg-electric-soft p-4">
+                    <div className="text-[15px] font-extrabold text-electric">Abonament ElectroField</div>
+                    <div className="mt-1 text-xl font-extrabold text-foreground">599 lei / lună</div>
+                    <p className="mt-1 text-sm text-muted">Per companie · Fără TVA</p>
                   </div>
                   <div className="mt-4 grid grid-cols-2 gap-3.5">
                     <div>
@@ -350,48 +298,9 @@ export default async function SetariPage({
                       <div className="mt-1 text-[13px] font-bold">{activeUserCount ?? 0}</div>
                     </div>
                   </div>
-                  <p className="mt-4 border-t border-[#f2f4f7] pt-3.5 text-[11.5px] text-muted-2">
-                    Fără TVA — sub pragul de scutire (395.000 RON/an). Pentru schimbarea planului, contactează
-                    administratorul platformei.
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
-                  {PLAN_ORDER.map((planKey) => {
-                    const plan = PLAN_DETAILS[planKey];
-                    const isCurrent = org.subscription_plan === planKey;
-                    return (
-                      <div
-                        key={planKey}
-                        className={`flex flex-col rounded-[13px] border p-4 ${
-                          isCurrent ? "border-electric bg-electric-soft" : "border-border bg-white"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="text-[13.5px] font-extrabold text-foreground">
-                            {SUBSCRIPTION_LABELS[planKey]}
-                          </div>
-                          {isCurrent && (
-                            <span className="rounded-full bg-electric px-2 py-0.5 text-[10px] font-bold text-white">
-                              Activ
-                            </span>
-                          )}
-                        </div>
-                        <div className="mt-1 text-[14px] font-bold text-electric">{plan.priceLabel}</div>
-                        <div className="mt-0.5 text-[11.5px] text-muted-2">
-                          {plan.maxUsers ? `până la ${plan.maxUsers} utilizatori` : "utilizatori nelimitați"}
-                        </div>
-                        <ul className="mt-3 flex flex-col gap-1.5">
-                          {plan.features.map((f) => (
-                            <li key={f} className="text-[11.5px] text-[#475467]">
-                              · {f}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    );
-                  })}
-                </div>
+                  <p className="mt-4 text-[11.5px] text-muted-2">Platforma înregistrează vizitele și timpul activ estimat, separat pe web și mobil, pentru administrarea serviciului. Conținutul tastat rămâne privat.</p>
+                </section>
+                {!readOnly && profile.role === "admin" && <SubscriptionRequests organizationId={organization.id} />}
               </div>
             )}
           </div>

@@ -4,13 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext } from "@/lib/auth";
 import { EmptyState } from "@/components/empty-state";
 
-const PLAN_LABELS: Record<string, string> = {
-  starter: "Starter",
-  team: "Team",
-  pro: "Pro",
-  enterprise: "Enterprise",
-};
-
 export default async function AdminCompaniesPage({
   searchParams,
 }: {
@@ -86,7 +79,7 @@ export default async function AdminCompaniesPage({
                     {c.cui && <div className="text-[11.5px] text-[#9b93b5]">{c.cui}</div>}
                   </td>
                   <td className="px-5 py-3.5 text-[13px] font-semibold text-[#5c5670]">
-                    {PLAN_LABELS[c.subscription_plan] ?? c.subscription_plan}
+                    ElectroField · 599 lei/lună
                   </td>
                   <td className="px-5 py-3.5 text-[13px] text-[#5c5670]">{c.user_count}</td>
                   <td className="px-5 py-3.5 text-[13px] text-[#5c5670]">{c.job_count}</td>

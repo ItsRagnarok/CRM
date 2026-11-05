@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/programari", label: "Programări" },
   { href: "/admin/activitate", label: "Activitate" },
   { href: "/admin/mail", label: "Mail" },
+  { href: "/admin/solicitari", label: "Solicitări" },
 ];
 
 export function AdminTopbar({ fullName }: { fullName: string }) {
