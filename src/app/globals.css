@@ -85,6 +85,41 @@ body:has(> [data-mail-viewport="true"]) {
   min-height: 0;
 }
 
+/* Desktop mail uses pane scrolling; mobile needs document scrolling so the
+   navigation and controls cannot squeeze the inbox down to zero height. */
+.admin-mail-viewport {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (max-width: 850px) {
+  html:has([data-mail-viewport="true"]),
+  body:has(> [data-mail-viewport="true"]) {
+    overflow: auto;
+  }
+  .admin-mail-viewport {
+    height: auto;
+    min-height: 100dvh;
+    overflow: visible;
+  }
+  .admin-mail-viewport > main {
+    flex: none;
+    overflow: visible;
+  }
+  .admin-mail-viewport > header nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+  .admin-mail-viewport > header > div:first-child {
+    min-width: 0;
+    width: 100%;
+  }
+  .admin-mail-viewport > header nav a {
+    flex-shrink: 0;
+  }
+}
+
 /* Only authenticated application surfaces adopt the selected theme. Marketing keeps its own palette. */
 html[data-theme="dark"] .ef-app-theme {
   color-scheme: dark;
