@@ -3,13 +3,6 @@
 import { useState, useTransition } from "react";
 import { updateCompany, deleteCompany } from "@/app/admin/actions";
 
-const PLANS = [
-  { value: "starter", label: "Starter" },
-  { value: "team", label: "Team" },
-  { value: "pro", label: "Pro" },
-  { value: "enterprise", label: "Enterprise" },
-];
-
 type Company = {
   id: string;
   name: string;
@@ -27,10 +20,14 @@ export function CompanyDetailForm({ company }: { company: Company }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [saveMessage, setSaveMessage] = useState("");
+  const [access, setAccess] = useState(company.is_active ? "active" : "suspended");
 
   function handleSubmit(formData: FormData) {
+    setSaveMessage("");
     startTransition(async () => {
-      await updateCompany(company.id, formData);
+      const result = await updateCompany(company.id, formData);
+      setSaveMessage(result.error ?? "Modificările au fost salvate.");
     });
   }
 
@@ -85,26 +82,19 @@ export function CompanyDetailForm({ company }: { company: Company }) {
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-4 border-t border-[#f2f0f9] pt-4">
-        <Field label="Plan abonament">
-          <select
-            name="plan"
-            defaultValue={company.subscription_plan}
-            className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-[14px] font-semibold outline-none focus:border-purple"
-          >
-            {PLANS.map((p) => (
-              <option key={p.value} value={p.value}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+      <div className="grid gap-4 border-t border-[#f2f0f9] pt-4 sm:grid-cols-2">
+        <Field label="Abonament">
+          <p className="text-sm font-bold">ElectroField · 599 lei / lună</p>
+          <p className="mt-1 text-xs text-muted">Per companie · Fără TVA</p>
         </Field>
-        <div className="flex items-end pb-2.5">
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <input type="checkbox" name="isActive" defaultChecked={company.is_active} className="h-4 w-4" />
-            <span className="text-[13.5px] font-semibold text-[#5c5670]">Companie activă</span>
-          </label>
-        </div>
+        <label className="flex flex-col gap-2 text-sm font-semibold">
+          Acces la platformă
+          <select name="access" value={access} onChange={(event) => setAccess(event.target.value)} disabled={pending} className="rounded-[10px] border border-border bg-white px-3 py-2.5">
+            <option value="active">Activ</option>
+            <option value="suspended">Suspendat</option>
+          </select>
+          <span className="text-xs font-normal text-muted">Suspendarea blochează accesul tuturor utilizatorilor companiei. Datele sunt păstrate. Modificarea se aplică după salvare.</span>
+        </label>
       </div>
 
       <button
@@ -114,6 +104,7 @@ export function CompanyDetailForm({ company }: { company: Company }) {
       >
         {pending ? "Se salvează…" : "Salvează modificările"}
       </button>
+      {saveMessage && <p role="status" className="text-sm">{saveMessage}</p>}
     </form>
 
     <div className="mt-6 rounded-[14px] border border-danger-bg bg-danger-bg/30 p-6">
