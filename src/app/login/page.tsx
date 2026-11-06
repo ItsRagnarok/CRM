@@ -108,12 +108,12 @@ export default function LoginPage() {
           </p>
 
           <a
-            href="/downloads/electrofield.apk"
+            href="/downloads/electrofield.apk?v=0.2"
             download
             className="mt-4 flex items-center justify-center gap-2 rounded-[10px] border border-[#d0d5dd] py-2.5 text-[13.5px] font-semibold text-[#344054] transition-colors hover:bg-neutral-bg"
           >
             <Smartphone className="h-4 w-4" strokeWidth={2} />
-            Descarcă aplicația Android
+            Descarcă aplicația Android v0.2
           </a>
         </div>
       </div>
