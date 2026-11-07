@@ -5,17 +5,23 @@ import { Capacitor, registerPlugin } from "@capacitor/core";
 
 const App = registerPlugin<{ getInfo(): Promise<{ version: string; build: string }> }>("App");
 
-// Shows the version of the installed Android app (so "which version do I
-// have?" has a real answer), or "web" when opened in a browser.
-export function AppVersion() {
-  const [label, setLabel] = useState("web");
+// Footer of the profile screen: the product version everywhere (browser,
+// iPhone, Android), plus the installed APK's own version when running inside
+// the Android app — so "which version do I have?" always has a real answer.
+export function AppVersion({ version }: { version: string }) {
+  const [apk, setApk] = useState<string | null>(null);
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable("App")) return;
     App.getInfo()
-      .then((info) => setLabel(`aplicația Android v${info.version}`))
+      .then((info) => setApk(info.version))
       .catch(() => {});
   }, []);
 
-  return <div className="mt-3.5 text-center text-[11px] text-muted-2">ElectroField · {label}</div>;
+  return (
+    <div className="mt-3.5 pb-2 text-center text-[11px] text-muted-2">
+      ElectroField · v{version}
+      {apk && ` · aplicația Android v${apk}`}
+    </div>
+  );
 }

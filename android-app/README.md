@@ -114,6 +114,9 @@ live site, so screens, messages, notifications and the map update for everyone
 without a new APK. Cut a new APK only for **native** changes (plugins,
 permissions, icons, `AndroidManifest.xml`, Java code).
 
+0. Every release (web-only or APK): bump `APP_VERSION` in `src/lib/app-version.ts`
+   — it is the version shown in the app's Profil footer, in the browser too.
+   The steps below apply only when you cut a new APK.
 1. Bump `versionCode` (+1) and `versionName` (`"0.3"`) in
    `android/app/build.gradle`.
 2. Bump `ANDROID_APP_VERSION` in `src/lib/android-release.ts` to the same

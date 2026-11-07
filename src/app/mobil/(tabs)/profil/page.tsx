@@ -7,6 +7,7 @@ import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
 import { NotificationsToggle } from "./notifications-toggle";
 import { SignOutForm } from "./sign-out-form";
 import { AppVersion } from "./app-version";
+import { APP_VERSION } from "@/lib/app-version";
 import { todayInOrgTimeZone } from "@/lib/date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -135,7 +136,7 @@ export default async function MobileProfilePage() {
       ) : (
         <SignOutForm />
       )}
-      <AppVersion />
+      <AppVersion version={APP_VERSION} />
     </div>
   );
 }

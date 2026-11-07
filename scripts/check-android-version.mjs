@@ -19,4 +19,5 @@ if (problems.length) {
   console.error("Android release metadata is inconsistent:\n- " + problems.join("\n- "));
   process.exit(1);
 }
-console.log(`Android release metadata OK: v${versionName} (versionCode ${versionCode})`);
+const app = read("src/lib/app-version.ts").match(/APP_VERSION\s*=\s*"([^"]+)"/)?.[1];
+console.log(`Release metadata OK: product v${app}, Android APK v${versionName} (versionCode ${versionCode})`);
