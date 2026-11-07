@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { Bell, MessageCircle } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { EmptyScreen, ScreenHeader } from "@/components/mobile/ui";
 
 function fmtTime(iso: string) {
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
@@ -37,50 +38,47 @@ export default async function MobileMessagesPage() {
 
   return (
     <div className="flex flex-col">
-      <div className="flex items-center gap-1 border-b border-[#eaecf0] bg-white px-4 pb-3 pt-2">
-        <Link href="/mobil" aria-label="Înapoi" className="-ml-2 flex h-11 w-11 items-center justify-center text-[#344054]">
-          <ChevronLeft className="h-[22px] w-[22px]" />
-        </Link>
-        <h1 className="flex-1 text-[18px] font-extrabold">Mesaje</h1>
+      <ScreenHeader
+        title="Mesaje"
+        right={
+          <Link href="/mobil/notificari" aria-label="Notificări" className="m-ib sm"><Bell className="m-i" /></Link>
+        }
+      />
+      <div className="m-bd" style={{ overflow: "visible" }}>
+        {(conversations ?? []).length === 0 ? (
+          <div className="m-cd" style={{ padding: 0 }}>
+            <EmptyScreen icon={MessageCircle} title="Nicio conversație încă">Mesajele de la birou și din echipa ta apar aici.</EmptyScreen>
+          </div>
+        ) : (
+          <div className="m-list">
+            {(conversations ?? []).map((c) => {
+              const last = lastBy.get(c.id);
+              const unread = unreadFor(c.id);
+              const title = c.kind === "team" ? c.teams?.name ?? "Echipa ta" : "Birou";
+              return (
+                <div key={c.id}>
+                  <Link href={`/mobil/mesaje/${c.id}`} className="m-row" style={{ padding: "14px 0" }}>
+                    <div className={`m-av ${c.kind === "team" ? "" : "ac"}`}>{title.slice(0, 2).toUpperCase()}</div>
+                    <div className="m-fl">
+                      <div className="m-r">
+                        <b className="m-fl" style={{ fontSize: 15.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</b>
+                        {last && <span className="m-mu" style={{ fontSize: 12 }}>{fmtTime(last.created_at)}</span>}
+                      </div>
+                      <div className="m-r" style={{ gap: 8 }}>
+                        <span className="m-mu m-fl" style={{ fontSize: 13.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: unread > 0 ? "var(--m-ink)" : undefined, fontWeight: unread > 0 ? 600 : undefined }}>
+                          {last ? `${last.sender_profile_id === profile.id ? "Tu: " : ""}${last.body}` : "Niciun mesaj încă"}
+                        </span>
+                        {unread > 0 && <span className="m-un" style={{ minWidth: 22, height: 22, borderRadius: 11, background: "var(--m-ac)", color: "var(--m-onac)", fontSize: 12, fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center", padding: "0 6px" }}>{unread}</span>}
+                      </div>
+                    </div>
+                  </Link>
+                  <hr className="m-sep" />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      {(conversations ?? []).length === 0 ? (
-        <div className="flex flex-col items-center gap-2 px-8 py-16 text-center">
-          <MessageSquare className="h-8 w-8 text-muted-2" strokeWidth={1.6} />
-          <div className="text-[14px] font-bold">Nicio conversație încă</div>
-          <div className="text-[12.5px] text-muted">Mesajele de la administrator și din echipa ta apar aici.</div>
-        </div>
-      ) : (
-        <div className="mt-3 overflow-hidden border-y border-[#eaecf0] bg-white">
-          {(conversations ?? []).map((c) => {
-            const last = lastBy.get(c.id);
-            const unread = unreadFor(c.id);
-            const title = c.kind === "team" ? c.teams?.name ?? "Echipa ta" : "Administrator";
-            return (
-              <Link key={c.id} href={`/mobil/mesaje/${c.id}`} className="flex items-center gap-3 border-b border-[#eaecf0] px-4 py-3.5 last:border-b-0">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-neutral-bg text-[12px] font-bold text-[#475467]">
-                  {title.slice(0, 2).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="truncate text-[13.5px] font-bold">{title}</div>
-                    {last && <div className="shrink-0 text-[10.5px] text-muted-2">{fmtTime(last.created_at)}</div>}
-                  </div>
-                  <div className="truncate text-[12.5px] text-muted-2">
-                    {last ? `${last.sender_profile_id === profile.id ? "Tu: " : ""}${last.body}` : "Niciun mesaj încă"}
-                  </div>
-                </div>
-                {unread > 0 && (
-                  <span className="flex h-[18px] min-w-[18px] shrink-0 items-center justify-center rounded-full bg-danger px-1.5 text-[10.5px] font-bold text-white">
-                    {unread}
-                  </span>
-                )}
-                <ChevronRight className="h-4 w-4 shrink-0 text-muted-2" />
-              </Link>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

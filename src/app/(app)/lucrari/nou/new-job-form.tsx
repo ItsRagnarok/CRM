@@ -564,6 +564,14 @@ export function NewJobForm({
                 ))}
               </select>
             </Field>
+            <Field label="Domeniu (formular tehnic)">
+              <select name="domain" defaultValue="" className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric">
+                <option value="">Fără formular</option>
+                <option value="gaze">Gaze — probă de etanșeitate</option>
+                <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>
+                <option value="electric">Electric — verificare tablou</option>
+              </select>
+            </Field>
             <Field label="Prioritate">
               <select
                 name="priority"

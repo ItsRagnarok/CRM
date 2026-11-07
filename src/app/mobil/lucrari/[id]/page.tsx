@@ -11,6 +11,7 @@ import { mobileStagePath } from "./mobile-stage";
 import { ArriveButton } from "./arrive-button";
 import { StartJobButton } from "../../(tabs)/start-job-button";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
+import { FORM_TEMPLATES, TEMPLATE_BY_DOMAIN } from "@/lib/forms/templates";
 
 type Step = "pregatire" | "drum" | "loc" | "inchidere";
 const STEPS: { id: Step; label: string; icon: typeof Clock }[] = [
@@ -65,7 +66,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, priority, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, priority, domain, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -84,7 +85,8 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const isDone = job.status === "finalizata";
   const current: Step | null = isDone ? null : isOnSite ? "loc" : isTraveling ? "drum" : "pregatire";
 
-  const [photos, expenses, usage, notes, signatures, purchases, required] = await Promise.all([
+  const formTemplate = job.domain ? FORM_TEMPLATES[TEMPLATE_BY_DOMAIN[job.domain]] : null;
+  const [photos, expenses, usage, notes, signatures, purchases, required, jobForm] = await Promise.all([
     supabase.from("photos").select("category").eq("job_id", id),
     supabase.from("expenses").select("id", { count: "exact", head: true }).eq("job_id", id).eq("submitted_by", profile.id),
     supabase.from("material_usage").select("id", { count: "exact", head: true }).eq("job_id", id),
@@ -99,7 +101,12 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
     job.status === "programata" && !job.mobile_stage
       ? supabase.from("job_required_items").select("id, kind, quantity_needed, custom_name, materials(name, unit)").eq("job_id", id).order("created_at")
       : Promise.resolve({ data: [] }),
+    formTemplate
+      ? supabase.from("job_forms").select("completed_at").eq("job_id", id).eq("template", formTemplate.id).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+  const formDone = Boolean(jobForm.data?.completed_at);
+  const missingForm = Boolean(formTemplate) && !formDone;
 
   const photoRows = photos.data ?? [];
   const count = (cat: string) => photoRows.filter((p) => p.category === cat).length;
@@ -253,6 +260,16 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         {isOnSite && (
           <>
             <div className="m-lb" style={{ marginTop: 4 }}>La locație</div>
+            {formTemplate && (
+              <Section
+                href={`/mobil/lucrari/${id}/formular/${formTemplate.id}`}
+                icon={FileText}
+                title={formTemplate.label}
+                detail={formDone ? "Completat" : `${formTemplate.description} · obligatoriu la închidere`}
+                required={!formDone}
+                status={formDone ? <span className="m-pl ok"><Check className="m-i" />Gata</span> : <span className="m-pl wr">De completat</span>}
+              />
+            )}
             <Section
               href={`/mobil/lucrari/${id}/foto?cat=${isArrived ? "before" : "during"}`}
               icon={Camera}
@@ -319,10 +336,12 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             ))}
           {isWorking && (
             <>
-              {missingDuring ? (
+              {missingDuring || missingForm ? (
                 <>
                   <button type="button" className="m-btn off" disabled><Flag className="m-i" /> Închide lucrarea</button>
-                  <div className="m-mu m-sm" style={{ textAlign: "center" }}>Mai ai de făcut: poza din timpul lucrării.</div>
+                  <div className="m-mu m-sm" style={{ textAlign: "center" }}>
+                    Mai ai de făcut: {[missingDuring && "poza din timpul lucrării", missingForm && `formularul „${formTemplate!.label}”`].filter(Boolean).join(" și ")}.
+                  </div>
                 </>
               ) : (
                 <Link href={`/mobil/lucrari/${id}/finalizare`} className="m-btn"><Flag className="m-i" /> Închide lucrarea</Link>

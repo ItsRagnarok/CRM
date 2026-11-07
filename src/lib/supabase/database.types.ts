@@ -1301,6 +1301,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          domain: string | null
           display_number: number
           distance_km: number | null
           end_time: string | null
@@ -1335,6 +1336,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          domain?: string | null
           display_number?: number
           distance_km?: number | null
           end_time?: string | null
@@ -1369,6 +1371,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          domain?: string | null
           display_number?: number
           distance_km?: number | null
           end_time?: string | null
@@ -1437,6 +1440,64 @@ export type Database = {
             columns: ["warehouse_id"]
             isOneToOne: false
             referencedRelation: "warehouses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_forms: {
+        Row: {
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          data: Json
+          id: string
+          job_id: string
+          organization_id: string
+          template: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          job_id: string
+          organization_id: string
+          template: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          data?: Json
+          id?: string
+          job_id?: string
+          organization_id?: string
+          template?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_forms_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_forms_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_forms_completed_by_fkey"
+            columns: ["completed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
+import { FORM_TEMPLATES } from "@/lib/forms/templates";
 import { LiveJobTimer } from "./live-timer";
 import {
   addChecklistItem,
@@ -108,6 +109,11 @@ export default async function JobDetailPage({
     .maybeSingle();
 
   if (!job) notFound();
+
+  const { data: jobForms } = await supabase
+    .from("job_forms")
+    .select("id, template, data, completed_at, profiles!job_forms_completed_by_fkey(full_name)")
+    .eq("job_id", id);
 
   const [
     { data: photos },
@@ -599,6 +605,38 @@ export default async function JobDetailPage({
         )}
 
         {tab === "raport" && <ReportCard jobId={id} full />}
+
+        {tab === "documente" && (jobForms ?? []).map((f) => {
+          const template = FORM_TEMPLATES[f.template as keyof typeof FORM_TEMPLATES];
+          if (!template) return null;
+          const values = (f.data ?? {}) as Record<string, unknown>;
+          const show = (v: unknown, unit?: string) => (v === undefined || v === "" ? "—" : v === true ? "Da" : v === false ? "Nu" : v === "conform" ? "Conform" : v === "neconform" ? "Neconform" : `${v}${unit ? ` ${unit}` : ""}`);
+          return (
+            <Card key={f.id} title={template.label}>
+              <div className="mb-3 text-[12px] text-muted">
+                {f.completed_at ? `Completat de ${f.profiles?.full_name ?? "tehnician"} · ${new Date(f.completed_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}` : "Ciornă — netrimisă finală"}
+              </div>
+              {template.steps.map((st) => (
+                <div key={st.title} className="mb-3">
+                  <div className="mb-1 text-[11.5px] font-bold uppercase tracking-wide text-muted-2">{st.title}</div>
+                  {(st.fields ?? []).map((fl) => (
+                    <div key={fl.key} className="flex justify-between gap-4 py-1 text-[13px]">
+                      <span className="text-muted">{fl.label}</span>
+                      <span className="font-semibold text-foreground">{show(values[fl.key], fl.unit)}</span>
+                    </div>
+                  ))}
+                  {st.repeater &&
+                    (Array.isArray(values[st.repeater.key]) ? (values[st.repeater.key] as Record<string, string>[]) : []).map((row, i) => (
+                      <div key={i} className="mt-1 rounded-[9px] bg-[#f9fafb] px-3 py-2 text-[12.5px]">
+                        <b>{st.repeater!.itemLabel} {i + 1}</b>
+                        {st.repeater!.fields.map((fl) => ` · ${fl.label}: ${show(row[fl.key], fl.unit)}`).join("")}
+                      </div>
+                    ))}
+                </div>
+              ))}
+            </Card>
+          );
+        })}
 
         {tab === "documente" && (
           <Card title="Documente">

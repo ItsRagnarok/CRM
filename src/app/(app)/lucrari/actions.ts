@@ -29,6 +29,8 @@ export async function createJob(
   const adminMessage = String(formData.get("adminMessage") ?? "").trim() || null;
   const jobType = String(formData.get("jobType") ?? "interventie") as JobType;
   const priority = String(formData.get("priority") ?? "normala") as JobPriority;
+  const domainRaw = String(formData.get("domain") ?? "");
+  const domain = (["gaze", "electric", "fotovoltaic"].includes(domainRaw) ? domainRaw : null) as "gaze" | "electric" | "fotovoltaic" | null;
   const scheduledDate = String(formData.get("scheduledDate") ?? "") || todayInOrgTimeZone();
   const startTime = String(formData.get("startTime") ?? "") || nowTimeInOrgTimeZone();
   const DEFAULT_END_TIME = "20:00";
@@ -86,6 +88,7 @@ export async function createJob(
       description,
       admin_message: adminMessage,
       job_type: jobType,
+      domain,
       priority,
       scheduled_date: scheduledDate,
       start_time: startTime,

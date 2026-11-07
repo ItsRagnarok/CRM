@@ -44,6 +44,9 @@ export async function updateJob(
       description: String(formData.get("description") ?? "").trim() || null,
       admin_message: String(formData.get("adminMessage") ?? "").trim() || null,
       job_type: String(formData.get("jobType") ?? "interventie") as JobType,
+      domain: (["gaze", "electric", "fotovoltaic"].includes(String(formData.get("domain") ?? ""))
+        ? String(formData.get("domain"))
+        : null) as "gaze" | "electric" | "fotovoltaic" | null,
       priority: String(formData.get("priority") ?? "normala") as JobPriority,
       scheduled_date: scheduledDate,
       start_time: String(formData.get("startTime") ?? "") || null,
