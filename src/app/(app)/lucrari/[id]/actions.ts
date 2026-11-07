@@ -7,6 +7,7 @@ import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "../team-sync";
 import { geocodeAddress } from "@/lib/geocode";
+import { notifyProfiles } from "@/lib/notify";
 
 type JobType = Database["public"]["Enums"]["job_type"];
 type JobPriority = Database["public"]["Enums"]["job_priority"];
@@ -16,7 +17,7 @@ export async function updateJob(
   _prevState: { error?: string } | undefined,
   formData: FormData
 ) {
-  const { organization } = await requireSessionContext();
+  const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
   const title = String(formData.get("title") ?? "").trim();
@@ -24,6 +25,13 @@ export async function updateJob(
   if (!title || !scheduledDate) {
     return { error: "Titlul și data sunt obligatorii." };
   }
+
+  const { data: before } = await supabase
+    .from("jobs")
+    .select("team_id, scheduled_date, start_time, end_time, display_number")
+    .eq("id", jobId)
+    .eq("organization_id", organization.id)
+    .maybeSingle();
 
   const teamId = String(formData.get("teamId") ?? "") || null;
   const address = String(formData.get("address") ?? "").trim();
@@ -83,6 +91,58 @@ export async function updateJob(
   }
 
   await syncJobAssignmentsToTeam(supabase, jobId, teamId);
+
+  if (before) {
+    const startTime = String(formData.get("startTime") ?? "") || null;
+    const endTime = String(formData.get("endTime") ?? "") || null;
+    const link = `/mobil/lucrari/${jobId}`;
+    const when = `${scheduledDate}${startTime ? `, ${startTime.slice(0, 5)}` : ""}`;
+    const membersOf = async (id: string | null) => {
+      if (!id) return [];
+      const { data } = await supabase.from("team_members").select("profile_id").eq("team_id", id);
+      return (data ?? []).map((m) => m.profile_id).filter((pid) => pid !== userId);
+    };
+    const norm = (t: string | null) => (t ? t.slice(0, 5) : null);
+
+    if (before.team_id !== teamId) {
+      const [oldMembers, newMembers] = await Promise.all([membersOf(before.team_id), membersOf(teamId)]);
+      await Promise.all([
+        notifyProfiles(supabase, {
+          organizationId: organization.id,
+          profileIds: newMembers,
+          type: "job_assigned",
+          title: "Lucrare nouă alocată",
+          body: `#${before.display_number} · ${title} — ${when}`,
+          jobId,
+          link,
+        }),
+        notifyProfiles(supabase, {
+          organizationId: organization.id,
+          profileIds: oldMembers.filter((pid) => !newMembers.includes(pid)),
+          type: "job_updated",
+          title: "Lucrare retrasă",
+          body: `#${before.display_number} · ${title} nu mai este alocată echipei tale.`,
+          jobId,
+          link: "/mobil/lucrari",
+        }),
+      ]);
+    } else if (
+      teamId &&
+      (before.scheduled_date !== scheduledDate ||
+        norm(before.start_time) !== norm(startTime) ||
+        norm(before.end_time) !== norm(endTime))
+    ) {
+      await notifyProfiles(supabase, {
+        organizationId: organization.id,
+        profileIds: await membersOf(teamId),
+        type: "job_updated",
+        title: "Programare modificată",
+        body: `#${before.display_number} · ${title} — acum ${when}`,
+        jobId,
+        link,
+      });
+    }
+  }
 
   revalidatePath(`/lucrari/${jobId}`);
   revalidatePath("/lucrari");
@@ -352,10 +412,10 @@ export async function decidePurchaseRequest(formData: FormData) {
   const storeName = String(formData.get("storeName") ?? "").trim() || null;
   if (!requestId || (decision !== "approved" && decision !== "denied")) return;
 
-  const { userId } = await requireSessionContext();
+  const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
-  await supabase
+  const { data: request } = await supabase
     .from("purchase_requests")
     .update({
       status: decision,
@@ -363,7 +423,25 @@ export async function decidePurchaseRequest(formData: FormData) {
       decided_at: new Date().toISOString(),
       store_name: decision === "approved" ? storeName : null,
     })
-    .eq("id", requestId);
+    .eq("id", requestId)
+    .select("job_id, requested_by, quantity, custom_name, materials(name)")
+    .maybeSingle();
+
+  if (request && request.requested_by !== userId) {
+    const item = request.materials?.name ?? request.custom_name ?? "materialul cerut";
+    await notifyProfiles(supabase, {
+      organizationId: organization.id,
+      profileIds: [request.requested_by],
+      type: "purchase",
+      title: decision === "approved" ? "Achiziție aprobată" : "Achiziție respinsă",
+      body:
+        decision === "approved"
+          ? `Cererea pentru ${request.quantity} × ${item} a fost aprobată${storeName ? ` — ia de la ${storeName}` : ""}.`
+          : `Cererea pentru ${request.quantity} × ${item} a fost respinsă.`,
+      jobId: request.job_id,
+      link: `/mobil/lucrari/${request.job_id}/achizitie/${requestId}`,
+    });
+  }
 
   revalidatePath("/aprobari");
   revalidatePath("/mobil/materiale");

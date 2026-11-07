@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { notifyConversationMessage } from "@/lib/message-notify";
 
 // Lazily create-or-fetch pattern: a team/employee only gets a conversation
 // row once someone actually sends a first message to them — the partial
@@ -101,6 +102,12 @@ export async function sendTeamMessage(formData: FormData) {
   });
   await supabase.from("conversations").update({ last_message_at: now }).eq("id", conversationId);
   await markReadFor(supabase, conversationId, profile.id);
+  await notifyConversationMessage(supabase, {
+    organizationId: organization.id,
+    conversationId,
+    sender: { id: profile.id, fullName: profile.full_name, role: profile.role },
+    body,
+  });
 
   revalidatePath("/harta");
   revalidatePath("/mesaje");
@@ -125,6 +132,12 @@ export async function sendDirectMessage(formData: FormData) {
   });
   await supabase.from("conversations").update({ last_message_at: now }).eq("id", conversationId);
   await markReadFor(supabase, conversationId, profile.id);
+  await notifyConversationMessage(supabase, {
+    organizationId: organization.id,
+    conversationId,
+    sender: { id: profile.id, fullName: profile.full_name, role: profile.role },
+    body,
+  });
 
   revalidatePath("/mesaje");
 }

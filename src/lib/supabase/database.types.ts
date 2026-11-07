@@ -1609,6 +1609,7 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          link: string | null
           organization_id: string
           profile_id: string
           related_job_id: string | null
@@ -1620,6 +1621,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           organization_id: string
           profile_id: string
           related_job_id?: string | null
@@ -1631,6 +1633,7 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          link?: string | null
           organization_id?: string
           profile_id?: string
           related_job_id?: string | null
@@ -1917,6 +1920,7 @@ export type Database = {
           location_consent_at: string | null
           location_consent_revoked_at: string | null
           notifications_enabled: boolean
+          notification_prefs: Json
           organization_id: string
           phone: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -1933,6 +1937,7 @@ export type Database = {
           location_consent_at?: string | null
           location_consent_revoked_at?: string | null
           notifications_enabled?: boolean
+          notification_prefs?: Json
           organization_id: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -1949,6 +1954,7 @@ export type Database = {
           location_consent_at?: string | null
           location_consent_revoked_at?: string | null
           notifications_enabled?: boolean
+          notification_prefs?: Json
           organization_id?: string
           phone?: string | null
           role?: Database["public"]["Enums"]["user_role"]

@@ -60,23 +60,45 @@ async function getAccessToken(): Promise<string | null> {
   return cachedAccessToken.token;
 }
 
+// Must match the channel the app creates in push-registration.tsx. Without a
+// high-importance channel Android shows the push silently in the tray (no
+// heads-up banner, no sound), and without HIGH priority Doze can hold it for
+// minutes while the phone is idle — exactly the "app closed" case.
+export const PUSH_CHANNEL_ID = "electrofield_alerts";
+
 async function sendToToken(projectId: string, accessToken: string, token: string, title: string, body: string, data?: Record<string, string>) {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
-    body: JSON.stringify({ message: { token, notification: { title, body }, data } }),
+    body: JSON.stringify({
+      message: {
+        token,
+        notification: { title, body },
+        data,
+        android: {
+          priority: "HIGH",
+          ttl: "86400s",
+          notification: { channel_id: PUSH_CHANNEL_ID, sound: "default", default_vibrate_timings: true },
+        },
+      },
+    }),
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
     // A stale/uninstalled-app token comes back as NOT_FOUND/UNREGISTERED —
     // clean it up so we stop trying to push to a dead device.
     if (errText.includes("UNREGISTERED") || errText.includes("NOT_FOUND")) {
-      return { token, stale: true };
+      return { token, stale: true, ok: false };
     }
     console.error("push: FCM send failed", res.status, errText);
+    return { token, stale: false, ok: false };
   }
-  return { token, stale: false };
+  return { token, stale: false, ok: true };
 }
+
+export type PushResult =
+  | { status: "sent"; delivered: number; devices: number }
+  | { status: "no_profiles" | "not_configured" | "no_devices" | "failed"; delivered: number; devices: number };
 
 // Sends a real push to every registered device of the given profiles, in
 // addition to whatever in-app `notifications` row the caller already wrote.
@@ -86,20 +108,20 @@ export async function sendPushToProfiles(
   supabase: SupabaseClient<Database>,
   profileIds: string[],
   message: { title: string; body: string; data?: Record<string, string> }
-) {
-  if (profileIds.length === 0) return;
+): Promise<PushResult> {
+  if (profileIds.length === 0) return { status: "no_profiles", delivered: 0, devices: 0 };
   const projectId = process.env.FIREBASE_PROJECT_ID;
-  if (!projectId) return;
+  if (!projectId) return { status: "not_configured", delivered: 0, devices: 0 };
 
   try {
     const accessToken = await getAccessToken();
-    if (!accessToken) return;
+    if (!accessToken) return { status: "not_configured", delivered: 0, devices: 0 };
 
     const { data: tokens } = await supabase
       .from("device_push_tokens")
       .select("token")
       .in("profile_id", profileIds);
-    if (!tokens || tokens.length === 0) return;
+    if (!tokens || tokens.length === 0) return { status: "no_devices", delivered: 0, devices: 0 };
 
     const results = await Promise.all(
       tokens.map((t) => sendToToken(projectId, accessToken, t.token, message.title, message.body, message.data))
@@ -108,7 +130,10 @@ export async function sendPushToProfiles(
     if (staleTokens.length > 0) {
       await supabase.from("device_push_tokens").delete().in("token", staleTokens);
     }
+    const delivered = results.filter((r) => r.ok).length;
+    return { status: delivered > 0 ? "sent" : "failed", delivered, devices: tokens.length };
   } catch (err) {
     console.error("push: sendPushToProfiles failed", err);
+    return { status: "failed", delivered: 0, devices: 0 };
   }
 }

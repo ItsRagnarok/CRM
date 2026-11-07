@@ -30,14 +30,18 @@ screen off.
   service; opened as a plain website it falls back to
   `navigator.geolocation.watchPosition` exactly as before. Same
   `pingLocation` server call either way, so the admin map needs no changes.
-- **Push notifications wired end-to-end, pending your Firebase project**:
+- **Push notifications wired end-to-end** (Firebase project connected since v0.2):
   `src/app/mobil/push-registration.tsx` registers the device for FCM and
   saves its token (`device_push_tokens` table); `src/lib/push.ts` sends real
   pushes via the FCM HTTP v1 API (no SDK, a signed service-account JWT +
   fetch, same pattern as the Groq integration) and is already called
-  wherever the app creates an in-app notification (job started → admins,
-  call requested → team). The one missing piece is your own Firebase
-  project — see below.
+  through `src/lib/notify.ts` wherever the app creates an in-app
+  notification (admin/technician messages, call requests, job assigned or
+  rescheduled, purchase decisions). The messages ask Android for high priority
+  on the `electrofield_alerts` channel (created by `push-registration.tsx`), so
+  they pop up even when the app is closed. Tapping one opens `data.url`.
+  Profile → "Preferințe notificări & test" sends a real test push and reports
+  whether the server, the device registration or Firebase is the broken link.
 
 ## Push notifications: the one thing only you can set up
 
@@ -102,3 +106,26 @@ The remote URL in `capacitor.config.ts` currently points at production. For
 testing against a local `next dev` server instead, point it at your machine's
 LAN IP (e.g. `http://192.168.1.x:3000/mobil`) — `localhost` won't resolve
 from inside the Android emulator/device.
+
+## Release checklist (every new APK: v0.3, v0.4, …)
+
+Most changes ship through the web deploy alone — the app is a WebView of the
+live site, so screens, messages, notifications and the map update for everyone
+without a new APK. Cut a new APK only for **native** changes (plugins,
+permissions, icons, `AndroidManifest.xml`, Java code).
+
+1. Bump `versionCode` (+1) and `versionName` (`"0.3"`) in
+   `android/app/build.gradle`.
+2. Bump `ANDROID_APP_VERSION` in `src/lib/android-release.ts` to the same
+   value (it drives the login-page label and the `?v=` cache-buster on the
+   download link). `npm run check:android` fails if the two disagree.
+3. Make sure `android/app/google-services.json` is present locally (it is
+   gitignored). Without it the build succeeds but the APK has **no push** —
+   never publish an APK built that way.
+4. `cd android-app && npx cap sync android`, then build a signed release APK
+   (Android Studio, or `./gradlew assembleRelease` with the keystore).
+5. Copy it to `public/downloads/electrofield.apk`, run `npm run check:android`,
+   commit and push — Vercel serves it from the login page.
+6. On a phone: install over the old version, open Profil → the footer shows the
+   installed version, then run "Trimite o notificare de test" with the app
+   closed.

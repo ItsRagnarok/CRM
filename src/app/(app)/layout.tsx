@@ -30,10 +30,10 @@ export default async function AppLayout({
   const [{ data: notifications }, { data: conversations }, { data: reads }] = await Promise.all([
     supabase
       .from("notifications")
-      .select("id, title, body, type, related_job_id, is_read, created_at")
+      .select("id, title, body, type, related_job_id, link, is_read, created_at")
       .eq("profile_id", profile.id)
       .order("created_at", { ascending: false })
-      .limit(15),
+      .limit(30),
     supabase.from("conversations").select("id, last_message_at"),
     supabase.from("conversation_reads").select("conversation_id, last_read_at").eq("profile_id", profile.id),
   ]);
@@ -53,7 +53,7 @@ export default async function AppLayout({
       {!readOnly && <UsageTracker channel="web" />}
       <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar notifications={notifications ?? []} readOnly={readOnly} />
+        <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} />
         {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}
       </div>
     </div>

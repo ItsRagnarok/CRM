@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
-import { sendPushToProfiles } from "@/lib/push";
+import { notifyProfiles } from "@/lib/notify";
 
 export async function resolveJobAlert(formData: FormData) {
   const alertId = String(formData.get("alertId") ?? "");
@@ -42,20 +42,15 @@ export async function requestCallFromTeam(formData: FormData) {
   const recipients = (members ?? []).map((m) => m.profile_id);
   if (recipients.length === 0) return;
 
-  const title = "Sună administratorul";
-  const body = `${profile.full_name} te roagă să suni cât mai curând.`;
-
-  await supabase.from("notifications").insert(
-    recipients.map((profileId) => ({
-      organization_id: organization.id,
-      profile_id: profileId,
-      type: "call_request",
-      title,
-      body,
-      related_job_id: jobId,
-    }))
-  );
-  await sendPushToProfiles(supabase, recipients, { title, body, data: jobId ? { jobId } : undefined });
+  await notifyProfiles(supabase, {
+    organizationId: organization.id,
+    profileIds: recipients,
+    type: "call_request",
+    title: "Sună administratorul",
+    body: `${profile.full_name} te roagă să suni cât mai curând.`,
+    jobId,
+    link: "/mobil",
+  });
 
   revalidatePath("/harta");
 }

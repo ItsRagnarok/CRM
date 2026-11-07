@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { LogOut, Shield, HelpCircle, FileText, ChevronRight, CalendarOff } from "lucide-react";
+import { Bell, Shield, HelpCircle, FileText, ChevronRight, CalendarOff } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
-import { signOut } from "@/app/(app)/actions";
 import { NotificationsToggle } from "./notifications-toggle";
+import { SignOutForm } from "./sign-out-form";
+import { AppVersion } from "./app-version";
 import { todayInOrgTimeZone } from "@/lib/date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -103,6 +104,11 @@ export default async function MobileProfilePage() {
           <ChevronRight className="h-4 w-4 text-muted-2" />
         </Link>
         <NotificationsToggle initialEnabled={profile.notifications_enabled} />
+        <Link href="/mobil/profil/notificari" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
+          <Bell className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
+          <div className="flex-1 text-[13.5px] font-semibold">Preferințe notificări & test</div>
+          <ChevronRight className="h-4 w-4 text-muted-2" />
+        </Link>
         <Link href="/mobil/concediu" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
           <CalendarOff className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
           <div className="flex-1 text-[13.5px] font-semibold">Concediu & absențe</div>
@@ -127,16 +133,9 @@ export default async function MobileProfilePage() {
           contactează administratorul dacă e nevoie să ieși din aplicație.
         </div>
       ) : (
-        <form action={signOut} className="mt-4">
-          <button
-            type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-danger-bg bg-white py-3.5 text-[13.5px] font-bold text-danger"
-          >
-            <LogOut className="h-4 w-4" /> Deconectare
-          </button>
-        </form>
+        <SignOutForm />
       )}
-      <div className="mt-3.5 text-center text-[11px] text-muted-2">ElectroField · v1.0.0</div>
+      <AppVersion />
     </div>
   );
 }

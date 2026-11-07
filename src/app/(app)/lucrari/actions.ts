@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "./team-sync";
+import { notifyProfiles } from "@/lib/notify";
 import { geocodeAddress } from "@/lib/geocode";
 import { todayInOrgTimeZone, nowTimeInOrgTimeZone } from "@/lib/date";
 import { ensureChecklist } from "./[id]/actions";
@@ -97,7 +98,7 @@ export async function createJob(
       photo_guidance_during: photoGuidanceDuring,
       photo_guidance_after: photoGuidanceAfter,
     })
-    .select("id")
+    .select("id, display_number")
     .single();
 
   if (error || !job) {
@@ -111,6 +112,19 @@ export async function createJob(
   });
 
   await syncJobAssignmentsToTeam(supabase, job.id, teamId);
+
+  if (teamId) {
+    const { data: members } = await supabase.from("team_members").select("profile_id").eq("team_id", teamId);
+    await notifyProfiles(supabase, {
+      organizationId: organization.id,
+      profileIds: (members ?? []).map((m) => m.profile_id).filter((id) => id !== userId),
+      type: "job_assigned",
+      title: "Lucrare nouă alocată",
+      body: `#${job.display_number} · ${title} — ${scheduledDate}${startTime ? `, ${startTime.slice(0, 5)}` : ""}`,
+      jobId: job.id,
+      link: `/mobil/lucrari/${job.id}`,
+    });
+  }
 
   const requiredMaterialIds = formData.getAll("requiredMaterialIds").map(String).filter(Boolean);
   if (requiredMaterialIds.length > 0) {

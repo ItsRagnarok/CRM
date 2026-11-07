@@ -9,8 +9,10 @@ import { CalendarCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { DepartureAlert } from "./departure-alert";
 import { ArrivalAlert } from "./arrival-alert";
 import { StartButtonCompact } from "./start-button-compact";
-import { PhoneCall } from "lucide-react";
+import { PhoneCall, MessageSquare } from "lucide-react";
 import { markNotificationRead } from "@/app/(app)/notifications-actions";
+import { MobileBell } from "./mobile-bell";
+import { timeAgo } from "@/lib/notification-ui";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -230,6 +232,19 @@ export default async function MobileHomePage({
     .eq("is_read", false)
     .order("created_at", { ascending: false });
 
+  const [{ count: unreadCount }, { data: unreadMessages }] = await Promise.all([
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("profile_id", profile.id).eq("is_read", false),
+    supabase
+      .from("notifications")
+      .select("id, title, body, link, created_at")
+      .eq("profile_id", profile.id)
+      .eq("type", "message")
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1),
+  ]);
+  const latestMessage = unreadMessages?.[0] ?? null;
+
   return (
     <div className="flex flex-col">
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3.5 pt-1.5">
@@ -240,8 +255,9 @@ export default async function MobileHomePage({
               {jobs.length > 0 ? `Ai ${jobs.length} lucrări astăzi.` : "Nicio lucrare programată azi."}
             </div>
           </div>
+          <MobileBell profileId={profile.id} initialUnread={unreadCount ?? 0} />
           <div
-            className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
+            className="ml-2.5 flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold"
             style={{ background: color.bg, color: color.text }}
           >
             {initials(profile.full_name)}
@@ -280,6 +296,28 @@ export default async function MobileHomePage({
           </form>
         </div>
       ))}
+
+      {latestMessage && (
+        <Link
+          href={latestMessage.link ?? "/mobil/notificari?tip=mesaje"}
+          className="mx-4 mt-3 flex items-start gap-3 rounded-[13px] border border-[#eaecf0] bg-white p-3.5"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-electric-soft">
+            <MessageSquare className="h-[19px] w-[19px] text-electric" strokeWidth={1.9} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <div className="text-[13px] font-bold text-foreground">{latestMessage.title}</div>
+              <span className="h-[7px] w-[7px] shrink-0 rounded-full bg-electric" />
+            </div>
+            {latestMessage.body && <div className="mt-0.5 line-clamp-2 text-[12.5px] text-[#475467]">{latestMessage.body}</div>}
+            <div className="mt-1.5 flex items-center gap-2.5 text-[11px]">
+              <span className="font-bold text-electric">Răspunde</span>
+              <span className="text-muted-2">{timeAgo(latestMessage.created_at)}</span>
+            </div>
+          </div>
+        </Link>
+      )}
 
       {nextUpcomingJob && nextUpcomingJob.locations && (
         <DepartureAlert
