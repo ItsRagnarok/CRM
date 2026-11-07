@@ -49,6 +49,7 @@ export default async function NewJobPage({
       defaultClientId={clientId}
       defaultDate={date}
       defaultTeamId={teamId}
+      enabledDomains={organization.enabled_domains}
     />
   );
 }

@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { parseDomains } from "@/lib/domains";
 
 export async function signup(_prevState: { error?: string } | undefined, formData: FormData) {
   const orgName = String(formData.get("orgName") ?? "").trim();
@@ -9,6 +10,7 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const termsAccepted = formData.get("termsAccepted") === "on";
+  const domains = parseDomains(formData.getAll("domains"));
 
   if (!orgName || !fullName || !email || !password) {
     return { error: "Completează toate câmpurile." };
@@ -25,7 +27,7 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { org_name: orgName, full_name: fullName } },
+    options: { data: { org_name: orgName, full_name: fullName, domains } },
   });
 
   if (error) {
@@ -44,6 +46,10 @@ export async function signup(_prevState: { error?: string } | undefined, formDat
     );
     if (rpcError) {
       return { error: "Contul a fost creat, dar organizația nu a putut fi inițializată. Contactează suportul." };
+    }
+    const { data: created } = await supabase.from("profiles").select("organization_id").eq("id", data.user!.id).maybeSingle();
+    if (created?.organization_id) {
+      await supabase.from("organizations").update({ enabled_domains: domains }).eq("id", created.organization_id);
     }
     redirect("/dashboard");
   }

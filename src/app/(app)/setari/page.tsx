@@ -5,7 +5,8 @@ import type { Database } from "@/lib/supabase/database.types";
 import { CompanyForm } from "./company-form";
 import { StandardScheduleForm } from "./standard-schedule-form";
 import { NewEmployeeForm } from "./new-employee-form";
-import { updateUserRole, updateGpsSettings } from "./actions";
+import { updateUserRole, updateGpsSettings, updateDomains } from "./actions";
+import { DomainPicker } from "@/components/domain-picker";
 import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
 
@@ -17,7 +18,7 @@ const NAV = [
   { id: "utilizatori", label: "Utilizatori & roluri" },
   { id: "echipe", label: "Echipe & vehicule" },
   { id: "checklisturi", label: "Checklist-uri" },
-  { id: "tipuri", label: "Tipuri de lucrări" },
+  { id: "tipuri", label: "Domenii" },
   { id: "notificari", label: "Notificări" },
   { id: "gps", label: "GPS & confidențialitate" },
   { id: "abonament", label: "Abonamente și facturare" },
@@ -169,9 +170,26 @@ export default async function SetariPage({
               <ChecklistTemplatesTab organizationId={organization.id} selectedJobType={selectedJobType} />
             )}
 
-            {(tab === "tipuri" || tab === "notificari" || tab === "integrari") && (
+            {tab === "tipuri" && (
+              <div className="rounded-[13px] border border-border bg-white p-[22px]">
+                <div className="mb-1 text-[15px] font-bold text-foreground">Domenii active</div>
+                <p className="mb-4 text-[12.5px] text-muted-2">
+                  Domeniile în care lucrează firma. Ele decid ce formulare tehnice (gaze, fotovoltaic, electric) pot fi alese pe o lucrare.
+                  Le alegi la crearea contului și le poți schimba oricând.
+                </p>
+                <form action={updateDomains} className="flex max-w-[440px] flex-col gap-3">
+                  <DomainPicker defaultValue={organization.enabled_domains as ("gaze" | "electric" | "fotovoltaic")[]} />
+                  {!readOnly && profile.role === "admin" ? (
+                    <button type="submit" className="self-start rounded-[10px] bg-electric px-4 py-2.5 text-[13px] font-bold text-white">Salvează domeniile</button>
+                  ) : (
+                    <div className="text-[12px] text-muted-2">Doar administratorul companiei poate schimba domeniile.</div>
+                  )}
+                </form>
+              </div>
+            )}
+
+            {(tab === "notificari" || tab === "integrari") && (
               <div className="rounded-[13px] border border-dashed border-border bg-white p-6 text-[13.5px] text-muted">
-                {tab === "tipuri" && "Tipurile de lucrări sunt momentan fixe (Instalare, Reparație, Mentenanță, Inspecție, Intervenție, Service, Demontare, Urgență) — personalizare în curând."}
                 {tab === "notificari" && "Preferințe de notificare per utilizator — în curând."}
                 {tab === "integrari" && "Integrări cu SmartBill, Oblio, FGO și altele — în curând."}
               </div>

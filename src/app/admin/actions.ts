@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext } from "@/lib/auth";
+import { parseDomains } from "@/lib/domains";
 
 export async function signOutAdmin() {
   const supabase = await createClient();
@@ -20,6 +21,7 @@ export async function createCompany(
   const ownerFullName = String(formData.get("ownerFullName") ?? "").trim();
   const ownerEmail = String(formData.get("ownerEmail") ?? "").trim();
   const ownerPassword = String(formData.get("ownerPassword") ?? "");
+  const domains = parseDomains(formData.getAll("domains"));
 
   if (!companyName || !ownerFullName || !ownerEmail || !ownerPassword) {
     return { error: "Completează toate câmpurile obligatorii." };
@@ -39,6 +41,10 @@ export async function createCompany(
 
   if (error) {
     return { error: error.message.includes("Există deja") ? error.message : "Nu am putut crea compania. Încearcă din nou." };
+  }
+
+  if (newOrgId) {
+    await supabase.rpc("platform_admin_set_company_domains", { org_id: newOrgId as string, domains });
   }
 
   revalidatePath("/admin/companii");

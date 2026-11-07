@@ -150,6 +150,18 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
       throw rpcError;
     }
 
+    // Domains chosen on the signup form travel in the user metadata.
+    const chosen = user.user_metadata?.domains;
+    if (Array.isArray(chosen)) {
+      const { data: mine } = await supabase.from("profiles").select("organization_id").eq("id", user.id).maybeSingle();
+      if (mine?.organization_id) {
+        await supabase
+          .from("organizations")
+          .update({ enabled_domains: chosen.filter((d): d is string => typeof d === "string") })
+          .eq("id", mine.organization_id);
+      }
+    }
+
     const { data: createdProfileRow, error: createdProfileError } = await supabase
       .from("profiles")
       .select("*, organizations!profiles_organization_id_fkey(*)")

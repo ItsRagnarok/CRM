@@ -1808,6 +1808,7 @@ export type Database = {
           created_at: string
           cui: string | null
           email: string | null
+          enabled_domains: string[]
           fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
@@ -1830,6 +1831,7 @@ export type Database = {
           created_at?: string
           cui?: string | null
           email?: string | null
+          enabled_domains?: string[]
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -1852,6 +1854,7 @@ export type Database = {
           created_at?: string
           cui?: string | null
           email?: string | null
+          enabled_domains?: string[]
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -2827,6 +2830,10 @@ export type Database = {
           owner_password: string
         }
         Returns: string
+      }
+      platform_admin_set_company_domains: {
+        Args: { org_id: string; domains: string[] }
+        Returns: undefined
       }
       platform_admin_delete_company: {
         Args: { org_id: string }

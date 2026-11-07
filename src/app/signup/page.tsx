@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { signup } from "./actions";
+import { DomainPicker } from "@/components/domain-picker";
 
 export default function SignupPage() {
   const [state, formAction, pending] = useActionState(signup, undefined);
@@ -53,6 +54,7 @@ export default function SignupPage() {
               className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
             />
           </div>
+          <DomainPicker />
           <div>
             <label className="mb-1.5 block text-[13px] font-semibold text-[#344054]">
               Email

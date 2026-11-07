@@ -22,6 +22,7 @@ export function NewJobForm({
   defaultClientId,
   defaultDate,
   defaultTeamId,
+  enabledDomains,
 }: {
   clients: { id: string; name: string; address: string | null }[];
   teams: { id: string; name: string }[];
@@ -30,6 +31,7 @@ export function NewJobForm({
   defaultClientId?: string;
   defaultDate?: string;
   defaultTeamId?: string;
+  enabledDomains: string[];
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
   const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
@@ -567,9 +569,9 @@ export function NewJobForm({
             <Field label="Domeniu (formular tehnic)">
               <select name="domain" defaultValue="" className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric">
                 <option value="">Fără formular</option>
-                <option value="gaze">Gaze — probă de etanșeitate</option>
-                <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>
-                <option value="electric">Electric — verificare tablou</option>
+                {enabledDomains.includes("gaze") && <option value="gaze">Gaze — probă de etanșeitate</option>}
+                {enabledDomains.includes("fotovoltaic") && <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>}
+                {enabledDomains.includes("electric") && <option value="electric">Electric — verificare tablou</option>}
               </select>
             </Field>
             <Field label="Prioritate">

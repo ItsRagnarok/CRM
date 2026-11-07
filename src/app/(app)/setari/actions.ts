@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { geocodeAddress } from "@/lib/geocode";
+import { parseDomains } from "@/lib/domains";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 
@@ -105,6 +106,18 @@ export async function updateUserRole(formData: FormData) {
     .eq("organization_id", organization.id);
 
   revalidatePath("/setari");
+}
+
+export async function updateDomains(formData: FormData) {
+  const { organization, profile, readOnly } = await requireSessionContext();
+  if (readOnly || profile.role !== "admin") return;
+  const supabase = await createClient();
+  await supabase
+    .from("organizations")
+    .update({ enabled_domains: parseDomains(formData.getAll("domains")) })
+    .eq("id", organization.id);
+  revalidatePath("/setari");
+  revalidatePath("/lucrari");
 }
 
 export async function updateStandardSchedule(formData: FormData) {

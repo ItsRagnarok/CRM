@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { DomainPicker } from "@/components/domain-picker";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createCompany } from "@/app/admin/actions";
@@ -59,6 +60,7 @@ export function NewCompanyForm() {
             className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-[14px] outline-none focus:border-purple"
           />
         </Field>
+        <DomainPicker />
         <Field label="Parolă temporară">
           <input
             name="ownerPassword"

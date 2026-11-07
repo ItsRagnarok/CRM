@@ -27,7 +27,7 @@ type Job = {
   photo_guidance_after: string | null;
 };
 
-export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; name: string }[] }) {
+export function EditJobForm({ job, teams, enabledDomains }: { job: Job; teams: { id: string; name: string }[]; enabledDomains: string[] }) {
   const updateJobWithId = updateJob.bind(null, job.id);
   const [state, formAction, pending] = useActionState(updateJobWithId, undefined);
 
@@ -61,9 +61,9 @@ export function EditJobForm({ job, teams }: { job: Job; teams: { id: string; nam
           <Field label="Domeniu (formular tehnic)">
             <select name="domain" defaultValue={(job as { domain?: string | null }).domain ?? ""} className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric">
               <option value="">Fără formular</option>
-              <option value="gaze">Gaze — probă de etanșeitate</option>
-              <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>
-              <option value="electric">Electric — verificare tablou</option>
+              {enabledDomains.includes("gaze") && <option value="gaze">Gaze — probă de etanșeitate</option>}
+              {enabledDomains.includes("fotovoltaic") && <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>}
+              {enabledDomains.includes("electric") && <option value="electric">Electric — verificare tablou</option>}
             </select>
           </Field>
           <Field label="Prioritate">
