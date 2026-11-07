@@ -250,3 +250,10 @@ textarea.m-in { padding: 12px 14px; min-height: 96px; resize: none; align-items:
 .m-root .bg-electric-soft, .m-root [class*="bg-electric-soft"] { background: var(--m-acs); }
 .m-root .border-electric { border-color: var(--m-ac); }
 .m-root .shadow-\[0_4px_12px_rgba\(47\,111\,237\,0\.3\)\] { box-shadow: none; }
+
+/* iOS: câmpurile de dată au lățime proprie și ieșeau din rând; le forțăm în coloană. */
+.m-fld { min-width: 0; }
+.m-in { min-width: 0; max-width: 100%; }
+input.m-in[type="date"], input.m-in[type="time"] { -webkit-appearance: none; appearance: none; width: 100%; min-height: 52px; }
+input.m-in[type="date"]::-webkit-date-and-time-value { text-align: left; }
+.m-r > .m-fld.m-fl { min-width: 0; flex: 1 1 0; }
