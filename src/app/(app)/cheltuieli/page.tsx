@@ -158,8 +158,7 @@ export default async function CheltuieliPage({
                     <td className="px-5 py-3 text-[13px] text-muted">
                       {new Date(`${e.expense_date}T00:00:00`).toLocaleDateString("ro-RO", {
                         day: "numeric",
-                        month: "short",
-                      })}
+                        month: "short", timeZone: "Europe/Bucharest" })}
                     </td>
                     <td className="px-5 py-3 text-right text-[13.5px] font-bold text-foreground">
                       {Number(e.amount).toFixed(2)} RON

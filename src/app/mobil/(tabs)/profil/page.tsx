@@ -8,7 +8,7 @@ import { NotificationsToggle } from "./notifications-toggle";
 import { SignOutForm } from "./sign-out-form";
 import { AppVersion } from "./app-version";
 import { APP_VERSION } from "@/lib/app-version";
-import { todayInOrgTimeZone } from "@/lib/date";
+import { todayInOrgTimeZone, startOfOrgDay } from "@/lib/date";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 function toISODate(d: Date) {
@@ -37,7 +37,7 @@ export default async function MobileProfilePage() {
         .from("time_entries")
         .select("event_type, occurred_at")
         .eq("profile_id", profile.id)
-        .gte("occurred_at", `${monthStartStr}T00:00:00`),
+        .gte("occurred_at", startOfOrgDay(monthStartStr)),
       supabase
         .from("job_assignments")
         .select("jobs(scheduled_date, status)")

@@ -73,7 +73,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   doc
     .fontSize(9)
     .fillColor(muted)
-    .text(`Generat: ${new Date().toLocaleString("ro-RO")}`, doc.page.margins.left, doc.y - 22, {
+    .text(`Generat: ${new Date().toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}`, doc.page.margins.left, doc.y - 22, {
       width: pageWidth,
       align: "right",
     });
@@ -153,7 +153,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       .font("Regular")
       .fontSize(9)
       .fillColor(muted)
-      .text(`Semnat de ${signature.signer_name}, ${new Date(signature.signed_at).toLocaleString("ro-RO")}`);
+      .text(`Semnat de ${signature.signer_name}, ${new Date(signature.signed_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}`);
   } else {
     doc.moveDown(2.5);
     doc

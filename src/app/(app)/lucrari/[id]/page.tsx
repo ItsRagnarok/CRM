@@ -82,7 +82,7 @@ function formatDuration(start: string | null, end: string | null) {
 
 function formatTime(iso: string | null) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
 }
 
 export default async function JobDetailPage({
@@ -323,7 +323,7 @@ export default async function JobDetailPage({
                             {n.text}
                           </span>
                           <span className="text-[11px] text-muted-2">
-                            {n.profiles?.full_name ?? "—"} · {new Date(n.created_at).toLocaleString("ro-RO")}
+                            {n.profiles?.full_name ?? "—"} · {new Date(n.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
                           </span>
                         </div>
                         {n.photo_path && (
@@ -728,7 +728,7 @@ function TimeEntriesList({ entries }: { entries: { id: string; event_type: strin
       {entries.map((e, i) => (
         <div key={e.id} className={`flex gap-3.5 py-2.5 ${i < entries.length - 1 ? "border-b border-[#f2f4f7]" : ""}`}>
           <div className="w-[52px] shrink-0 text-[13px] font-bold text-foreground">
-            {new Date(e.occurred_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+            {new Date(e.occurred_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" })}
           </div>
           <div className="text-[13px] text-[#344054]">{TIME_EVENT_LABELS[e.event_type] ?? e.event_type}</div>
         </div>
@@ -865,7 +865,7 @@ function SignatureCard({
             <img src={publicUrl(signature.storage_path)} alt="Semnătură client" className="h-full object-contain" />
           </div>
           <div className="mt-2 text-[12px] text-muted-2">
-            Semnat de {signature.signer_name}, {new Date(signature.signed_at).toLocaleString("ro-RO")}
+            Semnat de {signature.signer_name}, {new Date(signature.signed_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
           </div>
         </>
       ) : (

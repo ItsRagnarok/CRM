@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { syncOpenJobsOfTeam } from "../lucrari/team-sync";
 
 export async function createTeam(
   _prevState: { error?: string } | undefined,
@@ -73,6 +74,8 @@ export async function addMember(formData: FormData) {
   if (existingMembership) return;
 
   await supabase.from("team_members").insert({ team_id: teamId, profile_id: profileId });
+  await syncOpenJobsOfTeam(supabase, organization.id, teamId);
+  revalidatePath("/mobil");
   revalidatePath(`/echipe/${teamId}`);
   revalidatePath("/echipe");
 }
@@ -82,6 +85,7 @@ export async function removeMember(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
   if (!teamId || !profileId) return;
 
+  const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
   await supabase
@@ -89,6 +93,8 @@ export async function removeMember(formData: FormData) {
     .delete()
     .eq("team_id", teamId)
     .eq("profile_id", profileId);
+  await syncOpenJobsOfTeam(supabase, organization.id, teamId);
+  revalidatePath("/mobil");
 
   // A team leader who's no longer a member can't stay the leader.
   await supabase

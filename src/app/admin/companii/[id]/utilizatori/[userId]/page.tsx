@@ -7,7 +7,7 @@ import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 
 function formatDateTime(value: string | null) {
   if (!value) return "—";
-  return new Date(value).toLocaleString("ro-RO", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(value).toLocaleString("ro-RO", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Bucharest" });
 }
 
 function sessionDurationLabel(createdAt: string, refreshedAt: string | null) {
@@ -96,7 +96,7 @@ export default async function AdminUserDetailPage({
               <div>
                 <div className="text-[13.5px] font-bold text-[#17151f]">{j.title}</div>
                 <div className="text-[12px] text-[#9b93b5]">
-                  {j.client_name} · {new Date(j.scheduled_date).toLocaleDateString("ro-RO")}
+                  {j.client_name} · {new Date(j.scheduled_date).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                 </div>
               </div>
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${JOB_STATUS_STYLES[j.status]}`}>

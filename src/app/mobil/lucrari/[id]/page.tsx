@@ -304,7 +304,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
                 <div className="text-[13.5px] font-bold text-success">✓ Ai ajuns la locație</div>
                 {job.arrived_at && (
                   <div className="mt-1 text-[12px] text-success">
-                    {new Date(job.arrived_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}
+                    {new Date(job.arrived_at).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" })}
                   </div>
                 )}
               </div>
@@ -402,7 +402,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
               <div className="text-[13.5px] font-bold text-success">✓ Lucrare finalizată</div>
               {job.work_ended_at && (
                 <div className="mt-1 text-[12px] text-muted-2">
-                  Finalizată {new Date(job.work_ended_at).toLocaleString("ro-RO")}
+                  Finalizată {new Date(job.work_ended_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
                 </div>
               )}
               {job.observations && <div className="mt-2 text-[13px] text-[#344054]">{job.observations}</div>}

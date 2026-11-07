@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { startOfOrgDay } from "@/lib/date";
 import { Clock, Download, CalendarOff } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -45,8 +46,8 @@ export default async function PontajPage({
         .from("time_entries")
         .select("profile_id, job_id, event_type, occurred_at")
         .eq("organization_id", organization.id)
-        .gte("occurred_at", `${rangeStartStr}T00:00:00`)
-        .lt("occurred_at", `${rangeEndExclusiveStr}T00:00:00`),
+        .gte("occurred_at", startOfOrgDay(rangeStartStr))
+        .lt("occurred_at", startOfOrgDay(rangeEndExclusiveStr)),
       supabase
         .from("jobs")
         .select("id, job_assignments(profile_id)")

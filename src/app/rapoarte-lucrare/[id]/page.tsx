@@ -56,7 +56,7 @@ export default async function JobReportPage({
           <div className="text-[13px] text-[#667085]">Raport de intervenție</div>
         </div>
         <div className="text-right text-[13px] text-[#667085]">
-          Generat: {new Date().toLocaleString("ro-RO")}
+          Generat: {new Date().toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
         </div>
       </div>
 
@@ -140,7 +140,7 @@ export default async function JobReportPage({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={signatureUrl} alt="Semnătură" className="h-[70px]" />
             <div className="mt-1 text-[12px] text-[#98a2b3]">
-              Semnat de {signature.signer_name}, {new Date(signature.signed_at).toLocaleString("ro-RO")}
+              Semnat de {signature.signer_name}, {new Date(signature.signed_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
             </div>
           </div>
         ) : (

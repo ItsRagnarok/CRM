@@ -30,7 +30,7 @@ export default async function MobileConsentPage() {
           </div>
           {hasConsent && profile.location_consent_at && (
             <div className="mt-1 pl-[30px] text-[11.5px] text-muted-2">
-              Acordat pe {new Date(profile.location_consent_at).toLocaleString("ro-RO")}
+              Acordat pe {new Date(profile.location_consent_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
             </div>
           )}
         </div>

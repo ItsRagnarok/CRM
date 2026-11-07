@@ -8,7 +8,7 @@ import { DashboardMapLoader } from "@/components/dashboard-map-loader";
 import { AutoRefresh } from "@/components/auto-refresh";
 import type { DashboardMapMarker } from "@/components/dashboard-map";
 import type { Database } from "@/lib/supabase/database.types";
-import { todayInOrgTimeZone } from "@/lib/date";
+import { todayInOrgTimeZone, startOfOrgDay } from "@/lib/date";
 import {
   Briefcase,
   UsersRound,
@@ -43,7 +43,7 @@ function greeting() {
 }
 
 function startOfDay(dateStr: string) {
-  return `${dateStr}T00:00:00`;
+  return startOfOrgDay(dateStr);
 }
 
 function formatDuration(start: string | null, end: string | null) {
@@ -789,7 +789,7 @@ export default async function DashboardPage({
                         {item.text}
                       </div>
                       <div className="text-[11px] text-muted-2">
-                        {new Date(item.at).toLocaleString("ro-RO")}
+                        {new Date(item.at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
                       </div>
                     </div>
                   </div>

@@ -95,11 +95,11 @@ export default async function AdminCompaniesPage({
                   <td className="px-5 py-3.5">
                     {c.terms_accepted_at ? (
                       <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
-                        Acceptați {new Date(c.terms_accepted_at).toLocaleDateString("ro-RO")}
+                        Acceptați {new Date(c.terms_accepted_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                       </span>
                     ) : c.terms_declined_at ? (
                       <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">
-                        Refuzați {new Date(c.terms_declined_at).toLocaleDateString("ro-RO")}
+                        Refuzați {new Date(c.terms_declined_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                       </span>
                     ) : (
                       <span className="rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
@@ -108,7 +108,7 @@ export default async function AdminCompaniesPage({
                     )}
                   </td>
                   <td className="px-5 py-3.5 text-[12.5px] text-[#9b93b5]">
-                    {new Date(c.created_at).toLocaleDateString("ro-RO")}
+                    {new Date(c.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                   </td>
                 </tr>
               ))}

@@ -14,7 +14,7 @@ const CLIENT_STATUS_LABELS: Record<string, string> = {
 
 function formatLastSignIn(value: string | null) {
   if (!value) return "Niciodată";
-  return new Date(value).toLocaleString("ro-RO", { dateStyle: "medium", timeStyle: "short" });
+  return new Date(value).toLocaleString("ro-RO", { dateStyle: "medium", timeStyle: "short", timeZone: "Europe/Bucharest" });
 }
 
 export default async function AdminCompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -49,11 +49,11 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         </span>
         {company.terms_accepted_at ? (
           <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
-            Termeni acceptați {new Date(company.terms_accepted_at).toLocaleDateString("ro-RO")}
+            Termeni acceptați {new Date(company.terms_accepted_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
           </span>
         ) : company.terms_declined_at ? (
           <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">
-            Termeni refuzați {new Date(company.terms_declined_at).toLocaleDateString("ro-RO")}
+            Termeni refuzați {new Date(company.terms_declined_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
           </span>
         ) : (
           <span className="rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
@@ -63,7 +63,7 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
       </div>
       <div className="mt-1 text-[13px] text-[#9b93b5]">
         {company.user_count} utilizatori · {company.job_count} lucrări · creată{" "}
-        {new Date(company.created_at).toLocaleDateString("ro-RO")}
+        {new Date(company.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
       </div>
 
       <div className="mt-6">
@@ -128,7 +128,7 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
               <div>
                 <div className="text-[13.5px] font-bold text-[#17151f]">{j.title}</div>
                 <div className="text-[12px] text-[#9b93b5]">
-                  {j.client_name} · {new Date(j.scheduled_date).toLocaleDateString("ro-RO")}
+                  {j.client_name} · {new Date(j.scheduled_date).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                 </div>
               </div>
               <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${JOB_STATUS_STYLES[j.status]}`}>

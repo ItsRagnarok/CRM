@@ -334,7 +334,7 @@ export default async function ClientDetailPage({
                 <div key={inv.id} className="flex items-center justify-between py-2.5 text-[13px]">
                   <div>
                     <div className="font-semibold text-foreground">{inv.invoice_number}</div>
-                    <div className="text-[11.5px] text-muted-2">{new Date(inv.issued_at).toLocaleDateString("ro-RO")}</div>
+                    <div className="text-[11.5px] text-muted-2">{new Date(inv.issued_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}</div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-bold text-[#344054]">{Number(inv.total_amount).toFixed(2)} RON</span>

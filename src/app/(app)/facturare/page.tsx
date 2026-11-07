@@ -83,8 +83,7 @@ export default async function FacturarePage() {
                       {new Date(`${inv.issued_at}T00:00:00`).toLocaleDateString("ro-RO", {
                         day: "numeric",
                         month: "short",
-                        year: "numeric",
-                      })}
+                        year: "numeric", timeZone: "Europe/Bucharest" })}
                     </td>
                     <td className="px-5 py-3 text-right text-[13.5px] font-bold text-foreground">
                       {Number(inv.total_amount).toFixed(2)} RON

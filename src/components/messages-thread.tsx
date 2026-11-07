@@ -11,7 +11,7 @@ export type ThreadMessage = {
 };
 
 function timeLabel(iso: string) {
-  return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
 }
 
 export function MessagesThread({

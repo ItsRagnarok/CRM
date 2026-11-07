@@ -89,9 +89,9 @@ export default async function MesajePage({
 
   function fmtTime(iso: string) {
     const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-    if (days === 0) return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+    if (days === 0) return new Date(iso).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
     if (days === 1) return "ieri";
-    return new Date(iso).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit" });
+    return new Date(iso).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit", timeZone: "Europe/Bucharest" });
   }
 
   return (

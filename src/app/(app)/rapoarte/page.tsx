@@ -145,8 +145,7 @@ export default async function RapoartePage() {
                     {new Date(`${job.scheduled_date}T00:00:00`).toLocaleDateString("ro-RO", {
                       day: "numeric",
                       month: "short",
-                      year: "numeric",
-                    })}
+                      year: "numeric", timeZone: "Europe/Bucharest" })}
                   </td>
                   <td className="px-5 py-3 text-[12px] font-bold">
                     {signedJobIds.has(job.id) ? (

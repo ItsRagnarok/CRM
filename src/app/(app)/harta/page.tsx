@@ -10,7 +10,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { MapPin, AlertTriangle, X, Camera, MessageSquare, Package, Footprints } from "lucide-react";
 import { resolveJobAlert, requestCallFromTeam } from "./actions";
 import { AutoRefresh } from "@/components/auto-refresh";
-import { todayInOrgTimeZone } from "@/lib/date";
+import { todayInOrgTimeZone, startOfOrgDay } from "@/lib/date";
 import { TeamCommsPanel } from "@/components/team-comms-panel";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
@@ -19,7 +19,7 @@ const TEAM_MAP_COLORS = ["#15803d", "#1e293b", "#c2410c", "#7c3aed", "#0369a1"];
 const ACTIVE_STATUSES: JobStatus[] = ["in_lucru", "in_drum", "ajunsa", "pauza"];
 
 function startOfDay(dateStr: string) {
-  return `${dateStr}T00:00:00`;
+  return startOfOrgDay(dateStr);
 }
 
 export default async function HartaPage({
@@ -185,7 +185,7 @@ export default async function HartaPage({
     if (activeJob) {
       const arrival = arrivalByJob.get(activeJob.id);
       const arrivalLabel = arrival
-        ? `Ajuns ${new Date(arrival).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" })}`
+        ? `Ajuns ${new Date(arrival).toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" })}`
         : JOB_STATUS_LABELS[activeJob.status];
       return {
         teamId: team.id,
@@ -453,7 +453,7 @@ export default async function HartaPage({
                               {JOB_STATUS_LABELS[s.status]}
                             </div>
                             <div className="text-[11px] text-muted-2">
-                              {new Date(s.created_at).toLocaleString("ro-RO")}
+                              {new Date(s.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
                               {s.profiles?.full_name ? ` · ${s.profiles.full_name}` : ""}
                             </div>
                             {s.note && <div className="mt-0.5 text-[12px] text-[#475467]">{s.note}</div>}
@@ -523,7 +523,7 @@ export default async function HartaPage({
                           <div key={n.id} className="rounded-[10px] border border-[#eaecf0] p-2.5 text-[12.5px]">
                             <div className="text-[#344054]">{n.text}</div>
                             <div className="mt-1 text-[11px] text-muted-2">
-                              {new Date(n.created_at).toLocaleString("ro-RO")}
+                              {new Date(n.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}
                             </div>
                           </div>
                         ))}

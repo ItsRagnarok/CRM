@@ -95,7 +95,7 @@ export default async function MobileJobsPage({
                 {date === todayStr ? "ASTĂZI" : ""}
                 {" · "}
                 {new Date(`${date}T00:00:00`)
-                  .toLocaleDateString("ro-RO", { day: "numeric", month: "long" })
+                  .toLocaleDateString("ro-RO", { day: "numeric", month: "long", timeZone: "Europe/Bucharest" })
                   .toUpperCase()}
               </div>
               <div className="flex flex-col gap-2.5">

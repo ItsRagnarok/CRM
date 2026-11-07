@@ -145,6 +145,14 @@ Neconfirmat din surse primare: prețurile Apple, Google, EAS; Apple Business Man
 | **7. Capacitor iOS/Android** | GPS fundal, push nativ, scanner, biometrie; magazine | conturi Apple/Google |
 | **8. Oferte, loturi pe bloc, SmartBill** | ofertare, ierarhie bloc/scară/apartament, al doilea furnizor | 4 |
 
+## 9b. Decizii de produs de luat cu clientul (Proconstructo și alții)
+
+Aplicația oferă mecanismul; regula o alege firma.
+
+1. **Cine emite factura?** A: tehnicianul emite pe loc (firme mici, persoane fizice, plată la fața locului). B: tehnicianul pregătește draftul, biroul emite (firme cu contabil, asociații, B2B). C: fără factură din aplicație. Regula se setează per firmă și per tip de client, cu plafon și aprobare pentru sume mari. Implicit: B. Numărul fiscal vine mereu de la SmartBill/Oblio. Numerarul și casa de marcat: de lămurit cu contabilul.
+2. **Legitimații și autorizații.** Legitimația EGIU este personală (instalatorul, 5 ani); autorizația EDIB/ET este a firmei. Aplicația alertează înainte de expirare și blochează semnarea unui PV de gaze cu legitimație expirată. De validat cu un instalator autorizat și cu regulamentul ANRE nou din 2026.
+3. **Cheltuieli.** Aplicația doar înregistrează, cu câmpul „Cum ai plătit?" (din banii mei = decont / card firmă) și aprobare de birou. Reținerile din salariu nu se automatizează (contract și HR, diferă de la firmă la firmă).
+
 ## 10. Întrebări deschise pentru proprietar
 
 1. Ce furnizor de facturare folosește Proconstructo (SmartBill sau Oblio)?

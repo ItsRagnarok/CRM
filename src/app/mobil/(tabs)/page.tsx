@@ -164,7 +164,7 @@ export default async function MobileHomePage({
           <div className="mt-4 flex flex-col gap-2.5">
             <div className="text-[11.5px] font-bold text-muted-2">
               {new Date(`${selectedDate}T00:00:00`)
-                .toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long" })
+                .toLocaleDateString("ro-RO", { weekday: "long", day: "numeric", month: "long", timeZone: "Europe/Bucharest" })
                 .toUpperCase()}
             </div>
             {dayJobs.length === 0 ? (

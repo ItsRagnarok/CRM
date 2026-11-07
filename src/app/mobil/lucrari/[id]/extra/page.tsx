@@ -97,7 +97,7 @@ export default async function MobileExtraPage({ params }: { params: Promise<{ id
                     className="mt-2 h-[120px] w-full rounded-[8px] object-cover"
                   />
                 )}
-                <div className="mt-1 text-[11px] text-muted-2">{new Date(n.created_at).toLocaleString("ro-RO")}</div>
+                <div className="mt-1 text-[11px] text-muted-2">{new Date(n.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest" })}</div>
               </div>
             ))}
           </div>
