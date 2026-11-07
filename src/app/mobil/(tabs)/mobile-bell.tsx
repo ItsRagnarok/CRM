@@ -34,11 +34,11 @@ export function MobileBell({ profileId, initialUnread }: { profileId: string; in
     <Link
       href="/mobil/notificari"
       aria-label={unread > 0 ? `Notificări, ${unread} necitite` : "Notificări"}
-      className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#eaecf0] bg-white text-[#344054]"
+      className="m-ib"
     >
-      <Bell className="h-5 w-5" strokeWidth={1.9} />
+      <Bell className="m-i" strokeWidth={1.9} />
       {unread > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-danger px-1.5 text-[10.5px] font-bold text-white">
+        <span className="m-dot">
           {unread > 9 ? "9+" : unread}
         </span>
       )}

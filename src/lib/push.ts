@@ -69,6 +69,7 @@ export const PUSH_CHANNEL_ID = "electrofield_alerts";
 async function sendToToken(projectId: string, accessToken: string, token: string, title: string, body: string, data?: Record<string, string>) {
   const res = await fetch(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
     method: "POST",
+    signal: AbortSignal.timeout(8000),
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
     body: JSON.stringify({
       message: {
@@ -85,9 +86,17 @@ async function sendToToken(projectId: string, accessToken: string, token: string
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    // A stale/uninstalled-app token comes back as NOT_FOUND/UNREGISTERED —
-    // clean it up so we stop trying to push to a dead device.
-    if (errText.includes("UNREGISTERED") || errText.includes("NOT_FOUND")) {
+    // Only an explicit UNREGISTERED error code means this token is dead.
+    // A bare NOT_FOUND also comes back when FIREBASE_PROJECT_ID is wrong, and
+    // treating that as "stale" would wipe every device's token in one send.
+    let errorCode = "";
+    try {
+      const parsed = JSON.parse(errText) as { error?: { details?: { errorCode?: string }[] } };
+      errorCode = parsed.error?.details?.find((d) => d.errorCode)?.errorCode ?? "";
+    } catch {
+      /* non-JSON error body */
+    }
+    if (errorCode === "UNREGISTERED") {
       return { token, stale: true, ok: false };
     }
     console.error("push: FCM send failed", res.status, errText);
