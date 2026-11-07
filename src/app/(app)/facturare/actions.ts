@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSessionContext } from "@/lib/auth";
+import { requireSessionContext, requireBackOfficeContext } from "@/lib/auth";
 
 export async function createInvoiceForJob(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
@@ -49,6 +49,22 @@ export async function createInvoiceForJob(formData: FormData) {
     created_by: userId,
   });
 
+  revalidatePath("/facturare");
+}
+
+export async function resolveBillingRequest(formData: FormData) {
+  const requestId = String(formData.get("requestId") ?? "");
+  const outcome = String(formData.get("outcome") ?? "") === "dismissed" ? "dismissed" : "invoiced";
+  if (!requestId) return;
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
+  const supabase = await createClient();
+  await supabase
+    .from("billing_requests")
+    .update({ status: outcome, handled_by: ctx.userId, handled_at: new Date().toISOString() })
+    .eq("id", requestId)
+    .eq("organization_id", ctx.organization.id)
+    .eq("status", "new");
   revalidatePath("/facturare");
 }
 

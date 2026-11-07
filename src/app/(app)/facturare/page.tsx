@@ -3,7 +3,8 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
-import { createInvoiceForJob, markInvoicePaid } from "./actions";
+import Link from "next/link";
+import { createInvoiceForJob, markInvoicePaid, resolveBillingRequest } from "./actions";
 import { todayInOrgTimeZone } from "@/lib/date";
 
 const STATUS_LABEL: Record<string, string> = { unpaid: "Neplătită", paid: "Plătită", overdue: "Restantă" };
@@ -19,7 +20,7 @@ export default async function FacturarePage() {
 
   const monthStartStr = `${todayInOrgTimeZone().slice(0, 7)}-01`;
 
-  const [{ data: invoices }, { data: jobs }] = await Promise.all([
+  const [{ data: invoices }, { data: jobs }, { data: billingRequests }] = await Promise.all([
     supabase
       .from("invoices")
       .select("id, invoice_number, total_amount, status, issued_at, clients(name), jobs(display_number)")
@@ -31,6 +32,12 @@ export default async function FacturarePage() {
       .eq("organization_id", organization.id)
       .order("scheduled_date", { ascending: false })
       .limit(50),
+    supabase
+      .from("billing_requests")
+      .select("id, job_id, collected_method, collected_amount, note, created_at, jobs(display_number, title, clients(name)), profiles!billing_requests_requested_by_fkey(full_name)")
+      .eq("organization_id", organization.id)
+      .eq("status", "new")
+      .order("created_at", { ascending: true }),
   ]);
 
   const facturatLunaAceasta = (invoices ?? [])
@@ -49,6 +56,43 @@ export default async function FacturarePage() {
   return (
     <div className="flex flex-col gap-5 p-7">
       <h1 className="text-[17px] font-extrabold text-foreground">Facturare</h1>
+
+      {billingRequests && billingRequests.length > 0 && (
+        <div className="overflow-hidden rounded-[13px] border border-[#fec84b] bg-[#fffaeb]">
+          <div className="border-b border-[#fedf89] px-5 py-3.5 text-[14.5px] font-bold text-[#93370d]">
+            De facturat ({billingRequests.length}) — trimise de tehnicieni la închiderea lucrării
+          </div>
+          <div className="divide-y divide-[#fedf89]">
+            {billingRequests.map((r) => (
+              <div key={r.id} className="flex flex-wrap items-center gap-3 px-5 py-3.5">
+                <div className="min-w-0 flex-1">
+                  <div className="text-[13.5px] font-bold text-foreground">
+                    #{r.jobs?.display_number} · {r.jobs?.title} · {r.jobs?.clients?.name ?? "Client"}
+                  </div>
+                  <div className="text-[12px] text-muted">
+                    Trimis de {r.profiles?.full_name ?? "tehnician"}
+                    {r.collected_amount ? ` · încasat ${Number(r.collected_amount).toFixed(2)} lei (${r.collected_method})` : " · nimic încasat"}
+                    {r.note ? ` · „${r.note}”` : ""}
+                  </div>
+                </div>
+                <Link href={`/lucrari/${r.job_id}`} className="rounded-[9px] border border-[#d0d5dd] bg-white px-3 py-2 text-[12.5px] font-bold text-[#344054]">
+                  Deschide lucrarea
+                </Link>
+                <form action={resolveBillingRequest}>
+                  <input type="hidden" name="requestId" value={r.id} />
+                  <input type="hidden" name="outcome" value="invoiced" />
+                  <button type="submit" className="rounded-[9px] bg-electric px-3 py-2 text-[12.5px] font-bold text-white">Am emis factura</button>
+                </form>
+                <form action={resolveBillingRequest}>
+                  <input type="hidden" name="requestId" value={r.id} />
+                  <input type="hidden" name="outcome" value="dismissed" />
+                  <button type="submit" className="px-2 py-2 text-[12.5px] font-semibold text-muted">Ignoră</button>
+                </form>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.4fr_1fr]">
         <div className="min-w-0 overflow-hidden rounded-[13px] border border-border bg-white">

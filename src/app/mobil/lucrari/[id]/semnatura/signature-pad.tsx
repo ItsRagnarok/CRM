@@ -93,7 +93,7 @@ export function SignaturePad({
     formData.set("dataUrl", dataUrl);
     startTransition(async () => {
       await saveSignature(formData);
-      router.push(`/mobil/lucrari/${jobId}`);
+      router.push(`/mobil/lucrari/${jobId}/facturare`);
       router.refresh();
     });
   }
@@ -101,7 +101,7 @@ export function SignaturePad({
   function clientAbsent() {
     startTransition(async () => {
       await flagClientAbsent(jobId);
-      router.push(`/mobil/lucrari/${jobId}`);
+      router.push(`/mobil/lucrari/${jobId}/facturare`);
       router.refresh();
     });
   }

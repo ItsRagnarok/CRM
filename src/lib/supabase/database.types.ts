@@ -269,6 +269,77 @@ export type Database = {
           },
         ]
       }
+      billing_requests: {
+        Row: {
+          collected_amount: number | null
+          collected_method: string | null
+          created_at: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          job_id: string
+          note: string | null
+          organization_id: string
+          requested_by: string | null
+          status: string
+        }
+        Insert: {
+          collected_amount?: number | null
+          collected_method?: string | null
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          job_id: string
+          note?: string | null
+          organization_id: string
+          requested_by?: string | null
+          status?: string
+        }
+        Update: {
+          collected_amount?: number | null
+          collected_method?: string | null
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          job_id?: string
+          note?: string | null
+          organization_id?: string
+          requested_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_requests_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_requests_handled_by_fkey"
+            columns: ["handled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_contacts: {
         Row: {
           client_id: string
