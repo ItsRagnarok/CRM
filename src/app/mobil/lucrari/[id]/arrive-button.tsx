@@ -70,7 +70,7 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
   }
 
   return (
-    <form ref={formRef} action={arriveAtJobForm} className="w-full">
+    <form ref={formRef} action={arriveAtJobForm} style={{ width: "100%" }}>
       <input type="hidden" name="jobId" value={jobId} />
       <input type="hidden" name="lat" value={lat ?? ""} />
       <input type="hidden" name="lng" value={lng ?? ""} />
@@ -78,9 +78,9 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
         type="button"
         onClick={handleClick}
         disabled={pending}
-        className="block w-full rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)] disabled:opacity-60"
+        className="m-btn"
       >
-        {pending ? "Se confirmă…" : "AM AJUNS LA LOCAȚIE"}
+        {pending ? "Se confirmă…" : "Am ajuns la locație"}
       </button>
     </form>
   );
