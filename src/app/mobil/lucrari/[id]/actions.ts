@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
-import { notifyProfiles } from "@/lib/notify";
+import { notifyBackOffice, notifyProfiles } from "@/lib/notify";
 import { mobileStagePath, type MobileStage } from "./mobile-stage";
 
 function paths(jobId: string) {
@@ -241,6 +241,18 @@ export async function finalizeJob(formData: FormData) {
     occurred_at: now,
   });
 
+  const [{ data: doneJob }, { data: finisher }] = await Promise.all([
+    supabase.from("jobs").select("display_number, title").eq("id", jobId).maybeSingle(),
+    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+  ]);
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "job_finished",
+    title: "Lucrare finalizată",
+    body: `${finisher?.full_name ?? "Tehnicianul"} a finalizat lucrarea #${doneJob?.display_number ?? ""} — ${doneJob?.title ?? ""}`,
+    jobId,
+  });
+
   paths(jobId);
   revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
   redirect(`/mobil/lucrari/${jobId}/semnatura`);
@@ -316,6 +328,13 @@ export async function recordArrivalPromptDismissal(jobId: string) {
         job?.display_number ?? ""
       } (${job?.title ?? "—"}) dar nu a confirmat sosirea.`,
     });
+    await notifyBackOffice(supabase, {
+      organizationId: organization.id,
+      type: "job_alert",
+      title: "Sosire neconfirmată",
+      body: `${profile?.full_name ?? "Tehnicianul"} e la locația lucrării #${job?.display_number ?? ""} dar nu a confirmat sosirea.`,
+      jobId,
+    });
     revalidatePath("/harta");
     revalidatePath("/dashboard");
   }
@@ -351,6 +370,20 @@ export async function addJobNote(formData: FormData) {
     photo_path: photoPath,
     created_by: userId,
   });
+
+  if (kind === "problem") {
+    const [{ data: noteJob }, { data: author }] = await Promise.all([
+      supabase.from("jobs").select("display_number, title").eq("id", jobId).maybeSingle(),
+      supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    ]);
+    await notifyBackOffice(supabase, {
+      organizationId: organization.id,
+      type: "job_alert",
+      title: "Problemă raportată",
+      body: `${author?.full_name ?? "Tehnicianul"} la lucrarea #${noteJob?.display_number ?? ""} — ${text.slice(0, 140)}`,
+      jobId,
+    });
+  }
 
   revalidatePath(`/mobil/lucrari/${jobId}/extra`);
   revalidatePath(`/lucrari/${jobId}`);
@@ -422,6 +455,13 @@ export async function flagClientAbsent(jobId: string) {
     message: `${profile?.full_name ?? "Tehnicianul"} a finalizat lucrarea #${job?.display_number ?? ""} (${
       job?.title ?? "—"
     }) fără semnătură — clientul nu era prezent.`,
+  });
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "job_alert",
+    title: "Client absent",
+    body: `Lucrarea #${job?.display_number ?? ""} (${job?.title ?? "—"}) a fost finalizată fără semnătură: clientul nu era prezent.`,
+    jobId,
   });
 
   revalidatePath("/harta");

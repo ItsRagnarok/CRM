@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { notifyBackOffice } from "@/lib/notify";
 
 export async function requestTimeOff(formData: FormData) {
   const type = String(formData.get("type") ?? "");
@@ -23,6 +24,14 @@ export async function requestTimeOff(formData: FormData) {
     reason,
     status: "pending",
     requested_by: profile.id,
+  });
+
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "time_off_request",
+    title: "Cerere de concediu",
+    body: `${profile.full_name} cere liber între ${startDate} și ${endDate}`,
+    link: "/pontaj/concedii",
   });
 
   revalidatePath("/mobil/concediu");

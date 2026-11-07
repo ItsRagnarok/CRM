@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { notifyBackOffice } from "@/lib/notify";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 
@@ -104,6 +105,21 @@ export async function requestPurchase(formData: FormData) {
     material_id: materialId,
     custom_name: materialId ? null : customName,
     quantity,
+  });
+
+  const [{ data: requester }, { data: material }] = await Promise.all([
+    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    materialId
+      ? supabase.from("materials").select("name").eq("id", materialId).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "purchase_request",
+    title: "Cerere de achiziție nouă",
+    body: `${requester?.full_name ?? "Tehnicianul"} cere ${quantity} × ${material?.name ?? customName}`,
+    jobId,
+    link: "/aprobari",
   });
 
   revalidatePath("/mobil/materiale");

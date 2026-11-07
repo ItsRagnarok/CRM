@@ -68,7 +68,7 @@ export default async function MesajePage({
         .from("conversation_messages")
         .select("id, body, sender_profile_id, created_at")
         .eq("conversation_id", selectedConversation.id)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(200)
     : { data: [] };
 
@@ -181,7 +181,7 @@ export default async function MesajePage({
               <div className="flex-1 overflow-hidden">
                 <MessagesThread
                   conversationId={selectedConversation?.id ?? null}
-                  initialMessages={threadMessages ?? []}
+                  initialMessages={[...(threadMessages ?? [])].reverse()}
                   currentProfileId={profile.id}
                   participantNames={orgProfileNames}
                   sendAction={selectedTeamId ? sendTeamMessage : sendDirectMessage}

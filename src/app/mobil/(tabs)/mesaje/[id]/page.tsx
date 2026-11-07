@@ -27,8 +27,9 @@ export default async function MobileConversationPage({ params }: { params: Promi
     .from("conversation_messages")
     .select("id, body, sender_profile_id, created_at")
     .eq("conversation_id", id)
-    .order("created_at", { ascending: true })
+    .order("created_at", { ascending: false })
     .limit(200);
+  const orderedMessages = [...(messages ?? [])].reverse();
 
   const senderIds = [...new Set((messages ?? []).map((m) => m.sender_profile_id))];
   const { data: senders } = senderIds.length
@@ -63,7 +64,7 @@ export default async function MobileConversationPage({ params }: { params: Promi
       <div className="min-h-0 flex-1">
         <MessagesThread
           conversationId={id}
-          initialMessages={messages ?? []}
+          initialMessages={orderedMessages}
           currentProfileId={profile.id}
           participantNames={names}
           quickReplies={QUICK_REPLIES}

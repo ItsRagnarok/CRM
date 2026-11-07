@@ -16,7 +16,10 @@ export type NotificationCategory = "mesaje" | "apeluri" | "lucrari";
 export function categoryOf(type: string): NotificationCategory | null {
   if (type === "message") return "mesaje";
   if (type === "call_request") return "apeluri";
-  if (type === "job_assigned" || type === "job_updated" || type === "job_started") return "lucrari";
+  if (
+    type === "job_assigned" || type === "job_updated" || type === "job_started" ||
+    type === "job_alert" || type === "job_finished"
+  ) return "lucrari";
   return null;
 }
 

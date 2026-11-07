@@ -9,6 +9,11 @@ export type NotificationType =
   | "job_updated"
   | "job_started"
   | "purchase"
+  | "purchase_request"
+  | "job_alert"
+  | "job_finished"
+  | "expense_submitted"
+  | "time_off_request"
   | "test";
 
 // Per-category push preferences (profiles.notification_prefs). A missing key
@@ -30,6 +35,11 @@ const PREF_FOR_TYPE: Partial<Record<NotificationType, PrefKey>> = {
   job_updated: "jobs",
   job_started: "jobs",
   purchase: "purchases",
+  purchase_request: "purchases",
+  job_alert: "jobs",
+  job_finished: "jobs",
+  expense_submitted: "purchases",
+  time_off_request: "purchases",
 };
 
 export function prefEnabled(prefs: unknown, key: PrefKey) {
@@ -84,4 +94,31 @@ export async function notifyProfiles(
   if (input.jobId) data.jobId = input.jobId;
 
   return sendPushToProfiles(supabase, pushIds, { title: input.title, body: input.body, data });
+}
+
+// Tells the office (admins and managers) that something needs their attention:
+// a purchase request, a problem report, a finished job, a new expense or a
+// leave request. Same guarantees as notifyProfiles — never throws, never blocks
+// the action that triggered it. `exceptProfileId` keeps an admin who triggers the
+// event themselves from notifying themselves.
+export async function notifyBackOffice(
+  supabase: SupabaseClient<Database>,
+  input: {
+    organizationId: string;
+    type: NotificationType;
+    title: string;
+    body: string;
+    jobId?: string | null;
+    link?: string | null;
+    exceptProfileId?: string;
+  }
+): Promise<PushResult> {
+  const { data: office } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("organization_id", input.organizationId)
+    .in("role", ["admin", "manager"])
+    .eq("is_active", true);
+  const profileIds = (office ?? []).map((p) => p.id).filter((id) => id !== input.exceptProfileId);
+  return notifyProfiles(supabase, { ...input, profileIds });
 }

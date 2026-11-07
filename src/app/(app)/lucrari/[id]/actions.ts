@@ -7,7 +7,7 @@ import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "../team-sync";
 import { geocodeAddress } from "@/lib/geocode";
-import { notifyProfiles } from "@/lib/notify";
+import { notifyBackOffice, notifyProfiles } from "@/lib/notify";
 
 type JobType = Database["public"]["Enums"]["job_type"];
 type JobPriority = Database["public"]["Enums"]["job_priority"];
@@ -181,6 +181,16 @@ export async function addExpense(formData: FormData) {
     amount,
     submitted_by: userId,
     receipt_path: receiptPath,
+  });
+
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "expense_submitted",
+    title: "Cheltuială nouă",
+    body: `${amount.toFixed(2)} lei · ${category}${String(formData.get("vendor") ?? "").trim() ? ` · ${String(formData.get("vendor")).trim()}` : ""}`,
+    jobId,
+    link: "/cheltuieli",
+    exceptProfileId: userId,
   });
 
   revalidatePath(`/lucrari/${jobId}`);
