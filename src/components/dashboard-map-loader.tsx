@@ -16,9 +16,11 @@ const DashboardMap = dynamic(() => import("@/components/dashboard-map"), {
 export function DashboardMapLoader({
   markers,
   trails,
+  selectedId,
 }: {
   markers: DashboardMapMarker[];
   trails?: DashboardMapTrail[];
+  selectedId?: string;
 }) {
-  return <DashboardMap markers={markers} trails={trails} />;
+  return <DashboardMap markers={markers} trails={trails} selectedId={selectedId} />;
 }

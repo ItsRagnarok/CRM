@@ -259,6 +259,7 @@ export default async function HartaPage({
       sublabel: isStale ? "Ultima poziție cunoscută (offline)" : "Poziție live",
       statusLabel: minutesAgo <= 1 ? "chiar acum" : minutesAgo < 60 ? `acum ${minutesAgo} min` : `acum ${Math.round(minutesAgo / 60)} h`,
       color: isLive ? "#15803d" : isStale ? "#98a2b3" : "#0369a1",
+      live: isLive,
       lat: p.lat,
       lng: p.lng,
     };
@@ -383,7 +384,7 @@ export default async function HartaPage({
 
       <div className="relative flex-1">
         {allMapMarkers.length > 0 ? (
-          <DashboardMapLoader markers={allMapMarkers} trails={trails} />
+          <DashboardMapLoader markers={allMapMarkers} trails={trails} selectedId={selectedTeamId} />
         ) : (
           <EmptyState
             icon={MapPin}

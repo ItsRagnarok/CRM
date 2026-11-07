@@ -448,6 +448,7 @@ export default async function DashboardPage({
       sublabel: isStale ? "Ultima poziție cunoscută (offline)" : "Poziție live",
       statusLabel: minutesAgo <= 1 ? "chiar acum" : minutesAgo < 60 ? `acum ${minutesAgo} min` : `acum ${Math.round(minutesAgo / 60)} h`,
       color: isLive ? "#15803d" : isStale ? "#98a2b3" : "#0369a1",
+      live: isLive,
       lat: p.lat,
       lng: p.lng,
     };

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:android": "node scripts/check-android-version.mjs"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",

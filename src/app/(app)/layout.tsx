@@ -54,7 +54,7 @@ export default async function AppLayout({
       <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar notifications={notifications ?? []} readOnly={readOnly} />
-        {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="flex-1 overflow-auto">{children}</main>}
+        {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}
       </div>
     </div>
   );
