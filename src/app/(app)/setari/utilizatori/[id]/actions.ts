@@ -96,6 +96,7 @@ export async function addUserDocument(formData: FormData) {
     profile_id: profileId,
     name: file.name,
     doc_type: String(formData.get("docType") ?? "").trim() || null,
+    expires_at: /^\d{4}-\d{2}-\d{2}$/.test(String(formData.get("expiresAt") ?? "")) ? String(formData.get("expiresAt")) : null,
     storage_path: path,
     uploaded_by: userId,
   });

@@ -573,6 +573,7 @@ export type Database = {
           client_id: string | null
           created_at: string
           doc_type: string | null
+          expires_at: string | null
           id: string
           job_id: string | null
           name: string
@@ -585,6 +586,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           doc_type?: string | null
+          expires_at?: string | null
           id?: string
           job_id?: string | null
           name: string
@@ -597,6 +599,7 @@ export type Database = {
           client_id?: string | null
           created_at?: string
           doc_type?: string | null
+          expires_at?: string | null
           id?: string
           job_id?: string | null
           name?: string

@@ -104,7 +104,11 @@ export default async function UserDocumentsPage({ params }: { params: Promise<{ 
         )}
         <form action={addUserDocument} className="mt-4 flex items-center gap-2 border-t border-[#f2f4f7] pt-4">
           <input type="hidden" name="profileId" value={profile.id} />
-          <input name="docType" placeholder="Tip (opțional)" className="w-40 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+          <input name="docType" placeholder="Tip (ex. legitimație EGIU)" className="w-48 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+          <label className="flex items-center gap-2 text-[12px] text-muted">
+            Expiră
+            <input name="expiresAt" type="date" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
+          </label>
           <input name="file" type="file" required className="flex-1 text-[13px]" />
           <button type="submit" className="flex shrink-0 items-center gap-1.5 rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
             <Plus className="h-3.5 w-3.5" /> Încarcă
