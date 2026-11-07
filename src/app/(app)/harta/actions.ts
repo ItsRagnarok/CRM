@@ -39,7 +39,9 @@ export async function requestCallFromTeam(formData: FormData) {
     .select("profile_id")
     .eq("team_id", teamId);
 
-  const recipients = (members ?? []).map((m) => m.profile_id);
+  // The person asking never needs to be told to call themselves (admins can
+  // be team members too).
+  const recipients = (members ?? []).map((m) => m.profile_id).filter((id) => id !== profile.id);
   if (recipients.length === 0) return;
 
   await notifyProfiles(supabase, {
