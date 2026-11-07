@@ -4,6 +4,17 @@ Data: 2026-11-07. Bazat pe 8 rapoarte de cercetare din `docs/cercetare-2026-11/`
 
 Fiecare afirmație externă din rapoarte are un nivel de încredere (verificat / secundar / neconfirmat). Tot ce e legat de legislație (ANRE, ISCIR, TVA, e-Factura) trebuie validat cu un specialist autorizat și cu contabilul înainte de a fi promis unui client.
 
+## 0. Stare implementare (2026-11-07, versiunea 0.4)
+
+**Făcut și în producție:**
+- Securitate: escaladarea de rol blocată (trigger pe `profiles`), `is_back_office()` pe date sensibile, anti auto-aprobare, storage pe rol, `next_invoice_number` legat de organizație, plan/activare protejate, RPC-uri privilegiate fără acces anonim. Testat cu un tehnician real și un admin, în tranzacții anulate.
+- Bug-uri din audit: fus orar RO în pagini, PDF și ferestre de zi; sincronizare atomică a alocărilor + la schimbarea membrilor de echipă; `depot_arrival` permis; notificări către birou (achiziții, probleme, finalizări, cheltuieli, concedii); mesaje cu ultimele 200; token FCM nu se mai șterge din greșeală; manifest PWA accesibil; număr de factură atomic; planul firmei nu se mai suprascrie la editare.
+- Aplicația tehnicianului v2: schelet cu bara Acasă · Lucrări · Scanează · Mesaje · Meniu; Acasă; Lucrări (listă, calendar, hartă); hub de lucrare cu progres și un buton principal; formulare tehnice (gaze, fotovoltaic, electric) obligatorii la închidere; scanare cu poze comprimate; cheltuieli cu „cum ai plătit?”; pontaj; documente cu expirare; setări cu modul Soare și Mănuși; mesaje și notificări; închidere cu cerere de facturare către birou; panou „De facturat” în platformă; domeniul lucrării.
+
+**Neaplicat încă (migrare scrisă, cere confirmare Supabase):** `20261107170000_notifications_insert_same_org_recipient.sql`.
+
+**Neîncepute:** Web Push (VAPID) pentru iPhone și admini; stocare offline (outbox) pentru poze, semnături și închidere; citirea automată cu AI a documentelor scanate; emiterea directă de facturi prin Oblio/SmartBill; scrierea formularelor în PDF; aplicații iOS/Android în magazine; ecrane vechi nerestilizate complet (materiale, poze, note, verificare finală) care folosesc o punte de stil.
+
 ## 1. Rezumat
 
 1. **Platforma funcționează tehnic** (`tsc`, `eslint`, `build` fără erori), dar auditul a găsit **2 probleme P0 de securitate**: un tehnician își poate schimba singur rolul în admin și are drepturi de staff pe toată organizația. Se repară înainte de orice client nou (secțiunea 3).
