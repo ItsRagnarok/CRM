@@ -157,10 +157,19 @@ export async function addExpense(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
   const category = String(formData.get("category") ?? "").trim();
   const amount = Number(formData.get("amount"));
-  if (!jobId || !category || !Number.isFinite(amount) || amount <= 0) return;
+  const EXPENSE_CATEGORIES = ["materiale", "combustibil", "parcare", "transport", "unelte", "altele"];
+  if (!jobId || !EXPENSE_CATEGORIES.includes(category) || !Number.isFinite(amount) || amount <= 0) return;
+  const paidWith = String(formData.get("paidWith") ?? "company") === "own" ? "own" : "company";
+  const rawDate = String(formData.get("expenseDate") ?? "");
+  const expenseDate = /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : undefined;
 
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
+
+  // The job must belong to this organization (RLS also checks, but a clear refusal
+  // beats a silently dropped insert).
+  const { data: ownJob } = await supabase.from("jobs").select("id").eq("id", jobId).eq("organization_id", organization.id).maybeSingle();
+  if (!ownJob) return;
 
   let receiptPath: string | null = null;
   const receipt = formData.get("receipt") as File | null;
@@ -181,6 +190,8 @@ export async function addExpense(formData: FormData) {
     amount,
     submitted_by: userId,
     receipt_path: receiptPath,
+    paid_with: paidWith,
+    ...(expenseDate ? { expense_date: expenseDate } : {}),
   });
 
   await notifyBackOffice(supabase, {

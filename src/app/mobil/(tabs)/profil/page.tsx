@@ -1,151 +1,64 @@
-import Link from "next/link";
-import { Bell, Shield, HelpCircle, FileText, ChevronRight, CalendarOff } from "lucide-react";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
-import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
-import { NotificationsToggle } from "./notifications-toggle";
-import { SignOutForm } from "./sign-out-form";
-import { AppVersion } from "./app-version";
-import { APP_VERSION } from "@/lib/app-version";
-import { todayInOrgTimeZone, startOfOrgDay } from "@/lib/date";
-import { ThemeToggle } from "@/components/theme-toggle";
-
-function toISODate(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-function startOfWeek(d: Date) {
-  const day = d.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const c = new Date(d);
-  c.setUTCDate(c.getUTCDate() + diff);
-  return c;
-}
+import { ScreenHeader } from "@/components/mobile/ui";
+import { addDays, formatHM, dailyWorkedHours, startOfWeek, toISODate } from "@/app/(app)/pontaj/lib";
+import { startOfOrgDay, todayInOrgTimeZone } from "@/lib/date";
 
 export default async function MobileProfilePage() {
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
+  const today = todayInOrgTimeZone();
+  const monthStart = `${today.slice(0, 7)}-01`;
+  const weekStart = toISODate(startOfWeek(new Date(`${today}T00:00:00Z`)));
 
-  const todayStr = todayInOrgTimeZone();
-  const now = new Date(`${todayStr}T00:00:00Z`);
-  const monthStartStr = `${todayStr.slice(0, 7)}-01`;
-  const weekStartStr = toISODate(startOfWeek(now));
+  const [{ data: entries }, { data: assignments }, { data: membership }] = await Promise.all([
+    supabase.from("time_entries").select("event_type, occurred_at").eq("profile_id", profile.id).gte("occurred_at", startOfOrgDay(monthStart)),
+    supabase.from("job_assignments").select("jobs(scheduled_date, status)").eq("profile_id", profile.id),
+    supabase.from("team_members").select("teams(name)").eq("profile_id", profile.id).maybeSingle(),
+  ]);
 
-  const [{ data: entriesThisMonth }, { data: assignments }, { count: documentCount }, { data: membership }] =
-    await Promise.all([
-      supabase
-        .from("time_entries")
-        .select("event_type, occurred_at")
-        .eq("profile_id", profile.id)
-        .gte("occurred_at", startOfOrgDay(monthStartStr)),
-      supabase
-        .from("job_assignments")
-        .select("jobs(scheduled_date, status)")
-        .eq("profile_id", profile.id),
-      supabase.from("documents").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
-      supabase.from("team_members").select("teams(name)").eq("profile_id", profile.id).maybeSingle(),
-    ]);
-
-  const hoursThisMonth = pairHours(
-    (entriesThisMonth ?? []).map((e) => ({ ...e, profile_id: profile.id, job_id: "" })),
-    "work_start",
-    "work_end"
-  );
-
+  const hours = [...dailyWorkedHours((entries ?? []).map((e) => ({ ...e, profile_id: profile.id, job_id: "" })), "work_start", "work_end").values()].reduce((s, h) => s + h, 0);
   const jobs = (assignments ?? []).map((a) => a.jobs).filter((j): j is NonNullable<typeof j> => Boolean(j));
-  const jobsThisWeek = jobs.filter((j) => j.scheduled_date >= weekStartStr).length;
-  const jobsCompleted = jobs.filter((j) => j.status === "finalizata").length;
-  const isActiveNow = jobs.some((j) => j.status === "in_lucru" || j.status === "pauza");
-  const ACTIVE_JOB_STATUSES = ["in_drum", "ajunsa", "in_lucru", "pauza"];
-  const hasActiveJob = jobs.some((j) => ACTIVE_JOB_STATUSES.includes(j.status));
-
+  const doneThisMonth = jobs.filter((j) => j.status === "finalizata" && j.scheduled_date >= monthStart).length;
+  const thisWeek = jobs.filter((j) => j.scheduled_date >= weekStart && j.scheduled_date <= toISODate(addDays(new Date(`${weekStart}T00:00:00Z`), 6))).length;
   const color = avatarColor(profile.id);
 
   return (
-    <div className="flex flex-col px-5 pb-4 pt-3">
-      <div className="flex flex-col items-center py-3">
-        <div
-          className="flex h-[76px] w-[76px] items-center justify-center rounded-full text-[26px] font-extrabold"
-          style={{ background: color.bg, color: color.text }}
-        >
-          {initials(profile.full_name)}
-        </div>
-        <div className="mt-3 text-[18px] font-extrabold">{profile.full_name}</div>
-        <div className="mt-0.5 text-[12.5px] text-muted-2">
-          {ROLE_LABELS[profile.role]} · {organization.name}
-        </div>
-        {membership?.teams?.name && (
-          <div className="mt-1 rounded-full bg-electric-soft px-3 py-1 text-[11px] font-bold text-electric">
-            {membership.teams.name}
+    <div className="flex flex-col">
+      <ScreenHeader title="Profil" back="/mobil/meniu" />
+      <div className="m-bd" style={{ overflow: "visible" }}>
+        <div className="m-cd" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10, padding: "20px 16px" }}>
+          <div className="m-av" style={{ width: 72, height: 72, fontSize: 24, background: color.bg, color: color.text }}>{initials(profile.full_name)}</div>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 20, fontWeight: 800 }}>{profile.full_name}</div>
+            <div className="m-mu m-sm">{ROLE_LABELS[profile.role]} · {organization.name}</div>
           </div>
-        )}
-        {isActiveNow && (
-          <div className="mt-2 rounded-full bg-success-bg px-3 py-1 text-[11px] font-bold text-success">
-            ● Activ acum
+          <div className="m-r" style={{ width: "100%", marginTop: 6 }}>
+            <div className="m-stat"><b>{doneThisMonth}</b><span>lucrări finalizate luna asta</span></div>
+            <div style={{ width: 1, height: 34, background: "var(--m-ln)" }} />
+            <div className="m-stat"><b>{thisWeek}</b><span>lucrări săptămâna asta</span></div>
+            <div style={{ width: 1, height: 34, background: "var(--m-ln)" }} />
+            <div className="m-stat"><b style={{ fontSize: 18 }}>{formatHM(hours)}</b><span>ore luna asta</span></div>
           </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-3 gap-2.5">
-        <StatBox value={formatHM(hoursThisMonth)} label="ORE LUNA ASTA" />
-        <StatBox value={String(jobsThisWeek)} label="LUCRĂRI SĂPT." />
-        <StatBox value={String(jobsCompleted)} label="FINALIZATE" />
-      </div>
-
-      <div className="mt-4 flex items-center justify-between rounded-xl border border-border bg-white p-4 text-sm"><span>Aspectul aplicației</span><ThemeToggle /></div>
-      <p className="mt-3 text-xs text-muted">Platforma înregistrează interfața folosită, vizitele și timpul activ estimat pentru administrarea serviciului. Nu înregistrează conținutul tastat.</p>
-
-      <div className="mt-5 overflow-hidden rounded-[13px] border border-[#eaecf0] bg-white">
-        <Link href="/mobil/confidentialitate" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
-          <Shield className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-          <div className="flex-1 text-[13.5px] font-semibold">Confidențialitate & locație</div>
-          <div className="text-[11.5px] font-semibold text-muted-2">
-            {profile.location_consent_at ? "Consimțământ acordat" : "Consimțământ neacordat"}
-          </div>
-          <ChevronRight className="h-4 w-4 text-muted-2" />
-        </Link>
-        <NotificationsToggle initialEnabled={profile.notifications_enabled} />
-        <Link href="/mobil/profil/notificari" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
-          <Bell className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-          <div className="flex-1 text-[13.5px] font-semibold">Preferințe notificări & test</div>
-          <ChevronRight className="h-4 w-4 text-muted-2" />
-        </Link>
-        <Link href="/mobil/concediu" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
-          <CalendarOff className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-          <div className="flex-1 text-[13.5px] font-semibold">Concediu & absențe</div>
-          <ChevronRight className="h-4 w-4 text-muted-2" />
-        </Link>
-        <Link href="/mobil/documente" className="flex items-center gap-3 border-b border-[#f2f4f7] px-4 py-3.5">
-          <FileText className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-          <div className="flex-1 text-[13.5px] font-semibold">Documentele mele</div>
-          <div className="text-[11.5px] font-semibold text-muted-2">{documentCount ?? 0}</div>
-          <ChevronRight className="h-4 w-4 text-muted-2" />
-        </Link>
-        <Link href="/mobil/ajutor" className="flex items-center gap-3 px-4 py-3.5">
-          <HelpCircle className="h-[18px] w-[18px] text-[#475467]" strokeWidth={1.9} />
-          <div className="flex-1 text-[13.5px] font-semibold">Ajutor & suport</div>
-          <ChevronRight className="h-4 w-4 text-muted-2" />
-        </Link>
-      </div>
-
-      {hasActiveJob ? (
-        <div className="mt-4 rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-3.5 text-center text-[12.5px] text-muted-2">
-          Nu te poți deconecta cât ai o lucrare activă (în drum, la locație sau în lucru). Finalizează sau
-          contactează administratorul dacă e nevoie să ieși din aplicație.
         </div>
-      ) : (
-        <SignOutForm />
-      )}
-      <AppVersion version={APP_VERSION} />
-    </div>
-  );
-}
 
-function StatBox({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="rounded-[12px] border border-[#eaecf0] bg-white px-2 py-3.5 text-center">
-      <div className="text-[16px] font-extrabold">{value}</div>
-      <div className="mt-0.5 text-[10px] font-semibold text-muted-2">{label}</div>
+        <div className="m-list">
+          <div className="m-row"><span className="m-mu m-fl" style={{ maxWidth: 90, fontSize: 13 }}>Echipă</span><span className="m-fl" style={{ fontWeight: 700, fontSize: 15 }}>{membership?.teams?.name ?? "—"}</span></div>
+          <hr className="m-sep" />
+          <div className="m-row"><span className="m-mu m-fl" style={{ maxWidth: 90, fontSize: 13 }}>Compania</span><span className="m-fl" style={{ fontWeight: 700, fontSize: 15 }}>{organization.name}</span></div>
+          {organization.phone && (
+            <>
+              <hr className="m-sep" />
+              <div className="m-row"><span className="m-mu m-fl" style={{ maxWidth: 90, fontSize: 13 }}>Birou</span><a href={`tel:${organization.phone}`} className="m-fl" style={{ fontWeight: 700, fontSize: 15, color: "var(--m-aci)" }}>{organization.phone}</a></div>
+            </>
+          )}
+          <hr className="m-sep" />
+        </div>
+        <p className="m-mu m-sm" style={{ textAlign: "center" }}>
+          Datele de contact și rolul se schimbă din platformă, de către administrator.
+        </p>
+      </div>
     </div>
   );
 }

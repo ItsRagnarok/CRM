@@ -20,12 +20,9 @@ export function SignOutForm() {
   }
 
   return (
-    <form action={handleSignOut} className="mt-4">
-      <button
-        type="submit"
-        className="flex w-full items-center justify-center gap-2 rounded-[12px] border border-danger-bg bg-white py-3.5 text-[13.5px] font-bold text-danger"
-      >
-        <LogOut className="h-4 w-4" /> Deconectare
+    <form action={handleSignOut}>
+      <button type="submit" className="m-bt2 bad">
+        <LogOut className="m-i" /> Deconectare
       </button>
     </form>
   );

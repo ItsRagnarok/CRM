@@ -691,6 +691,7 @@ export type Database = {
           receipt_path: string | null
           rejection_reason: string | null
           status: string
+          paid_with: string
           submitted_by: string | null
           vendor: string | null
         }
@@ -709,6 +710,7 @@ export type Database = {
           receipt_path?: string | null
           rejection_reason?: string | null
           status?: string
+          paid_with?: string
           submitted_by?: string | null
           vendor?: string | null
         }
@@ -727,6 +729,7 @@ export type Database = {
           receipt_path?: string | null
           rejection_reason?: string | null
           status?: string
+          paid_with?: string
           submitted_by?: string | null
           vendor?: string | null
         }
