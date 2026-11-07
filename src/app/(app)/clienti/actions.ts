@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSessionContext } from "@/lib/auth";
+import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { geocodeAddress } from "@/lib/geocode";
 
@@ -185,12 +185,12 @@ export async function createInvoice(formData: FormData) {
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
-  const { count } = await supabase
-    .from("invoices")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organization.id);
-
-  const invoiceNumber = `FACT-${String((count ?? 0) + 1).padStart(4, "0")}`;
+  // Atomic per-organization counter (count+1 collided with it and failed silently).
+  const { data: nextNumber, error: numberError } = await supabase.rpc("next_invoice_number", {
+    p_organization_id: organization.id,
+  });
+  if (numberError || !nextNumber) return;
+  const invoiceNumber = `FACT-${String(nextNumber).padStart(4, "0")}`;
 
   // total_amount is a DB-generated column (sum of the four below) — sending
   // it explicitly is rejected outright, not just ignored.
@@ -239,14 +239,24 @@ export async function addClientDocument(formData: FormData) {
 
 export async function deleteClientDocument(formData: FormData) {
   const documentId = String(formData.get("documentId") ?? "");
-  const storagePath = String(formData.get("storagePath") ?? "");
   const clientId = String(formData.get("clientId") ?? "");
   if (!documentId) return;
 
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
   const supabase = await createClient();
-  if (storagePath) {
-    await supabase.storage.from("attachments").remove([storagePath]);
+  // The file path is read from the document row (scoped to this organization),
+  // never trusted from the submitted form.
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("storage_path")
+    .eq("id", documentId)
+    .eq("organization_id", ctx.organization.id)
+    .maybeSingle();
+  if (!doc) return;
+  if (doc.storage_path) {
+    await supabase.storage.from("attachments").remove([doc.storage_path]);
   }
-  await supabase.from("documents").delete().eq("id", documentId);
+  await supabase.from("documents").delete().eq("id", documentId).eq("organization_id", ctx.organization.id);
   revalidatePath(`/clienti/${clientId}`);
 }

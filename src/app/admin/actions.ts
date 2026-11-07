@@ -64,6 +64,12 @@ export async function updateCompany(orgId: string, formData: FormData) {
   if (access !== "active" && access !== "suspended") return { error: "Selectează starea accesului." };
 
   const supabase = await createClient();
+  // Keep the plan the company already has (this form doesn't edit the plan).
+  const { data: currentCompany } = await supabase
+    .from("organizations")
+    .select("subscription_plan")
+    .eq("id", orgId)
+    .maybeSingle();
   const { error } = await supabase.rpc("platform_admin_update_company", {
     org_id: orgId,
     company_name: companyName,
@@ -71,7 +77,7 @@ export async function updateCompany(orgId: string, formData: FormData) {
     company_email: String(formData.get("email") ?? "").trim(),
     company_phone: String(formData.get("phone") ?? "").trim(),
     company_address: String(formData.get("address") ?? "").trim(),
-    new_plan: "pro",
+    new_plan: currentCompany?.subscription_plan ?? "pro",
     new_is_active: access === "active",
   });
 

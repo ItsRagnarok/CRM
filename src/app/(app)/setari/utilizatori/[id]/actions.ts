@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSessionContext } from "@/lib/auth";
+import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 
 export async function updateEmployeeEmail(
   profileId: string,
@@ -106,15 +106,25 @@ export async function addUserDocument(formData: FormData) {
 
 export async function deleteUserDocument(formData: FormData) {
   const documentId = String(formData.get("documentId") ?? "");
-  const storagePath = String(formData.get("storagePath") ?? "");
   const profileId = String(formData.get("profileId") ?? "");
   if (!documentId) return;
 
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
   const supabase = await createClient();
-  if (storagePath) {
-    await supabase.storage.from("attachments").remove([storagePath]);
+  // The file path is read from the document row (scoped to this organization),
+  // never trusted from the submitted form.
+  const { data: doc } = await supabase
+    .from("documents")
+    .select("storage_path")
+    .eq("id", documentId)
+    .eq("organization_id", ctx.organization.id)
+    .maybeSingle();
+  if (!doc) return;
+  if (doc.storage_path) {
+    await supabase.storage.from("attachments").remove([doc.storage_path]);
   }
-  await supabase.from("documents").delete().eq("id", documentId);
+  await supabase.from("documents").delete().eq("id", documentId).eq("organization_id", ctx.organization.id);
   revalidatePath(`/setari/utilizatori/${profileId}`);
   revalidatePath("/mobil/documente");
 }

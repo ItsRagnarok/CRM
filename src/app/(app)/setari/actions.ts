@@ -91,7 +91,8 @@ export async function updateUserRole(formData: FormData) {
   const role = String(formData.get("role") ?? "") as UserRole;
   if (!profileId || !role) return;
 
-  const { organization, profile, readOnly } = await requireSessionContext();
+  const ctx = await requireSessionContext();
+  const { organization, profile, readOnly } = ctx;
   // Only a company admin may change roles, and never their own: otherwise any
   // technician could promote themselves through this server action.
   if (readOnly || profile.role !== "admin" || profileId === profile.id) return;

@@ -192,4 +192,22 @@ async function requireSessionContextUncached(): Promise<SessionContext> {
 
 export const requireSessionContext = cache(requireSessionContextUncached);
 
+export const BACK_OFFICE_ROLES: UserRole[] = ["admin", "manager"];
+
+export function isBackOfficeRole(role: UserRole): boolean {
+  return BACK_OFFICE_ROLES.includes(role);
+}
+
+/**
+ * Session context for actions that only the office may run (approvals, role
+ * changes…). Returns null for technicians, clients and read-only previews so the
+ * action can bail out — the database enforces the same rule, this keeps the UI
+ * from reporting success on something that was silently refused.
+ */
+export async function requireBackOfficeContext(): Promise<SessionContext | null> {
+  const ctx = await requireSessionContext();
+  if (ctx.readOnly || !isBackOfficeRole(ctx.profile.role)) return null;
+  return ctx;
+}
+
 export { ROLE_LABELS } from "@/lib/role-labels";

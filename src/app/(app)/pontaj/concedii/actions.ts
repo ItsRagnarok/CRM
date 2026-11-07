@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSessionContext } from "@/lib/auth";
+import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 
 export async function addTimeOff(formData: FormData) {
   const profileId = String(formData.get("profileId") ?? "");
@@ -38,7 +38,9 @@ export async function decideTimeOff(formData: FormData) {
   const decision = String(formData.get("decision") ?? "");
   if (!requestId || (decision !== "approved" && decision !== "rejected")) return;
 
-  const { organization, userId } = await requireSessionContext();
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
+  const { organization, userId } = ctx;
   const supabase = await createClient();
 
   await supabase
