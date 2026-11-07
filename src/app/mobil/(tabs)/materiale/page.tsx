@@ -1,4 +1,5 @@
 import { requireSessionContext } from "@/lib/auth";
+import { ScreenHeader } from "@/components/mobile/ui";
 import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
@@ -90,18 +91,22 @@ export default async function MobileMaterialsPage() {
 
   if (!vehicle) {
     return (
-      <div className="px-5 py-6">
+      <div className="flex flex-col">
+        <ScreenHeader title="Materiale" back="/mobil/meniu" />
+        <div className="px-5 py-6">
         <EmptyState
           icon={Package}
           title="Nicio dubă asociată"
           description="Nu ești încă alocat unei echipe cu vehicul, deci nu ai stoc de materiale asignat."
         />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col">
+      <ScreenHeader title="Materiale și mașină" back="/mobil/meniu" />
       <div className="flex-shrink-0 border-b border-[#eaecf0] bg-white px-5 pb-3.5 pt-1.5">
         <div className="flex items-center justify-between">
           <div className="text-[19px] font-extrabold">Stocul meu</div>

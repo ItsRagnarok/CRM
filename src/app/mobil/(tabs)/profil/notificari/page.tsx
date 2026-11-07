@@ -26,7 +26,7 @@ export default async function NotificationPreferencesPage() {
   return (
     <div className="flex flex-col pb-6">
       <div className="flex items-center gap-1 border-b border-[#eaecf0] bg-white px-4 pb-3 pt-2">
-        <Link href="/mobil/profil" aria-label="Înapoi" className="-ml-2 flex h-11 w-11 items-center justify-center text-[#344054]">
+        <Link href="/mobil/setari" aria-label="Înapoi" className="-ml-2 flex h-11 w-11 items-center justify-center text-[#344054]">
           <ChevronLeft className="h-[22px] w-[22px]" />
         </Link>
         <h1 className="flex-1 text-[18px] font-extrabold">Notificări</h1>
