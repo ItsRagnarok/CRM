@@ -11,7 +11,7 @@ const timeFormat = new Intl.DateTimeFormat("ro-RO", { hour: "2-digit", minute: "
 const escapes: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
 const escape = (text: string) => text.replace(/[&<>"']/g, (character) => escapes[character]);
 
-export async function sendBookingEmail(to: string, subject: string, text: string, html?: string, account?: MailCredentials) {
+export async function sendBookingEmail(to: string, subject: string, text: string, html?: string, account?: MailCredentials, replyTo?: string) {
   const host = process.env.BOOKING_SMTP_HOST;
   const password = process.env.BOOKING_SMTP_PASSWORD;
   if (!account && (!host || !password)) throw new Error("SMTP not configured");
@@ -25,6 +25,7 @@ export async function sendBookingEmail(to: string, subject: string, text: string
     const result = await transport.sendMail({
       from: { name: "ElectroField Programări", address: sender },
       to: { name: "", address: to },
+      replyTo,
       subject: subject.replace(/[\r\n]+/g, " "), text, html,
     });
     if (!result.accepted.length) throw new Error("SMTP did not accept recipient");
