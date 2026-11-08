@@ -10,6 +10,7 @@ const LINKS = [
   { href: "#platforma", label: "Platformă" },
   { href: "#functionalitati", label: "Funcționalități" },
   { href: "#cum-functioneaza", label: "Cum funcționează" },
+  { href: "/blog", label: "Blog" },
   { href: "#contact", label: "Contact" },
 ];
 
@@ -40,9 +41,9 @@ export function MarketingNav() {
         <Link href="/login" className={s.btnGhostNav}>
           Conectează-te
         </Link>
-        <a href="#contact" className={s.btnLime}>
-          Începe acum
-        </a>
+        <Link href="/programare" className={s.btnLime}>
+          Programează un demo
+        </Link>
       </div>
     </nav>
   );

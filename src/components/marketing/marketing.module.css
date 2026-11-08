@@ -455,6 +455,8 @@
 .ctaContent h2 { font-size: clamp(32px, 5.6vw, 64px); font-weight: 700; max-width: 16ch; margin-inline: auto; }
 .ctaContent .lime { color: var(--lime); }
 .ctaContent p { margin: 20px auto 0; max-width: 46ch; color: var(--fg-dim); font-size: 16px; }
+.ctaMail { margin-top: 28px; font-size: 14px; color: var(--fg-dim); }
+.ctaMail a { color: var(--lime); text-decoration: underline; text-underline-offset: 3px; }
 .ctaStats { display: flex; flex-wrap: wrap; justify-content: center; gap: 48px 64px; margin-top: 56px; }
 .ctaStat .v { font-family: var(--font-mono); font-weight: 700; font-size: 32px; }
 .ctaStat .v .u { color: var(--lime); font-size: 18px; margin-left: 2px; }

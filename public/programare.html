@@ -12,43 +12,65 @@
 <meta property="og:url" content="https://www.electrofield.ro/programare">
 <meta property="og:locale" content="ro_RO">
 <meta property="og:image" content="https://www.electrofield.ro/marketing/van-dusk.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
 <style>
-/* = Culori: schimbă-le aici ca să se potrivească cu site-ul = */
-:root{--bg:#f4f5f7;--card:#fff;--ink:#101828;--muted:#667085;--line:#e3e7ee;--accent:#f5a400;--ok:#1a7f4b;--err:#c0392b}
+/* Aceeași temă ca site-ul de prezentare: întunecat + lime */
+:root{--bg:#07090a;--card:#0f1513;--ink:#f4f7f4;--muted:#aab3ac;--line:rgba(255,255,255,.12);--accent:#c6ff4a;--on-accent:#0a0d0a;--field:#0b100e;--ok:#8be39f;--err:#ff8a80;color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-main{max-width:560px;margin:0 auto;padding:20px 14px 60px}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh;background-repeat:no-repeat;background-image:radial-gradient(900px 420px at 85% -10%,rgba(198,255,74,.10),transparent 60%)}
+::selection{background:var(--accent);color:var(--on-accent)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;max-width:1040px;margin:0 auto;padding:18px 16px}
+.brandl{font:700 1.05rem Unbounded,Inter,sans-serif;color:var(--ink);text-decoration:none;letter-spacing:-.01em}
+.brandl b{color:var(--accent);font-weight:700}
+.toplinks{display:flex;gap:18px;align-items:center;font-size:.92rem}
+.toplinks a{color:var(--muted);text-decoration:none}.toplinks a:hover{color:var(--ink)}
+.toplinks a.pill{border:1px solid var(--line);border-radius:99px;padding:8px 14px;color:var(--ink)}
+main{max-width:1040px;margin:0 auto;padding:10px 16px 70px}
+.wrap2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;align-items:start}
+@media(max-width:860px){.wrap2{grid-template-columns:1fr}}
+.intro h1{font:700 clamp(1.6rem,4.2vw,2.5rem)/1.08 Unbounded,Inter,sans-serif;margin:0 0 14px;text-wrap:balance;letter-spacing:-.01em}
+.intro h1 em{font-style:normal;color:var(--accent)}
+.intro p{color:var(--muted);margin:0 0 18px;max-width:46ch}
+.points{list-style:none;margin:0 0 20px;padding:0;display:grid;gap:12px}
+.points li{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:.95rem}
+.points i{width:28px;height:28px;border-radius:50%;background:rgba(198,255,74,.14);color:var(--accent);font-style:normal;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.points b{display:block}.points span{color:var(--muted);font-size:.9rem}
 h1{font-size:1.5rem;margin:6px 0 4px}h2{font-size:1.05rem;margin:0 0 10px}
 .sub,.muted{color:var(--muted)}.sub{margin:0 0 16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:14px}
 .hidden{display:none}
-/* calendar */
 .calh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .calh b{text-transform:capitalize;font-size:1.05rem}
-.nav{width:44px;height:44px;border:1px solid var(--line);background:#fff;border-radius:10px;font-size:1.3rem;cursor:pointer;color:var(--ink)}
+.nav{width:44px;height:44px;border:1px solid var(--line);background:var(--field);border-radius:12px;font-size:1.3rem;cursor:pointer;color:var(--ink)}
+.nav:hover{border-color:var(--accent)}
 .grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .wd{text-align:center;font-size:.8rem;color:var(--muted);padding-bottom:2px}
-.day{position:relative;min-height:48px;border:1px solid var(--line);background:#fff;border-radius:9px;font:inherit;color:var(--ink);cursor:pointer;padding:0}
-.day.off{background:transparent;border-color:transparent;color:#a7afbd}
+.day{position:relative;min-height:48px;border:1px solid var(--line);background:var(--field);border-radius:10px;font:inherit;color:var(--ink);cursor:pointer;padding:0}
+.day.off{background:transparent;border-color:transparent;color:#5d6760}
 .day.open::after{content:"";position:absolute;left:32%;right:32%;bottom:6px;height:3px;border-radius:2px;background:var(--accent)}
-.day.today{box-shadow:inset 0 0 0 2px var(--accent)}
-.day.sel{background:var(--ink);color:#fff;border-color:var(--ink)}
-.day:disabled{cursor:default;opacity:.4}
-.day i{position:absolute;top:3px;right:4px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:var(--ink);font:600 .7rem/17px system-ui;font-style:normal}
+.day.today{box-shadow:inset 0 0 0 2px rgba(198,255,74,.55)}
+.day.sel{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.day.sel::after{background:var(--on-accent)}
+.day:disabled{cursor:default;opacity:.45}
+.day i{position:absolute;top:3px;right:4px;min-width:17px;height:17px;border-radius:9px;background:var(--accent);color:var(--on-accent);font:600 .7rem/17px Inter,system-ui;font-style:normal}
 .legend{font-size:.82rem;color:var(--muted);margin-top:10px}
-/* controale */
 .slots{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer;min-height:44px;min-width:70px}
-.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
-.chip.booked{background:#fff4d6;border-color:var(--accent);cursor:default}
+.chip{border:1px solid var(--line);background:var(--field);color:var(--ink);border-radius:10px;padding:8px 12px;font:inherit;cursor:pointer;min-height:44px;min-width:70px}
+.chip:hover{border-color:var(--accent)}
+.chip.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent);font-weight:700}
+.chip.booked{background:rgba(198,255,74,.12);border-color:rgba(198,255,74,.5);cursor:default}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-label{display:block;font-size:.9rem;margin:10px 0 4px}
-input,textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:#fff;color:var(--ink)}
-.btn{background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:12px 16px;font:inherit;font-weight:600;cursor:pointer;margin:12px 8px 0 0}
-.btn.ghost{background:transparent;border:1px solid var(--line);font-weight:400}
-.btn.danger{background:transparent;color:var(--err);border:1px solid var(--err);padding:6px 10px;margin:0;font-weight:400}
-.msg{margin-top:12px;padding:10px 12px;border-radius:8px;display:none}
-.msg.ok{display:block;background:#e6f6ee;color:var(--ok)}.msg.err{display:block;background:#fdeceb;color:var(--err)}
+label{display:block;font-size:.9rem;margin:10px 0 4px;color:var(--muted)}
+input,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;background:var(--field);color:var(--ink)}
+input:focus,textarea:focus{border-color:var(--accent);outline:none}
+input[type=time],input[type=date]{color-scheme:dark}
+.btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:99px;padding:13px 22px;font:inherit;font-weight:700;cursor:pointer;margin:12px 8px 0 0;box-shadow:0 10px 30px -12px rgba(198,255,74,.6)}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:500;box-shadow:none}
+.btn.danger{background:transparent;color:var(--err);border:1px solid var(--err);padding:6px 10px;margin:0;font-weight:400;box-shadow:none;border-radius:10px}
+.msg{margin-top:12px;padding:10px 12px;border-radius:10px;display:none}
+.msg.ok{display:block;background:rgba(139,227,159,.12);color:var(--ok)}.msg.err{display:block;background:rgba(255,138,128,.12);color:var(--err)}
 .link{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;margin-top:20px;padding:6px 0}
 .row{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .row .d{width:96px;margin:0}.row input[type=time]{width:auto}.row input[type=checkbox]{width:auto}
@@ -62,12 +84,22 @@ details summary{cursor:pointer;font-weight:600}
 <script defer src="/public-web-analytics.js"></script>
 </head>
 <body>
+<header class="top"><a class="brandl" href="/">Electro<b>Field</b></a><nav class="toplinks"><a href="/">Acasă</a><a href="/blog">Blog</a><a class="pill" href="/login">Conectează-te</a></nav></header>
 <main>
 
 <!--  PARTEA PUBLICĂ  -->
-<section id="pub">
-  <h1 id="tTitle">Programează o discuție</h1>
-  <p class="sub" id="tSub">Alege o zi din calendar, apoi ora. Zilele cu linie galbenă au ore libere.</p>
+<section id="pub" class="wrap2">
+  <div class="intro">
+    <h1 id="tTitle">Programează o discuție</h1>
+    <p class="sub" id="tSub">Alege o zi din calendar, apoi ora. Zilele cu linie lime au ore libere.</p>
+    <ul class="points">
+      <li><i>1</i><div><b>Alegi ziua și ora</b><span>Vezi doar intervalele libere. Primești confirmarea pe email.</span></div></li>
+      <li><i>2</i><div><b>Ne spui cum lucrezi azi</b><span>Câți tehnicieni ai, ce domenii faci (electrice, gaze, fotovoltaice) și ce te încurcă cel mai mult.</span></div></li>
+      <li><i>3</i><div><b>Îți arătăm pe cazul tău</b><span>Fără prezentare generală: lucrăm pe fluxurile firmei tale și îți spunem sincer dacă ne potrivim.</span></div></li>
+    </ul>
+    <p class="muted" style="font-size:.9rem">Preferi email? <a href="mailto:contact@electrofield.ro" style="color:var(--accent)">contact@electrofield.ro</a></p>
+  </div>
+  <div>
   <div class="card"><div id="calPub"></div></div>
   <div class="card"><h2 id="slotH">Ora</h2><div class="slots" id="slots"></div></div>
   <div class="card hidden" id="formCard">
@@ -79,6 +111,7 @@ details summary{cursor:pointer;font-weight:600}
     <button class="btn" id="bookBtn">Confirmă programarea</button>
   </div>
   <div class="msg" id="pubMsg" role="status"></div>
+  </div>
 </section>
 
 </main>
@@ -103,7 +136,7 @@ let sel = {pub:null, adm:null}, selSlot = null, edit = null, adminOn = false;
 
 const DEFT = {
   title:"Programează o discuție",
-  sub:"Alege o zi din calendar, apoi ora. Zilele cu linie galbenă au ore libere.",
+  sub:"Alege o zi din calendar, apoi ora. Zilele cu linie lime au ore libere.",
   slotsEmpty:"Ora",
   pickDay:"Alege o zi din calendar.",
   slotsTitle:"Ore libere: {data}",

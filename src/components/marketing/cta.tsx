@@ -2,12 +2,6 @@ import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import s from "./marketing.module.css";
 
-const STATS = [
-  ["500", "+", "Firme active"],
-  ["12.000", "+", "Tehnicieni în teren"],
-  ["98", "%", "Rată de satisfacție"],
-] as const;
-
 export function CtaSection() {
   return (
     <section id="contact" className={s.ctaSection}>
@@ -21,21 +15,16 @@ export function CtaSection() {
         </h2>
         <p>ElectroField — platforma pentru firmele care lucrează în teren.</p>
         <div className={s.heroCtas} style={{ justifyContent: "center" }}>
-          <a href="mailto:contact@electrofield.ro" className={`${s.btn} ${s.btnPrimary}`}>
-            Începe acum <ArrowRight size={17} />
+          <a href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
+            Programează un demo <ArrowRight size={17} />
+          </a>
+          <a href="/blog" className={`${s.btn} ${s.btnOutline}`}>
+            Citește ghidurile
           </a>
         </div>
-        <div className={s.ctaStats}>
-          {STATS.map(([v, u, l]) => (
-            <div key={l} className={s.ctaStat}>
-              <div className="v">
-                {v}
-                <span className="u">{u}</span>
-              </div>
-              <div className="l">{l}</div>
-            </div>
-          ))}
-        </div>
+        <p className={s.ctaMail}>
+          Preferi email? <a href="mailto:contact@electrofield.ro">contact@electrofield.ro</a>
+        </p>
       </div>
     </section>
   );

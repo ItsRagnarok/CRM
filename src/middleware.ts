@@ -46,13 +46,21 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
+  // A redirect built from scratch would drop the refreshed session cookies that
+  // getUser() just set. The rotated refresh token would be lost and the next
+  // request would present the old, already-used one, which logs the user out.
+  const redirectWithSession = (url: URL) => {
+    const redirect = NextResponse.redirect(url);
+    for (const cookie of response.cookies.getAll()) redirect.cookies.set(cookie);
+    return redirect;
+  };
+
   if (!user && !isPublicPath) {
-    const loginUrl = new URL("/login", request.url);
-    return NextResponse.redirect(loginUrl);
+    return redirectWithSession(new URL("/login", request.url));
   }
 
   if (user && (pathname === "/login" || pathname === "/signup")) {
-    return NextResponse.redirect(new URL("/", request.url));
+    return redirectWithSession(new URL("/", request.url));
   }
 
   return response;

@@ -70,8 +70,8 @@ export function Hero() {
             cu tehnicienii pentru firme de instalații electrice, fotovoltaice și service din România.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
-            <a href="#contact" className={`${s.btn} ${s.btnPrimary}`}>
-              Începe acum <ArrowRight size={17} />
+            <a href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
+              Programează un demo <ArrowRight size={17} />
             </a>
             <a href="#cum-functioneaza" className={`${s.btn} ${s.btnOutline}`}>
               <PlayCircle size={17} />
