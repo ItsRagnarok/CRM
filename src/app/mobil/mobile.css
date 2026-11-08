@@ -257,3 +257,20 @@ textarea.m-in { padding: 12px 14px; min-height: 96px; resize: none; align-items:
 input.m-in[type="date"], input.m-in[type="time"] { -webkit-appearance: none; appearance: none; width: 100%; min-height: 52px; }
 input.m-in[type="date"]::-webkit-date-and-time-value { text-align: left; }
 .m-r > .m-fld.m-fl { min-width: 0; flex: 1 1 0; }
+
+/* Ecranul de conectare din aplicație: degrade discret alb → gri → un pic mai închis, cu o lumină lime foarte slabă sus. */
+.m-login-bg {
+  background:
+    radial-gradient(520px 300px at 12% 4%, rgba(198, 255, 74, 0.22), transparent 70%),
+    linear-gradient(180deg, #ffffff 0%, #f1f3f6 42%, #dde1e8 100%);
+}
+html[data-theme="dark"] .m-login-bg {
+  background:
+    radial-gradient(520px 300px at 12% 4%, rgba(198, 255, 74, 0.1), transparent 70%),
+    linear-gradient(180deg, #182030 0%, #121926 55%, #0b0f17 100%);
+}
+.m-login-tile {
+  display: inline-flex; align-items: center; background: #0b100e; color: #f4f7f4;
+  border-radius: 20px; padding: 14px 20px 14px 16px;
+  box-shadow: 0 14px 32px -14px rgba(11, 16, 14, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+}

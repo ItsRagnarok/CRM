@@ -6,9 +6,11 @@ export const metadata = { title: "Conectare | ElectroField", robots: { index: fa
 
 export default function MobileLoginPage() {
   return (
-    <div className="ef-app-theme m-root mx-auto flex min-h-dvh max-w-[480px] flex-col px-6 pb-8 pt-[max(28px,env(safe-area-inset-top))]">
+    <div className="ef-app-theme m-root m-login-bg mx-auto flex min-h-dvh max-w-[480px] flex-col px-6 pb-8 pt-[max(28px,env(safe-area-inset-top))]">
       <div className="pt-4">
-        <Logo size={34} />
+        <span className="m-login-tile">
+          <Logo size={34} />
+        </span>
       </div>
 
       <div className="mt-14">
