@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { Search, Bell, MessageSquare, PhoneCall, Briefcase, ShoppingCart } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { markNotificationRead, markAllNotificationsRead } from "@/app/(app)/notifications-actions";
-import { createClient } from "@/lib/supabase/client";
 import {
   CATEGORY_LABELS,
   categoryOf,
@@ -61,17 +60,25 @@ export function Topbar({
   // without waiting for the next navigation.
   useEffect(() => {
     if (readOnly) return;
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`topbar-notifications-${profileId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${profileId}` },
-        () => router.refresh()
-      )
-      .subscribe();
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    // The realtime client is loaded after the page is interactive, not with the first paint.
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`topbar-notifications-${profileId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${profileId}` },
+          () => router.refresh()
+        )
+        .subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    });
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      cleanup?.();
     };
   }, [profileId, readOnly, router]);
 

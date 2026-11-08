@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
 // The bell in the home header. The count comes from the server render and
 // then ticks up live (Supabase Realtime) when a notification arrives while
@@ -15,18 +14,26 @@ export function MobileBell({ profileId, initialUnread }: { profileId: string; in
     setUnread(initialUnread);
   }, [initialUnread]);
 
+  // The realtime client is loaded after the screen is interactive, not with the first paint.
   useEffect(() => {
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`bell-${profileId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${profileId}` },
-        () => setUnread((c) => c + 1)
-      )
-      .subscribe();
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`bell-${profileId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "notifications", filter: `profile_id=eq.${profileId}` },
+          () => setUnread((c) => c + 1)
+        )
+        .subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    });
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      cleanup?.();
     };
   }, [profileId]);
 

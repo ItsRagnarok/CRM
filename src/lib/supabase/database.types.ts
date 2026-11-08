@@ -3200,6 +3200,10 @@ export type Database = {
         Args: { org_id: string }
         Returns: { enabled_domains: string[]; enabled_modules: string[] }[]
       }
+      gas_overdue_count: {
+        Args: { p_today: string }
+        Returns: number
+      }
       public_job_status: {
         Args: { p_token: string }
         Returns: {

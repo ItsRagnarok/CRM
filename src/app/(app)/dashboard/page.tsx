@@ -12,9 +12,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { todayInOrgTimeZone, startOfOrgDay } from "@/lib/date";
 import {
   Briefcase,
-  UsersRound,
   Receipt,
-  Clock,
   MapPin,
   Navigation,
   Camera,
@@ -22,7 +20,6 @@ import {
   AlertTriangle,
   Plus,
   Activity,
-  TrendingUp,
   Circle,
   Smartphone,
   ArrowRight,
@@ -56,41 +53,6 @@ function formatDuration(start: string | null, end: string | null) {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   return m === 0 ? `${h}h` : `${h}h${m}`;
-}
-
-type TimeEvent = { profile_id: string; job_id: string; event_type: string; occurred_at: string };
-
-function hoursWorked(events: TimeEvent[]): number {
-  const byKey = new Map<string, TimeEvent[]>();
-  for (const e of events) {
-    const key = `${e.profile_id}:${e.job_id}`;
-    if (!byKey.has(key)) byKey.set(key, []);
-    byKey.get(key)!.push(e);
-  }
-  const now = Date.now();
-  let totalMs = 0;
-  for (const evs of byKey.values()) {
-    evs.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
-    let openStart: number | null = null;
-    for (const e of evs) {
-      const t = new Date(e.occurred_at).getTime();
-      if (e.event_type === "work_start") {
-        openStart = t;
-      } else if (e.event_type === "work_end" && openStart != null) {
-        totalMs += t - openStart;
-        openStart = null;
-      }
-    }
-    if (openStart != null) totalMs += now - openStart;
-  }
-  return totalMs / 3_600_000;
-}
-
-function formatHours(hours: number) {
-  const totalMinutes = Math.round(hours * 60);
-  const h = Math.floor(totalMinutes / 60);
-  const m = totalMinutes % 60;
-  return `${h}h ${m.toString().padStart(2, "0")}m`;
 }
 
 type ActivityItem = {
@@ -145,19 +107,10 @@ export default async function DashboardPage({
   rangeEndExclusiveDate.setUTCDate(rangeEndExclusiveDate.getUTCDate() + 1);
   const rangeEndExclusiveStr = rangeEndExclusiveDate.toISOString().slice(0, 10);
 
-  const prevStartDate = new Date(rangeStartDate);
-  prevStartDate.setUTCDate(prevStartDate.getUTCDate() - rangeDays);
-  const prevStartStr = prevStartDate.toISOString().slice(0, 10);
-  const prevEndExclusiveStr = rangeStartStr;
-
   const [
     { data: jobsToday },
     { data: activeJobs },
     { data: expensesTodayRows },
-    { data: expensesYesterdayRows },
-    { data: timeEntriesToday },
-    { data: timeEntriesYesterday },
-    { count: activeTeamsCount },
     { data: historyToday },
     { data: arrivalsToday },
     { data: photosToday },
@@ -187,29 +140,6 @@ export default async function DashboardPage({
       .eq("organization_id", organization.id)
       .gte("expense_date", rangeStartStr)
       .lte("expense_date", rangeEndStr),
-    supabase
-      .from("expenses")
-      .select("amount")
-      .eq("organization_id", organization.id)
-      .gte("expense_date", prevStartStr)
-      .lt("expense_date", prevEndExclusiveStr),
-    supabase
-      .from("time_entries")
-      .select("profile_id, job_id, event_type, occurred_at, profiles(hourly_rate)")
-      .eq("organization_id", organization.id)
-      .gte("occurred_at", startOfDay(rangeStartStr))
-      .lt("occurred_at", startOfDay(rangeEndExclusiveStr)),
-    supabase
-      .from("time_entries")
-      .select("profile_id, job_id, event_type, occurred_at, profiles(hourly_rate)")
-      .eq("organization_id", organization.id)
-      .gte("occurred_at", startOfDay(prevStartStr))
-      .lt("occurred_at", startOfDay(prevEndExclusiveStr)),
-    supabase
-      .from("teams")
-      .select("id", { count: "exact", head: true })
-      .eq("organization_id", organization.id)
-      .eq("is_active", true),
     supabase
       .from("job_status_history")
       .select("id, status, created_at, profiles(full_name), jobs(display_number, title)")
@@ -261,91 +191,6 @@ export default async function DashboardPage({
     supabase.from("warehouses").select("id, name, address, lat, lng").eq("organization_id", organization.id),
   ]);
 
-  // Profit = venitul facturat pentru lucrările programate în perioadă, minus
-  // costul lor (materiale folosite + manoperă + combustibil estimat +
-  // cheltuieli — aceeași metodă ca la costul pe lucrare individuală).
-  const [
-    { data: materialUsageInRange },
-    { data: materialUsagePrevRange },
-    { data: invoicesInRange },
-    { data: invoicesPrevRange },
-    { data: jobDistancesPrevRange },
-  ] = await Promise.all([
-    supabase
-      .from("material_usage")
-      .select("quantity, materials(unit_cost), jobs!inner(scheduled_date)")
-      .eq("organization_id", organization.id)
-      .gte("jobs.scheduled_date", rangeStartStr)
-      .lte("jobs.scheduled_date", rangeEndStr),
-    supabase
-      .from("material_usage")
-      .select("quantity, materials(unit_cost), jobs!inner(scheduled_date)")
-      .eq("organization_id", organization.id)
-      .gte("jobs.scheduled_date", prevStartStr)
-      .lt("jobs.scheduled_date", prevEndExclusiveStr),
-    supabase
-      .from("invoices")
-      .select("total_amount, jobs!inner(scheduled_date)")
-      .eq("organization_id", organization.id)
-      .gte("jobs.scheduled_date", rangeStartStr)
-      .lte("jobs.scheduled_date", rangeEndStr),
-    supabase
-      .from("invoices")
-      .select("total_amount, jobs!inner(scheduled_date)")
-      .eq("organization_id", organization.id)
-      .gte("jobs.scheduled_date", prevStartStr)
-      .lt("jobs.scheduled_date", prevEndExclusiveStr),
-    supabase
-      .from("jobs")
-      .select("distance_km")
-      .eq("organization_id", organization.id)
-      .gte("scheduled_date", prevStartStr)
-      .lt("scheduled_date", prevEndExclusiveStr),
-  ]);
-
-  const materialsCostOf = (rows: { quantity: number; materials: { unit_cost: number | null } | null }[] | null) =>
-    (rows ?? []).reduce((s, m) => s + Number(m.quantity) * (m.materials?.unit_cost ?? 0), 0);
-
-  function laborCostOf(
-    rows: { profile_id: string; event_type: string; occurred_at: string; profiles?: { hourly_rate: number | null } | null }[]
-  ) {
-    const byProfile = new Map<string, (typeof rows)[number][]>();
-    for (const e of rows) {
-      if (!byProfile.has(e.profile_id)) byProfile.set(e.profile_id, []);
-      byProfile.get(e.profile_id)!.push(e);
-    }
-    let total = 0;
-    for (const events of byProfile.values()) {
-      const sorted = [...events].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
-      const rate = sorted[0]?.profiles?.hourly_rate ?? null;
-      let openStart: number | null = null;
-      let hours = 0;
-      for (const e of sorted) {
-        const t = new Date(e.occurred_at).getTime();
-        if (e.event_type === "work_start") openStart = t;
-        else if (e.event_type === "work_end" && openStart != null) {
-          hours += (t - openStart) / 3_600_000;
-          openStart = null;
-        }
-      }
-      total += hours * (rate ?? 0);
-    }
-    return total;
-  }
-
-  const revenueOf = (rows: { total_amount: number | null }[] | null) =>
-    (rows ?? []).reduce((s, i) => s + Number(i.total_amount ?? 0), 0);
-
-  const materialsCostInRange = materialsCostOf(materialUsageInRange);
-  const materialsCostPrevRange = materialsCostOf(materialUsagePrevRange);
-  const laborCostInRange = laborCostOf(timeEntriesToday ?? []);
-  const laborCostPrevRange = laborCostOf(timeEntriesYesterday ?? []);
-  const travelCostInRange = (jobsToday ?? []).reduce((s, j) => s + (j.distance_km ?? 0), 0) * organization.fuel_cost_per_km;
-  const travelCostPrevRange =
-    (jobDistancesPrevRange ?? []).reduce((s, j) => s + (j.distance_km ?? 0), 0) * organization.fuel_cost_per_km;
-  const revenueInRange = revenueOf(invoicesInRange);
-  const revenuePrevRange = revenueOf(invoicesPrevRange);
-
   const activeJobsList = activeJobs ?? [];
   const teamsInField = new Map(
     activeJobsList.filter((j) => j.team_id).map((j) => [j.team_id as string, j])
@@ -372,52 +217,6 @@ export default async function DashboardPage({
       .filter((n): n is string => Boolean(n));
     if (names.length > 0) assignedNames.set(job.id, names);
   }
-
-  // KPIs
-  const expensesToday = (expensesTodayRows ?? []).reduce((s, e) => s + Number(e.amount), 0);
-  const expensesYesterday = (expensesYesterdayRows ?? []).reduce((s, e) => s + Number(e.amount), 0);
-  const hoursToday = hoursWorked(timeEntriesToday ?? []);
-  const hoursYesterday = hoursWorked(timeEntriesYesterday ?? []);
-
-  const comparisonLabel = range === "azi" ? "față de ieri" : "față de perioada anterioară";
-  const noComparisonLabel = range === "azi" ? "primele date de azi" : "primele date din perioadă";
-  const sameLabel = range === "azi" ? "la fel ca ieri" : "la fel ca perioada anterioară";
-
-  function percentTrend(current: number, previous: number) {
-    if (previous <= 0) return current > 0 ? noComparisonLabel : null;
-    const pct = Math.round(((current - previous) / previous) * 100);
-    if (pct === 0) return sameLabel;
-    return `${pct > 0 ? "↑" : "↓"} ${Math.abs(pct)}% ${comparisonLabel}`;
-  }
-
-  // A percentage trend is meaningless when the baseline is 0 or negative
-  // (routine when nothing's invoiced yet) — profit gets an absolute RON
-  // delta instead.
-  function profitTrend(current: number, previous: number) {
-    const diff = current - previous;
-    if (diff === 0) return sameLabel;
-    return `${diff > 0 ? "↑" : "↓"} ${Math.abs(diff).toFixed(2)} RON ${comparisonLabel}`;
-  }
-
-  const totalCostInRange = materialsCostInRange + laborCostInRange + travelCostInRange + expensesToday;
-  const totalCostPrevRange = materialsCostPrevRange + laborCostPrevRange + travelCostPrevRange + expensesYesterday;
-  const profitInRange = revenueInRange - totalCostInRange;
-  const profitPrevRange = revenuePrevRange - totalCostPrevRange;
-
-  const activeYesterdayCount = new Set(
-    (timeEntriesYesterday ?? [])
-      .filter((e) => e.event_type === "work_start")
-      .map((e) => e.job_id)
-  ).size;
-  const activeDelta = activeJobsList.length - activeYesterdayCount;
-  const activeTrend =
-    activeYesterdayCount === 0
-      ? activeJobsList.length > 0
-        ? noComparisonLabel
-        : null
-      : activeDelta === 0
-        ? sameLabel
-        : `${activeDelta > 0 ? "↑" : "↓"} ${Math.abs(activeDelta)} ${comparisonLabel}`;
 
   // Team pins for the map — one per team currently in the field.
   const mapMarkers: DashboardMapMarker[] = [...teamsInField.entries()]
@@ -835,37 +634,6 @@ function OnboardingChecklist({
           </Link>
         )}
       </div>
-    </div>
-  );
-}
-
-function KpiCard({
-  label,
-  value,
-  trend,
-  icon: Icon,
-  iconBg,
-  iconColor,
-}: {
-  label: string;
-  value: string | number;
-  trend?: string | null;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  iconBg: string;
-  iconColor: string;
-}) {
-  return (
-    <div className="rounded-[13px] border border-border bg-white p-[18px] shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
-      <div className="flex items-start justify-between">
-        <div className="text-[13px] font-semibold text-muted">{label}</div>
-        <div className={`flex h-8 w-8 items-center justify-center rounded-[9px] ${iconBg}`}>
-          <Icon className={`h-4 w-4 ${iconColor}`} strokeWidth={2} />
-        </div>
-      </div>
-      <div className="mt-2.5 text-[28px] font-extrabold text-foreground">{value}</div>
-      {trend && (
-        <div className="mt-1 text-[12px] font-medium text-muted-2">{trend}</div>
-      )}
     </div>
   );
 }

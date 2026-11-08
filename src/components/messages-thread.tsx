@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { createClient } from "@/lib/supabase/client";
 
 export type ThreadMessage = {
   id: string;
@@ -49,20 +48,28 @@ export function MessagesThread({
   // position, but reads as "broken chat" for a conversation).
   useEffect(() => {
     if (!conversationId) return;
-    const supabase = createClient();
-    const channel = supabase
-      .channel(`conversation-${conversationId}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "conversation_messages", filter: `conversation_id=eq.${conversationId}` },
-        (payload) => {
-          const row = payload.new as ThreadMessage;
-          setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
-        }
-      )
-      .subscribe();
+    let cancelled = false;
+    let cleanup: (() => void) | undefined;
+    // Loaded after the thread is on screen: the realtime client is not needed for the first paint.
+    import("@/lib/supabase/client").then(({ createClient }) => {
+      if (cancelled) return;
+      const supabase = createClient();
+      const channel = supabase
+        .channel(`conversation-${conversationId}`)
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "conversation_messages", filter: `conversation_id=eq.${conversationId}` },
+          (payload) => {
+            const row = payload.new as ThreadMessage;
+            setMessages((prev) => (prev.some((m) => m.id === row.id) ? prev : [...prev, row]));
+          }
+        )
+        .subscribe();
+      cleanup = () => { supabase.removeChannel(channel); };
+    });
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      cleanup?.();
     };
   }, [conversationId]);
 

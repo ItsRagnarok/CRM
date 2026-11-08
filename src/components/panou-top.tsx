@@ -4,7 +4,6 @@ import { hasModule } from "@/lib/modules";
 import { KIND_LABELS, complianceLevel, daysUntil, type ComplianceKind } from "@/lib/compliance";
 import { syncComplianceAlerts } from "@/lib/compliance-alerts";
 import { openClocks } from "@/lib/pv";
-import { unitDue } from "@/lib/gas";
 import type { SessionContext } from "@/lib/auth";
 
 type SessionOrganization = SessionContext["organization"];
@@ -39,9 +38,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
     hasPv
       ? supabase.from("pv_projects").select("id, name, stage, atr_filed_on, atr_received_on, cert_requested_on, cert_received_on, afm_filed_on, afm_paid_on").eq("organization_id", orgId).neq("stage", "anulat").neq("stage", "finalizat").limit(500)
       : Promise.resolve({ data: [] }),
-    hasGas
-      ? supabase.from("gas_units").select("last_inspection_on, last_revision_on").eq("organization_id", orgId).limit(20000)
-      : Promise.resolve({ data: [] as { last_inspection_on: string | null; last_revision_on: string | null }[] }),
+    hasGas ? supabase.rpc("gas_overdue_count", { p_today: today }) : Promise.resolve({ data: 0 }),
     supabase.from("jobs").select("id, display_number, title").eq("organization_id", orgId).eq("status", "necesita_atentie").limit(5),
     supabase.from("purchase_requests").select("id", head).eq("organization_id", orgId).eq("status", "pending"),
   ]);
@@ -65,8 +62,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
   // PV clocks
   const pvLate = (pv.data ?? []).map((p) => ({ p, clocks: openClocks(p, { atrDays: organization.pv_atr_days, certDays: organization.pv_cert_days }, today).filter((c) => c.overdue) })).filter((x) => x.clocks.length);
   // Gas
-  const gasSettings = { inspectionMonths: organization.gas_inspection_months, revisionMonths: organization.gas_revision_months };
-  const gasLate = (gas.data ?? []).filter((u) => (unitDue(u, gasSettings, today).left ?? 1) < 0).length;
+  const gasLate = Number(gas.data ?? 0);
 
   const items: Attention[] = [];
   for (const { p, clocks } of pvLate) {

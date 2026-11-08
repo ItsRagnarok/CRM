@@ -274,3 +274,8 @@ html[data-theme="dark"] .m-login-bg {
   border-radius: 20px; padding: 14px 20px 14px 16px;
   box-shadow: 0 14px 32px -14px rgba(11, 16, 14, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
+
+/* Schelet de încărcare: apare imediat la atingerea unui tab, cât timp serverul pregătește ecranul. */
+@keyframes m-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+.m-sk { background: var(--m-chip); border-radius: 12px; animation: m-pulse 1.3s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .m-sk { animation: none; } }
