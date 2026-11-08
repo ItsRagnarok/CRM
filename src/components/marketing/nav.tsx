@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { Logo } from "@/components/logo";
 import s from "./marketing.module.css";
 
 const LINKS = [
@@ -27,8 +27,7 @@ export function MarketingNav() {
   return (
     <nav className={`${s.nav} ${scrolled ? s.navScrolled : ""}`}>
       <a href="#acasa" className={s.brand}>
-        <Zap size={18} className={s.brandBolt} strokeWidth={2.5} fill="currentColor" />
-        ElectroField
+        <Logo size={30} />
       </a>
       <div className={s.navLinks}>
         {LINKS.map((l) => (

@@ -1,4 +1,5 @@
 import "../mobil/mobile.css";
+import { Logo } from "@/components/logo";
 import { MobileLoginForm } from "./login-form";
 import { ANDROID_APP_VERSION } from "@/lib/android-release";
 import { CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/contact";
@@ -8,9 +9,8 @@ export const metadata = { title: "Conectare | ElectroField", robots: { index: fa
 export default function MobileLoginPage() {
   return (
     <div className="ef-app-theme m-root mx-auto flex min-h-dvh max-w-[480px] flex-col px-6 pb-8 pt-[max(28px,env(safe-area-inset-top))]">
-      <div className="flex items-center gap-2.5 pt-4 text-[19px] font-extrabold tracking-tight">
-        <span className="block h-[30px] w-[30px] rounded-[9px] bg-[var(--m-ac)]" aria-hidden />
-        ElectroField
+      <div className="pt-4">
+        <Logo size={34} />
       </div>
 
       <div className="mt-14">

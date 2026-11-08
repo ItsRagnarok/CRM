@@ -1,4 +1,4 @@
-import { Zap } from "lucide-react";
+import { Logo } from "@/components/logo";
 import s from "./marketing.module.css";
 
 export function MarketingFooter() {
@@ -6,8 +6,7 @@ export function MarketingFooter() {
     <footer className={s.footer}>
       <div className={`${s.wrap} ${s.footRow}`}>
         <div className={s.brand}>
-          <Zap size={16} className={s.brandBolt} strokeWidth={2.5} fill="currentColor" />
-          ElectroField
+          <Logo size={26} />
         </div>
         <div className={s.footLinks}>
           <a href="#platforma">Platformă</a>

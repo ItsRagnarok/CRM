@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { signOutAdmin } from "@/app/admin/actions";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -18,12 +18,7 @@ export function AdminTopbar({ fullName }: { fullName: string }) {
     <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-graphite-border bg-graphite px-5 py-3">
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[8px] bg-purple">
-            <Zap className="h-4 w-4 text-white" />
-          </div>
-          <span className="text-[14.5px] font-bold tracking-tight text-white">
-            ElectroField
-          </span>
+          <Logo size={28} className="text-white" />
           <span className="ml-1 rounded-full bg-purple/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-purple">
             Super Admin
           </span>

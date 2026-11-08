@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Smartphone } from "lucide-react";
 import { login } from "./actions";
+import { Logo } from "@/components/logo";
 import { ANDROID_APK_URL, ANDROID_APP_VERSION } from "@/lib/android-release";
 
 const POINTS = [
@@ -20,8 +21,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen bg-[#07090a] text-[#f4f7f4]" style={{ colorScheme: "dark" }}>
       <div className="relative hidden flex-[1.05] flex-col justify-between overflow-hidden p-14 lg:flex" style={{ background: "radial-gradient(700px 500px at 70% 20%, rgba(198,255,74,.16), transparent 60%), linear-gradient(160deg,#0c110f,#07090a)" }}>
         <Link href="/" className="flex items-center gap-2.5 text-xl font-extrabold tracking-tight">
-          <span className="block h-[30px] w-[30px] rounded-[9px] bg-[#c6ff4a]" aria-hidden />
-          ElectroField
+          <Logo size={38} />
         </Link>
         <div>
           <h1 className="max-w-[560px] text-[44px] font-extrabold leading-[1.05] tracking-tight">
@@ -45,8 +45,7 @@ export default function LoginPage() {
       <div className="flex flex-1 items-center justify-center border-l border-white/[.08] bg-[#0b100e] p-6">
         <div className="w-full max-w-[420px]">
           <Link href="/" className="mb-8 flex items-center gap-2.5 text-lg font-extrabold lg:hidden">
-            <span className="block h-[26px] w-[26px] rounded-[8px] bg-[#c6ff4a]" aria-hidden />
-            ElectroField
+            <Logo size={30} />
           </Link>
           <h2 className="text-[28px] font-extrabold tracking-tight">Bine ai revenit</h2>
           <p className="mb-7 mt-1.5 text-[14.5px] text-[#aab3ac]">Intră în contul firmei tale.</p>
