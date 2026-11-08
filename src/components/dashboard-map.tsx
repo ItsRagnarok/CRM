@@ -157,7 +157,7 @@ export default function DashboardMap({
       style={{ height: "100%", width: "100%", borderRadius: "13px" }}
     >
       <style>{MAP_CSS}</style>
-      <LayersControl position="topright">
+      <LayersControl position="topleft">
         <LayersControl.BaseLayer checked name="Stradă">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'

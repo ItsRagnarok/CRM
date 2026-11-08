@@ -137,3 +137,6 @@ html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[
 .focus\:border-electric:focus,
 .hover\:border-electric:hover { border-color: var(--color-accent-ink); }
 .border-electric\/20 { border-color: color-mix(in srgb, var(--color-accent-ink) 20%, transparent); }
+
+/* Harta: selectorul de straturi stă în stânga, sub butoanele de zoom și recentrare, ca să nu fie acoperit de panoul echipei. */
+.leaflet-top.leaflet-left .leaflet-control-layers { margin-top: 48px; }
