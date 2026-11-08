@@ -1,5 +1,6 @@
 import "../mobil/mobile.css";
 import { Logo } from "@/components/logo";
+import { ANDROID_APP_VERSION } from "@/lib/android-release";
 import { MobileLoginForm } from "./login-form";
 
 export const metadata = { title: "Conectare | ElectroField", robots: { index: false } };
@@ -24,6 +25,7 @@ export default function MobileLoginPage() {
 
       <MobileLoginForm />
 
+      <div className="mt-auto pt-10 text-center text-[12.5px] text-[var(--m-mu)]">ElectroField v{ANDROID_APP_VERSION}</div>
     </div>
   );
 }
