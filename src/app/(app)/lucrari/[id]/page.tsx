@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
 import { StatusLinkCard } from "@/components/status-link-card";
+import { DosarPanel } from "@/components/dosar-panel";
 import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { StatusBadge } from "@/components/status-badge";
@@ -288,6 +289,7 @@ export default async function JobDetailPage({
         {tab === "rezumat" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
             <div className="flex flex-col gap-4">
+              {isBackOfficeRole(profile.role) && <DosarPanel job={job} organization={organization} />}
               {isBackOfficeRole(profile.role) && <StatusLinkCard jobId={id} organizationId={organization.id} canEdit={!readOnly} />}
               <Card title="Informații generale">
                 <div className="grid grid-cols-3 gap-4">
