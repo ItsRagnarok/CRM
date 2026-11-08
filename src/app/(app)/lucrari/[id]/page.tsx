@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireSessionContext } from "@/lib/auth";
+import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
+import { StatusLinkCard } from "@/components/status-link-card";
 import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { StatusBadge } from "@/components/status-badge";
@@ -96,7 +97,7 @@ export default async function JobDetailPage({
   const { id } = await params;
   const { tab: tabParam } = await searchParams;
   const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "rezumat";
-  const { organization } = await requireSessionContext();
+  const { organization, profile, readOnly } = await requireSessionContext();
   const supabase = await createClient();
 
   const { data: job } = await supabase
@@ -287,6 +288,7 @@ export default async function JobDetailPage({
         {tab === "rezumat" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
             <div className="flex flex-col gap-4">
+              {isBackOfficeRole(profile.role) && <StatusLinkCard jobId={id} organizationId={organization.id} canEdit={!readOnly} />}
               <Card title="Informații generale">
                 <div className="grid grid-cols-3 gap-4">
                   <InfoField label="DATA" value={job.scheduled_date} />

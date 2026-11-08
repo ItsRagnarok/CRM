@@ -434,6 +434,14 @@ export type Database = {
           { foreignKeyName: "pv_projects_client_id_fkey", columns: ["client_id"], isOneToOne: false, referencedRelation: "clients", referencedColumns: ["id"] },
         ]
       }
+      job_status_links: {
+        Row: { id: string; organization_id: string; job_id: string; token: string; created_by: string | null; created_at: string; expires_at: string; revoked_at: string | null }
+        Insert: { id?: string; organization_id: string; job_id: string; token?: string; created_by?: string | null; created_at?: string; expires_at?: string; revoked_at?: string | null }
+        Update: { id?: string; organization_id?: string; job_id?: string; token?: string; created_by?: string | null; created_at?: string; expires_at?: string; revoked_at?: string | null }
+        Relationships: [
+          { foreignKeyName: "job_status_links_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+        ]
+      }
       compliance_items: {
         Row: {
           id: string
@@ -3082,6 +3090,14 @@ export type Database = {
       platform_admin_get_company_config: {
         Args: { org_id: string }
         Returns: { enabled_domains: string[]; enabled_modules: string[] }[]
+      }
+      public_job_status: {
+        Args: { p_token: string }
+        Returns: {
+          company_name: string; company_phone: string | null; company_email: string | null
+          job_number: number; title: string; status: string
+          scheduled_date: string | null; start_time: string | null; work_started_at: string | null; work_ended_at: string | null
+        }[]
       }
       platform_admin_set_company_modules: {
         Args: { org_id: string; modules: string[] }
