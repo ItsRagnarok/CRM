@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ShieldCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
-import { LEVEL_STYLE, complianceLevel, daysLabel, daysUntil, syncComplianceAlerts } from "@/lib/compliance";
+import { LEVEL_STYLE, complianceLevel, daysLabel, daysUntil } from "@/lib/compliance";
+import { syncComplianceAlerts } from "@/lib/compliance-alerts";
 
 // Dashboard card: what expires soonest. Also the moment alerts get sent, so the
 // office hears about a deadline the first time it opens the platform after it is crossed.
