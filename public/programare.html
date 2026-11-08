@@ -78,6 +78,23 @@ input[type=time],input[type=date]{color-scheme:dark}
 .bk:first-child{border-top:0}.bk b{display:block}
 .dayh{font-weight:600;margin:14px 0 2px}.dayh:first-child{margin-top:0}
 details summary{cursor:pointer;font-weight:600}
+.prog{display:flex;gap:8px;margin-bottom:14px}.prog i{flex:1;height:5px;border-radius:3px;background:var(--line)}.prog i.on{background:var(--accent)}
+.stepk{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.dm3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:560px){.dm3{grid-template-columns:1fr}}
+.dmc{border:2px solid var(--line);background:var(--field);border-radius:16px;padding:16px;cursor:pointer;color:var(--ink);text-align:left;font:inherit;display:flex;flex-direction:column;gap:6px;min-height:120px}
+.dmc:hover{border-color:rgba(198,255,74,.5)}
+.dmc.on{border-color:var(--accent);background:rgba(198,255,74,.09)}
+.dmc b{font-size:1.05rem}.dmc span{color:var(--muted);font-size:.85rem;line-height:1.4}
+.dmc em{font-style:normal;font-weight:700;color:var(--accent);font-size:.8rem;margin-top:auto}
+.q{margin:0 0 16px}.q h3{margin:0 0 8px;font-size:.98rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips .chip{min-width:0}
+.navrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.navrow .btn{margin:12px 0 0}
+.hint{font-size:.85rem;color:var(--muted);margin-top:8px}
+.recap{font-size:.9rem;color:var(--muted);padding:10px 12px;border:1px dashed var(--line);border-radius:12px;margin-bottom:14px}
+.recap b{color:var(--ink)}
 </style>
 <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png">
 <link rel="shortcut icon" href="/favicon.ico">
@@ -91,16 +108,41 @@ details summary{cursor:pointer;font-weight:600}
 <section id="pub" class="wrap2">
   <div class="intro">
     <h1 id="tTitle">Programează o discuție</h1>
-    <p class="sub" id="tSub">Alege o zi din calendar, apoi ora. Zilele cu linie lime au ore libere.</p>
+    <p class="sub" id="tSub">Trei pași scurți: domeniile tale, cum lucrezi azi, apoi ziua și ora. Zilele cu linie lime au ore libere.</p>
     <ul class="points">
-      <li><i>1</i><div><b>Alegi ziua și ora</b><span>Vezi doar intervalele libere. Primești confirmarea pe email.</span></div></li>
-      <li><i>2</i><div><b>Ne spui cum lucrezi azi</b><span>Câți tehnicieni ai, ce domenii faci (electrice, gaze, fotovoltaice) și ce te încurcă cel mai mult.</span></div></li>
+      <li><i>1</i><div><b>Ne spui cum lucrezi azi</b><span>Ce domenii faci (electrice, gaze, fotovoltaice), câți oameni ai în teren și ce te încurcă cel mai mult.</span></div></li>
+      <li><i>2</i><div><b>Alegi ziua și ora</b><span>Vezi doar intervalele libere. Primești confirmarea pe email.</span></div></li>
       <li><i>3</i><div><b>Îți arătăm pe cazul tău</b><span>Fără prezentare generală: lucrăm pe fluxurile firmei tale și îți spunem sincer dacă ne potrivim.</span></div></li>
     </ul>
     <p class="muted" style="font-size:.9rem">Preferi email sau WhatsApp? <a href="mailto:contact@electrofield.ro" style="color:var(--accent)">contact@electrofield.ro</a> · <a href="https://wa.me/40750425670" target="_blank" rel="noopener" style="color:var(--accent)">WhatsApp 0750 425 670</a></p>
   </div>
   <div>
-  <div class="card"><div id="calPub"></div></div>
+  <div class="prog" id="prog" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+  <div id="step1" class="card">
+    <p class="stepk">Pasul 1 din 3</p>
+    <h2>Ce lucrări face firma ta?</h2>
+    <p class="muted" style="margin:0 0 12px;font-size:.92rem">Alege unul, două sau toate trei. Așa pregătim discuția pe domeniile tale.</p>
+    <div class="dm3" id="domCards">
+      <button type="button" class="dmc" data-v="Electrice" aria-pressed="false"><b>Electrice</b><span>Tablouri, circuite, măsurători, buletine, marjă pe lucrare.</span><em>Alege</em></button>
+      <button type="button" class="dmc" data-v="Gaze" aria-pressed="false"><b>Gaze</b><span>Verificări și revizii, scadențar pe bloc, legitimații.</span><em>Alege</em></button>
+      <button type="button" class="dmc" data-v="Fotovoltaice" aria-pressed="false"><b>Fotovoltaice</b><span>Dosar pe etape, ATR, termene operator, AFM.</span><em>Alege</em></button>
+    </div>
+    <div class="navrow"><button type="button" class="btn" id="to2">Continuă</button></div>
+    <div class="msg" id="m1" role="alert"></div>
+  </div>
+  <div id="step2" class="card hidden">
+    <p class="stepk">Pasul 2 din 3</p>
+    <h2>Cum arată firma ta azi?</h2>
+    <div class="q"><h3>Câți oameni aveți în teren?</h3><div class="chips" data-q="team" data-one="1"><button type="button" class="chip">1–3</button><button type="button" class="chip">4–10</button><button type="button" class="chip">11–25</button><button type="button" class="chip">Peste 25</button></div></div>
+    <div class="q"><h3>Cu ce lucrați acum? <span class="muted" style="font-weight:400">(poți alege mai multe)</span></h3><div class="chips" data-q="tools"><button type="button" class="chip">Excel</button><button type="button" class="chip">WhatsApp</button><button type="button" class="chip">Caiet / hârtie</button><button type="button" class="chip">Alt program</button><button type="button" class="chip">Nimic organizat</button></div></div>
+    <div class="q"><h3>Ce vă încurcă cel mai mult? <span class="muted" style="font-weight:400">(poți alege mai multe)</span></h3><div class="chips" data-q="pain"><button type="button" class="chip">Scadențe și termene</button><button type="button" class="chip">Documente și poze</button><button type="button" class="chip">Încasări și facturi</button><button type="button" class="chip">Planificarea echipelor</button><button type="button" class="chip">Materiale și stoc</button><button type="button" class="chip">Pontaj</button><button type="button" class="chip">Raportare către client</button></div></div>
+    <div class="navrow"><button type="button" class="btn ghost" id="back1">Înapoi</button><button type="button" class="btn" id="to3">Alege ziua și ora</button></div>
+    <p class="hint">Nu e obligatoriu să răspunzi la toate. Ne ajută să nu pierdem timp la discuție.</p>
+  </div>
+  <div id="step3" class="hidden">
+    <p class="stepk">Pasul 3 din 3</p>
+    <div class="recap" id="recap"></div>
+    <div class="card"><div id="calPub"></div></div>
   <div class="card"><h2 id="slotH">Ora</h2><div class="slots" id="slots"></div></div>
   <div class="card hidden" id="formCard">
     <h2 id="formH">Datele tale</h2>
@@ -109,6 +151,8 @@ details summary{cursor:pointer;font-weight:600}
     <label for="f_email">E-mail pentru confirmare</label><input id="f_email" type="email" autocomplete="email" maxlength="254" required>
     <label for="f_note">Ce vrei să discutăm? (opțional)</label><textarea id="f_note" rows="3"></textarea>
     <button class="btn" id="bookBtn">Confirmă programarea</button>
+  </div>
+  <div class="navrow"><button type="button" class="btn ghost" id="back2" style="margin-top:0">Înapoi la întrebări</button></div>
   </div>
   <div class="msg" id="pubMsg" role="status"></div>
   </div>
@@ -136,7 +180,7 @@ let sel = {pub:null, adm:null}, selSlot = null, edit = null, adminOn = false;
 
 const DEFT = {
   title:"Programează o discuție",
-  sub:"Alege o zi din calendar, apoi ora. Zilele cu linie lime au ore libere.",
+  sub:"Trei pași scurți: domeniile tale, cum lucrezi azi, apoi ziua și ora. Zilele cu linie lime au ore libere.",
   slotsEmpty:"Ora",
   pickDay:"Alege o zi din calendar.",
   slotsTitle:"Ore libere: {data}",
@@ -257,6 +301,42 @@ function drawPub(){
   });
   if (selSlot) $("formH").textContent = fill(t.formTitle, fmtDate(d), fmtTime(new Date(selSlot)));
 }
+
+/* ---------- pași: domenii → firma ta → data și ora ---------- */
+const wiz = {dom:[], team:"", tools:[], pain:[]};
+const setStep = n => {
+  ["step1","step2","step3"].forEach((id,i) => $(id).classList.toggle("hidden", i+1 !== n));
+  [...$("prog").children].forEach((el,i) => el.classList.toggle("on", i < n));
+  if (n === 3){
+    const parts = [wiz.dom.join(", ")]; if (wiz.team) parts.push(wiz.team+" în teren");
+    $("recap").innerHTML = "<b>Discutăm despre:</b> "+esc(parts.join(" · "));
+  }
+  $("pub").scrollIntoView({behavior:"smooth",block:"start"});
+};
+document.querySelectorAll("#domCards .dmc").forEach(c => c.onclick = () => {
+  const on = c.classList.toggle("on"); c.setAttribute("aria-pressed", on);
+  c.querySelector("em").textContent = on ? "Ales" : "Alege";
+  wiz.dom = [...document.querySelectorAll("#domCards .dmc.on")].map(e => e.dataset.v);
+  $("m1").className = "msg";
+});
+$("to2").onclick = () => wiz.dom.length ? setStep(2) : show($("m1"),"err","Alege cel puțin un domeniu.");
+document.querySelectorAll(".chips[data-q]").forEach(box => box.querySelectorAll(".chip").forEach(ch => ch.onclick = () => {
+  const key = box.dataset.q, single = box.dataset.one === "1";
+  if (single) box.querySelectorAll(".chip").forEach(o => o !== ch && o.classList.remove("on"));
+  ch.classList.toggle("on");
+  const sel2 = [...box.querySelectorAll(".chip.on")].map(e => e.textContent);
+  wiz[key] = single ? (sel2[0] || "") : sel2;
+}));
+$("back1").onclick = () => setStep(1);
+$("to3").onclick = () => setStep(3);
+$("back2").onclick = () => setStep(2);
+const composeNote = () => [
+  "Domenii: "+wiz.dom.join(", "),
+  wiz.team && "Oameni în teren: "+wiz.team,
+  wiz.tools.length && "Folosesc acum: "+wiz.tools.join(", "),
+  wiz.pain.length && "Ce îi încurcă: "+wiz.pain.join(", "),
+  $("f_note").value.trim() && "Mesaj: "+$("f_note").value.trim()
+].filter(Boolean).join("\n");
 $("bookBtn").onclick = async () => {
   const name = $("f_name").value.trim(), phone = $("f_phone").value.trim();
   if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
@@ -267,7 +347,7 @@ $("bookBtn").onclick = async () => {
   try {
     const response = await fetch("/api/programari", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:$("f_note").value.trim()})
+      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:composeNote()})
     });
     if (response.status === 409){
       show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră.");
@@ -283,6 +363,7 @@ $("bookBtn").onclick = async () => {
   }
   show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)));
   selSlot = null; await loadPublicData(); drawPub();
+  $("formCard").classList.add("hidden");
 };
 
 /* ---------- pornire ---------- */

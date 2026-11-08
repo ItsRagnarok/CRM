@@ -36,12 +36,14 @@ export async function sendBookingEmail(to: string, subject: string, text: string
 export async function notifyBooking(booking: Booking) {
   const when = new Date(booking.slot_start);
   const slot = `${dateFormat.format(when)}, ${timeFormat.format(when)}`;
-  await sendBookingEmail(bookingMailbox, `Programare nouă ElectroField · ${slot}`, [
+  // The booking form stores the wizard answers in the note: "Domenii: Electrice, Gaze" comes first.
+  const domains = booking.note?.match(/^Domenii: (.+)$/m)?.[1];
+  await sendBookingEmail(bookingMailbox, `Programare nouă ElectroField · ${slot}${domains ? ` · ${domains}` : ""}`, [
     `Programare: ${slot} (ora României)`,
     `Nume: ${booking.name}`,
     `Telefon: ${booking.phone}`,
     booking.email && `Email: ${booking.email}`,
-    booking.note && `Mesaj: ${booking.note}`,
+    booking.note && `\nDespre firmă:\n${booking.note}`,
   ].filter(Boolean).join("\n"));
 }
 
