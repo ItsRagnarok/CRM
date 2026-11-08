@@ -22,14 +22,16 @@ export async function DosarPanel({
 }) {
   const supabase = await createClient();
   const head = { count: "exact" as const, head: true };
-  const [forms, photos, signatures, documents, invoices, expenses, assigned] = await Promise.all([
+  const [forms, photos, signatures, documents, invoices, expenses, assigned, timing, usage] = await Promise.all([
     supabase.from("job_forms").select("template, completed_at").eq("job_id", job.id),
     supabase.from("photos").select("id", head).eq("job_id", job.id),
     supabase.from("signatures").select("id", head).eq("job_id", job.id),
     supabase.from("documents").select("id", head).eq("job_id", job.id),
     supabase.from("invoices").select("total_amount, status").eq("job_id", job.id),
     supabase.from("expenses").select("amount").eq("job_id", job.id).eq("status", "approved"),
-    supabase.from("job_assignments").select("profile_id, profiles(full_name)").eq("job_id", job.id),
+    supabase.from("job_assignments").select("profile_id, profiles(full_name, hourly_rate)").eq("job_id", job.id),
+    supabase.from("jobs").select("work_started_at, work_ended_at").eq("id", job.id).maybeSingle(),
+    supabase.from("material_usage").select("quantity, materials(unit_cost)").eq("job_id", job.id),
   ]);
 
   const checks: Check[] = [];
@@ -53,6 +55,15 @@ export async function DosarPanel({
   const billed = (invoices.data ?? []).reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
   const paid = (invoices.data ?? []).filter((i) => i.status === "paid").reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
   const spent = (expenses.data ?? []).reduce((a, e) => a + Number(e.amount ?? 0), 0);
+  // Margin per job: billed minus real cost. Labor = hours on site x hourly rate of each assigned person; materials = quantity x unit cost.
+  const hours = timing.data?.work_started_at && timing.data?.work_ended_at ? Math.max(0, (Date.parse(timing.data.work_ended_at) - Date.parse(timing.data.work_started_at)) / 3_600_000) : null;
+  const rateSum = (assigned.data ?? []).reduce((a, x) => a + Number(x.profiles?.hourly_rate ?? 0), 0);
+  const labor = hours !== null ? hours * rateSum : null;
+  const materialsCost = (usage.data ?? []).reduce((a, u) => a + Number(u.quantity ?? 0) * Number(u.materials?.unit_cost ?? 0), 0);
+  const totalCost = (labor ?? 0) + materialsCost + spent;
+  const canMargin = billed > 0 && labor !== null;
+  const margin = billed - totalCost;
+  const marginPct = billed > 0 ? Math.round((margin / billed) * 100) : 0;
   const stepNow = (invoices.data ?? []).length ? ((invoices.data ?? []).every((i) => i.status === "paid") ? 5 : 4) : job.status === "finalizata" ? 3 : ["ajunsa", "in_lucru", "pauza", "necesita_atentie"].includes(job.status) ? 2 : job.status === "in_drum" ? 1 : 0;
 
   return (
@@ -88,7 +99,13 @@ export async function DosarPanel({
           <div><div className="text-muted">Încasat</div><div className="text-[18px] font-extrabold tabular-nums">{lei(paid)}</div></div>
           <div><div className="text-muted">Cheltuieli aprobate</div><div className="text-[18px] font-extrabold tabular-nums">{lei(spent)}</div></div>
         </div>
-        <p className="mt-2 text-[11.5px] text-muted">Marja pe lucrare apare când și manopera și materialele sunt calculate pe lucrare; aici vezi doar ce e deja înregistrat.</p>
+        <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[#eef0f4] pt-3 text-[13px] sm:grid-cols-4">
+          <div><div className="text-muted">Manoperă{hours !== null ? ` (${hours.toLocaleString("ro-RO", { maximumFractionDigits: 1 })} h)` : ""}</div><div className="text-[16px] font-extrabold tabular-nums">{labor !== null ? lei(labor) : "—"}</div></div>
+          <div><div className="text-muted">Materiale folosite</div><div className="text-[16px] font-extrabold tabular-nums">{lei(materialsCost)}</div></div>
+          <div><div className="text-muted">Cost total</div><div className="text-[16px] font-extrabold tabular-nums">{canMargin || labor !== null ? lei(totalCost) : "—"}</div></div>
+          <div><div className="text-muted">Marjă</div><div className={`text-[16px] font-extrabold tabular-nums ${canMargin ? (margin >= 0 ? "text-success" : "text-danger") : ""}`}>{canMargin ? `${lei(margin)} · ${marginPct}%` : "—"}</div></div>
+        </div>
+        <p className="mt-2 text-[11.5px] text-muted">Manopera = ore pe teren × tariful orar al persoanelor alocate. Marja apare după ce lucrarea e terminată și facturată. Dacă o persoană nu are tarif orar setat, manopera ei se numără ca 0.</p>
       </div>
     </div>
   );

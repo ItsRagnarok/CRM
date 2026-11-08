@@ -4,6 +4,7 @@ import Link from "next/link";
 const TABS = [
   { href: "/materiale", label: "Stoc și scule" },
   { href: "/aprobari", label: "Cereri de materiale" },
+  { href: "/foaie-parcurs", label: "Foaie de parcurs" },
 ] as const;
 
 export function StocTabs({ active }: { active: (typeof TABS)[number]["href"] }) {

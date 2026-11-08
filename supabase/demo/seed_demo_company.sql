@@ -176,10 +176,12 @@ begin
   from (values (1,'Hotel Panoramic — 120 kWp',120,'atr',3,'ATR/2026/118',22),(2,'Casă Rusu — 8,8 kWp',8.8,'montaj',2,null,0),(4,'Fabrica Textil Nord — 250 kWp',250,'atr',3,'ATR/2026/131',31),(8,'Școala nr. 18 — 40 kWp',40,'contract',1,null,0),(9,'Ansamblu Vest Residence — 60 kWp',60,'punere_in_functiune',5,'ATR/2026/090',12),(10,'Pensiunea Valea Verde — 15 kWp',15,'oferta',0,null,0)) v(cc,pn,kw,stg,sg,ar,atr_f);
 
   -- conformitate: ANRE (10 persoane), mașini, aparate
-  for i in 1..10 loop
+  -- autorizații pentru toți cei 25 (echipele 3-4 = gaze → legitimație; restul → ANRE); primii 10 au termene apropiate/expirate pentru demo
+  for i in 1..25 loop
     insert into public.compliance_items (organization_id, kind, title, subject, profile_id, domain, issued_on, expires_on, notes)
-    values (oid, 'person', case when i <= 5 then 'Autorizație ANRE grad IIB' else 'Legitimație instalator gaze' end, names[i], tech_ids[i], case when i <= 5 then 'electric' else 'gaze' end,
-      current_date - 1400, current_date + (array[-12, 18, 45, 200, 400, 25, 90, 600, 12, 300])[i], 'Date demo');
+    values (oid, 'person', case when i between 11 and 20 then 'Legitimație instalator gaze' else 'Autorizație ANRE grad IIB' end, names[i], tech_ids[i],
+      case when i between 11 and 20 then 'gaze' when i > 20 then 'fotovoltaic' else 'electric' end, current_date - 1400,
+      case when i <= 10 then current_date + (array[-12, 18, 45, 200, 400, 25, 90, 600, 12, 300])[i] else current_date + 120 + (i * 53) % 700 end, 'Date demo');
   end loop;
   for i in 1..5 loop
     insert into public.compliance_items (organization_id, kind, title, subject, expires_on) values
