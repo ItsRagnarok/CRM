@@ -2831,6 +2831,18 @@ export type Database = {
         }
         Returns: string
       }
+      platform_admin_transfer_begin: {
+        Args: { new_email: string; new_full_name: string; temp_password: string }
+        Returns: string
+      }
+      platform_admin_transfer_finish: {
+        Args: { new_admin_id: string }
+        Returns: undefined
+      }
+      platform_admin_transfer_cancel: {
+        Args: { new_admin_id: string }
+        Returns: undefined
+      }
       platform_admin_set_company_domains: {
         Args: { org_id: string; domains: string[] }
         Returns: undefined

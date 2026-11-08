@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
       { source: "/blog/index.html", destination: "/blog", permanent: true },
       { source: "/blog/index", destination: "/blog", permanent: true },
       { source: "/blog/:slug.html", destination: "/blog/:slug", permanent: true },
+      { source: "/signup", destination: "/programare", permanent: false },
       { source: "/programare.html", destination: "/programare", permanent: true },
     ];
   },

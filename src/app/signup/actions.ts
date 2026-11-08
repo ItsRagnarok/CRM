@@ -5,6 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 import { parseDomains } from "@/lib/domains";
 
 export async function signup(_prevState: { error?: string } | undefined, formData: FormData) {
+  // Company accounts are created by the platform admin, who sets up the domains
+  // and plan for each firm. Self-service signup is closed.
+  if (process.env.ALLOW_SELF_SIGNUP !== "1") {
+    return { error: "Conturile de firmă se creează de echipa ElectroField. Programează o discuție pe electrofield.ro/programare." };
+  }
   const orgName = String(formData.get("orgName") ?? "").trim();
   const fullName = String(formData.get("fullName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();

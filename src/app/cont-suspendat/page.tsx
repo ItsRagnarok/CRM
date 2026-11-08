@@ -35,8 +35,8 @@ export default async function AccountSuspendedPage() {
             <>
               Contul companiei {organization?.name} a fost suspendat deoarece a refuzat Termenii și condițiile
               platformei. Pentru a relua accesul, contactează-ne la{" "}
-              <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">
-                contact@alpora.ro
+              <a href="mailto:contact@electrofield.ro" className="font-semibold text-electric">
+                contact@electrofield.ro
               </a>{" "}
               sau pe WhatsApp la{" "}
               <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">
@@ -48,8 +48,8 @@ export default async function AccountSuspendedPage() {
             <>
               Contul companiei {organization?.name} a fost suspendat de administratorul platformei. Pentru detalii,
               contactează-ne la{" "}
-              <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">
-                contact@alpora.ro
+              <a href="mailto:contact@electrofield.ro" className="font-semibold text-electric">
+                contact@electrofield.ro
               </a>{" "}
               sau pe WhatsApp la{" "}
               <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">

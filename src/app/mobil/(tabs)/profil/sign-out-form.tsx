@@ -1,7 +1,7 @@
 "use client";
 
 import { LogOut } from "lucide-react";
-import { signOut } from "@/app/(app)/actions";
+import { signOutMobile } from "@/app/(app)/actions";
 import { unregisterPushToken } from "@/app/mobil/push-actions";
 import { PUSH_TOKEN_STORAGE_KEY } from "@/app/mobil/push-registration";
 
@@ -16,7 +16,7 @@ export function SignOutForm() {
     } catch {
       // Never let a failed cleanup trap someone inside the app.
     }
-    await signOut();
+    await signOutMobile();
   }
 
   return (

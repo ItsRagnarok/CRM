@@ -84,7 +84,7 @@ export default function PrivacyPolicyPage() {
             Conform GDPR, ai dreptul de acces, rectificare, ștergere, restricționare a prelucrării, portabilitate a
             datelor și opoziție. Pentru date legate de locul de muncă, aceste drepturi se exercită față de compania
             angajatoare (operatorul de date). Pentru întrebări legate de platforma ElectroField în sine, ne poți
-            scrie la <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">contact@alpora.ro</a> sau pe WhatsApp / telefon la <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">0750 425 670</a>.
+            scrie la <a href="mailto:contact@electrofield.ro" className="font-semibold text-electric">contact@electrofield.ro</a> sau pe WhatsApp / telefon la <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">0750 425 670</a>.
           </p>
         </section>
 

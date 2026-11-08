@@ -3,7 +3,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parsePreview, PREVIEW_COOKIE } from "@/lib/preview";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare"];
+const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare", "/mobil-login"];
 export async function middleware(request: NextRequest) {
   if (parsePreview(request.cookies.get(PREVIEW_COOKIE)?.value) && !["GET", "HEAD"].includes(request.method) && request.nextUrl.pathname !== "/api/admin/preview-exit") {
     return NextResponse.json({ error: "Modul de vizualizare nu permite modificări." }, { status: 403 });
@@ -56,10 +56,11 @@ export async function middleware(request: NextRequest) {
   };
 
   if (!user && !isPublicPath) {
-    return redirectWithSession(new URL("/login", request.url));
+    const inApp = pathname === "/mobil" || pathname.startsWith("/mobil/");
+    return redirectWithSession(new URL(inApp ? "/mobil-login" : "/login", request.url));
   }
 
-  if (user && (pathname === "/login" || pathname === "/signup")) {
+  if (user && (pathname === "/login" || pathname === "/signup" || pathname === "/mobil-login")) {
     return redirectWithSession(new URL("/", request.url));
   }
 

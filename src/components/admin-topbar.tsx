@@ -10,6 +10,7 @@ const NAV = [
   { href: "/admin/activitate", label: "Activitate" },
   { href: "/admin/mail", label: "Mail" },
   { href: "/admin/solicitari", label: "Solicitări" },
+  { href: "/admin/cont", label: "Cont" },
 ];
 
 export function AdminTopbar({ fullName }: { fullName: string }) {

@@ -30,7 +30,7 @@ export type AdminContext = {
 
 /**
  * Loads the platform owner's context. A platform admin (ElectroField itself,
- * e.g. info@alpora.ro) is deliberately NOT a row in public.profiles — every
+ * e.g. admin@electrofield.ro) is deliberately NOT a row in public.profiles — every
  * profile is scoped to one tenant organization_id, and a platform admin
  * manages every tenant, not one of them. See public.platform_admins.
  */

@@ -9,7 +9,7 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=ro&q=${encodeURIComponent(trimmed)}`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "ElectroField/1.0 (support@electrofield.ro)" },
+      headers: { "User-Agent": "ElectroField/1.0 (contact@electrofield.ro)" },
     });
     if (!res.ok) return null;
 
