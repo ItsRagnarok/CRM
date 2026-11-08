@@ -269,6 +269,62 @@ export type Database = {
           },
         ]
       }
+      compliance_items: {
+        Row: {
+          id: string
+          organization_id: string
+          kind: "person" | "device" | "vehicle" | "company"
+          title: string
+          subject: string
+          profile_id: string | null
+          domain: "electric" | "gaze" | "fotovoltaic" | null
+          issued_on: string | null
+          expires_on: string
+          notes: string | null
+          last_alert_days: number | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          kind: "person" | "device" | "vehicle" | "company"
+          title: string
+          subject: string
+          profile_id?: string | null
+          domain?: "electric" | "gaze" | "fotovoltaic" | null
+          issued_on?: string | null
+          expires_on: string
+          notes?: string | null
+          last_alert_days?: number | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          kind?: "person" | "device" | "vehicle" | "company"
+          title?: string
+          subject?: string
+          profile_id?: string | null
+          domain?: "electric" | "gaze" | "fotovoltaic" | null
+          issued_on?: string | null
+          expires_on?: string
+          notes?: string | null
+          last_alert_days?: number | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_items_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       billing_requests: {
         Row: {
           collected_amount: number | null
@@ -1809,6 +1865,7 @@ export type Database = {
           cui: string | null
           email: string | null
           enabled_domains: string[]
+          enabled_modules: string[]
           fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
@@ -1832,6 +1889,7 @@ export type Database = {
           cui?: string | null
           email?: string | null
           enabled_domains?: string[]
+          enabled_modules?: string[]
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -1855,6 +1913,7 @@ export type Database = {
           cui?: string | null
           email?: string | null
           enabled_domains?: string[]
+          enabled_modules?: string[]
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -2841,6 +2900,14 @@ export type Database = {
       }
       platform_admin_transfer_cancel: {
         Args: { new_admin_id: string }
+        Returns: undefined
+      }
+      platform_admin_get_company_config: {
+        Args: { org_id: string }
+        Returns: { enabled_domains: string[]; enabled_modules: string[] }[]
+      }
+      platform_admin_set_company_modules: {
+        Args: { org_id: string; modules: string[] }
         Returns: undefined
       }
       platform_admin_set_company_domains: {

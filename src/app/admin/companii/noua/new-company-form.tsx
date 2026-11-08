@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { DomainPicker } from "@/components/domain-picker";
+import { ModulePicker } from "@/components/module-picker";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createCompany } from "@/app/admin/actions";
@@ -61,6 +62,7 @@ export function NewCompanyForm() {
           />
         </Field>
         <DomainPicker />
+        <ModulePicker />
         <Field label="Parolă temporară">
           <input
             name="ownerPassword"

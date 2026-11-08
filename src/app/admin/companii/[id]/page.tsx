@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext, ROLE_LABELS } from "@/lib/auth";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { CompanyDetailForm } from "./company-detail-form";
+import { CompanyConfigForm } from "./company-config-form";
+import { parseDomains } from "@/lib/domains";
 import { startCompanyPreview } from "@/app/admin/preview-actions";
 
 const CLIENT_STATUS_LABELS: Record<string, string> = {
@@ -31,6 +33,8 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
 
   const company = (companies ?? []).find((c) => c.id === id);
   if (!company) notFound();
+  const { data: configRows } = await supabase.rpc("platform_admin_get_company_config", { org_id: id });
+  const config = configRows?.[0];
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -65,6 +69,8 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         {company.user_count} utilizatori · {company.job_count} lucrări · creată{" "}
         {new Date(company.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
       </div>
+
+      <CompanyConfigForm orgId={id} domains={parseDomains(config?.enabled_domains ?? [])} modules={config?.enabled_modules ?? []} />
 
       <div className="mt-6">
         <div className="mb-5 rounded-xl border border-border bg-white p-5">

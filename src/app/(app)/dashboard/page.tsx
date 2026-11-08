@@ -1,5 +1,7 @@
 import Link from "next/link";
-import { requireSessionContext } from "@/lib/auth";
+import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
+import { hasModule } from "@/lib/modules";
+import { ComplianceCard } from "@/components/compliance-card";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -747,6 +749,9 @@ export default async function DashboardPage({
         </div>
 
         <div className="flex flex-col gap-4">
+          {hasModule(organization.enabled_modules, "conformitate") && isBackOfficeRole(profile.role) && (
+            <ComplianceCard organizationId={organization.id} today={today} />
+          )}
           <div className="rounded-[13px] border border-border bg-white">
             <div className="flex items-center justify-between border-b border-[#f2f4f7] px-4 py-3">
               <h2 className="flex items-center gap-2 text-[13.5px] font-bold text-foreground">

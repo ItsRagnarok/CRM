@@ -18,6 +18,7 @@ import {
   Settings,
   LogOut,
   ClipboardCheck,
+  ShieldCheck,
   MessageSquare,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
@@ -25,7 +26,7 @@ import { signOut } from "@/app/(app)/actions";
 // Grouped purely for legibility in the sidebar — no behavior/logic change,
 // every href/icon/active-state check below is unchanged from the old flat
 // list, just organized into sections instead of one undifferentiated block.
-const NAV_SECTIONS: { label: string | null; items: { href: string; label: string; icon: typeof LayoutDashboard }[] }[] = [
+const NAV_SECTIONS: { label: string | null; items: { href: string; label: string; icon: typeof LayoutDashboard; module?: string }[] }[] = [
   {
     label: null,
     items: [
@@ -45,6 +46,7 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
     label: null,
     items: [
       { href: "/materiale", label: "Materiale și scule", icon: Package },
+      { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
       { href: "/harta", label: "Hartă & GPS", icon: MapPin },
       { href: "/mesaje", label: "Mesaje", icon: MessageSquare },
     ],
@@ -69,10 +71,12 @@ export function Sidebar({
   fullName,
   roleLabel,
   unreadMessages = 0,
+  modules = [],
 }: {
   fullName: string;
   roleLabel: string;
   unreadMessages?: number;
+  modules?: string[];
 }) {
   const pathname = usePathname();
   const initials = fullName
@@ -113,7 +117,7 @@ export function Sidebar({
                 {section.label}
               </div>
             )}
-            {section.items.map(({ href, label, icon: Icon }) => {
+            {section.items.filter((item) => !item.module || modules.includes(item.module)).map(({ href, label, icon: Icon }) => {
               const isActive = pathname === href || pathname.startsWith(href + "/");
               return (
                 <Link

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext } from "@/lib/auth";
 import { parseDomains } from "@/lib/domains";
+import { parseModules } from "@/lib/modules";
 
 export async function signOutAdmin() {
   const supabase = await createClient();
@@ -45,6 +46,7 @@ export async function createCompany(
 
   if (newOrgId) {
     await supabase.rpc("platform_admin_set_company_domains", { org_id: newOrgId as string, domains });
+    await supabase.rpc("platform_admin_set_company_modules", { org_id: newOrgId as string, modules: parseModules(formData.getAll("modules")) });
   }
 
   revalidatePath("/admin/companii");
@@ -91,4 +93,18 @@ export async function updateCompany(orgId: string, formData: FormData) {
   revalidatePath(`/admin/companii/${orgId}`);
   revalidatePath("/admin/companii");
   return { error: undefined };
+}
+
+export async function updateCompanyConfig(orgId: string, formData: FormData) {
+  await requireAdminContext();
+  const supabase = await createClient();
+  const domains = parseDomains(formData.getAll("domains"));
+  const modules = parseModules(formData.getAll("modules"));
+  const [a, b] = await Promise.all([
+    supabase.rpc("platform_admin_set_company_domains", { org_id: orgId, domains }),
+    supabase.rpc("platform_admin_set_company_modules", { org_id: orgId, modules }),
+  ]);
+  if (a.error || b.error) return { error: "Nu am putut salva domeniile și modulele." };
+  revalidatePath(`/admin/companii/${orgId}`);
+  return { error: undefined, saved: true };
 }

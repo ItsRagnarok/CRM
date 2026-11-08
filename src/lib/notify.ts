@@ -14,6 +14,7 @@ export type NotificationType =
   | "job_finished"
   | "expense_submitted"
   | "time_off_request"
+  | "compliance_alert"
   | "test";
 
 // Per-category push preferences (profiles.notification_prefs). A missing key
@@ -40,6 +41,7 @@ const PREF_FOR_TYPE: Partial<Record<NotificationType, PrefKey>> = {
   job_finished: "jobs",
   expense_submitted: "purchases",
   time_off_request: "purchases",
+  compliance_alert: "jobs",
 };
 
 export function prefEnabled(prefs: unknown, key: PrefKey) {
