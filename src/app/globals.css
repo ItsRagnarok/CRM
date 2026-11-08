@@ -123,6 +123,11 @@ html[data-theme="dark"] .ef-app-theme :is([class~="divide-[#f2f4f7]"], [class~="
 html[data-theme="dark"] .ef-app-theme :is([class~="hover:bg-[#f9fafb]"], [class~="hover:bg-[#faf9fd]"]):hover { background-color: #2b3548; }
 html[data-theme="dark"] .ef-app-theme :is(input, select, textarea) { color: #e8edf5; background-color: #151c28; }
 html[data-theme="dark"] .ef-app-theme :is(.bg-purple, .bg-electric, .bg-success, .bg-warning, .bg-danger, .bg-info) { color: #10141c; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#eceee9]"], [class~="bg-[#eceff4]"], [class~="bg-[#f3f4f6]"], [class~="bg-[#fafbfc]"], [class~="bg-[#f5f3ff]"]) { background-color: #202838; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fff5f5]"], [class~="bg-[#fde4e4]"]) { background-color: #3c2323; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fffaeb]"], [class~="bg-[#fffaf0]"], [class~="bg-[#fef0c7]"], [class~="bg-[#fff1e0]"]) { background-color: #3c3019; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#ecfdf3]"]) { background-color: #1d3427; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#e0f0ff]"]) { background-color: #1c2f47; }
 html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[#fef9ec]"]) { background-color: #3c3019; }
 
 /* Theme "lime": --color-electric is the lime FILL. Lime is unreadable as text or
