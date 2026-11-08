@@ -40,7 +40,7 @@ export const MODULES: ModuleDef[] = [
     label: "Măsurători și buletine electrice",
     description: "Tablouri și circuite, măsurători completate de tehnician, procese-verbale cu semnatar autorizat.",
     domains: ["electric"],
-    available: false,
+    available: true,
   },
 ];
 

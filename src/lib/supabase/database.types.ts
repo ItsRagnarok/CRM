@@ -442,6 +442,115 @@ export type Database = {
           { foreignKeyName: "job_status_links_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
         ]
       }
+      electric_measurements: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          label: string
+          kind: string
+          insulation_mohm: number | null
+          loop_ohm: number | null
+          continuity_ohm: number | null
+          result: string | null
+          notes: string | null
+          measured_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          label: string
+          kind?: string
+          insulation_mohm?: number | null
+          loop_ohm?: number | null
+          continuity_ohm?: number | null
+          result?: string | null
+          notes?: string | null
+          measured_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          label?: string
+          kind?: string
+          insulation_mohm?: number | null
+          loop_ohm?: number | null
+          continuity_ohm?: number | null
+          result?: string | null
+          notes?: string | null
+          measured_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "electric_measurements_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+        ]
+      }
+      electric_reports: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          title: string
+          signer_profile_id: string | null
+          signed_on: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          title: string
+          signer_profile_id?: string | null
+          signed_on?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          title?: string
+          signer_profile_id?: string | null
+          signed_on?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "electric_reports_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+          { foreignKeyName: "electric_reports_signer_profile_id_fkey", columns: ["signer_profile_id"], isOneToOne: false, referencedRelation: "profiles", referencedColumns: ["id"] },
+        ]
+      }
+      electric_hidden_works: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          description: string
+          documented: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          description: string
+          documented?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          description?: string
+          documented?: boolean
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "electric_hidden_works_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+        ]
+      }
       compliance_items: {
         Row: {
           id: string

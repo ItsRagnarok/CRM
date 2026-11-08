@@ -602,8 +602,8 @@ export default async function DashboardPage({
       <AutoRefresh />
       <div>
         <h1 className="text-[22px] font-extrabold text-foreground">Panou · ce cere atenția azi</h1>
-        <p className="mt-1 text-sm capitalize text-muted">
-          {new Date().toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest", weekday: "long", day: "numeric", month: "long" })} · {greeting()}, {firstName}
+        <p className="mt-1 text-sm text-muted first-letter:uppercase">
+          {new Date().toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest", weekday: "long", day: "numeric", month: "long" }).toLowerCase()} · {greeting()}, {firstName}
         </p>
       </div>
 

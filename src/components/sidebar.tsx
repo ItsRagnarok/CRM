@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Flame,
   Sun,
+  Zap,
   MessageSquare,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
@@ -42,6 +43,7 @@ const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
     items: [
       { href: "/gaze", label: "Gaze · scadențar", icon: Flame, module: "scadentar_gaze" },
       { href: "/fotovoltaic", label: "Fotovoltaic · dosare", icon: Sun, module: "dosar_fotovoltaic" },
+      { href: "/electric", label: "Electric · lucrări", icon: Zap, module: "buletine_electrice" },
     ],
   },
   {
