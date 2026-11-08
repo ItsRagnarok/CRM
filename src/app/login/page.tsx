@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Eye, EyeOff, Smartphone } from "lucide-react";
 import { login } from "./actions";
 import { ANDROID_APK_URL, ANDROID_APP_VERSION } from "@/lib/android-release";
-import { CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/contact";
 
 const POINTS = [
   ["Scadențe care nu se uită", "verificări, legitimații, termene ale operatorului"],
@@ -77,10 +76,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-6 text-center text-[13px] leading-relaxed text-[#aab3ac]">
-            Contul îl creează echipa ElectroField pentru firma ta. Nu-l ai sau ai uitat parola? Scrie-ne pe{" "}
-            <a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="font-bold text-[#c6ff4a]">WhatsApp {CONTACT_PHONE_DISPLAY}</a>.
-          </p>
+          <div className="mt-7 rounded-2xl border border-white/[.12] bg-white/[.04] p-4 text-center">
+            <p className="text-[13.5px] leading-relaxed text-[#cfd8d1]">
+              Firma ta nu are încă cont? Conturile se configurează pe domeniile tale, deci le facem împreună.
+            </p>
+            <Link href="/programare" className="mt-3 inline-flex h-11 items-center justify-center rounded-full border border-[#c6ff4a]/60 px-5 text-[14px] font-bold text-[#c6ff4a] transition-colors hover:bg-[#c6ff4a]/10">
+              Programează un demo
+            </Link>
+          </div>
 
           <a href={ANDROID_APK_URL} download className="mt-6 flex items-center justify-center gap-2 rounded-full border border-white/[.16] py-2.5 text-[13.5px] font-semibold text-[#dfe6e0] transition-colors hover:bg-white/5">
             <Smartphone className="h-4 w-4" strokeWidth={2} />
