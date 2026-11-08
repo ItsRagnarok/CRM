@@ -1,3 +1,4 @@
+import { SignOutForm } from "./sign-out-form";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
@@ -58,6 +59,7 @@ export default async function MobileProfilePage() {
         <p className="m-mu m-sm" style={{ textAlign: "center" }}>
           Datele de contact și rolul se schimbă din platformă, de către administrator.
         </p>
+        <SignOutForm />
       </div>
     </div>
   );
