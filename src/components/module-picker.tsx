@@ -1,10 +1,33 @@
-import { MODULES } from "@/lib/modules";
+"use client";
+
+import { useEffect, useRef } from "react";
+import { MODULES, defaultModules } from "@/lib/modules";
 
 // Modules for a company. Plain checkboxes named "modules" so it works in any
-// server-action form. Modules not built yet are listed but disabled.
-export function ModulePicker({ defaultValue }: { defaultValue?: string[] }) {
+// server-action form. Modules not built yet are listed but disabled. With
+// `followDomains`, the checkboxes follow the domains ticked in the same form
+// until the admin changes a module by hand.
+export function ModulePicker({ defaultValue, followDomains = false }: { defaultValue?: string[]; followDomains?: boolean }) {
+  const root = useRef<HTMLFieldSetElement>(null);
+  const touched = useRef(false);
+
+  useEffect(() => {
+    if (!followDomains) return;
+    const form = root.current?.closest("form");
+    if (!form) return;
+    const sync = () => {
+      if (touched.current) return;
+      const domains = [...form.querySelectorAll<HTMLInputElement>('input[name="domains"]:checked')].map((i) => i.value);
+      const wanted = defaultModules(domains);
+      root.current?.querySelectorAll<HTMLInputElement>('input[name="modules"]').forEach((i) => { i.checked = wanted.includes(i.value); });
+    };
+    sync();
+    form.addEventListener("change", sync);
+    return () => form.removeEventListener("change", sync);
+  }, [followDomains]);
+
   return (
-    <fieldset className="flex flex-col gap-2">
+    <fieldset ref={root} className="flex flex-col gap-2" onChange={(e) => { if ((e.target as unknown as HTMLInputElement).name === "modules") touched.current = true; }}>
       <legend className="mb-1.5 text-[13px] font-semibold text-[#344054]">Module active pentru această firmă</legend>
       {MODULES.map((m) => (
         <label
@@ -16,7 +39,7 @@ export function ModulePicker({ defaultValue }: { defaultValue?: string[] }) {
             name="modules"
             value={m.id}
             disabled={!m.available}
-            defaultChecked={m.available && (defaultValue ? defaultValue.includes(m.id) : true)}
+            defaultChecked={m.available && (defaultValue ? defaultValue.includes(m.id) : defaultModules(["electric", "gaze", "fotovoltaic"]).includes(m.id))}
             className="mt-1 h-4 w-4"
           />
           <span>

@@ -26,7 +26,7 @@ export const MODULES: ModuleDef[] = [
     label: "Scadențar gaze",
     description: "Pe bloc, scară și apartament: verificări și revizii, cine nu a răspuns, campanii.",
     domains: ["gaze"],
-    available: false,
+    available: true,
   },
   {
     id: "dosar_fotovoltaic",

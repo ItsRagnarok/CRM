@@ -19,6 +19,7 @@ import {
   LogOut,
   ClipboardCheck,
   ShieldCheck,
+  Flame,
   MessageSquare,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
@@ -47,6 +48,7 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
     items: [
       { href: "/materiale", label: "Materiale și scule", icon: Package },
       { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
+      { href: "/gaze", label: "Gaze · scadențar", icon: Flame, module: "scadentar_gaze" },
       { href: "/harta", label: "Hartă & GPS", icon: MapPin },
       { href: "/mesaje", label: "Mesaje", icon: MessageSquare },
     ],

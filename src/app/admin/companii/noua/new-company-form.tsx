@@ -62,7 +62,7 @@ export function NewCompanyForm() {
           />
         </Field>
         <DomainPicker />
-        <ModulePicker />
+        <ModulePicker followDomains />
         <Field label="Parolă temporară">
           <input
             name="ownerPassword"

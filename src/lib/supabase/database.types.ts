@@ -269,6 +269,88 @@ export type Database = {
           },
         ]
       }
+      gas_buildings: {
+        Row: {
+          id: string
+          organization_id: string
+          client_id: string | null
+          name: string
+          address: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          client_id?: string | null
+          name: string
+          address?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          client_id?: string | null
+          name?: string
+          address?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "gas_buildings_client_id_fkey", columns: ["client_id"], isOneToOne: false, referencedRelation: "clients", referencedColumns: ["id"] },
+        ]
+      }
+      gas_units: {
+        Row: {
+          id: string
+          organization_id: string
+          building_id: string
+          stair: string
+          apartment: string
+          owner_name: string | null
+          phone: string | null
+          last_inspection_on: string | null
+          last_revision_on: string | null
+          contact_status: string
+          scheduled_on: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          building_id: string
+          stair?: string
+          apartment: string
+          owner_name?: string | null
+          phone?: string | null
+          last_inspection_on?: string | null
+          last_revision_on?: string | null
+          contact_status?: string
+          scheduled_on?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          building_id?: string
+          stair?: string
+          apartment?: string
+          owner_name?: string | null
+          phone?: string | null
+          last_inspection_on?: string | null
+          last_revision_on?: string | null
+          contact_status?: string
+          scheduled_on?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "gas_units_building_id_fkey", columns: ["building_id"], isOneToOne: false, referencedRelation: "gas_buildings", referencedColumns: ["id"] },
+        ]
+      }
       compliance_items: {
         Row: {
           id: string
@@ -1866,6 +1948,8 @@ export type Database = {
           email: string | null
           enabled_domains: string[]
           enabled_modules: string[]
+          gas_inspection_months: number
+          gas_revision_months: number
           fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
@@ -1890,6 +1974,8 @@ export type Database = {
           email?: string | null
           enabled_domains?: string[]
           enabled_modules?: string[]
+          gas_inspection_months?: number
+          gas_revision_months?: number
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -1914,6 +2000,8 @@ export type Database = {
           email?: string | null
           enabled_domains?: string[]
           enabled_modules?: string[]
+          gas_inspection_months?: number
+          gas_revision_months?: number
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
