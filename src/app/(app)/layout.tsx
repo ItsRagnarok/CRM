@@ -1,4 +1,6 @@
 import { redirect } from "next/navigation";
+import { loadNavBadges } from "@/lib/shell-counts";
+import { todayInOrgTimeZone } from "@/lib/date";
 import { requireSessionContext, ROLE_LABELS, FIELD_ROLES } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/sidebar";
@@ -26,6 +28,7 @@ export default async function AppLayout({
   }
 
   const supabase = await createClient();
+  const navBadges = await loadNavBadges(supabase, organization.id, organization.enabled_modules ?? [], todayInOrgTimeZone());
 
   const [{ data: notifications }, { data: conversations }, { data: reads }] = await Promise.all([
     supabase
@@ -51,7 +54,7 @@ export default async function AppLayout({
   return (
     <div className="ef-app-theme flex h-screen overflow-hidden bg-background">
       {!readOnly && <UsageTracker channel="web" />}
-      <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} />
+      <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} badges={navBadges} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} />
         {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}

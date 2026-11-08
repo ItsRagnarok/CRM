@@ -1,3 +1,4 @@
+import { PontajTabs } from "@/components/pontaj-tabs";
 import Link from "next/link";
 import { startOfOrgDay } from "@/lib/date";
 import { Clock, Download, CalendarOff } from "lucide-react";
@@ -136,6 +137,7 @@ export default async function PontajPage({
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <PontajTabs active="/pontaj" />
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-[17px] font-extrabold text-foreground">Pontaj</h1>
 

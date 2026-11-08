@@ -8,16 +8,13 @@ import {
   Users,
   Briefcase,
   Calendar,
-  UsersRound,
   MapPin,
   Package,
-  Receipt,
   Clock,
   BarChart3,
   FileText,
   Settings,
   LogOut,
-  ClipboardCheck,
   ShieldCheck,
   Flame,
   Sun,
@@ -28,42 +25,44 @@ import { signOut } from "@/app/(app)/actions";
 // Grouped purely for legibility in the sidebar — no behavior/logic change,
 // every href/icon/active-state check below is unchanged from the old flat
 // list, just organized into sections instead of one undifferentiated block.
-const NAV_SECTIONS: { label: string | null; items: { href: string; label: string; icon: typeof LayoutDashboard; module?: string }[] }[] = [
+type NavItem = { href: string; label: string; icon: typeof LayoutDashboard; module?: string; also?: string[] };
+// Same structure as the platform mockup: groups, names and order.
+const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
   {
     label: null,
     items: [
-      { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-      { href: "/clienti", label: "Clienți", icon: Users },
-    ],
-  },
-  {
-    label: "Echipă & Lucrări",
-    items: [
-      { href: "/echipe", label: "Echipe", icon: UsersRound },
+      { href: "/dashboard", label: "Panou", icon: LayoutDashboard },
       { href: "/lucrari", label: "Lucrări", icon: Briefcase },
-      { href: "/calendar", label: "Calendar", icon: Calendar },
+      { href: "/calendar", label: "Calendar și echipe", icon: Calendar, also: ["/echipe"] },
+      { href: "/harta", label: "Hartă live", icon: MapPin },
     ],
   },
   {
-    label: null,
+    label: "Pe domenii",
     items: [
-      { href: "/materiale", label: "Materiale și scule", icon: Package },
-      { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
       { href: "/gaze", label: "Gaze · scadențar", icon: Flame, module: "scadentar_gaze" },
       { href: "/fotovoltaic", label: "Fotovoltaic · dosare", icon: Sun, module: "dosar_fotovoltaic" },
-      { href: "/harta", label: "Hartă & GPS", icon: MapPin },
-      { href: "/mesaje", label: "Mesaje", icon: MessageSquare },
     ],
   },
   {
-    label: "Bani & Timp",
+    label: "Clienți și bani",
     items: [
-      { href: "/cheltuieli", label: "Cheltuieli", icon: Receipt },
-      { href: "/aprobari", label: "Aprobări", icon: ClipboardCheck },
-      { href: "/pontaj", label: "Pontaj", icon: Clock },
-      { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
-      { href: "/facturare", label: "Facturare", icon: FileText },
+      { href: "/clienti", label: "Clienți", icon: Users },
+      { href: "/facturare", label: "Facturare și încasări", icon: FileText },
     ],
+  },
+  {
+    label: "Firmă",
+    items: [
+      { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
+      { href: "/materiale", label: "Stoc și mașini", icon: Package },
+      { href: "/pontaj", label: "Pontaj și concedii", icon: Clock, also: ["/cheltuieli", "/aprobari"] },
+      { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Comunicare",
+    items: [{ href: "/mesaje", label: "Mesaje", icon: MessageSquare }],
   },
   {
     label: null,
@@ -76,11 +75,13 @@ export function Sidebar({
   roleLabel,
   unreadMessages = 0,
   modules = [],
+  badges = {},
 }: {
   fullName: string;
   roleLabel: string;
   unreadMessages?: number;
   modules?: string[];
+  badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
   const initials = fullName
@@ -121,23 +122,22 @@ export function Sidebar({
                 {section.label}
               </div>
             )}
-            {section.items.filter((item) => !item.module || modules.includes(item.module)).map(({ href, label, icon: Icon }) => {
-              const isActive = pathname === href || pathname.startsWith(href + "/");
+            {section.items.filter((item) => !item.module || modules.includes(item.module)).map(({ href, label, icon: Icon, also }) => {
+              const isActive = [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
+              const count = href === "/mesaje" ? unreadMessages : (badges[href] ?? 0);
               return (
                 <Link
                   key={href}
                   href={href}
-                  className={`flex items-center gap-2.5 rounded-[9px] px-3 py-1.5 text-[13.5px] font-medium transition-colors ${
-                    isActive
-                      ? "bg-navy-active font-semibold text-white"
-                      : "text-[#b4b6be] hover:bg-white/5 hover:text-white"
+                  className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13.5px] font-semibold transition-colors ${
+                    isActive ? "bg-[rgba(198,255,74,.14)] text-white" : "text-[#cbcdd4] hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
+                  <Icon className={`h-[17px] w-[17px] ${isActive ? "text-[#c6ff4a]" : ""}`} strokeWidth={1.9} />
                   <span className="flex-1">{label}</span>
-                  {href === "/mesaje" && unreadMessages > 0 && (
-                    <span className="flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-danger px-1 text-[9.5px] font-bold text-white">
-                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                  {count > 0 && (
+                    <span className="flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#dc2626] px-1.5 text-[10.5px] font-extrabold text-white">
+                      {count > 99 ? "99+" : count}
                     </span>
                   )}
                 </Link>

@@ -1,3 +1,4 @@
+import { PontajTabs } from "@/components/pontaj-tabs";
 import Link from "next/link";
 import { ClipboardCheck, Check, X } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
@@ -39,6 +40,7 @@ export default async function AprobariPage({
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <PontajTabs active="/aprobari" />
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-[17px] font-extrabold text-foreground">Aprobări cumpărare</h1>
         <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">

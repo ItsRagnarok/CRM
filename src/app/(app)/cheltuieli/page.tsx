@@ -1,3 +1,4 @@
+import { PontajTabs } from "@/components/pontaj-tabs";
 import Link from "next/link";
 import { Receipt, Fuel, ParkingCircle, Wrench } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
@@ -68,6 +69,7 @@ export default async function CheltuieliPage({
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <PontajTabs active="/cheltuieli" />
       <div className="flex items-center justify-between">
         <h1 className="text-[17px] font-extrabold text-foreground">Cheltuieli</h1>
         <div className="text-[13px] text-muted">

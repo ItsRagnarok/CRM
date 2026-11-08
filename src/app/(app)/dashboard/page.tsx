@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
-import { hasModule } from "@/lib/modules";
-import { ComplianceCard } from "@/components/compliance-card";
+import { PanouTop } from "@/components/panou-top";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
@@ -601,83 +600,14 @@ export default async function DashboardPage({
   return (
     <div className="flex flex-col gap-5 p-7">
       <AutoRefresh />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-extrabold text-foreground">
-            {greeting()}, {firstName} 👋
-          </h1>
-          <p className="mt-1 text-sm text-muted">
-            {range === "azi"
-              ? "Iată ce se întâmplă astăzi în echipele tale."
-              : "Iată ce s-a întâmplat în ultimele 7 zile în echipele tale."}
-          </p>
-        </div>
-        <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
-          <Link
-            href="/dashboard"
-            className={`rounded-[7px] px-4 py-1.5 text-center text-[12.5px] ${
-              range === "azi" ? "bg-white font-bold shadow-sm" : "font-semibold text-muted"
-            }`}
-          >
-            Astăzi
-          </Link>
-          <Link
-            href="/dashboard?range=7zile"
-            className={`rounded-[7px] px-4 py-1.5 text-center text-[12.5px] ${
-              range === "7zile" ? "bg-white font-bold shadow-sm" : "font-semibold text-muted"
-            }`}
-          >
-            Ultimele 7 zile
-          </Link>
-        </div>
+      <div>
+        <h1 className="text-[22px] font-extrabold text-foreground">Panou · ce cere atenția azi</h1>
+        <p className="mt-1 text-sm capitalize text-muted">
+          {new Date().toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest", weekday: "long", day: "numeric", month: "long" })} · {greeting()}, {firstName}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-        <KpiCard
-          label="Lucrări active"
-          value={activeJobsList.length}
-          trend={activeTrend}
-          icon={Briefcase}
-          iconBg="bg-electric-soft"
-          iconColor="text-electric"
-        />
-        <KpiCard
-          label="Echipe în teren"
-          value={`${teamsInField.size}`}
-          trend={`din ${activeTeamsCount ?? 0} echipe`}
-          icon={UsersRound}
-          iconBg="bg-success-bg"
-          iconColor="text-success"
-        />
-        <KpiCard
-          label={range === "azi" ? "Ore lucrate azi" : "Ore lucrate (7 zile)"}
-          value={formatHours(hoursToday)}
-          trend={percentTrend(hoursToday, hoursYesterday)}
-          icon={Clock}
-          iconBg="bg-warning-bg"
-          iconColor="text-warning"
-        />
-        <KpiCard
-          label={range === "azi" ? "Cheltuieli azi" : "Cheltuieli (7 zile)"}
-          value={`${expensesToday.toFixed(2)} RON`}
-          trend={percentTrend(expensesToday, expensesYesterday)}
-          icon={Receipt}
-          iconBg="bg-danger-bg"
-          iconColor="text-danger"
-        />
-        <KpiCard
-          label={range === "azi" ? "Profit azi" : "Profit (7 zile)"}
-          value={`${profitInRange.toFixed(2)} RON`}
-          trend={profitTrend(profitInRange, profitPrevRange)}
-          icon={TrendingUp}
-          iconBg={profitInRange >= 0 ? "bg-purple-soft" : "bg-danger-bg"}
-          iconColor={profitInRange >= 0 ? "text-purple" : "text-danger"}
-        />
-      </div>
-      <p className="-mt-2 text-[11.5px] text-muted-2">
-        Profit = venit facturat (facturi emise pentru lucrările din perioadă) − cost (materiale folosite + manoperă +
-        combustibil estimat + cheltuieli). Lucrările nefacturate încă apar doar ca și cost.
-      </p>
+      <PanouTop organization={organization} today={today} canAlert={isBackOfficeRole(profile.role)} />
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
         <div className="rounded-[13px] border border-border bg-white">
@@ -749,9 +679,6 @@ export default async function DashboardPage({
         </div>
 
         <div className="flex flex-col gap-4">
-          {hasModule(organization.enabled_modules, "conformitate") && isBackOfficeRole(profile.role) && (
-            <ComplianceCard organizationId={organization.id} today={today} />
-          )}
           <div className="rounded-[13px] border border-border bg-white">
             <div className="flex items-center justify-between border-b border-[#f2f4f7] px-4 py-3">
               <h2 className="flex items-center gap-2 text-[13.5px] font-bold text-foreground">

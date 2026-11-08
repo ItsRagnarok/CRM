@@ -1,3 +1,4 @@
+import { PontajTabs } from "@/components/pontaj-tabs";
 import Link from "next/link";
 import { ArrowLeft, CalendarOff, Plus } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
@@ -53,6 +54,7 @@ export default async function ConcediiPage() {
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <PontajTabs active="/pontaj/concedii" />
       <div className="flex items-center gap-3">
         <Link href="/pontaj" className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-neutral-bg">
           <ArrowLeft className="h-4 w-4 text-[#344054]" />
