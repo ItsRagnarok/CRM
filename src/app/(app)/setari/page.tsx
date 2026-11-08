@@ -6,6 +6,9 @@ import { CompanyForm } from "./company-form";
 import { StandardScheduleForm } from "./standard-schedule-form";
 import { NewEmployeeForm } from "./new-employee-form";
 import { updateUserRole, updateGpsSettings, updateDomains } from "./actions";
+import { hasModule } from "@/lib/modules";
+import { SettingsForm as GasSettingsForm } from "../gaze/gas-forms";
+import { PvSettingsForm } from "../fotovoltaic/pv-forms";
 import { DomainPicker } from "@/components/domain-picker";
 import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
@@ -14,14 +17,15 @@ type UserRole = Database["public"]["Enums"]["user_role"];
 type JobType = Database["public"]["Enums"]["job_type"];
 
 const NAV = [
-  { id: "companie", label: "Companie" },
-  { id: "utilizatori", label: "Utilizatori & roluri" },
-  { id: "echipe", label: "Echipe & vehicule" },
-  { id: "checklisturi", label: "Checklist-uri" },
+  { id: "companie", label: "Firmă" },
   { id: "tipuri", label: "Domenii" },
+  { id: "utilizatori", label: "Utilizatori și roluri" },
+  { id: "echipe", label: "Echipe și vehicule" },
+  { id: "termene", label: "Termene și alerte" },
+  { id: "checklisturi", label: "Șabloane" },
   { id: "notificari", label: "Notificări" },
-  { id: "gps", label: "GPS & confidențialitate" },
-  { id: "abonament", label: "Abonamente și facturare" },
+  { id: "gps", label: "GPS și confidențialitate" },
+  { id: "abonament", label: "Facturare și abonament" },
   { id: "integrari", label: "Integrări" },
 ] as const;
 
@@ -185,6 +189,24 @@ export default async function SetariPage({
                     <div className="text-[12px] text-muted-2">Doar administratorul companiei poate schimba domeniile.</div>
                   )}
                 </form>
+              </div>
+            )}
+
+            {tab === "termene" && (
+              <div className="flex flex-col gap-4">
+                <div className="rounded-[13px] border border-border bg-white p-[22px]">
+                  <div className="mb-1 text-[15px] font-bold text-foreground">Termene și alerte ale firmei</div>
+                  <p className="text-[12.5px] text-muted-2">Termenele sunt ale firmei, nu fixate în aplicație: le confirmi cu juristul sau cu operatorul și le schimbi aici, fără să aștepți o actualizare.</p>
+                  <ul className="mt-3 flex flex-col gap-2 text-[13.5px]">
+                    <li className="flex justify-between border-t border-[#f2f4f7] pt-2"><span>Alertă legitimații, autorizații, aparate, mașini</span><b>60 / 30 / 7 zile și la expirare</b></li>
+                    <li className="flex justify-between border-t border-[#f2f4f7] pt-2"><span>Verificare instalație gaze</span><b>{organization.gas_inspection_months} luni</b></li>
+                    <li className="flex justify-between border-t border-[#f2f4f7] pt-2"><span>Revizie instalație gaze</span><b>{organization.gas_revision_months} luni</b></li>
+                    <li className="flex justify-between border-t border-[#f2f4f7] pt-2"><span>ATR (operator)</span><b>{organization.pv_atr_days} zile</b></li>
+                    <li className="flex justify-between border-t border-[#f2f4f7] pt-2"><span>Certificat de racordare (operator)</span><b>{organization.pv_cert_days} zile</b></li>
+                  </ul>
+                </div>
+                {!readOnly && profile.role === "admin" && hasModule(organization.enabled_modules, "scadentar_gaze") && <GasSettingsForm inspectionMonths={organization.gas_inspection_months} revisionMonths={organization.gas_revision_months} />}
+                {!readOnly && profile.role === "admin" && hasModule(organization.enabled_modules, "dosar_fotovoltaic") && <PvSettingsForm atrDays={organization.pv_atr_days} certDays={organization.pv_cert_days} />}
               </div>
             )}
 

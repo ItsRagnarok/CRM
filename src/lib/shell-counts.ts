@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import { hasModule } from "@/lib/modules";
 
-export type NavBadges = Partial<Record<"/conformitate" | "/facturare" | "/pontaj" | "/mesaje", number>>;
+export type NavBadges = Partial<Record<"/conformitate" | "/facturare" | "/pontaj" | "/materiale" | "/mesaje", number>>;
 
 /** Numbers shown next to the sidebar items: what is waiting for the office. */
 export async function loadNavBadges(supabase: SupabaseClient<Database>, organizationId: string, modules: string[], today: string): Promise<NavBadges> {
@@ -21,6 +21,7 @@ export async function loadNavBadges(supabase: SupabaseClient<Database>, organiza
   return {
     "/conformitate": compliance.count ?? 0,
     "/facturare": billing.count ?? 0,
-    "/pontaj": (expenses.count ?? 0) + (timeOff.count ?? 0) + (purchases.count ?? 0),
+    "/pontaj": (expenses.count ?? 0) + (timeOff.count ?? 0),
+    "/materiale": purchases.count ?? 0,
   };
 }

@@ -5,7 +5,6 @@ const TABS = [
   { href: "/pontaj", label: "Pontaj" },
   { href: "/pontaj/concedii", label: "Concedii" },
   { href: "/cheltuieli", label: "Cheltuieli" },
-  { href: "/aprobari", label: "Aprobări achiziții" },
 ] as const;
 
 export function PontajTabs({ active }: { active: (typeof TABS)[number]["href"] }) {

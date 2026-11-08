@@ -55,8 +55,8 @@ const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
     label: "Firmă",
     items: [
       { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
-      { href: "/materiale", label: "Stoc și mașini", icon: Package },
-      { href: "/pontaj", label: "Pontaj și concedii", icon: Clock, also: ["/cheltuieli", "/aprobari"] },
+      { href: "/materiale", label: "Stoc și mașini", icon: Package, also: ["/aprobari"] },
+      { href: "/pontaj", label: "Pontaj și concedii", icon: Clock, also: ["/cheltuieli"] },
       { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },
     ],
   },

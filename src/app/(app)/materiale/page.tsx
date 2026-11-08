@@ -1,3 +1,4 @@
+import { StocTabs } from "@/components/stoc-tabs";
 import Link from "next/link";
 import { Package, Plus, Search, Download } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
@@ -70,8 +71,9 @@ export default async function MaterialePage({
 
   return (
     <div className="flex flex-col gap-5 p-7">
+      <StocTabs active="/materiale" />
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-[17px] font-extrabold text-foreground">Materiale &amp; Scule</h1>
+        <h1 className="text-[17px] font-extrabold text-foreground">Stoc și scule</h1>
 
         <div className="flex gap-0.5 rounded-[9px] bg-neutral-bg p-[3px]">
           {(["toate", "material", "tool"] as Kind[]).map((k) => (
