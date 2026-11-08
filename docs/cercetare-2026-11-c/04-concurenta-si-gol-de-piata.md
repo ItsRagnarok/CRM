@@ -1,0 +1,46 @@
+# Concurență și gol de piață (actualizare) - 2026-11-08
+
+Completează `cercetare-2026-11/04` și `cercetare-2026-11-b/06`; nu repetă funcțiile mobile deja comparate acolo. Legendă: **[V]** = citit direct pe pagina vendorului în această sesiune; **[T]** = estimare din surse terțe (adesea blogurile concurenților, cifre contradictorii); **[N]** = negăsit/neconfirmat. Nu am putut citi G2/Capterra/Trustpilot/Reddit direct; recenziile de mai jos sunt rezumate din căutări și valorează ca ipoteze.
+
+## 1. Corecție importantă față de cercetările anterioare
+**Zarina CRM are acum pagină dedicată fotovoltaice** ([V] [zarinacrm.ro](https://www.zarinacrm.ro/program-crm-companii-panouri-solare-fotovoltaice/)): urmărește atestatele ANRE ale firmei cu data de expirare ca sarcini, dosarul de prosumator în 8 etape (cerere de racordare până la certificat de racordare), aviz tehnic de racordare ca fir paralel cu execuția, avize întârziate în lista „blocate", tranșa finală emisă spre SmartBill sau e-Factura ANAF. Licență **2.990 € o singură dată**, fără limită de utilizatori, instalare pe serverul firmei. Pagina spune explicit că NU dimensionează sistemul, nu depune cereri la operator, nu se leagă de monitorizarea invertoarelor, nu depune dosare de finanțare și **nu menționează nicio aplicație mobilă**. Deci afirmația „nimeni nu are ANRE/prosumator" din rapoartele anterioare e **falsă pentru partea de birou**. Golul rămâne în teren (mobil offline) și în gaze.
+
+## 2. Prețuri și acoperire (doar ce e nou/actualizat)
+
+| Produs | Preț | Sursă / încredere | RO + facturare locală | Limite |
+|---|---|---|---|---|
+| **Aktio** (RO) | de la 15 €/utilizator/lună; Professional „de la 23 €/utilizator"; 15 zile probă; fără server | [V] [aktio.ro](https://www.aktio.ro/solutii/service-mentenanta) | Română + suport RO. Pagina NU menționează SmartBill/Oblio/e-Factura sau ANRE | Domenii: HVAC, centrale termice, sanitare, electrice, lifturi, PSI. Fișe configurabile, offline, PDF pe WhatsApp/email. Generic, fără gaz/PV specific |
+| **Zarina CRM** | 1.990-5.990 € licență; PV 2.990 € | [V] (vezi 06 + pagina PV) | Română, e-Factura prin SmartBill/ANAF, ANRE parțial | On-premise, fără mobil declarat, fără recenzii independente |
+| **SmartBill** | Facturare de la 5,84 €/lună + TVA; Gestiune+Facturare de la 16,32 € + TVA; utilizator extra 1,5 € / 5,5 € + TVA; 30 zile probă | [V] [smartbill.ro/preturi](https://www.smartbill.ro/preturi/) | e-Factura în toate pachetele (primite/lună: 5/15/50/100/150) | Doar facturare/gestiune, nu lucrări |
+| **Oblio** | **29 €/an**, utilizatori nelimitați, e-Factura gratuită, stocuri gratuite; gratuit sub 3 documente/lună | [V] [oblio.eu](https://www.oblio.eu/) | Da | Doar facturare; API documentat (vezi 04) |
+| **FGO, Ciel, WinMentor** | FGO: preț negăsit; WinMentor: doar promoție expirată (Classic Extended 390 € + TVA, dec 2025-ian 2026); Ciel: surse contradictorii | [N] / [T] [taxdome](https://taxdome.com/ro-ro/blog/fgo-vs-oblio-vs-smartbill), [WinMentor](https://portal.winmentor.ro/winmentor/en/exceptional-winmentor-extended-single-workstation-offer/) | FGO: trimitere SPV cu un click, nelimitată [T] | Contabilitate/gestiune, nu FSM |
+| **Jobber** | Core 49 $, Connect 139 $, Grow 199 $, Plus 699 $/lună (utilizatori incluși 1/5/10/15, extra ~29 $); surse diferă (alta: 129/249) | [T] [fieldproxy](https://www.fieldproxy.ai/fsm-software-pricing/jobber), [getonecrew](https://www.getonecrew.com/post/jobber-pricing) | Nu | Fără RO/ANAF; cost crește cu echipa |
+| **Workiz** | Nepublicat; estimări: Starter 65 $/lună (3 useri), Team 169 $; extra user 30-55 $ | [T] [fieldproxy](https://www.fieldproxy.ai/fsm-software-pricing/workiz), [crewroute](https://crewroute.pages.dev/compare/pricing/workiz) | Nu | Idem |
+| **Zuper** | Estimări contradictorii: 35 $ sau 65-105 $/utilizator/lună | [T] [toolradar](https://toolradar.com/tools/zuper/pricing), [ranksvs](https://ranksvs.pages.dev/compare/workiz-vs-zuper) | Nu | Offline documentat (vezi 04) dar fără RO |
+| **Fieldproxy** | Un singur plan găsit: 649 $/lună, 300 joburi, **utilizatori nelimitați** | [T] [fieldproxy](https://www.fieldproxy.ai/fsm-software-pricing/fieldproxy) (autopublicat) | Nu | Nicio recenzie independentă; preț în USD |
+| **Odoo (Field Service)** | Online Standard ~16,90-31,10 $/utilizator/lună, Custom ~25-61 $ (promoțional vs. reînnoire; variază pe regiune); FSM nu e prețuit separat | [T] [activepieces](https://www.activepieces.com/blog/odoo-pricing-2026-plans-hosting-and-implementation.md), [erpresearch](https://www.erpresearch.com/pricing/odoo) | Localizare RO există prin parteneri (ex. Dakai); costul real e implementarea | Implementare/personalizare scumpă; „Odoo 20% licență, 80% rest" [T] [octura](https://octurasolutions.com/resources/the-honest-cost-of-odoo-in-2026-why-the-license-is-only-20-percent-of-the-budget) |
+| **Bitrix24** | Cloud anual: 49 $ (5 useri), 99 $ (50), 199 $ (100), 399 $ (250); preț RON negăsit | [T] [capterra](https://www.capterra.com/p/113540/Bitrix24/pricing/) | UI RO există [N, neverificat]; nu e FSM | CRM/proiecte generic; fără teren offline/ANRE |
+| **Simpro** | Fără preț public; estimări 60-140 $/utilizator, până la 200-300 $ cu mobil [T] | [T] [toolradar](https://toolradar.com/tools/simpro/pricing) | Nu | Quote-only, contracte lungi |
+| **ServiceTitan** | Quote-only; estimări 245-500 $/tehnician + 5.000-50.000 $ implementare; 12 luni minim | [T] [getonecrew](https://www.getonecrew.com/post/servicetitan-pricing) | Nu | Taxe de reziliere raportate 5-20k $ (BBB, via blog) |
+| **Fieldwire** | Pro ~39 $, Business ~59-64 $, Business Plus ~89 $/utilizator/lună; Basic gratuit (5 useri) | [T] [softwares.com](https://www.softwares.com/software/fieldwire/pricing) | Nu | Șantier/planuri, nu FSM |
+| **Serviceo Pro** | App gratuită, doar engleză, ultimul update feb 2023 | [V] [App Store](https://apps.apple.com/ro/app/serviceo-pro/id1443955743?l=ro) | Nu | Abandonat practic; nu e concurent |
+
+**Recenzii negative (nou/confirmare):** plângerile repetate la americani sunt preț per utilizator care crește, lock-in contractual la ServiceTitan, bug-uri mobile la Housecall Pro; sursele sunt bloguri/afiliați, nu Reddit verificat [T]. Nu am găsit niciun fir Reddit verificabil de electricieni români. Pentru Aktio/Zarina nu există recenzii independente [N].
+
+## 3. Scadențar gaze, devize, soft electric/PV
+- **Scadențar gaze:** căutarea NU a găsit niciun produs software dedicat [N]. Reguli: verificare la max. 2 ani, revizie la max. 10 ani, doar firme ANRE (~5.700 în lista ANRE) ([playtech](https://playtech.ro/2026/revizia-la-centrala-termica-si-la-instalatiile-gaze-cat-costa-si-ce-se-intampla-daca-nu-o-faci/)); furnizorii au obligația să notifice clienții, dar firma instalatoare nu are un instrument de reamintire găsit. Absența din căutare nu e dovadă (soft de nișă poate fi doar pe Google/Facebook); de confirmat prin 5 telefoane la firme autorizate.
+- **Devize (Winsoft/eDevize/Antemăsurători):** nicio licență sau preț găsit pentru 2026 [N]. Nu merită reconstruit un motor de devize cu norme (vezi §5).
+- **Fotovoltaic RO:** Zarina e singurul cu flux prosumator (birou). **Atenție legală:** în 2019 programul AFM a fost suspendat după ce firme au încărcat dosare cu soft automat, ceea ce era interzis ([economica](https://www.economica.net/?p=164975)) - nu automatizați depuneri în portaluri de stat fără verificarea regulilor.
+
+## 4. Unde e golul real
+1. **Mobil-first offline pentru tehnician + birou RO într-un singur SaaS la preț mic.** Aktio are mobil dar fără facturare/ANRE declarate; Zarina are birou/ANRE/PV dar on-premise și fără mobil declarat. Nimeni nu are ambele [V pe pagini; fără demo].
+2. **Gaze:** niciun produs găsit pentru scadențar verificări/revizii + fișe ANRE + reamintiri către client. Cel mai clar gol (dar de validat cerere).
+3. **Preț/model:** SaaS 15-23 €/utilizator (Aktio) vs licență 2-6k € (Zarina) vs 50-500 $ (străini). Loc pentru model intermediar (ex. preț per firmă cu utilizatori nelimitați, ca Oblio/Fieldproxy), ipoteză de testat.
+4. **Patron-tehnician cu 1-3 oameni** (cifră ~90%, neverificată direct): nevoie de simplitate, nu de dispecerat.
+
+## 5. Cum ne diferențiem și ce NU construim
+**Diferențiere:** (a) aplicația de teren pe care deja o redesenăm (offline cu stare vizibilă, un buton de stare, mod mănuși); (b) pachet ANRE/PV/gaz „la cheie" cu documente și scadențe, dar **ca șabloane validate de un electrician/instalator autorizat**, nu ca promisiune legală; (c) deviz/proformă pe loc → birou facturează în SmartBill/Oblio (nu concurăm contabilitatea); (d) SaaS fără server, onboarding din Excel, preț transparent.
+**Nu construim:** contabilitate/facturare fiscală proprie (Oblio 29 €/an ne bate), motor de devize pe norme (Winsoft/eDevize, fără date de preț, licențe de norme), design 3D/dimensionare PV (OpenSolar/Aurora), monitorizare invertoare (doar link/integrare), chat/CRM generic (Bitrix24/Odoo), depunere automată în portaluri de stat (risc legal).
+
+## 6. De verificat înainte de decizii
+Demo la Aktio și Zarina (mobil, SmartBill, ANRE); 10-15 interviuri cu firme (ce folosesc azi); lista oficială de documente ANRE/operator; prețuri Bitrix24 în RON și FGO/Ciel de pe paginile oficiale; G2/Capterra/Reddit citite direct.
