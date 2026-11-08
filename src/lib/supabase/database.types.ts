@@ -3204,6 +3204,20 @@ export type Database = {
         Args: { p_today: string }
         Returns: number
       }
+      money_at_risk: {
+        Args: { p_today: string }
+        Returns: {
+          unbilled_jobs: number
+          unbilled_estimate: number
+          overdue_count: number
+          overdue_amount: number
+          overdue_oldest_days: number
+          cash_open_count: number
+          cash_open_amount: number
+          pending_expenses_count: number
+          pending_expenses_amount: number
+        }[]
+      }
       public_job_status: {
         Args: { p_token: string }
         Returns: {

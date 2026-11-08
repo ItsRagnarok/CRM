@@ -4,6 +4,7 @@ import { hasModule } from "@/lib/modules";
 import { KIND_LABELS, complianceLevel, daysUntil, type ComplianceKind } from "@/lib/compliance";
 import { syncComplianceAlerts } from "@/lib/compliance-alerts";
 import { openClocks } from "@/lib/pv";
+import { MoneyAtRisk, type MoneyAtRiskRow } from "@/components/money-at-risk";
 import type { SessionContext } from "@/lib/auth";
 
 type SessionOrganization = SessionContext["organization"];
@@ -28,7 +29,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
 
   if (hasCompliance && canAlert) await syncComplianceAlerts(supabase, orgId, today);
 
-  const [jobsToday, billing, invoices, compliance, pv, gas, attentionJobs, purchases] = await Promise.all([
+  const [jobsToday, billing, invoices, compliance, pv, gas, attentionJobs, purchases, money] = await Promise.all([
     supabase.from("jobs").select("status").eq("organization_id", orgId).eq("scheduled_date", today),
     supabase.from("billing_requests").select("created_at").eq("organization_id", orgId).eq("status", "new").order("created_at").limit(500),
     supabase.from("invoices").select("total_amount, client_id, due_date, issued_at, status").eq("organization_id", orgId).in("status", ["unpaid", "overdue"]).limit(2000),
@@ -41,7 +42,9 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
     hasGas ? supabase.rpc("gas_overdue_count", { p_today: today }) : Promise.resolve({ data: 0 }),
     supabase.from("jobs").select("id, display_number, title").eq("organization_id", orgId).eq("status", "necesita_atentie").limit(5),
     supabase.from("purchase_requests").select("id", head).eq("organization_id", orgId).eq("status", "pending"),
+    canAlert ? supabase.rpc("money_at_risk", { p_today: today }) : Promise.resolve({ data: null as MoneyAtRiskRow[] | null }),
   ]);
+  const moneyRow = money.data?.[0];
 
   // Jobs today
   const st = (jobsToday.data ?? []).map((j) => j.status);
@@ -51,6 +54,8 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
   // To invoice
   const toInvoice = billing.data ?? [];
   const oldestBilling = toInvoice[0] ? daysAgo(toInvoice[0].created_at, today) : null;
+  // "To invoice" = finished jobs with no invoice yet (falls back to the technicians' billing requests for non-admin views)
+  const toInvoiceCount = moneyRow ? Math.max(Number(moneyRow.unbilled_jobs), toInvoice.length) : toInvoice.length;
   // Overdue receivables
   const open = invoices.data ?? [];
   const owed = open.reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
@@ -76,7 +81,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
     items.push({ key: `j-${j.id}`, tone: "warn", rank: 2, title: `Lucrarea #${j.display_number} necesită atenție`, sub: j.title, href: `/lucrari/${j.id}`, action: "Deschide" });
   }
   if ((purchases.count ?? 0) > 0) items.push({ key: "buy", tone: "warn", rank: 3, title: `${plural(purchases.count ?? 0, "cerere", "cereri")} de achiziție ${purchases.count === 1 ? "așteaptă" : "așteaptă"} aprobare`, sub: "din teren", href: "/aprobari", action: "Aprobă" });
-  if (toInvoice.length > 0) items.push({ key: "bill", tone: "info", rank: 4, title: `${plural(toInvoice.length, "lucrare închisă", "lucrări închise")}, de facturat`, sub: oldestBilling !== null ? `cea mai veche așteaptă de ${plural(oldestBilling, "zi", "zile")}` : "", href: "/facturare", action: "Facturează" });
+  if (toInvoiceCount > 0) items.push({ key: "bill", tone: "info", rank: 4, title: `${plural(toInvoiceCount, "lucrare închisă", "lucrări închise")}, de facturat`, sub: oldestBilling !== null ? `cea mai veche așteaptă de ${plural(oldestBilling, "zi", "zile")}` : "", href: "/facturare", action: "Facturează" });
   if (gasLate > 0) items.push({ key: "gas", tone: "warn", rank: 3, title: `${plural(gasLate, "apartament", "apartamente")} cu scadența depășită`, sub: "verificare sau revizie de gaze", href: "/gaze", action: "Deschide" });
   for (const c of expiring.filter((e) => e.left > 7 && e.left <= 30).slice(0, 2)) {
     items.push({ key: `c-${c.id}`, tone: "warn", rank: 5, title: `${c.title} expiră în ${c.left} zile`, sub: c.subject, href: "/conformitate", action: "Vezi" });
@@ -97,11 +102,13 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <Kpi label="Lucrări azi" value={st.length} sub={`${working} în lucru · ${planned} programate · ${done} finalizate`} />
-        <Kpi label="De facturat" value={toInvoice.length} sub={oldestBilling !== null ? `cea mai veche: ${plural(oldestBilling, "zi", "zile")}` : "nimic de facturat"} cls={toInvoice.length ? "border-[#f5c27a] bg-[#fffaf0]" : ""} />
+        <Kpi label="De facturat" value={toInvoiceCount} sub={oldestBilling !== null ? `cea mai veche cerere: ${plural(oldestBilling, "zi", "zile")}` : toInvoiceCount ? "lucrări terminate, fără factură" : "nimic de facturat"} cls={toInvoiceCount ? "border-[#f5c27a] bg-[#fffaf0]" : ""} />
         <Kpi label="Încasări restante" value={lei(owed)} sub={open.length ? `${plural(owedClients, "client", "clienți")} · cea mai veche: ${oldestDue ? plural(daysAgo(oldestDue, today), "zi", "zile") : "—"}` : "nicio factură neîncasată"} cls={owed > 0 ? "border-[#f5c27a] bg-[#fffaf0]" : ""} />
         {hasCompliance && <Kpi label="Expiră în 30 de zile" value={expiring.length} sub={byKind.length ? byKind.map(([k, n]) => `${n} ${KIND_LABELS[k].toLowerCase()}`).join(" · ") : "nimic nu expiră"} cls={expiring.some((c) => complianceLevel(c.left) === "expired") ? "border-[#f0a3a3] bg-[#fff5f5]" : ""} />}
         {hasPv && <Kpi label="Termene operator depășite" value={pvLate.length} sub={pvLate.length ? pvLate.map(({ clocks }) => `${clocks[0].key === "atr" ? "ATR" : "certificat"} ${clocks[0].elapsed} zile`).slice(0, 2).join(" · ") : "în termen"} cls={pvLate.length ? "border-[#f0a3a3] bg-[#fff5f5]" : ""} />}
       </div>
+
+      {canAlert && <MoneyAtRisk row={moneyRow} />}
 
       <div className="rounded-2xl border border-border bg-white p-5">
         <div className="mb-2 flex items-center justify-between">
