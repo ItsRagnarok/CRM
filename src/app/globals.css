@@ -10,8 +10,10 @@
   --color-navy: #1c1c22;
   --color-navy-active: #26262e;
   --color-navy-border: #2e2e38;
-  --color-electric: #3b82f6;
-  --color-electric-soft: #eff6ff;
+  --color-electric: #c6ff4a; /* accent fill (buttons, active states); text on it is dark */
+  --color-electric-soft: #f0fbd3;
+  --color-accent-ink: #3f6212; /* accent as text/border on light backgrounds (7:1 on white) */
+  --color-on-accent: #0a0d0a;
   --color-amber: #f5a623;
   --color-amber-soft: #fdf1df;
 
@@ -95,8 +97,9 @@ html[data-theme="dark"] .ef-app-theme {
   --color-muted-2: #9ba8bd;
   --color-neutral: #c4cedd;
   --color-neutral-bg: #242d3c;
-  --color-electric: #78adff;
-  --color-electric-soft: #1b3456;
+  --color-electric: #c6ff4a;
+  --color-electric-soft: #2a3a12;
+  --color-accent-ink: #c6ff4a;
   --color-purple: #b39bff;
   --color-purple-soft: #302647;
   --color-amber-soft: #3a2d18;
@@ -121,3 +124,16 @@ html[data-theme="dark"] .ef-app-theme :is([class~="hover:bg-[#f9fafb]"], [class~
 html[data-theme="dark"] .ef-app-theme :is(input, select, textarea) { color: #e8edf5; background-color: #151c28; }
 html[data-theme="dark"] .ef-app-theme :is(.bg-purple, .bg-electric, .bg-success, .bg-warning, .bg-danger, .bg-info) { color: #10141c; }
 html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[#fef9ec]"]) { background-color: #3c3019; }
+
+/* Theme "lime": --color-electric is the lime FILL. Lime is unreadable as text or
+   border on light backgrounds (1.2:1), so those uses switch to --color-accent-ink,
+   and any element with a lime fill gets dark text. Unlayered rules beat Tailwind's
+   utility layer, so a stray `text-white` on a lime button cannot win. */
+.bg-electric,
+.peer:checked ~ .peer-checked\:bg-electric { color: var(--color-on-accent); }
+.text-electric,
+.hover\:text-electric:hover { color: var(--color-accent-ink); }
+.border-electric,
+.focus\:border-electric:focus,
+.hover\:border-electric:hover { border-color: var(--color-accent-ink); }
+.border-electric\/20 { border-color: color-mix(in srgb, var(--color-accent-ink) 20%, transparent); }

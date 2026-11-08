@@ -208,7 +208,7 @@ export default function DashboardMap({
               <div style={{ color: "#667085" }}>{marker.sublabel}</div>
               <div style={{ marginTop: 4, fontWeight: 600 }}>{marker.statusLabel}</div>
               {marker.href && (
-                <Link href={marker.href} style={{ color: "#3b82f6", fontWeight: 600 }}>
+                <Link href={marker.href} style={{ color: "#3f6212", fontWeight: 600 }}>
                   {marker.linkLabel ?? "Deschide lucrarea →"}
                 </Link>
               )}
