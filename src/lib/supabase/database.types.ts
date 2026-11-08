@@ -351,6 +351,89 @@ export type Database = {
           { foreignKeyName: "gas_units_building_id_fkey", columns: ["building_id"], isOneToOne: false, referencedRelation: "gas_buildings", referencedColumns: ["id"] },
         ]
       }
+      pv_projects: {
+        Row: {
+          id: string
+          organization_id: string
+          client_id: string | null
+          name: string
+          address: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          kwp: number | null
+          stage: string
+          operator_name: string | null
+          atr_number: string | null
+          offer_sent_on: string | null
+          contract_signed_on: string | null
+          advance_received_on: string | null
+          install_on: string | null
+          atr_filed_on: string | null
+          atr_received_on: string | null
+          cert_requested_on: string | null
+          cert_received_on: string | null
+          afm_filed_on: string | null
+          afm_paid_on: string | null
+          warranty_until: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          client_id?: string | null
+          name: string
+          address?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          kwp?: number | null
+          stage?: string
+          operator_name?: string | null
+          atr_number?: string | null
+          offer_sent_on?: string | null
+          contract_signed_on?: string | null
+          advance_received_on?: string | null
+          install_on?: string | null
+          atr_filed_on?: string | null
+          atr_received_on?: string | null
+          cert_requested_on?: string | null
+          cert_received_on?: string | null
+          afm_filed_on?: string | null
+          afm_paid_on?: string | null
+          warranty_until?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          client_id?: string | null
+          name?: string
+          address?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          kwp?: number | null
+          stage?: string
+          operator_name?: string | null
+          atr_number?: string | null
+          offer_sent_on?: string | null
+          contract_signed_on?: string | null
+          advance_received_on?: string | null
+          install_on?: string | null
+          atr_filed_on?: string | null
+          atr_received_on?: string | null
+          cert_requested_on?: string | null
+          cert_received_on?: string | null
+          afm_filed_on?: string | null
+          afm_paid_on?: string | null
+          warranty_until?: string | null
+          notes?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "pv_projects_client_id_fkey", columns: ["client_id"], isOneToOne: false, referencedRelation: "clients", referencedColumns: ["id"] },
+        ]
+      }
       compliance_items: {
         Row: {
           id: string
@@ -1950,6 +2033,8 @@ export type Database = {
           enabled_modules: string[]
           gas_inspection_months: number
           gas_revision_months: number
+          pv_atr_days: number
+          pv_cert_days: number
           fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
@@ -1976,6 +2061,8 @@ export type Database = {
           enabled_modules?: string[]
           gas_inspection_months?: number
           gas_revision_months?: number
+          pv_atr_days?: number
+          pv_cert_days?: number
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
@@ -2002,6 +2089,8 @@ export type Database = {
           enabled_modules?: string[]
           gas_inspection_months?: number
           gas_revision_months?: number
+          pv_atr_days?: number
+          pv_cert_days?: number
           fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number

@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   ShieldCheck,
   Flame,
+  Sun,
   MessageSquare,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
@@ -49,6 +50,7 @@ const NAV_SECTIONS: { label: string | null; items: { href: string; label: string
       { href: "/materiale", label: "Materiale și scule", icon: Package },
       { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
       { href: "/gaze", label: "Gaze · scadențar", icon: Flame, module: "scadentar_gaze" },
+      { href: "/fotovoltaic", label: "Fotovoltaic · dosare", icon: Sun, module: "dosar_fotovoltaic" },
       { href: "/harta", label: "Hartă & GPS", icon: MapPin },
       { href: "/mesaje", label: "Mesaje", icon: MessageSquare },
     ],

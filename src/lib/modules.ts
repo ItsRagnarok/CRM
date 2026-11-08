@@ -33,7 +33,7 @@ export const MODULES: ModuleDef[] = [
     label: "Dosar fotovoltaic",
     description: "Etape de la ofertă la garanție, termenele operatorului (ATR, contor), AFM.",
     domains: ["fotovoltaic"],
-    available: false,
+    available: true,
   },
   {
     id: "buletine_electrice",
