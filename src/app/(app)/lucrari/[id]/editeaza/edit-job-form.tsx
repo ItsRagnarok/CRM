@@ -58,9 +58,9 @@ export function EditJobForm({ job, teams, enabledDomains }: { job: Job; teams: {
               ))}
             </select>
           </Field>
-          <Field label="Domeniu (formular tehnic)">
+          <Field label="Domeniu (apare în pagina domeniului și are formular tehnic)">
             <select name="domain" defaultValue={(job as { domain?: string | null }).domain ?? ""} className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric">
-              <option value="">Fără formular</option>
+              <option value="">Fără domeniu (nu apare în paginile pe domenii)</option>
               {enabledDomains.includes("gaze") && <option value="gaze">Gaze — probă de etanșeitate</option>}
               {enabledDomains.includes("fotovoltaic") && <option value="fotovoltaic">Fotovoltaic — punere în funcțiune</option>}
               {enabledDomains.includes("electric") && <option value="electric">Electric — verificare tablou</option>}
