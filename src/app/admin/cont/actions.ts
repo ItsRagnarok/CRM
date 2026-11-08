@@ -6,6 +6,8 @@ import { redirect } from "next/navigation";
 import { requireAdminContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { sendBookingEmail } from "@/lib/booking-email";
+import { getMailCredentials, listMailAccounts } from "@/lib/mail/store";
+import { safeMailError } from "@/lib/mail/validation";
 import { SITE_URL } from "@/lib/seo";
 import { SUPPORT_EMAIL } from "@/lib/contact";
 import type { Database } from "@/lib/supabase/database.types";
@@ -59,6 +61,14 @@ export async function transferSuperAdmin(_prev: State, formData: FormData): Prom
   if (confirmEmail !== newEmail) return { error: "Confirmarea adresei nu coincide." };
   if (!email || !current || !(await passwordMatches(email, current))) return { error: "Parola ta curentă nu este corectă." };
 
+  // Send from a mailbox connected in Super Admin → Mail (the same way personal
+  // booking confirmations are sent). Check this BEFORE creating the account.
+  const mailboxes = await listMailAccounts();
+  const sender = ["noreply@", "support@", "programare@", "contact@"].map((prefix) => mailboxes.find((a) => a.address.toLowerCase().startsWith(prefix))).find(Boolean) ?? mailboxes[0];
+  if (!sender) {
+    return { error: "Nu ai nicio adresă conectată în Super Admin → Mail → Adrese. Conectează una (de exemplu noreply@ sau support@) și încearcă din nou." };
+  }
+
   const supabase = await createClient({ ignorePreview: true });
   const password = temporaryPassword();
   const { data: newId, error } = await supabase.rpc("platform_admin_transfer_begin", {
@@ -86,11 +96,11 @@ export async function transferSuperAdmin(_prev: State, formData: FormData): Prom
   const html = `<!doctype html><html lang="ro"><body style="margin:0;padding:24px;background:#f4f5fb;color:#19223a;font-family:Arial,sans-serif"><div style="max-width:560px;margin:auto;background:#fff;border:1px solid #e3e7f3;border-radius:14px"><div style="padding:20px 24px;background:#0c110f;color:#c6ff4a;border-radius:14px 14px 0 0;font-size:19px;font-weight:bold">ElectroField</div><div style="padding:24px;font-size:15px;line-height:1.6"><h1 style="margin:0 0 14px;font-size:22px">Acces Super Admin</h1><p>Bună, ${fullName.replace(/[<>&"']/g, "")},</p><p>Ai primit rolul de Super Admin în platforma ElectroField.</p><p style="padding:14px;background:#f0f5e4;border-radius:8px;font-family:monospace;font-size:15px">Email: ${newEmail}<br>Parolă temporară: <strong>${password}</strong></p><p><a href="${loginUrl}" style="display:inline-block;background:#c6ff4a;color:#0a0d0a;padding:10px 18px;border-radius:99px;text-decoration:none;font-weight:bold">Conectează-te</a></p><p>După prima conectare, schimbă parola din <strong>Super Admin → Cont</strong>.</p><p style="color:#667085;font-size:13px">Dacă nu te așteptai la acest mesaj, nu folosi parola și răspunde la acest email.</p></div></div></body></html>`;
 
   try {
-    await sendBookingEmail(newEmail, "Acces Super Admin ElectroField", text, html, undefined, SUPPORT_EMAIL);
-  } catch {
+    await sendBookingEmail(newEmail, "Acces Super Admin ElectroField", text, html, await getMailCredentials(sender.id), SUPPORT_EMAIL);
+  } catch (error) {
     // Nobody received the password: undo, so the platform is never left without a reachable admin.
     await supabase.rpc("platform_admin_transfer_cancel", { new_admin_id: newId });
-    return { error: "Emailul cu parola temporară nu a putut fi trimis, deci transferul a fost anulat. Verifică setările SMTP și încearcă din nou." };
+    return { error: `Emailul cu parola temporară nu a putut fi trimis de pe ${sender.address}, deci transferul a fost anulat. ${safeMailError(error)}` };
   }
 
   const { error: finishError } = await supabase.rpc("platform_admin_transfer_finish", { new_admin_id: newId });
