@@ -117,6 +117,10 @@ export function TermsContent() {
           <a href="mailto:contact@electrofield.ro" className="font-semibold text-electric">
             contact@electrofield.ro
           </a>
+          , pe WhatsApp sau telefon la{" "}
+          <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">
+            0750 425 670
+          </a>
           .
         </p>
       </section>

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
+import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/contact";
 import s from "./marketing.module.css";
 
 export function CtaSection() {
@@ -23,7 +24,9 @@ export function CtaSection() {
           </a>
         </div>
         <p className={s.ctaMail}>
-          Preferi email? <a href="mailto:contact@electrofield.ro">contact@electrofield.ro</a>
+          Preferi email sau WhatsApp?{" "}
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> ·{" "}
+          <a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp {CONTACT_PHONE_DISPLAY}</a>
         </p>
       </div>
     </section>

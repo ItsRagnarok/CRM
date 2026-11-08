@@ -19,6 +19,7 @@ const structuredData = {
       url: SITE_URL,
       logo: `${SITE_URL}/icon-512.png`,
       email: "contact@electrofield.ro",
+      telephone: "+40750425670",
       areaServed: { "@type": "Country", name: "Romania" },
     },
     {

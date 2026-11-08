@@ -37,6 +37,10 @@ export default async function AccountSuspendedPage() {
               platformei. Pentru a relua accesul, contactează-ne la{" "}
               <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">
                 contact@alpora.ro
+              </a>{" "}
+              sau pe WhatsApp la{" "}
+              <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">
+                0750 425 670
               </a>
               .
             </>
@@ -46,6 +50,10 @@ export default async function AccountSuspendedPage() {
               contactează-ne la{" "}
               <a href="mailto:contact@alpora.ro" className="font-semibold text-electric">
                 contact@alpora.ro
+              </a>{" "}
+              sau pe WhatsApp la{" "}
+              <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer" className="font-semibold text-electric">
+                0750 425 670
               </a>
               .
             </>

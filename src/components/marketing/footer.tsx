@@ -15,6 +15,7 @@ export function MarketingFooter() {
           <a href="#cum-functioneaza">Cum funcționează</a>
           <a href="/blog">Ghiduri pentru firme de instalații</a>
           <a href="/programare">Programează o discuție</a>
+          <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer">WhatsApp 0750 425 670</a>
           <a href="/termeni">Termeni și condiții</a>
           <a href="/confidentialitate">Confidențialitate</a>
           <a href="/login">Conectează-te</a>
