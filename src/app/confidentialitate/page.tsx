@@ -39,6 +39,11 @@ export default function PrivacyPolicyPage() {
             <li><b>Fotografii, semnături și documente</b> încărcate în legătură cu lucrările (înainte/în timpul/după intervenție, semnătura clientului, documente de angajare).</li>
             <li><b>Date operaționale:</b> pontaj (ore de lucru, pauze, deplasări), cheltuieli, materiale folosite, facturi.</li>
             <li><b>Date tehnice:</b> jurnale de acces și erori, pentru securitate și depanare.</li>
+            <li>
+              <b>Statistici ale site-ului public</b> (prima pagină, blog, programări): numărăm afișările de pagini fără cookie-uri.
+              Salvăm pagina vizitată, site-ul de unde ai venit, țara, tipul dispozitivului și un cod anonim care se schimbă în fiecare zi;
+              adresa IP nu se salvează. Poți dezactiva numărarea cu setarea „Do Not Track” din browser.
+            </li>
           </ul>
         </section>
 

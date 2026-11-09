@@ -1,0 +1,3 @@
+-- Applied via MCP on 2026-11-09. First-party, cookie-less page-view analytics for the public site.
+-- site_events (RLS on, no policies): written only through ef_record_site_view (anon-callable, validates path and rate-limits per visitor),
+-- read only through ef_site_analytics (platform admins). See src/app/api/analytics and src/app/admin/analitice.

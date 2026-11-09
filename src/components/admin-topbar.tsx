@@ -7,6 +7,7 @@ const NAV = [
   { href: "/admin", label: "Prezentare generală" },
   { href: "/admin/companii", label: "Companii" },
   { href: "/admin/programari", label: "Programări" },
+  { href: "/admin/analitice", label: "Analitice" },
   { href: "/admin/activitate", label: "Activitate" },
   { href: "/admin/mail", label: "Mail" },
   { href: "/admin/solicitari", label: "Solicitări" },

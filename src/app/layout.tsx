@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { PreventZoom } from "@/components/prevent-zoom";
 import { PublicWebAnalytics } from "@/components/public-web-analytics";
+import { SiteTracker } from "@/components/site-tracker";
 import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
@@ -70,6 +71,7 @@ export default function RootLayout({
         <PreventZoom />
         {children}
         <PublicWebAnalytics />
+        <SiteTracker />
       </body>
     </html>
   );

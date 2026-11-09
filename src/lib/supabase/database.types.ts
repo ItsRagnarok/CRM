@@ -3267,6 +3267,14 @@ export type Database = {
         Args: { p_today: string }
         Returns: number
       }
+      ef_record_site_view: {
+        Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string }
+        Returns: undefined
+      }
+      ef_site_analytics: {
+        Args: { p_period?: string }
+        Returns: Json
+      }
       invoicing_disconnect: {
         Args: Record<PropertyKey, never>
         Returns: undefined
