@@ -98,7 +98,13 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   }, []);
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
-  useEffect(() => { try { setIgnoreMine(Boolean(localStorage.getItem("ef-no-track"))); } catch { /* storage unavailable */ } }, []);
+  useEffect(() => {
+    // Opening this page once on a computer turns its own visits off by default; "ef-no-track-choice" remembers an explicit choice to count them.
+    try {
+      if (!localStorage.getItem("ef-no-track-choice") && !localStorage.getItem("ef-no-track")) localStorage.setItem("ef-no-track", "1");
+      setIgnoreMine(Boolean(localStorage.getItem("ef-no-track")));
+    } catch { /* storage unavailable */ }
+  }, []);
   useEffect(() => { void load(period); }, [period, load]);
   useEffect(() => {
     const id = setInterval(() => { if (document.visibilityState === "visible") void load(period); }, 10_000);
@@ -112,7 +118,11 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   }, [daily]);
 
   function toggleIgnore() {
-    try { if (ignoreMine) localStorage.removeItem("ef-no-track"); else localStorage.setItem("ef-no-track", "1"); setIgnoreMine(!ignoreMine); } catch { /* storage unavailable */ }
+    try {
+      localStorage.setItem("ef-no-track-choice", "1");
+      if (ignoreMine) localStorage.removeItem("ef-no-track"); else localStorage.setItem("ef-no-track", "1");
+      setIgnoreMine(!ignoreMine);
+    } catch { /* storage unavailable */ }
   }
 
   const dv = data ? delta(data.visitors, data.prev_visitors) : null;
@@ -189,7 +199,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
         </>
       )}
 
-      <label className="flex items-center gap-2 text-[13px] text-muted"><input type="checkbox" checked={ignoreMine} onChange={toggleIgnore} className="h-4 w-4" /> Nu număra vizitele mele de pe acest dispozitiv (ca să nu-ți umfli propriile statistici)</label>
+      <label className="flex items-center gap-2 text-[13px] text-muted"><input type="checkbox" checked={ignoreMine} onChange={toggleIgnore} className="h-4 w-4" /> Nu număra vizitele de pe acest browser (se activează singur când deschizi această pagină; fă-o o dată în fiecare browser pe care îl folosești)</label>
     </div>
   );
 }
