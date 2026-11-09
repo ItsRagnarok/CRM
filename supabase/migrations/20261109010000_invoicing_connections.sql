@@ -1,0 +1,4 @@
+-- Applied via MCP on 2026-11-09. SmartBill/Oblio connection per company; the secret lives encrypted in Vault and is only
+-- readable through invoicing_get_secret() by the company's admin/manager. See src/lib/invoicing.
+-- (Full statement as applied: table invoicing_connections + RLS, invoices.provider/provider_series/provider_number/
+--  provider_synced_at/e_invoice_status/simulated, and the functions invoicing_save_connection, invoicing_get_secret, invoicing_disconnect.)

@@ -1,10 +1,12 @@
-import { Plus, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { StatusBadge } from "@/components/status-badge";
 import { EmptyState } from "@/components/empty-state";
 import Link from "next/link";
-import { createInvoiceForJob, markInvoicePaid, resolveBillingRequest } from "./actions";
+import { markInvoicePaid, resolveBillingRequest, syncInvoicePayments } from "./actions";
+import { InvoiceForm } from "./invoice-form";
+import { PROVIDER_LABEL, loadConnection } from "@/lib/invoicing";
 import { todayInOrgTimeZone } from "@/lib/date";
 
 const STATUS_LABEL: Record<string, string> = { unpaid: "Neplătită", paid: "Plătită", overdue: "Restantă" };
@@ -20,18 +22,20 @@ export default async function FacturarePage() {
 
   const monthStartStr = `${todayInOrgTimeZone().slice(0, 7)}-01`;
 
+  const connection = await loadConnection(supabase, organization.id);
   const [{ data: invoices }, { data: jobs }, { data: billingRequests }] = await Promise.all([
     supabase
       .from("invoices")
-      .select("id, invoice_number, total_amount, status, issued_at, clients(name), jobs(display_number)")
+      .select("id, invoice_number, total_amount, status, issued_at, provider, simulated, e_invoice_status, clients(name), jobs(display_number)")
       .eq("organization_id", organization.id)
       .order("issued_at", { ascending: false }),
     supabase
       .from("jobs")
       .select("id, display_number, title, clients(name)")
       .eq("organization_id", organization.id)
+      .eq("status", "finalizata")
       .order("scheduled_date", { ascending: false })
-      .limit(50),
+      .limit(300),
     supabase
       .from("billing_requests")
       .select("id, job_id, collected_method, collected_amount, note, created_at, jobs(display_number, title, clients(name)), profiles!billing_requests_requested_by_fkey(full_name)")
@@ -55,7 +59,14 @@ export default async function FacturarePage() {
 
   return (
     <div className="flex flex-col gap-5 p-7">
-      <h1 className="text-[17px] font-extrabold text-foreground">Facturare</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-[17px] font-extrabold text-foreground">Facturare{connection ? <span className="ml-2 rounded-full bg-neutral-bg px-2.5 py-1 align-middle text-[11.5px] font-bold text-muted">{PROVIDER_LABEL[connection.provider]}{connection.simulated ? " · demo simulat" : ""}</span> : null}</h1>
+        {connection && !connection.simulated && (
+          <form action={syncInvoicePayments}>
+            <button type="submit" className="rounded-[10px] border border-[#d0d5dd] bg-white px-3.5 py-2 text-[12.5px] font-bold">Sincronizează încasările</button>
+          </form>
+        )}
+      </div>
 
       {billingRequests && billingRequests.length > 0 && (
         <div className="overflow-hidden rounded-[13px] border border-[#fec84b] bg-[#fffaeb]">
@@ -137,6 +148,7 @@ export default async function FacturarePage() {
                         label={STATUS_LABEL[inv.status] ?? inv.status}
                         className={STATUS_STYLE[inv.status] ?? "bg-neutral-bg text-neutral"}
                       />
+                      {inv.provider && <div className="mt-1 text-[11px] text-muted">{PROVIDER_LABEL[inv.provider as "smartbill" | "oblio"]}{inv.simulated ? " (simulat)" : ""}{inv.e_invoice_status ? ` · e-Factura ${inv.e_invoice_status}` : ""}</div>}
                     </td>
                     <td className="px-5 py-3 text-right">
                       {inv.status !== "paid" && (
@@ -163,66 +175,11 @@ export default async function FacturarePage() {
         <div className="rounded-[13px] border border-border bg-white p-5">
           <div className="mb-3.5 text-[14.5px] font-bold text-foreground">Generează factură</div>
           {jobs && jobs.length > 0 ? (
-            <form action={createInvoiceForJob} className="flex flex-col gap-2.5">
-              <select
-                name="jobId"
-                required
-                defaultValue=""
-                className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-              >
-                <option value="" disabled>
-                  Alege o lucrare…
-                </option>
-                {jobs.map((j) => (
-                  <option key={j.id} value={j.id}>
-                    #{j.display_number} — {j.clients?.name ?? "client necunoscut"} · {j.title}
-                  </option>
-                ))}
-              </select>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  name="laborAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Manoperă"
-                  className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-                />
-                <input
-                  name="materialsAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Materiale"
-                  className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-                />
-                <input
-                  name="travelAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Deplasare"
-                  className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-                />
-                <input
-                  name="otherAmount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  placeholder="Altele"
-                  className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
-                />
-              </div>
-              <button
-                type="submit"
-                className="mt-1 flex items-center justify-center gap-1.5 rounded-[10px] bg-electric px-4 py-2.5 text-[13.5px] font-bold text-white"
-              >
-                <Plus className="h-4 w-4" /> Generează factură
-              </button>
-              <p className="mt-1 rounded-[9px] bg-neutral-bg p-2.5 text-[11.5px] leading-relaxed text-muted-2">
-                Pregătit pentru integrare cu soluții externe de facturare/contabilitate (ex. SmartBill, Oblio, FGO).
-              </p>
-            </form>
+            <InvoiceForm
+              providerLabel={connection ? PROVIDER_LABEL[connection.provider] : null}
+              simulated={Boolean(connection?.simulated)}
+              jobs={jobs.map((j) => ({ id: j.id, label: `#${j.display_number} — ${j.clients?.name ?? "client necunoscut"} · ${j.title}` }))}
+            />
           ) : (
             <p className="text-[13px] text-muted">Creează mai întâi o lucrare pentru a putea emite o factură.</p>
           )}

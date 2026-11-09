@@ -12,6 +12,8 @@ import { PvSettingsForm } from "../fotovoltaic/pv-forms";
 import { DomainPicker } from "@/components/domain-picker";
 import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
+import { InvoicingForm } from "./invoicing-form";
+import { loadConnection } from "@/lib/invoicing";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -41,6 +43,7 @@ export default async function SetariPage({
   const selectedJobType = (jt as JobType) || null;
   const { organization, profile, readOnly } = await requireSessionContext();
   const supabase = await createClient();
+  const invoicingConnection = tab === "integrari" ? await loadConnection(supabase, organization.id) : null;
 
   const monthStartStr = `${new Date().toISOString().slice(0, 7)}-01`;
 
@@ -210,12 +213,13 @@ export default async function SetariPage({
               </div>
             )}
 
-            {(tab === "notificari" || tab === "integrari") && (
+            {tab === "notificari" && (
               <div className="rounded-[13px] border border-dashed border-border bg-white p-6 text-[13.5px] text-muted">
-                {tab === "notificari" && "Preferințe de notificare per utilizator — în curând."}
-                {tab === "integrari" && "Integrări cu SmartBill, Oblio, FGO și altele — în curând."}
+                Preferințe de notificare per utilizator — în curând.
               </div>
             )}
+
+            {tab === "integrari" && <InvoicingForm initial={invoicingConnection} canEdit={!readOnly && profile.role === "admin"} />}
 
             {tab === "gps" && org && (
               <div className="rounded-[13px] border border-border bg-white p-[22px]">

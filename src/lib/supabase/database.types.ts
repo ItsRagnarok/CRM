@@ -1199,12 +1199,58 @@ export type Database = {
           },
         ]
       }
+      invoicing_connections: {
+        Row: {
+          account_email: string
+          created_at: string
+          default_tax_percent: number
+          due_days: number
+          organization_id: string
+          provider: string
+          secret_id: string | null
+          send_email: boolean
+          series: string
+          simulated: boolean
+          updated_at: string
+          vat_code: string
+        }
+        Insert: {
+          account_email: string
+          created_at?: string
+          default_tax_percent?: number
+          due_days?: number
+          organization_id: string
+          provider: string
+          secret_id?: string | null
+          send_email?: boolean
+          series: string
+          simulated?: boolean
+          updated_at?: string
+          vat_code: string
+        }
+        Update: {
+          account_email?: string
+          created_at?: string
+          default_tax_percent?: number
+          due_days?: number
+          organization_id?: string
+          provider?: string
+          secret_id?: string | null
+          send_email?: boolean
+          series?: string
+          simulated?: boolean
+          updated_at?: string
+          vat_code?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           client_id: string
           created_at: string
           created_by: string | null
           due_date: string | null
+          e_invoice_status: string | null
           id: string
           invoice_number: string
           issued_at: string
@@ -1213,6 +1259,11 @@ export type Database = {
           materials_amount: number
           organization_id: string
           other_amount: number
+          provider: string | null
+          provider_number: string | null
+          provider_series: string | null
+          provider_synced_at: string | null
+          simulated: boolean
           status: string
           total_amount: number | null
           travel_amount: number
@@ -1222,6 +1273,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           due_date?: string | null
+          e_invoice_status?: string | null
           id?: string
           invoice_number: string
           issued_at?: string
@@ -1230,6 +1282,11 @@ export type Database = {
           materials_amount?: number
           organization_id: string
           other_amount?: number
+          provider?: string | null
+          provider_number?: string | null
+          provider_series?: string | null
+          provider_synced_at?: string | null
+          simulated?: boolean
           status?: string
           total_amount?: number | null
           travel_amount?: number
@@ -1239,6 +1296,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           due_date?: string | null
+          e_invoice_status?: string | null
           id?: string
           invoice_number?: string
           issued_at?: string
@@ -1247,6 +1305,11 @@ export type Database = {
           materials_amount?: number
           organization_id?: string
           other_amount?: number
+          provider?: string | null
+          provider_number?: string | null
+          provider_series?: string | null
+          provider_synced_at?: string | null
+          simulated?: boolean
           status?: string
           total_amount?: number | null
           travel_amount?: number
@@ -3203,6 +3266,18 @@ export type Database = {
       gas_overdue_count: {
         Args: { p_today: string }
         Returns: number
+      }
+      invoicing_disconnect: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      invoicing_get_secret: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      invoicing_save_connection: {
+        Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
+        Returns: undefined
       }
       money_at_risk: {
         Args: { p_today: string }

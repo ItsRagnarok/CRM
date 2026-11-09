@@ -38,6 +38,7 @@
   ],
   "exclude": [
     "node_modules",
-    "android-app"
+    "android-app",
+    "scripts"
   ]
 }
