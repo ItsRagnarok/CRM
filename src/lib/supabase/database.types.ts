@@ -3271,6 +3271,22 @@ export type Database = {
         Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string }
         Returns: undefined
       }
+      ef_site_exclusion_add: {
+        Args: { p_hash: string; p_label: string }
+        Returns: undefined
+      }
+      ef_site_exclusion_remove: {
+        Args: { p_hash: string }
+        Returns: undefined
+      }
+      ef_site_exclusions_list: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      ef_site_ip_excluded: {
+        Args: { p_hash: string }
+        Returns: boolean
+      }
       ef_site_analytics: {
         Args: { p_period?: string }
         Returns: Json

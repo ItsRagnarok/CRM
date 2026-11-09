@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { ipHash } from "@/lib/ip-key";
 
 // Public page-view beacon. No cookies and no stored IP: the visitor id is a daily-rotating hash, so the same person
 // cannot be followed across days. Bots and "Do Not Track" visitors are not counted.
@@ -34,6 +35,8 @@ export async function POST(request: NextRequest) {
   const device = /ipad|tablet/i.test(ua) ? "tablet" : /mobi|android|iphone/i.test(ua) ? "mobile" : "desktop";
 
   const db = await createClient();
+  const excluded = ip ? ipHash(ip) : null;
+  if (excluded && (await db.rpc("ef_site_ip_excluded", { p_hash: excluded })).data === true) return quiet();
   await db.rpc("ef_record_site_view", { p_path: path, p_referrer_host: referrerHost, p_utm_source: utm, p_country: request.headers.get("x-vercel-ip-country") ?? "", p_device: device, p_visitor: visitor });
   return quiet();
 }

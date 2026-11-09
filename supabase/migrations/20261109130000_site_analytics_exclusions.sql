@@ -1,0 +1,2 @@
+-- Applied via MCP on 2026-11-09. IP exclusions for site analytics, stored as one-way hashes (see src/lib/ip-key.ts).
+-- site_analytics_exclusions (RLS on, no policies) + ef_site_ip_excluded (anon, boolean only), ef_site_exclusions_list/add/remove (platform admins).
