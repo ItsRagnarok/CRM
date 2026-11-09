@@ -148,3 +148,11 @@ html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[
 
 /* Tema întunecată: cardurile de domenii/module (selectate) foloseau variante Tailwind `has-[:checked]:` care nu erau acoperite și rămâneau deschise, cu text deschis pe ele. */
 html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"]:has(:checked) { background-color: #242d3c; border-color: var(--color-purple, #8b7cf6); }
+
+/* Mail în Super Admin pe telefon: fără blocarea pe înălțimea ecranului, ca lista de mesaje să aibă loc și pagina să se poată derula. */
+@media (max-width: 850px) {
+  html:has([data-mail-viewport="true"]),
+  body:has(> [data-mail-viewport="true"]) { overflow: auto; }
+  [data-mail-viewport="true"] { height: auto !important; min-height: 100dvh !important; overflow: visible !important; }
+  [data-mail-viewport="true"] > main { overflow: visible !important; }
+}

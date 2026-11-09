@@ -18,3 +18,14 @@
 @media(max-width:850px){.mail{padding:12px}.heading{margin-bottom:12px;gap:10px}.heading h1{font-size:22px}.heading p{font-size:11px}.workspace,.accountsView{min-height:0;grid-template-rows:auto minmax(0,1fr)}.sidebar{max-height:150px;padding:8px 12px}.accountList{flex:none;min-height:56px;max-height:65px;overflow-x:auto;overflow-y:hidden;margin-bottom:5px}.folders{flex-shrink:0;max-height:66px}.mobileReading{grid-template-rows:minmax(0,1fr)}.messageList{min-height:0;max-height:none}.accountCards{max-height:110px;gap:6px;margin-bottom:10px}.folderBar{gap:4px;margin-bottom:9px}.footer{font-size:9px;gap:4px;max-height:48px}.footer>span:last-child{max-width:100%}.readerToolbar{padding-top:10px;padding-bottom:10px}.composerDialog{height:94dvh;max-height:94dvh}.optionGrid{grid-template-columns:1fr}.composerStatus{padding-left:16px;padding-right:16px}}
 @media(max-height:600px){.mail{padding-top:10px;padding-bottom:6px}.heading{margin-bottom:8px}.heading p,.permission{display:none}.accountCards{max-height:75px}.folderBar{margin-bottom:8px}.footer{max-height:30px;padding-top:5px;padding-bottom:2px}.search{padding-top:6px;padding-bottom:6px}}
 @media(max-width:850px){.accountsView{grid-template-rows:minmax(0,1fr)}}
+
+/* Telefon: pagina curge normal (se derulează), nu mai e blocată pe înălțimea ecranului. Altfel antetul ocupa tot ecranul și lista de mesaje rămânea cu un singur rând vizibil. */
+@media(max-width:850px){
+.mail{height:auto;overflow:visible}
+.workspace,.accountsView,.mobileReading{flex:none;min-height:0;grid-template-rows:auto}
+.messageList{min-height:65dvh;overflow:visible}
+.messageRows{overflow:visible;max-height:none}
+.reader{overflow:visible;min-height:65dvh}
+.accountCards{max-height:none}
+.footer{max-height:none}
+}

@@ -23,12 +23,12 @@ export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0 }
             Super Admin
           </span>
         </div>
-        <nav className="flex flex-wrap items-center gap-1" aria-label="Administrare platformă">
+        <nav className="flex w-full min-w-0 flex-nowrap items-center gap-1 overflow-x-auto md:w-auto md:flex-wrap md:overflow-visible" aria-label="Administrare platformă">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold text-[#c9c3e0] transition-colors hover:bg-graphite-active hover:text-white"
+              className="shrink-0 whitespace-nowrap rounded-[8px] px-3 py-1.5 text-[13px] font-semibold text-[#c9c3e0] transition-colors hover:bg-graphite-active hover:text-white"
             >
               {item.label}
               {item.href === "/admin/programari" && upcomingBookings > 0 && (
