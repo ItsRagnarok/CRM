@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Clock } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -7,11 +8,13 @@ import { EmptyScreen, ScreenHeader } from "@/components/mobile/ui";
 
 const DAY_NAMES = ["luni", "marți", "miercuri", "joi", "vineri", "sâmbătă", "duminică"];
 
-export default async function MobileTimesheetPage() {
+export default async function MobileTimesheetPage({ searchParams }: { searchParams: Promise<{ sapt?: string }> }) {
+  const { sapt } = await searchParams;
+  const offset = Math.max(-52, Math.min(0, Number.parseInt(sapt ?? "0", 10) || 0));
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const today = todayInOrgTimeZone();
-  const weekStart = startOfWeek(new Date(`${today}T00:00:00Z`));
+  const weekStart = addDays(startOfWeek(new Date(`${today}T00:00:00Z`)), offset * 7);
   const weekEnd = addDays(weekStart, 7);
 
   const { data: entries } = await supabase
@@ -29,16 +32,24 @@ export default async function MobileTimesheetPage() {
   // An open work_start (no matching work_end yet) = clocked in right now.
   const sorted = [...rows].sort((a, b) => a.occurred_at.localeCompare(b.occurred_at));
   const lastWork = [...sorted].reverse().find((e) => e.event_type === "work_start" || e.event_type === "work_end");
-  const workingSince = lastWork?.event_type === "work_start" ? lastWork.occurred_at : null;
+  const workingSince = offset === 0 && lastWork?.event_type === "work_start" ? lastWork.occurred_at : null;
 
   const target = organization.standard_hours_per_day * (organization.standard_workdays?.length ?? 5);
   const pct = Math.min(100, Math.round((weekTotal / Math.max(1, target)) * 100));
   const days = Array.from({ length: 7 }, (_, i) => toISODate(addDays(weekStart, i))).filter((d) => d <= today).reverse();
 
+  const fmt = new Intl.DateTimeFormat("ro-RO", { day: "numeric", month: "short", timeZone: "UTC" });
+  const weekLabel = `${fmt.format(weekStart)} – ${fmt.format(addDays(weekStart, 6))}`;
+
   return (
     <div className="flex h-full flex-col">
-      <ScreenHeader title="Pontaj" subtitle="Săptămâna curentă" back="/mobil/meniu" />
+      <ScreenHeader title="Pontaj" subtitle={offset === 0 ? "Săptămâna curentă" : `${weekLabel}`} back="/mobil/meniu" />
       <div className="m-bd">
+        <div className="m-r" style={{ justifyContent: "space-between", gap: 8 }}>
+          <Link href={`/mobil/pontaj?sapt=${offset - 1}`} className="m-pl" aria-label="Săptămâna anterioară">← Înapoi</Link>
+          <span className="m-mu m-sm">{weekLabel}</span>
+          {offset < 0 ? <Link href={`/mobil/pontaj?sapt=${offset + 1}`} className="m-pl" aria-label="Săptămâna următoare">Înainte →</Link> : <span style={{ width: 70 }} />}
+        </div>
         <div className="m-cd" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, padding: 18 }}>
           <div
             style={{
