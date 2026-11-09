@@ -145,3 +145,6 @@ html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[
 
 /* Harta: selectorul de straturi stă în stânga, sub butoanele de zoom și recentrare, ca să nu fie acoperit de panoul echipei. */
 .leaflet-top.leaflet-left .leaflet-control-layers { margin-top: 48px; }
+
+/* Tema întunecată: cardurile de domenii/module (selectate) foloseau variante Tailwind `has-[:checked]:` care nu erau acoperite și rămâneau deschise, cu text deschis pe ele. */
+html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"]:has(:checked) { background-color: #242d3c; border-color: var(--color-purple, #8b7cf6); }
