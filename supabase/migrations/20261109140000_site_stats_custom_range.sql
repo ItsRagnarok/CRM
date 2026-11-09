@@ -1,0 +1,2 @@
+-- Applied via MCP on 2026-11-09. ef_site_stats(p_period, p_from, p_to): periods 24h, today, yesterday, 7d, 30d and custom (inclusive local dates, max 365 days).
+-- Hourly buckets for spans up to 48 h, daily above; the previous period of the same length is used for the comparison.

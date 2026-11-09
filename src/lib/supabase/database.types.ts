@@ -3287,6 +3287,10 @@ export type Database = {
         Args: { p_hash: string }
         Returns: boolean
       }
+      ef_site_stats: {
+        Args: { p_period?: string; p_from?: string; p_to?: string }
+        Returns: Json
+      }
       ef_site_analytics: {
         Args: { p_period?: string }
         Returns: Json

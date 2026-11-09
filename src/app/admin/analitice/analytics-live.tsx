@@ -4,15 +4,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export type SiteAnalytics = {
   online: number; last30: { t: string; views: number }[];
-  visitors: number; views: number; bounce: number | null; prev_visitors: number; prev_views: number;
+  visitors: number; views: number; bounce: number | null; prev_visitors: number; prev_views: number; daily: boolean; from: string; to: string;
   series: { t: string; views: number; visitors: number }[];
   pages: { path: string; visitors: number; views: number }[];
   referrers: { name: string; visitors: number }[]; sources: { name: string; visitors: number }[];
   countries: { code: string; visitors: number }[]; devices: { name: string; visitors: number }[];
   recent: { t: string; path: string; country: string | null; device: string; referrer_host: string | null }[];
 };
-type Period = "24h" | "7d" | "30d";
-const PERIODS: { id: Period; label: string }[] = [{ id: "24h", label: "Ultimele 24 de ore" }, { id: "7d", label: "7 zile" }, { id: "30d", label: "30 de zile" }];
+type Period = "24h" | "today" | "yesterday" | "7d" | "30d" | "custom";
+const PERIODS: { id: Period; label: string }[] = [
+  { id: "24h", label: "Ultimele 24 de ore" }, { id: "today", label: "Astăzi" }, { id: "yesterday", label: "Ieri" },
+  { id: "7d", label: "Ultimele 7 zile" }, { id: "30d", label: "Ultimele 30 de zile" }, { id: "custom", label: "Interval personalizat…" },
+];
+const dayIso = (d: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Bucharest" }).format(d);
 const DEVICE: Record<string, string> = { desktop: "Calculator", mobile: "Telefon", tablet: "Tabletă" };
 const nf = new Intl.NumberFormat("ro-RO");
 
@@ -83,18 +87,22 @@ function Bars({ rows, empty }: { rows: { label: string; value: number }[]; empty
 export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   const [period, setPeriod] = useState<Period>("24h");
   const [data, setData] = useState<SiteAnalytics | null>(initial);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
+  const [from, setFrom] = useState(() => dayIso(new Date(Date.now() - 6 * 86_400_000)));
+  const [to, setTo] = useState(() => dayIso(new Date()));
+  const [range, setRange] = useState({ from: "", to: "" });
   const [now, setNow] = useState(() => Date.now());
   const [ignoreMine, setIgnoreMine] = useState(false);
   const alive = useRef(true);
 
-  const load = useCallback(async (p: Period) => {
+  const load = useCallback(async (p: Period, r: { from: string; to: string }) => {
+    if (p === "custom" && !(r.from && r.to)) return;
     try {
-      const res = await fetch(`/api/admin/analytics?period=${p}`, { cache: "no-store" });
-      if (!res.ok) throw new Error("fetch");
-      const json = (await res.json()) as SiteAnalytics;
-      if (alive.current) { setData(json); setError(false); setNow(Date.now()); }
-    } catch { if (alive.current) setError(true); }
+      const res = await fetch(`/api/admin/analytics?period=${p}${p === "custom" ? `&from=${r.from}&to=${r.to}` : ""}`, { cache: "no-store" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(typeof json?.error === "string" ? json.error : "fetch");
+      if (alive.current) { setData(json as SiteAnalytics); setError(""); setNow(Date.now()); }
+    } catch (e) { if (alive.current) setError(e instanceof Error && e.message !== "fetch" && e.message !== "Failed to fetch" ? e.message : "Nu am putut actualiza datele. Mai încerc automat."); }
   }, []);
 
   useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []);
@@ -105,13 +113,13 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
       setIgnoreMine(Boolean(localStorage.getItem("ef-no-track")));
     } catch { /* storage unavailable */ }
   }, []);
-  useEffect(() => { void load(period); }, [period, load]);
+  useEffect(() => { void load(period, range); }, [period, range, load]);
   useEffect(() => {
-    const id = setInterval(() => { if (document.visibilityState === "visible") void load(period); }, 10_000);
+    const id = setInterval(() => { if (document.visibilityState === "visible") void load(period, range); }, 10_000);
     return () => clearInterval(id);
-  }, [period, load]);
+  }, [period, range, load]);
 
-  const daily = period !== "24h";
+  const daily = data?.daily ?? false;
   const fmtLabel = useMemo(() => {
     const f = daily ? new Intl.DateTimeFormat("ro-RO", { day: "2-digit", month: "2-digit", timeZone: "Europe/Bucharest" }) : new Intl.DateTimeFormat("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" });
     return (iso: string) => f.format(new Date(iso));
@@ -141,13 +149,23 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
             <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" /></span>
             {data ? `${data.online} ${data.online === 1 ? "vizitator online" : "vizitatori online"}` : "Se încarcă…"}
           </span>
-          <select aria-label="Perioadă" value={period} onChange={(e) => setPeriod(e.target.value as Period)} className="rounded-lg border border-border bg-white p-2 text-[13px] font-semibold">
+          <select aria-label="Perioadă" value={period} onChange={(e) => { const next = e.target.value as Period; setPeriod(next); if (next === "custom") setRange({ from, to }); }} className="rounded-lg border border-border bg-white p-2 text-[13px] font-semibold">
             {PERIODS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
+          {period === "custom" && (
+            <form className="flex flex-wrap items-center gap-2" onSubmit={(e) => { e.preventDefault(); setRange({ from, to }); }}>
+              <label className="sr-only" htmlFor="an-from">De la</label>
+              <input id="an-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} className="rounded-lg border border-border bg-white p-2 text-[13px]" required />
+              <span className="text-[13px] text-muted">–</span>
+              <label className="sr-only" htmlFor="an-to">Până la</label>
+              <input id="an-to" type="date" value={to} min={from || undefined} max={dayIso(new Date())} onChange={(e) => setTo(e.target.value)} className="rounded-lg border border-border bg-white p-2 text-[13px]" required />
+              <button className="rounded-lg bg-purple px-3.5 py-2 text-[13px] font-bold text-white">Aplică</button>
+            </form>
+          )}
         </div>
       </div>
 
-      {error && <p role="alert" className="rounded-lg bg-danger-bg p-3 text-sm text-danger">Nu am putut actualiza datele. Mai încerc automat.</p>}
+      {error && <p role="alert" className="rounded-lg bg-danger-bg p-3 text-sm text-danger">{error}</p>}
 
       {!data ? <p className="text-muted">Se încarcă analiticele…</p> : (
         <>
@@ -167,7 +185,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
           </div>
 
           <div className="rounded-2xl border border-border bg-white p-5">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h2 className="text-[15px] font-bold">Vizitatori {daily ? "pe zile" : "pe ore"}</h2><span className="text-[12px] text-muted">oră locală România</span></div>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2"><h2 className="text-[15px] font-bold">Vizitatori {daily ? "pe zile" : "pe ore"}</h2><span className="text-[12px] text-muted">{new Intl.DateTimeFormat("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Bucharest" }).format(new Date(data.from))} – {new Intl.DateTimeFormat("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Europe/Bucharest" }).format(new Date(data.to))} · oră locală România</span></div>
             <Area points={data.series.map((s) => s.visitors)} labels={data.series.map((s) => fmtLabel(s.t))} daily={daily} />
           </div>
 
