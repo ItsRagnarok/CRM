@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const SITE_URL = "https://www.electrofield.ro";
 export const SITE_DESCRIPTION =
-  "CRM pentru firme de instalații și echipe de teren din România. Gestionează lucrări, clienți, programări, pontaj, materiale și rapoarte cu ElectroField.";
+  "ElectroField conectează biroul cu echipele de teren. Coordonează lucrările din platforma web și primește actualizări din aplicația pentru tehnicieni.";
 
 export function publicPageMetadata(title: string, description: string, path: string): Metadata {
   const url = `${SITE_URL}${path}`;

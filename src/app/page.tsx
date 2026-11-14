@@ -4,7 +4,7 @@ import { MarketingLanding } from "@/components/marketing/marketing-landing";
 import { publicPageMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
 
 export const metadata = publicPageMetadata(
-  "CRM pentru firme de instalații și echipe de teren | ElectroField",
+  "ElectroField | Software pentru firme de instalații",
   SITE_DESCRIPTION,
   "/",
 );
@@ -31,7 +31,7 @@ const structuredData = {
       operatingSystem: "Web, Android",
       inLanguage: "ro-RO",
       publisher: { "@id": `${SITE_URL}/#organization` },
-      featureList: ["Gestionare lucrări", "Programări", "Clienți", "Echipe de teren", "Pontaj", "Materiale", "Rapoarte"],
+      featureList: ["Dispecerat web", "Aplicație mobilă pentru tehnicieni", "Gestionare lucrări", "Programări", "Pontaj", "Materiale", "Rapoarte"],
     },
   ],
 };

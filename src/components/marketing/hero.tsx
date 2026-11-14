@@ -55,19 +55,16 @@ export function Hero() {
         <div>
           <span className={`${s.heroKicker} mk-reveal-1`}>
             <span className={s.dot} />
-            CRM pentru firme de instalații din România
+            Platformă pentru firme de instalații
           </span>
           <h1 className={`${s.heroTitle} ${s.disp} mk-reveal-2`}>
-            Lucrări.
+            Din birou.
             <br />
-            Echipe de teren.
-            <br />
-            <span className={s.lime}>Sub control.</span>
+            <span className={s.lime}>Direct în teren.</span>
           </h1>
           <p className={`${s.heroSub} mk-reveal-3`}>
-            Gestionează lucrările și echipele de teren într-un singur CRM: clienți,
-            programări, pontaj, materiale și rapoarte. ElectroField conectează biroul
-            cu tehnicienii pentru firme de instalații electrice, fotovoltaice și service din România.
+            Administratorii și dispecerii planifică lucrările, le repartizează și urmăresc progresul în platforma web.
+            Tehnicienii văd lucrările alocate și trimit actualizări și rapoarte din aplicația mobilă dedicată.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
             <a href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
