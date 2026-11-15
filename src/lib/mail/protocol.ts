@@ -4,7 +4,7 @@ import nodemailer from "nodemailer";
 import MailComposer from "nodemailer/lib/mail-composer";
 import { simpleParser } from "mailparser";
 import { MailError, hostname, isPublicAddress, composeOptions } from "./validation";
-import { sanitizeEmailHtml } from "./html";
+import { sanitizeEmailHtml, sanitizeIncomingHtml } from "./html";
 import type { ComposeOptions, MailCredentials, MailFolder, MailMessage, MailReference } from "./types";
 
 const MAX_MESSAGE = 25 * 1024 * 1024;
@@ -112,9 +112,20 @@ export async function readMailboxMessage(settings: MailCredentials, ref: MailRef
       try { options = composeOptions(JSON.parse(Buffer.from(stored, "base64").toString("utf8"))); } catch { /* Foreign drafts have no application preferences. */ }
     }
     const addresses = (value: typeof parsed.to) => (Array.isArray(value) ? value : value ? [value] : []).flatMap((a) => a.value).map((a) => a.address).filter(Boolean).join(", ");
+    const inlineImages = new Map<string, string>();
+    let remaining = 1_000_000;
+    if (parsed.html) {
+      for (const attachment of parsed.attachments) {
+        const size = attachment.content.length;
+        if (!attachment.cid || size > remaining || !/^image\/(png|jpeg|gif|webp)$/i.test(attachment.contentType)) continue;
+        inlineImages.set(attachment.cid, `data:${attachment.contentType};base64,${attachment.content.toString("base64")}`);
+        remaining -= size;
+      }
+    }
     return { ...summary(row, ref.accountId, ref.folder, ref.uidValidity), body: (parsed.text || (ref.folder === "draft" ? "" : "Mesajul nu conține text afișabil.")).slice(0, 300_000), unread: false,
       to: addresses(parsed.to), cc: addresses(parsed.cc), bcc: ref.folder === "draft" || ref.folder === "sent" ? addresses(parsed.bcc) : "",
       bodyHtml: ref.folder === "draft" && parsed.html ? sanitizeEmailHtml(parsed.html.slice(0, 200_000)).slice(0, 200_000) : "",
+      readerHtml: parsed.html && parsed.html.length <= 500_000 ? sanitizeIncomingHtml(parsed.html, inlineImages) : undefined,
       composeOptions: { ...options, replyTo: addresses(parsed.replyTo), followUpTo: String(parsed.headers.get("mail-followup-to") || "") },
       references: parsed.references ? (Array.isArray(parsed.references) ? parsed.references : [parsed.references]).slice(-20) : [],
       attachments: parsed.attachments.map((a, index) => ({ index, name: a.filename || "Atașament", size: a.size })) };

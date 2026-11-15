@@ -28,7 +28,7 @@ export type MailMessage = MailReference & {
   id: string; name: string; address: string; to: string; replyTo: string;
   subject: string; timestamp: string; unread: boolean; body?: string;
   messageId?: string; references?: string[];
-  cc?: string; bcc?: string; bodyHtml?: string; composeOptions?: ComposeOptions;
+  cc?: string; bcc?: string; bodyHtml?: string; readerHtml?: string; composeOptions?: ComposeOptions;
   attachments?: { index: number; name: string; size: number }[];
 };
 export type MailResult<T> = { data: T; error?: never } | { error: string; data?: never };
