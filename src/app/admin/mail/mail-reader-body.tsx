@@ -3,10 +3,8 @@
 import { useCallback, useState } from "react";
 import s from "./mail.module.css";
 
-export function MailReaderBody({ html, text }: { html?: string; text: string }) {
-  const [showImages, setShowImages] = useState(false);
+export function MailReaderBody({ html, text, showImages }: { html?: string; text: string; showImages: boolean }) {
   const [height, setHeight] = useState(160);
-  const hasRemoteImages = /<img\b[^>]*\bsrc="https:\/\//i.test(html ?? "");
   const trackHeight = useCallback((frame: HTMLIFrameElement | null) => {
     if (!frame) return;
     let observer: ResizeObserver | undefined;
@@ -37,7 +35,6 @@ export function MailReaderBody({ html, text }: { html?: string; text: string }) 
 
   return (
     <div className={s.formattedBody}>
-      {hasRemoteImages && !showImages && <button type="button" className={s.button} onClick={() => setShowImages(true)}>Afișează imaginile externe</button>}
       <iframe title="Conținutul emailului" ref={trackHeight}
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer" srcDoc={document} style={{ height }}
