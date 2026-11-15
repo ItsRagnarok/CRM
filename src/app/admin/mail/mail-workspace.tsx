@@ -24,6 +24,7 @@ export function MailWorkspace({ initialAccounts, ownerId }: { initialAccounts: M
   const [query, setQuery] = useState("");
   const [messages, setMessages] = useState<MailMessage[]>([]);
   const [selected, setSelected] = useState<MailMessage | null>(null);
+  const [showImages, setShowImages] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
@@ -68,6 +69,7 @@ export function MailWorkspace({ initialAccounts, ownerId }: { initialAccounts: M
   function changeView(next: MailView) { setView(next); try { localStorage.setItem("ef-mail-view", next); } catch {} }
   function updateAccounts(rows: MailAccount[]) { setAccounts(rows); setCounts({}); if (accountId !== "all" && !rows.some((a) => a.id === accountId)) setAccountId("all"); setPage(0); }
   async function openMessage(message: MailMessage) {
+    setShowImages(false);
     const version = ++readVersion.current;
     setSelected(message); setReading(true); setNotice("");
     try {
@@ -128,10 +130,10 @@ export function MailWorkspace({ initialAccounts, ownerId }: { initialAccounts: M
         </div>
       </section>
       <section className={s.reader} aria-label="Citire mesaj" aria-busy={reading}>{!selected || !selectedAccount ? <div className={s.emptyReader}><MailOpen size={38} /><h2>{accounts.length ? "Alege un mesaj" : "Corespondența ta, organizată"}</h2><p>{accounts.length ? "Citește și răspunde direct de pe adresa care a primit mesajul." : "Inbox comun sau câte o adresă. Adaugă căsuțele tale Hostico pentru a începe."}</p>{!accounts.length && <button className={`${s.button} ${s.primary}`} onClick={() => setShowAccounts(true)}>Conectează o adresă</button>}</div> : <>
-        <div className={s.readerToolbar}><div><button className={`${s.iconButton} ${s.backButton}`} aria-label="Înapoi la mesaje" onClick={() => { setSelected(null); readVersion.current++; setReading(false); }}><ArrowLeft size={18} /></button><button className={s.button} disabled={!messageReady || working} onClick={() => compose(selected.folder === "draft" ? "edit" : "reply")}><Reply size={16} />{selected.folder === "draft" ? "Editează ciorna" : "Răspunde"}</button></div><div><button className={s.iconButton} disabled={!messageReady || working} aria-label="Redirecționează textul mesajului" onClick={() => compose("forward")}><Forward size={17} /></button><button className={s.iconButton} disabled={working || reading} aria-label="Marchează ca necitit" onClick={() => updateMessage("unread")}><Mail size={17} /></button><button className={s.iconButton} disabled={working || reading || folder === "trash"} aria-label="Mută în Coș" onClick={() => updateMessage("trash")}><Trash2 size={17} /></button></div></div>
+        <div className={s.readerToolbar}><div><button className={`${s.iconButton} ${s.backButton}`} aria-label="Înapoi la mesaje" onClick={() => { setSelected(null); readVersion.current++; setReading(false); }}><ArrowLeft size={18} /></button><button className={s.button} disabled={!messageReady || working} onClick={() => compose(selected.folder === "draft" ? "edit" : "reply")}><Reply size={16} />{selected.folder === "draft" ? "Editează ciorna" : "Răspunde"}</button>{!reading && !showImages && /<img\b[^>]*\bsrc="https:\/\//i.test(selected.readerHtml ?? "") && <button type="button" className={s.button} onClick={() => setShowImages(true)}>Afișează imaginile</button>}</div><div><button className={s.iconButton} disabled={!messageReady || working} aria-label="Redirecționează textul mesajului" onClick={() => compose("forward")}><Forward size={17} /></button><button className={s.iconButton} disabled={working || reading} aria-label="Marchează ca necitit" onClick={() => updateMessage("unread")}><Mail size={17} /></button><button className={s.iconButton} disabled={working || reading || folder === "trash"} aria-label="Mută în Coș" onClick={() => updateMessage("trash")}><Trash2 size={17} /></button></div></div>
         <h2>{selected.subject}</h2><div className={s.sender}><span className={s.senderAvatar}>{initials(selected.name)}</span><div><strong>{folder === "sent" || folder === "draft" ? selectedAccount.name : selected.name}</strong><span>{folder === "sent" || folder === "draft" ? selectedAccount.address : selected.address}</span><span>Către: {selected.to}</span></div><time dateTime={selected.timestamp}>{when(selected.timestamp, true)}</time></div>
         {reading ? <div className={s.body}>Se încarcă mesajul…</div> : (
-          <MailReaderBody key={selected.id} html={selected.readerHtml} text={selected.body ?? "Mesajul nu a fost încărcat."} />
+          <MailReaderBody key={selected.id} html={selected.readerHtml} text={selected.body ?? "Mesajul nu a fost încărcat."} showImages={showImages} />
         )}
         {selected.attachments?.map((a) => <a key={a.index} className={s.attachment} href={`/api/admin/mail/attachment?${new URLSearchParams({ accountId: selected.accountId, folder: selected.folder, uid: String(selected.uid), uidValidity: selected.uidValidity, index: String(a.index) })}`}><Download size={21} /><div><strong>{a.name}</strong><span>{Math.ceil(a.size / 1024)} KB · descarcă</span></div></a>)}
         <button className={s.replyBox} disabled={!messageReady || working} onClick={() => compose(selected.folder === "draft" ? "edit" : "reply")}><Reply size={17} />{selected.folder === "draft" ? "Continuă ciorna" : `Răspunde de pe ${selectedAccount.address}`}</button>
