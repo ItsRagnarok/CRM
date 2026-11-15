@@ -31,3 +31,7 @@
 }
 .formattedBody { padding: 16px 0; }
 .formattedBody > iframe { display: block; width: 100%; border: 0; border-radius: 8px; background: #fff; }
+@media (max-width: 520px) {
+  .readerToolbar { flex-wrap: wrap; }
+  .readerToolbar > div { flex-wrap: wrap; }
+}
