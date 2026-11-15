@@ -9,7 +9,7 @@ import ts from "typescript";
 import nodemailer from "nodemailer";
 import { ImapFlow } from "imapflow";
 import { validateCredentials, validateSettings, hostname, isPublicAddress, composeInput, composeOptions, uploadManifest, reference, safeMailError } from "../src/lib/mail/validation.ts";
-import { sanitizeEmailHtml } from "../src/lib/mail/html.ts";
+import { sanitizeEmailHtml, sanitizeIncomingHtml } from "../src/lib/mail/html.ts";
 import { simpleParser } from "mailparser";
 
 // Transpile the actual protocol module for Node's runner without changing the
@@ -30,6 +30,22 @@ after(async () => {
 });
 const settings = { name: "Test", address: "contact@example.com", username: "contact@example.com", password: " secret with spaces ", outgoingPassword: "smtp-secret", incomingHost: "mail.example.com", incomingPort: 993, incomingSecurity: "tls", outgoingHost: "mail.example.com", outgoingPort: 465, outgoingSecurity: "tls", outgoingUsername: "contact@example.com", separateSmtp: true };
 const ref = { accountId: "11111111-1111-4111-8111-111111111111", folder: "inbox", uid: 9, uidValidity: "123" };
+
+test("received HTML keeps email layout, safe links and attached images", () => {
+  const inline = "data:image/png;base64,AA==";
+  const html = sanitizeIncomingHtml(
+    '<body style="background-color:#f5f5f5"><table><tr><td style="padding:16px;color:#334455;background-image:url(https://example.com)">' +
+    '<a href="https://example.com/path">Confirmă</a><img src="cid:logo">' +
+    '<img src="https://example.net/logo.png"><img src="data:image/png;base64,BB=="><img src="/private.png">' +
+    '<a href="/admin">Intern</a><form>Formular</form></td></tr></table></body>',
+    new Map([["logo", inline]]),
+  );
+  assert.match(html, /<table><tr><td style="padding:16px;color:#334455">/);
+  assert.match(html, /href="https:\/\/example.com\/path" target="_blank" rel="noopener noreferrer"/);
+  assert.ok(html.includes(inline));
+  assert.match(html, /src="https:\/\/example.net\/logo.png"/);
+  assert.doesNotMatch(html, /background-image|BB==|private\.png|href="\/admin"|<form/);
+});
 
 test("manual settings accept secured ports, preserve passwords and safely reuse editing credentials", () => {
   assert.equal(validateCredentials(settings).password, settings.password);

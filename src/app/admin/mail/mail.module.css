@@ -29,3 +29,6 @@
 .accountCards{max-height:none}
 .footer{max-height:none}
 }
+.formattedBody { display: grid; gap: 10px; padding: 16px 0; }
+.formattedBody > button { justify-self: start; }
+.formattedBody > iframe { display: block; width: 100%; border: 0; border-radius: 8px; background: #fff; }
