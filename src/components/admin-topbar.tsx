@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const NAV = [
   { href: "/admin", label: "Prezentare generală" },
   { href: "/admin/companii", label: "Companii" },
+  { href: "/admin/facturare", label: "Facturare" },
   { href: "/admin/programari", label: "Programări" },
   { href: "/admin/analitice", label: "Analitice" },
   { href: "/admin/activitate", label: "Activitate" },

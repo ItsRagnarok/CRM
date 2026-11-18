@@ -109,3 +109,30 @@ intenționat pentru refuzul implicit al accesului direct.
 
 Aceasta este o publicare a schemei. Interfața și emiterea Oblio nu sunt încă
 implementate; nu este necesară reconstruirea aplicației Vercel pentru această etapă.
+
+## Etapa 2 — interfață în Super Admin
+
+Modulul este integrat în bara existentă: `/admin/facturare`, cu Acasă, Setări
+și Clienți. Acasă afișează stadiul configurării; emiterea și rapoartele urmează.
+Setările permit salvarea firmei, TVA, termenului de plată, contabilului, seriilor
+Oblio și conturilor bancare cu verificarea cifrelor IBAN. Modelul PDF rămâne cel
+configurat în Oblio. Clienții pot fi adăugați doar cu CUI, completați/editați și
+căutați după nume/CUI. Soldul este calculat exact pe server, cu paginare.
+
+Conectarea Oblio verifică autentificarea și seria pentru firma configurată, apoi
+salvează Client Secret în Vault. Nu emite facturi. Secretul nu este trimis înapoi
+în interfață. Migrarea `20261118045301_platform_billing_settings.sql` este aplicată
+în producție. RPC-ul de salvare verifică independent super adminul și refuză
+contextul preview. Funcția de sold rulează cu drepturile apelantului și RLS.
+
+Testare manuală după publicare:
+1. Intră ca Super Admin → Facturare → Setări facturare.
+2. Salvează datele firmei, apoi seria de facturi existentă în Oblio și IBAN-ul.
+3. Introdu în formular e-mailul și Client Secret din Oblio, selectează seria și
+   apasă „Verifică și conectează Oblio”. Nu trimite secretul în chat.
+4. În Clienți, adaugă un CUI, caută-l și completează datele din pagina lui.
+
+Nu există cont Oblio de test furnizat; verificarea externă cu credențiale reale
+rămâne de efectuat din acest formular. Testele SQL locale acoperă autorizarea,
+salvarea/rotirea referinței Vault și calculul soldurilor; criptarea Vault este
+asigurată de serviciul Supabase și nu este simulată criptografic în test.

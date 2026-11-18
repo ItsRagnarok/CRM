@@ -28,9 +28,14 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       insert into public.platform_admins values ('00000000-0000-0000-0000-000000000001');
       -- Only the Vault FK contract is needed. Encryption is not simulated/tested.
       create schema vault;
-      create table vault.secrets(id uuid primary key);
+      create table vault.secrets(id uuid primary key, secret text);
+      create function vault.create_secret(value text, name text, description text) returns uuid language plpgsql as $$
+      declare sid uuid := gen_random_uuid(); begin insert into vault.secrets values(sid,value); return sid; end $$;
+      create function vault.update_secret(sid uuid, value text) returns void language sql as $$
+      update vault.secrets set secret=value where id=sid; $$;
     `);
     sql(readFileSync(new URL('../supabase/migrations/20261118030725_platform_billing_oblio.sql', import.meta.url), 'utf8'));
+    sql(readFileSync(new URL('../supabase/migrations/20261118045301_platform_billing_settings.sql', import.meta.url), 'utf8'));
     const output = sql(`
       create function pg_temp.assert_true(value boolean, message text) returns void language plpgsql as $$
       begin if value is distinct from true then raise exception 'ASSERT: %', message; end if; end $$;
@@ -50,10 +55,15 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       select pg_temp.reject($q$insert into public.billing_clients(name) values ('Tenant forbidden')$q$);
       select pg_temp.assert_true((select count(*)=0 from public.billing_invoices),'tenant cannot read invoices');
       select pg_temp.reject('select * from private.billing_oblio_credentials');
+      select pg_temp.reject($q$select public.billing_save_oblio('test@example.ro','test-only-secret')$q$);
+      select pg_temp.assert_true((select count(*)=0 from public.billing_client_balances()),'tenant balances empty');
       reset role;
       select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000001',false);
       set role authenticated;
       insert into public.billing_company_settings(name,cui,address) values ('Emitent','RO123','București');
+      select public.billing_save_oblio('test@example.ro','test-only-secret');
+      select public.billing_save_oblio('test@example.ro','rotated-test-secret');
+      select pg_temp.assert_true((select count(*)=1 from public.billing_oblio_connections where enabled),'connection upsert');
       insert into public.billing_clients(id,cui) values ('10000000-0000-0000-0000-000000000001','RO456');
       insert into public.billing_invoices(id,client_id) values ('20000000-0000-0000-0000-000000000001','10000000-0000-0000-0000-000000000001');
       insert into public.billing_invoice_lines(invoice_id,position,name,quantity,unit_price)
@@ -101,6 +111,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       insert into public.billing_payments(invoice_id,amount,paid_on,method,reverses_payment_id)
         values ('20000000-0000-0000-0000-000000000001',-500,current_date,'bank','30000000-0000-0000-0000-000000000001');
       select pg_temp.assert_true((select sum(amount)=0 from public.billing_payments),'payment reversal');
+      select pg_temp.assert_true((select balance='1149.50' from public.billing_client_balances('Changed')),'server client balance');
       insert into public.billing_invoices(id,client_id,document_type,original_invoice_id)
         values ('20000000-0000-0000-0000-000000000002','10000000-0000-0000-0000-000000000001','credit_note','20000000-0000-0000-0000-000000000001');
       insert into public.billing_invoice_lines(invoice_id,position,name,quantity,unit_price)
