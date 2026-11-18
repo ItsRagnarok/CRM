@@ -38,6 +38,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
     sql(readFileSync(new URL('../supabase/migrations/20261118030725_platform_billing_oblio.sql', import.meta.url), 'utf8'));
     sql(readFileSync(new URL('../supabase/migrations/20261118045301_platform_billing_settings.sql', import.meta.url), 'utf8'));
     sql(readFileSync(new URL('../supabase/migrations/20261118085522_platform_billing_workflow.sql', import.meta.url), 'utf8'));
+    sql(readFileSync(new URL('../supabase/migrations/20261118220446_platform_billing_credit_balances.sql', import.meta.url), 'utf8'));
     const output = sql(`
       create function pg_temp.assert_true(value boolean, message text) returns void language plpgsql as $$
       begin if value is distinct from true then raise exception 'ASSERT: %', message; end if; end $$;
@@ -148,6 +149,19 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       select pg_temp.assert_true((select total=-1149.50 from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'full credit total');
       select public.billing_workflow('prepare',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'vatNames','{"21.00":"Normala"}'::jsonb));
       select pg_temp.assert_true((select request_payload->'referenceDocument'->>'refund'='0' from public.billing_issue_requests r join public.billing_invoices i on i.id=r.invoice_id where i.original_invoice_id='20000000-0000-0000-0000-000000000003'),'credit preserves provider collections');
+
+      select public.billing_workflow('confirm',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'series','FCT','number','0045'));
+      select pg_temp.assert_true((select balance::numeric=0 and payment_status='credit_note' from public.billing_invoice_overview where id='20000000-0000-0000-0000-000000000003'),'credited original no longer collectible');
+      select pg_temp.assert_true((select balance='-1149.50' from public.billing_invoice_overview where original_invoice_id='20000000-0000-0000-0000-000000000003'),'paid original creates refund due');
+      select public.billing_workflow('payment',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'paymentId','30000000-0000-0000-0000-000000000004','amount','-1149.50','date','2026-11-18','method','bank'));
+      select pg_temp.assert_true((select balance='0.00' from public.billing_invoice_overview where original_invoice_id='20000000-0000-0000-0000-000000000003'),'refund settles credit');
+
+      select public.billing_workflow('credit','{"id":"20000000-0000-0000-0000-000000000001"}');
+      select public.billing_workflow('prepare',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000001'),'vatNames','{"21.00":"Normala"}'::jsonb));
+      select public.billing_workflow('confirm',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000001'),'series','FCT','number','0046'));
+      select pg_temp.assert_true((select balance='0.00' from public.billing_invoice_overview where original_invoice_id='20000000-0000-0000-0000-000000000001'),'unpaid original cancels without refund');
+      select pg_temp.assert_true((public.billing_workflow('dashboard')->>'outstanding')::numeric=0,'credits clear dashboard receivables');
+      select pg_temp.reject($q$insert into public.billing_payments(invoice_id,amount,paid_on,method) select id,-1,current_date,'bank' from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000001'$q$);
       select pg_temp.assert_true(jsonb_array_length(public.billing_workflow('report')->'months')=6,'six months');
       select pg_temp.assert_true((public.billing_workflow('credentials')->>'secret')='rotated-test-secret','credentials retrieved only for admin');
       select set_config('request.headers','{"x-ef-preview-org":"test"}',false);
