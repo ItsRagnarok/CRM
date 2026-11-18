@@ -1,7 +1,8 @@
+import { Building2, Link2, Landmark, Hash, FileText, Mail } from "lucide-react";
 import { billingDb } from "@/lib/billing/store";
-import { CompanyForm, BankForm, SeriesForm, OblioForm } from "../forms";
-
-export default async function BillingSettings() {
+import { CompanyForm, BankForm, OblioForm } from "../forms";
+import { card } from "../ui";
+export default async function Settings() {
   const db = await billingDb();
   const [company, banks, series, connection] = await Promise.all([
     db.from("billing_company_settings").select("*").eq("id", 1).maybeSingle(),
@@ -15,24 +16,66 @@ export default async function BillingSettings() {
   ]);
   if (company.error || banks.error || series.error || connection.error)
     throw new Error("Setările nu au putut fi încărcate.");
-  const card = "rounded-2xl border border-border bg-white p-5 sm:p-6";
+  const c = company.data;
   return (
-    <div className="space-y-6">
-      <section className={card}>
-        <h2 className="mb-5 text-lg font-bold">Datele firmei</h2>
-        <CompanyForm company={company.data} />
-      </section>
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <section className={card}>
-          <h2 className="mb-2 text-lg font-bold">Serie și numerotare</h2>
-          <p className="mb-4 text-sm text-muted">
-            Numărul final este atribuit de Oblio la emitere.
+    <div className="space-y-5">
+      <h1 className="text-3xl font-extrabold">Setări facturare</h1>
+      <div className={card + " flex items-center gap-4"}>
+        <div className="rounded-full bg-purple p-4 text-white">
+          <Building2 />
+        </div>
+        <div>
+          <h2 className="font-bold">{c?.name ?? "Datele firmei tale"}</h2>
+          <p className="mt-1 text-sm text-muted">
+            {c
+              ? `CUI ${c.cui} · ${c.address}`
+              : "1. Completează firma · 2. Conectează Oblio"}
           </p>
-          <ul className="mb-5 divide-y divide-border">
+        </div>
+      </div>
+      <section id="oblio" className={card}>
+        <div className="mb-4 flex items-center gap-3">
+          <Link2 className="text-purple" />
+          <h2 className="font-bold">
+            {connection.data?.enabled
+              ? "Conectat la Oblio"
+              : "Conectează Oblio"}
+          </h2>
+          <span
+            className={`ml-auto rounded-full px-3 py-1 text-xs font-semibold ${connection.data?.enabled ? "bg-success-bg text-success" : "bg-neutral-bg text-muted"}`}
+          >
+            {connection.data?.enabled ? "Verificat" : "Neconectat"}
+          </span>
+        </div>
+        <OblioForm email={connection.data?.account_email} />
+      </section>
+      <div className="overflow-hidden rounded-[20px] border border-border bg-white">
+        <details open={!c} className="border-b border-border p-5">
+          <summary className="cursor-pointer font-bold">
+            Datele firmei și TVA
+          </summary>
+          <p className="mt-1 text-sm text-muted">
+            {c
+              ? `${c.vat_payer ? "Plătitor" : "Neplătitor"} de TVA · cotă implicită ${c.default_vat_rate}%`
+              : "Denumire, CUI, adresă și TVA implicit 21%"}
+          </p>
+          <div className="mt-5">
+            <CompanyForm company={c} />
+          </div>
+        </details>
+        <details className="border-b border-border p-5">
+          <summary className="cursor-pointer font-bold">
+            <Hash size={16} className="mr-2 inline" />
+            Serie și numerotare
+          </summary>
+          <p className="mt-1 text-sm text-muted">
+            Serii preluate din Oblio. Numărul este atribuit doar la emitere.
+          </p>
+          <ul className="mt-3 divide-y divide-border">
             {series.data?.map((s) => (
               <li key={s.id} className="flex justify-between py-3 text-sm">
                 <strong>{s.name}</strong>
-                <span className="text-muted">
+                <span>
                   {s.document_type === "invoice"
                     ? "Factură"
                     : s.document_type === "proforma"
@@ -42,54 +85,65 @@ export default async function BillingSettings() {
               </li>
             ))}
           </ul>
-          <SeriesForm />
-        </section>
-        <section className={card}>
-          <h2 className="mb-2 text-lg font-bold">Conturi bancare</h2>
-          <ul className="mb-5 divide-y divide-border">
+          {!series.data?.length && (
+            <p className="mt-3 text-sm text-muted">
+              Conectează Oblio pentru a prelua seriile existente.
+            </p>
+          )}
+          <p className="mt-3 text-xs text-muted">
+            Configurezi seriile și următorul număr în Oblio. Reconectarea
+            actualizează lista.
+          </p>
+        </details>
+        <details className="border-b border-border p-5">
+          <summary className="cursor-pointer font-bold">
+            <Landmark size={16} className="mr-2 inline" />
+            Conturi bancare
+          </summary>
+          <p className="mt-1 text-sm text-muted">
+            Apar pe PDF-ul generat de ElectroField.
+          </p>
+          <ul className="my-4 divide-y divide-border">
             {banks.data?.map((b) => (
-              <li key={b.id} className="py-3 text-sm">
+              <li key={b.id} className="py-2 text-sm">
                 <strong>{b.bank_name}</strong>
-                <p className="mt-1 break-all text-muted">
-                  {b.iban} · {b.currency}
-                </p>
+                <p className="break-all text-muted">{b.iban}</p>
               </li>
             ))}
           </ul>
           <BankForm />
-        </section>
-      </div>
-      <section className={card}>
-        <div className="mb-5 flex flex-wrap items-center gap-3">
-          <h2 className="text-lg font-bold">Conexiune Oblio</h2>
-          <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${connection.data?.enabled ? "bg-success-bg text-success" : "bg-neutral-bg text-neutral"}`}
+        </details>
+        <details className="border-b border-border p-5">
+          <summary className="cursor-pointer font-bold">
+            <FileText size={16} className="mr-2 inline" />
+            Modelul facturii
+          </summary>
+          <p className="mt-3 text-sm text-muted">
+            Factura din Oblio folosește modelul ales în contul tău. PDF-ul
+            descărcat din ElectroField folosește datele fiscale salvate la
+            emitere și formatul ElectroField.
+          </p>
+          <a
+            href="https://www.oblio.eu/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-block text-sm font-semibold text-purple"
           >
-            {connection.data?.enabled ? "Conexiune verificată" : "Neconectat"}
-          </span>
-        </div>
-        <OblioForm
-          email={connection.data?.account_email}
-          series={(series.data ?? [])
-            .filter((s) => s.document_type === "invoice")
-            .map((s) => s.name)}
-        />
-      </section>
-      <section className={card}>
-        <h2 className="text-lg font-bold">Modelul facturii</h2>
-        <p className="mt-2 text-sm text-muted">
-          Facturile vor folosi modelul configurat în contul Oblio: logo, culori
-          și mențiuni de subsol.
-        </p>
-        <a
-          href="https://www.oblio.eu/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-block text-sm font-semibold text-purple hover:underline"
-        >
-          Deschide Oblio ↗
-        </a>
-      </section>
+            Configurează modelul în Oblio ↗
+          </a>
+        </details>
+        <details className="p-5">
+          <summary className="cursor-pointer font-bold">
+            <Mail size={16} className="mr-2 inline" />
+            Contabil
+          </summary>
+          <p className="mt-3 text-sm text-muted">
+            {c?.accountant_email ??
+              "Adaugă e-mailul contabilului în Datele firmei."}{" "}
+            Exportul lunar PDF + Excel este disponibil în Rapoarte.
+          </p>
+        </details>
+      </div>
     </div>
   );
 }

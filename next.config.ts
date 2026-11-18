@@ -23,6 +23,7 @@ const nextConfig: NextConfig = {
   // deployed serverless function bundle — breaking the download in
   // production while working fine locally. Force them in explicitly.
   outputFileTracingIncludes: {
+    "/api/admin/billing/**": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
     "/api/rapoarte-lucrare/[id]": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
   },
   // Blog static: /blog arată public/blog/index.html,

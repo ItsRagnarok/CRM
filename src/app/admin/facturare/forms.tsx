@@ -11,7 +11,7 @@ import {
 } from "./actions";
 
 type Tables = Database["public"]["Tables"];
-const input =
+export const input =
   "mt-1 block w-full rounded-[10px] border border-border bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-purple";
 export function Field({
   label,
@@ -43,7 +43,7 @@ export function Field({
     </label>
   );
 }
-function Form({
+export function Form({
   action,
   children,
   button,
@@ -210,15 +210,21 @@ export function BankForm() {
     </Form>
   );
 }
-export function OblioForm({
-  email,
-  series,
-}: {
-  email?: string;
-  series: string[];
-}) {
+export function OblioForm({ email }: { email?: string }) {
   return (
-    <Form action={connectOblio} button="Verifică și conectează Oblio">
+    <Form action={connectOblio} button="Conectează și preia seriile">
+      <p className="text-sm text-muted">
+        Folosește e-mailul cu care intri în Oblio și cheia Client Secret din{" "}
+        <a
+          className="font-semibold text-purple"
+          href="https://www.oblio.eu/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Setări → Date cont ↗
+        </a>
+        .
+      </p>
       <Field
         name="email"
         label="E-mail cont Oblio"
@@ -228,25 +234,14 @@ export function OblioForm({
       />
       <Field
         name="secret"
-        label="Client Secret"
+        label="Client Secret Oblio"
         type="password"
         required
         maxLength={4096}
       />
-      <label className="block text-sm font-semibold">
-        Seria de facturi de verificat
-        <select className={input} name="series" required>
-          <option value="">Alege seria</option>
-          {series.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
-      <p className="text-xs leading-relaxed text-muted">
-        Client Secret se găsește în contul Oblio, la Setări → Date cont.
-        Verificarea nu emite facturi.
+      <p className="text-xs text-muted">
+        Cheia este păstrată criptat. Verificarea preia seriile fără să emită
+        facturi. Parola contului nu este necesară.
       </p>
     </Form>
   );

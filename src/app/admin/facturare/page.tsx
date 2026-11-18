@@ -1,10 +1,20 @@
 import Link from "next/link";
-import { Settings, Users, CheckCircle2, Circle } from "lucide-react";
-import { billingDb } from "@/lib/billing/store";
-
+import {
+  FileText,
+  Receipt,
+  Banknote,
+  Settings,
+  ArrowRight,
+} from "lucide-react";
+import { billingDb, workflow } from "@/lib/billing/store";
+import { requireAdminContext } from "@/lib/auth";
+import { money } from "@/lib/billing/money";
+import type { Dashboard } from "@/lib/billing/types";
+import { card, InvoiceList, SectionTitle } from "./ui";
 export default async function BillingHome() {
   const db = await billingDb();
-  const [company, connection, clients] = await Promise.all([
+  const [dashboard, company, connection, admin] = await Promise.all([
+    workflow<Dashboard>("dashboard"),
     db
       .from("billing_company_settings")
       .select("name")
@@ -15,80 +25,112 @@ export default async function BillingHome() {
       .select("enabled")
       .eq("company_id", 1)
       .maybeSingle(),
-    db
-      .from("billing_clients")
-      .select("id", { head: true, count: "exact" })
-      .eq("archived", false),
+    requireAdminContext(),
   ]);
-  if (company.error || connection.error || clients.error)
-    throw new Error("Datele de facturare nu au putut fi încărcate.");
+  if (company.error || connection.error)
+    throw new Error("Datele nu au putut fi încărcate.");
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl bg-graphite p-7 text-white">
-        <p className="text-sm text-[#c9c3e0]">
-          {company.data?.name ?? "Firma ta"}
+    <div className="space-y-7">
+      <header className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted">
+            {company.data?.name ?? "Firma ta"}
+          </p>
+          <h1 className="mt-1 text-3xl font-extrabold tracking-tight">
+            Bună, {admin.fullName.split(" ")[0] || "administrator"}!
+          </h1>
+        </div>
+        <Link
+          href="/admin/facturare/setari"
+          aria-label="Setări facturare"
+          className="rounded-full border border-border bg-white p-3"
+        >
+          <Settings />
+        </Link>
+      </header>
+      <section className="rounded-[24px] bg-purple p-6 text-white sm:p-8">
+        <p className="text-sm opacity-90">
+          Încasat în{" "}
+          {new Intl.DateTimeFormat("ro-RO", {
+            month: "long",
+            timeZone: "Europe/Bucharest",
+          }).format(new Date())}
         </p>
-        <h2 className="mt-2 text-2xl font-bold">
-          Pregătește facturarea prin Oblio
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#c9c3e0]">
-          Configurează firma, conectează contul Oblio și adaugă clienții.
-          Emiterea facturilor va fi disponibilă în etapa următoare.
+        <p className="mt-2 text-4xl font-extrabold tracking-tight sm:text-5xl">
+          {money(dashboard.collected)}
         </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {[
-          [
-            "/admin/facturare/setari",
-            "Setări facturare",
-            "Datele firmei, serii, conturi bancare și conexiunea Oblio",
-            Settings,
-          ],
-          [
-            "/admin/facturare/clienti",
-            "Clienți",
-            `${clients.count ?? 0} clienți în evidență`,
-            Users,
-          ],
-        ].map(([href, title, description, Icon]) => {
-          const Symbol = Icon as typeof Users;
-          return (
+        <div className="mt-6 grid grid-cols-2 gap-3">
+          {[
+            ["De încasat", dashboard.outstanding, "outstanding"],
+            ["Restante", dashboard.overdue, "overdue"],
+          ].map(([label, sum, filter]) => (
             <Link
-              key={String(href)}
-              href={String(href)}
-              className="rounded-2xl border border-border bg-white p-6 hover:border-purple"
+              key={label}
+              href={`/admin/facturare/facturi?filter=${filter}`}
+              className="rounded-2xl bg-white/15 p-4"
             >
-              <Symbol className="mb-4 h-6 w-6 text-purple" />
-              <h2 className="font-bold">{String(title)}</h2>
-              <p className="mt-2 text-sm text-muted">{String(description)}</p>
+              <p className="text-sm opacity-90">{label}</p>
+              <p className="mt-1 text-xl font-bold">{money(sum)}</p>
             </Link>
-          );
-        })}
-      </div>
-      <div className="rounded-2xl border border-border bg-white p-6">
-        <h2 className="mb-4 font-bold">Configurare</h2>
+          ))}
+        </div>
+      </section>
+      <div className="grid grid-cols-3 gap-3">
         {[
-          ["Datele firmei", !!company.data],
-          ["Conexiunea Oblio", !!connection.data?.enabled],
-          ["Primul client", !!clients.count],
-        ].map(([label, ready]) => {
-          const Icon = ready ? CheckCircle2 : Circle;
-          return (
-            <p
-              key={String(label)}
-              className="mt-3 flex items-center gap-3 text-sm"
-            >
-              <Icon
-                className={`h-5 w-5 ${ready ? "text-success" : "text-muted"}`}
-              />
-              {label}
-              <span className="ml-auto text-muted">
-                {ready ? "Pregătit" : "De completat"}
-              </span>
-            </p>
-          );
-        })}
+          { label: "Factură", href: "/facturi/noua", Icon: FileText },
+          {
+            label: "Proformă",
+            href: "/facturi/noua?tip=proforma",
+            Icon: Receipt,
+          },
+          {
+            label: "Încasare",
+            href: "/facturi?filter=outstanding",
+            Icon: Banknote,
+          },
+        ].map(({ label, href, Icon }) => (
+          <Link
+            key={label}
+            href={"/admin/facturare" + href}
+            className={`${card} flex flex-col items-center gap-3 text-center font-bold hover:border-purple`}
+          >
+            <Icon className="text-purple" />
+            {label}
+          </Link>
+        ))}
       </div>
+      {!connection.data?.enabled && (
+        <Link
+          href="/admin/facturare/setari#oblio"
+          className="flex items-center justify-between gap-4 rounded-2xl border border-purple/20 bg-purple-soft p-5"
+        >
+          <div>
+            <p className="font-bold text-purple">
+              Conectează Oblio pentru prima factură
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              Ai nevoie de e-mailul contului și Client Secret.
+            </p>
+          </div>
+          <ArrowRight className="shrink-0 text-purple" />
+        </Link>
+      )}
+      <section>
+        <SectionTitle>Necesită atenție</SectionTitle>
+        {dashboard.attention.length ? (
+          <InvoiceList rows={dashboard.attention} />
+        ) : (
+          <p className={`${card} text-sm text-muted`}>
+            Nu ai facturi restante sau emiteri de verificat.
+          </p>
+        )}
+      </section>
+      <section>
+        <SectionTitle href="/admin/facturare/facturi">
+          Ultimele facturi
+        </SectionTitle>
+        <InvoiceList rows={dashboard.latest} />
+      </section>
     </div>
   );
 }

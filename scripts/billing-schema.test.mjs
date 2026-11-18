@@ -29,6 +29,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       -- Only the Vault FK contract is needed. Encryption is not simulated/tested.
       create schema vault;
       create table vault.secrets(id uuid primary key, secret text);
+      create view vault.decrypted_secrets as select id,secret as decrypted_secret from vault.secrets;
       create function vault.create_secret(value text, name text, description text) returns uuid language plpgsql as $$
       declare sid uuid := gen_random_uuid(); begin insert into vault.secrets values(sid,value); return sid; end $$;
       create function vault.update_secret(sid uuid, value text) returns void language sql as $$
@@ -36,6 +37,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
     `);
     sql(readFileSync(new URL('../supabase/migrations/20261118030725_platform_billing_oblio.sql', import.meta.url), 'utf8'));
     sql(readFileSync(new URL('../supabase/migrations/20261118045301_platform_billing_settings.sql', import.meta.url), 'utf8'));
+    sql(readFileSync(new URL('../supabase/migrations/20261118085522_platform_billing_workflow.sql', import.meta.url), 'utf8'));
     const output = sql(`
       create function pg_temp.assert_true(value boolean, message text) returns void language plpgsql as $$
       begin if value is distinct from true then raise exception 'ASSERT: %', message; end if; end $$;
@@ -120,10 +122,48 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       delete from public.billing_invoices where document_type='credit_note';
       reset role;
       select pg_temp.assert_true((select count(*)=12 from pg_tables where schemaname in ('public','private') and tablename like 'billing_%' and rowsecurity),'all new tables use RLS');
+
+      set role authenticated;
+      insert into public.billing_series(id,name,document_type) values ('40000000-0000-0000-0000-000000000001','FCT','invoice'),('40000000-0000-0000-0000-000000000002','FCT','credit_note');
+      update public.billing_clients set address='București',email='client@example.ro';
+      select public.billing_workflow('save_draft','{"id":"20000000-0000-0000-0000-000000000003","clientId":"10000000-0000-0000-0000-000000000001","seriesId":"40000000-0000-0000-0000-000000000001","kind":"invoice","date":"2026-11-18","due":"2026-11-25","lines":[{"name":"Montaj","quantity":"1","price":"850","vat":"21"},{"name":"Deplasare","quantity":"1","price":"100","vat":"21"}]}');
+      select pg_temp.assert_true((public.billing_workflow('detail','{"id":"20000000-0000-0000-0000-000000000003"}')->>'total')='1149.50','workflow exact totals');
+      select public.billing_workflow('prepare','{"id":"20000000-0000-0000-0000-000000000003","sendEmail":true,"vatNames":{"21.00":"Normala"}}');
+      select pg_temp.assert_true((select request_payload->'products'->0->>'price'='850.0000' and request_payload->'products'->0->>'vatName'='Normala' and request_payload->'products'->0->>'measuringUnit'='buc' and request_payload->>'sendEmail'='1' from public.billing_issue_requests where invoice_id='20000000-0000-0000-0000-000000000003'),'provider payload exact');
+      select public.billing_workflow('uncertain','{"id":"20000000-0000-0000-0000-000000000003"}');
+      create temp table saved_payload as select request_payload from public.billing_issue_requests where invoice_id='20000000-0000-0000-0000-000000000003';
+      select public.billing_workflow('prepare','{"id":"20000000-0000-0000-0000-000000000003"}');
+      select pg_temp.assert_true((select r.request_payload=s.request_payload from public.billing_issue_requests r,saved_payload s where invoice_id='20000000-0000-0000-0000-000000000003'),'retry uses identical frozen payload');
+      select public.billing_workflow('reject','{"id":"20000000-0000-0000-0000-000000000003"}');
+      select public.billing_workflow('correct_rejected','{"id":"20000000-0000-0000-0000-000000000003"}');
+      select pg_temp.assert_true((select status='draft' and company_snapshot is null from public.billing_invoices where id='20000000-0000-0000-0000-000000000003'),'definitive rejection can be corrected');
+      select public.billing_workflow('prepare','{"id":"20000000-0000-0000-0000-000000000003","vatNames":{"21.00":"Normala"}}');
+      select pg_temp.assert_true((select r.request_payload->>'idempotencyKey'<>s.request_payload->>'idempotencyKey' from public.billing_issue_requests r,saved_payload s where invoice_id='20000000-0000-0000-0000-000000000003'),'new attempt after rejection has new key');
+      select public.billing_workflow('confirm','{"id":"20000000-0000-0000-0000-000000000003","series":"FCT","number":"0044"}');
+      select public.billing_workflow('confirm','{"id":"20000000-0000-0000-0000-000000000003","series":"FCT","number":"0044"}');
+      select public.billing_workflow('payment','{"id":"20000000-0000-0000-0000-000000000003","paymentId":"30000000-0000-0000-0000-000000000003","amount":"1149.50","date":"2026-11-18","method":"bank"}');
+      select public.billing_workflow('payment','{"id":"20000000-0000-0000-0000-000000000003","paymentId":"30000000-0000-0000-0000-000000000003","amount":"1149.50","date":"2026-11-18","method":"bank"}');
+      select pg_temp.assert_true((public.billing_workflow('detail','{"id":"20000000-0000-0000-0000-000000000003"}')->>'balance')='0.00','idempotent payment');
+      select public.billing_workflow('credit','{"id":"20000000-0000-0000-0000-000000000003"}');
+      select pg_temp.assert_true((select total=-1149.50 from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'full credit total');
+      select public.billing_workflow('prepare',jsonb_build_object('id',(select id from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000003'),'vatNames','{"21.00":"Normala"}'::jsonb));
+      select pg_temp.assert_true((select request_payload->'referenceDocument'->>'refund'='0' from public.billing_issue_requests r join public.billing_invoices i on i.id=r.invoice_id where i.original_invoice_id='20000000-0000-0000-0000-000000000003'),'credit preserves provider collections');
+      select pg_temp.assert_true(jsonb_array_length(public.billing_workflow('report')->'months')=6,'six months');
+      select pg_temp.assert_true((public.billing_workflow('credentials')->>'secret')='rotated-test-secret','credentials retrieved only for admin');
+      select set_config('request.headers','{"x-ef-preview-org":"test"}',false);
+      select pg_temp.reject($q$select public.billing_workflow('credentials')$q$);
+      select set_config('request.headers','{}',false);
+      reset role;
+      select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
+      set role authenticated;
+      select pg_temp.reject($q$select public.billing_workflow('dashboard')$q$);
+      select pg_temp.reject($q$select public.billing_workflow('credentials')$q$);
+      select pg_temp.assert_true((select count(*)=0 from public.billing_invoice_overview),'overview tenant isolation');
+      reset role;
       select 'billing checks passed';
     `);
     assert.match(output, /billing checks passed/);
   } finally {
-    sql(`drop database ${database} with (force)`, 'postgres');
+    if(!process.env.BILLING_KEEP_FIXTURE) sql(`drop database ${database} with (force)`, 'postgres'); else console.log('Test fixture database: '+database);
   }
 });

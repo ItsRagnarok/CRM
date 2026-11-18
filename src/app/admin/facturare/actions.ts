@@ -2,9 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { billingDb } from "@/lib/billing/store";
-import { oblioCheck } from "@/lib/invoicing/oblio";
+import {
+  authorize,
+  oblioRead,
+  OblioError,
+  type OblioSeries,
+} from "@/lib/billing/oblio";
 
-export type BillingState = { error?: string; success?: string } | undefined;
+export type BillingState =
+  | { error?: string; success?: string; invoiceId?: string; clientId?: string }
+  | undefined;
 const text = (f: FormData, key: string, max = 500) =>
   String(f.get(key) ?? "")
     .trim()
@@ -68,21 +75,19 @@ export async function saveCompany(
           "CUI-ul este asociat conexiunii Oblio. Păstrează firma configurată.",
       };
   }
-  const { error } = await db
-    .from("billing_company_settings")
-    .upsert({
-      id: 1,
-      name,
-      cui,
-      address,
-      registration_number: text(f, "registration") || null,
-      email: email || null,
-      phone: text(f, "phone", 40) || null,
-      vat_payer: f.get("vatPayer") === "on",
-      default_vat_rate: Number(vat),
-      default_due_days: Number(due),
-      accountant_email: accountant || null,
-    });
+  const { error } = await db.from("billing_company_settings").upsert({
+    id: 1,
+    name,
+    cui,
+    address,
+    registration_number: text(f, "registration") || null,
+    email: email || null,
+    phone: text(f, "phone", 40) || null,
+    vat_payer: f.get("vatPayer") === "on",
+    default_vat_rate: Number(vat),
+    default_due_days: Number(due),
+    accountant_email: accountant || null,
+  });
   if (error) return { error: "Datele firmei nu au putut fi salvate." };
   done();
   return { success: "Datele firmei au fost salvate." };
@@ -185,61 +190,95 @@ export async function connectOblio(
 ): Promise<BillingState> {
   const db = await billingDb();
   const email = text(f, "email", 254),
-    secret = text(f, "secret", 4097),
-    series = text(f, "series", 50);
-  if (
-    !email ||
-    !emailValid(email) ||
-    secret.length < 8 ||
-    secret.length > 4096 ||
-    !series
-  )
-    return {
-      error: "Completează e-mailul Oblio, Client Secret și seria de facturi.",
-    };
-  const { data: company, error: companyError } = await db
+    secret = text(f, "secret", 4097);
+  if (!email || !emailValid(email) || secret.length < 8 || secret.length > 4096)
+    return { error: "Introdu e-mailul contului Oblio și Client Secret." };
+  const { data: company, error } = await db
     .from("billing_company_settings")
-    .select("*")
+    .select("cui")
     .eq("id", 1)
     .maybeSingle();
-  if (companyError || !company)
-    return { error: "Salvează întâi datele firmei." };
+  if (error || !company)
+    return {
+      error:
+        "Salvează întâi datele firmei din secțiunea de mai jos, apoi conectează Oblio.",
+    };
   try {
-    const verified = await oblioCheck(
-      {
-        provider: "oblio",
-        accountEmail: email,
-        vatCode: company.cui,
-        series,
-        taxPercent: company.default_vat_rate,
-        dueDays: company.default_due_days,
-        sendEmail: false,
-        simulated: false,
-      },
-      secret,
+    const token = await authorize(email, secret);
+    const companies = await oblioRead<{ cif: string; company: string }[]>(
+      "/nomenclature/companies",
+      token,
     );
-    if (!verified.series.includes(series))
+    const match = Array.isArray(companies)
+      ? companies.find(
+          (c) => c.cif.replace(/^RO/i, "") === company.cui.replace(/^RO/i, ""),
+        )
+      : undefined;
+    if (!match)
       return {
         error:
-          "Oblio nu a confirmat seria de facturi pentru firma configurată.",
+          "CUI-ul firmei salvate nu există în acest cont Oblio. Verifică firma din Datele firmei.",
       };
-  } catch {
+    const series = await oblioRead<OblioSeries[]>(
+      `/nomenclature/series?cif=${encodeURIComponent(match.cif)}`,
+      token,
+    );
+    if (!Array.isArray(series) || !series.some((s) => s.type === "Factura"))
+      return {
+        error:
+          "Creează cel puțin o serie de facturi în contul Oblio, apoi reconectează.",
+      };
+    const rows = series.flatMap((s) =>
+      s.type === "Factura"
+        ? [
+            {
+              company_id: 1,
+              name: s.name,
+              document_type: "invoice",
+              active: true,
+            },
+            {
+              company_id: 1,
+              name: s.name,
+              document_type: "credit_note",
+              active: true,
+            },
+          ]
+        : s.type === "Proforma"
+          ? [
+              {
+                company_id: 1,
+                name: s.name,
+                document_type: "proforma",
+                active: true,
+              },
+            ]
+          : [],
+    );
+    const saved = await db
+      .from("billing_series")
+      .upsert(rows, { onConflict: "company_id,name,document_type" });
+    if (saved.error) return { error: "Seriile Oblio nu au putut fi salvate." };
+    const connection = await db.rpc("billing_save_oblio", {
+      p_email: email,
+      p_secret: secret,
+    });
+    if (connection.error)
+      return {
+        error:
+          "Conexiunea a fost verificată, dar nu a putut fi salvată. Reîncearcă.",
+      };
+  } catch (e) {
     return {
       error:
-        "Conexiunea nu a putut fi verificată. Verifică e-mailul, Client Secret, CUI-ul și seria din contul Oblio.",
+        e instanceof OblioError
+          ? e.message
+          : "Conexiunea Oblio nu a putut fi verificată.",
     };
   }
-  const { error } = await db.rpc("billing_save_oblio", {
-    p_email: email,
-    p_secret: secret,
-  });
-  if (error)
-    return {
-      error:
-        "Conexiunea a fost verificată, dar nu a putut fi salvată. Reîncearcă.",
-    };
   done();
   return {
-    success: "Conexiunea Oblio a fost verificată și salvată securizat.",
+    success:
+      "Oblio este conectat. Seriile de facturi și proforme au fost preluate automat.",
   };
 }

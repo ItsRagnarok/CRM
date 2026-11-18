@@ -3696,6 +3696,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      billing_workflow: { Args: { operation: string; input?: Json }; Returns: Json }
       billing_save_oblio: {
         Args: { p_email: string; p_secret: string }
         Returns: undefined

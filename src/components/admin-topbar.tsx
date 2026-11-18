@@ -18,7 +18,7 @@ const NAV = [
 export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0 }: { fullName: string; upcomingBookings?: number; openRequests?: number }) {
   return (
     <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-graphite-border bg-graphite px-5 py-3">
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex min-w-0 max-w-full flex-wrap items-center gap-4">
         <div className="flex items-center gap-2.5">
           <Logo size={28} className="text-white" />
           <span className="ml-1 rounded-full bg-purple/20 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-purple">

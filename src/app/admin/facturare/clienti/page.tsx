@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { billingDb } from "@/lib/billing/store";
 import { ClientForm } from "../forms";
+import { QuickClient } from "../workflow-forms";
+import { money } from "@/lib/billing/money";
 
 export default async function BillingClients({
   searchParams,
@@ -24,6 +26,15 @@ export default async function BillingClients({
     `/admin/facturare/clienti?q=${encodeURIComponent(q)}&page=${p}`;
   return (
     <div className="space-y-6">
+      <h1 className="text-3xl font-extrabold">Clienți</h1>
+      <section className="rounded-[24px] bg-purple p-6 text-white">
+        <h2 className="text-lg font-bold">Adaugă un client doar cu CUI</h2>
+        <p className="mb-4 mt-2 text-sm opacity-90">
+          Preluăm datele clienților existenți în contul Oblio. Pentru un client
+          nou poți completa apoi datele fiscale.
+        </p>
+        <QuickClient />
+      </section>
       <details className="rounded-2xl border border-border bg-white p-5">
         <summary className="cursor-pointer font-bold text-purple">
           Adaugă un client
@@ -58,19 +69,21 @@ export default async function BillingClients({
             href={`/admin/facturare/clienti/${c.id}`}
             className="flex items-center justify-between gap-4 border-b border-border px-5 py-4 last:border-0 hover:bg-purple-soft"
           >
-            <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold">
-                {c.name ?? "Client de completat"}
-              </h2>
-              <p className="mt-1 text-xs text-muted">
-                {c.cui ? `CUI ${c.cui}` : "Persoană fizică · fără CUI"}
-              </p>
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-soft font-bold text-purple">
+                {(c.name ?? c.cui ?? "C").slice(0, 2).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <h2 className="truncate text-sm font-bold">
+                  {c.name ?? "Client de completat"}
+                </h2>
+                <p className="mt-1 text-xs text-muted">
+                  {c.cui ? `CUI ${c.cui}` : "Persoană fizică · fără CUI"}
+                </p>
+              </div>
             </div>
             <span className="shrink-0 text-sm font-bold">
-              {new Intl.NumberFormat("ro-RO", {
-                style: "currency",
-                currency: "RON",
-              }).format(Number(c.balance))}
+              {money(c.balance)}
             </span>
           </Link>
         ))}

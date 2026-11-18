@@ -28,6 +28,12 @@ export default async function EditBillingClient({
       <section className="mt-5 rounded-2xl border border-border bg-white p-6">
         <h2 className="mb-5 text-lg font-bold">{data.name ?? data.cui}</h2>
         <ClientForm client={data} />
+        <Link
+          href={`/admin/facturare/facturi/noua?client=${id}`}
+          className="mt-6 inline-block rounded-xl bg-purple px-5 py-3 text-sm font-bold text-white"
+        >
+          Factură pentru acest client →
+        </Link>
       </section>
     </div>
   );
