@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition } from "react";
 import { ArrowLeft, Plus, Trash2, Search } from "lucide-react";
 import { saveInvoice, searchClients } from "../invoice-actions";
 import { QuickClient } from "../workflow-forms";
@@ -20,6 +20,7 @@ export function InvoiceEditor({
   vat,
   notes = "",
   initialLines,
+  initialSeries,
   connected,
 }: {
   id: string;
@@ -32,8 +33,10 @@ export function InvoiceEditor({
   vat: string;
   notes?: string;
   initialLines?: EditLine[];
+  initialSeries?: string | null;
   connected: boolean;
 }) {
+  const intentRef = useRef<HTMLInputElement>(null);
   const [state, submit, pending] = useActionState(saveInvoice, undefined);
   const [lines, setLines] = useState<EditLine[]>(
     initialLines ?? [
@@ -154,6 +157,12 @@ export function InvoiceEditor({
         <input type="hidden" name="id" value={state?.invoiceId ?? id} />
         <input type="hidden" name="clientId" value={clientId} />
         <input type="hidden" name="kind" value={kind} />
+        <input
+          type="hidden"
+          name="intent"
+          defaultValue="draft"
+          ref={intentRef}
+        />
         <input type="hidden" name="lines" value={JSON.stringify(lines)} />
         <fieldset disabled={pending} className="space-y-5 disabled:opacity-60">
           <section className={card}>
@@ -312,7 +321,7 @@ export function InvoiceEditor({
                 name="seriesId"
                 className={input}
                 required={connected}
-                defaultValue={series[0]?.id ?? ""}
+                defaultValue={initialSeries ?? series[0]?.id ?? ""}
               >
                 <option value="">Alege seria</option>
                 {series.map((s) => (
@@ -376,8 +385,9 @@ export function InvoiceEditor({
           )}
           <div className="space-y-2">
             <button
-              name="intent"
-              value="issue"
+              onClick={() => {
+                if (intentRef.current) intentRef.current.value = "issue";
+              }}
               disabled={
                 pending ||
                 !valid ||
@@ -394,8 +404,9 @@ export function InvoiceEditor({
                   : "Emite fără e-mail"}
             </button>
             <button
-              name="intent"
-              value="draft"
+              onClick={() => {
+                if (intentRef.current) intentRef.current.value = "draft";
+              }}
               disabled={pending || !valid || !clientId || !!state?.invoiceId}
               className="w-full py-3 font-semibold text-muted"
             >

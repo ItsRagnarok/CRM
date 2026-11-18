@@ -89,6 +89,7 @@ export default async function NewInvoice({
       due={due}
       vat={String(company.data.vat_payer ? company.data.default_vat_rate : 0)}
       notes={draft?.notes ?? ""}
+      initialSeries={draft?.series_id}
       connected={!!connection.data?.enabled}
       initialLines={draft?.lines.map((l) => ({
         name: l.name,
