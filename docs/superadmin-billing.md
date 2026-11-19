@@ -41,3 +41,14 @@ Testul SQL folosește exclusiv un container PostgreSQL 17 local (`electrofield-b
 Verificare browser efectuată pe un mediu local izolat: Next.js + PostgREST + PostgreSQL real, identitate de test și răspunsuri Oblio simulate. Flux: setări/conectare → serii → ciornă → emitere → PDF → încasare → rapoarte/ZIP → client CUI. Verificare la 1440 și 390 px. Nu au fost emise facturi fiscale reale în scop de test. O verificare cu contul real necesită introducerea cheii de către administrator și emiterea unui document real ales de acesta.
 
 Documentație Oblio verificată: https://www.oblio.eu/api (18 noiembrie 2026).
+
+
+## Istoric Oblio
+
+La deschiderea modulului, o conexiune activă pornește automat importul clienților și facturilor firmei din Setări. O sincronizare completă este reutilizată 15 minute; „Actualizează din Oblio” o reia imediat. Paginile sunt salvate atomic și progresul poate fi reluat după întrerupere. Importul apelează doar citiri Oblio, nu emite documente.
+
+Istoricul este păstrat în `billing_oblio_documents`, cu progres în `billing_oblio_sync_state`, ambele accesibile doar super adminului. Clienții sunt identificați după CUI; datele editate local nu sunt suprascrise. Facturile istorice și încasările sunt actualizate idempotent. Documentele deja emise prin ElectroField sunt excluse din oglinda afișată pentru a evita dublarea. Facturile anulate sunt etichetate și excluse din solduri/rapoarte. Indicatorii agregă RON; lista și Excel păstrează moneda fiecărui document.
+
+TVA-ul istoric este calculat numai dacă liniile primite permit reconcilierea cu totalul Oblio; altfel apare avertizarea de TVA incomplet. Documentele importate se corectează în Oblio. PDF-ul deschide originalul Oblio; exportul încearcă descărcarea originalului și include un link text dacă furnizorul nu returnează PDF direct. Nu sunt inventate linii sau copii fiscale. Importul istoric include facturi și stornări, nu proforme istorice.
+
+Testele SQL acoperă repetarea importului, încasări fără dublare, anulări, solduri și export. Fluxul automat și actualizarea manuală sunt verificate în browser cu PostgreSQL/PostgREST real și răspunsuri Oblio simulate; acestea nu confirmă importul contului real înainte de prima accesare autentificată în producție.

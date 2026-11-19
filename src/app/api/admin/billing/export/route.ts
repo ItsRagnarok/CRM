@@ -1,3 +1,5 @@
+import {remotePdf} from "@/lib/billing/remote-pdf";
+import {safeOblioUrl} from "@/lib/billing/oblio";
 import ExcelJS from "exceljs";
 import JSZip from "jszip";
 import { workflow } from "@/lib/billing/store";
@@ -18,11 +20,12 @@ export async function GET(request: Request) {
     { header: "Client", key: "client", width: 35 },
     { header: "Data", key: "date", width: 14 },
     { header: "Scadență", key: "due", width: 14 },
-    { header: "Subtotal (RON)", key: "subtotal", width: 20 },
-    { header: "TVA (RON)", key: "vat", width: 20 },
-    { header: "Total (RON)", key: "total", width: 20 },
-    { header: "Încasat (RON)", key: "paid", width: 20 },
-    { header: "Sold (RON)", key: "balance", width: 20 },
+    { header: "Subtotal", key: "subtotal", width: 20 },
+    { header: "TVA", key: "vat", width: 20 },
+    { header: "Total", key: "total", width: 20 },
+    { header: "Încasat", key: "paid", width: 20 },
+    { header: "Sold", key: "balance", width: 20 },
+    { header: "Monedă", key: "currency", width: 10 },
   ];
   const zip = new JSZip();
   let bytes = 0;
@@ -38,15 +41,17 @@ export async function GET(request: Request) {
       total: r.total,
       paid: r.paid,
       balance: r.balance,
+      currency: r.currency ?? "RON",
     });
-    const pdf = await invoicePdf(r);
+    const pdf = r.imported?await remotePdf(r.provider_url):await invoicePdf(r);
+    if(!pdf){const url=safeOblioUrl(r.provider_url);zip.file(`${r.id}-original-Oblio.txt`,url?`Documentul fiscal original este disponibil în Oblio: ${url}`:'Oblio nu a furnizat linkul PDF. Verifică documentul în cont.');continue;}
     bytes += pdf.length;
     if (bytes > 40 * 1024 * 1024)
       return new Response("Exportul PDF depășește 40 MB.", { status: 422 });
     zip.file(`${r.id}.pdf`, pdf);
   }
   sheet.getRow(1).font = { bold: true };
-  sheet.autoFilter = "A1:J1";
+  sheet.autoFilter = "A1:K1";
   sheet.views = [{ state: "frozen", ySplit: 1 }];
   // Write decimal literals directly into OOXML, without a float conversion.
   // Excel's own 15-digit limit requires retaining very large values as text.
@@ -83,7 +88,7 @@ export async function GET(request: Request) {
   );
   zip.file(
     "Citește-mă.txt",
-    "Sumele sunt numerice. Valorile cu peste 15 cifre sunt păstrate ca text pentru a evita limita de precizie Excel. PDF-urile sunt copii generate din datele fiscale salvate la emitere. Proformele și ciornele sunt excluse.",
+    "Sumele sunt numerice. Valorile cu peste 15 cifre sunt păstrate ca text pentru a evita limita de precizie Excel. PDF-urile sunt copii generate din datele fiscale salvate la emitere. Proformele și ciornele sunt excluse. Pentru documentele istorice care nu pot fi descărcate automat, arhiva conține un fișier text cu linkul originalului Oblio.",
   );
   const data = await zip.generateAsync({
     type: "uint8array",

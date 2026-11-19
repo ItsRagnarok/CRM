@@ -41,7 +41,7 @@ export default async function Invoice({
     ? `${d.provider_series} ${d.provider_number}`
     : "fără număr";
   const url = safeOblioUrl(d.provider_url);
-  const share = `${title} ${label}, ${money(d.total)}${url ? " — " + url : ""}`;
+  const share = `${title} ${label}, ${money(d.total, d.currency)}${url ? " — " + url : ""}`;
   return (
     <div className="space-y-6">
       <Link
@@ -65,7 +65,7 @@ export default async function Invoice({
               : `${title} este salvată ca ciornă`}
         </h1>
         <p className="mt-3 text-muted">
-          {d.client_name} · {money(d.total)}
+          {d.client_name} · {money(d.total, d.currency)}
         </p>
       </header>
       <section className={card}>
@@ -174,6 +174,13 @@ export default async function Invoice({
         </p>
       )}
       <section className={card}>
+        {d.imported && (
+          <p className="mb-4 text-sm text-muted">
+            Factură preluată din istoricul Oblio. Documentul fiscal original se
+            deschide prin «Factura în Oblio». Modificările încasărilor și
+            stornările se fac în Oblio, apoi se sincronizează.
+          </p>
+        )}
         <div className="mb-5 flex flex-wrap justify-between gap-3 text-sm text-muted">
           <span>Data: {displayDate(d.issue_date)}</span>
           <span>Scadență: {displayDate(d.due_date)}</span>
@@ -195,15 +202,23 @@ export default async function Invoice({
         <div className="ml-auto mt-5 max-w-sm space-y-2 text-sm">
           <p className="flex justify-between">
             <span>Subtotal</span>
-            <span>{money(d.subtotal)}</span>
+            <span>
+              {d.subtotal === null
+                ? "Vezi originalul Oblio"
+                : money(d.subtotal, d.currency)}
+            </span>
           </p>
           <p className="flex justify-between">
             <span>TVA</span>
-            <span>{money(d.vat_total)}</span>
+            <span>
+              {d.vat_total === null
+                ? "Vezi originalul Oblio"
+                : money(d.vat_total, d.currency)}
+            </span>
           </p>
           <p className="flex justify-between pt-2 text-lg font-bold">
             <span>Total</span>
-            <span>{money(d.total)}</span>
+            <span>{money(d.total, d.currency)}</span>
           </p>
         </div>
       </section>
@@ -211,22 +226,22 @@ export default async function Invoice({
         <section id="incasare" className={card}>
           <h2 className="mb-4 font-bold">
             {d.document_type === "credit_note" ? "Restituire" : "Încasare"} ·
-            sold {money(d.balance)}
+            sold {money(d.balance, d.currency)}
           </h2>
-          {d.balance !== "0.00" && (
+          {!d.imported && d.balance !== "0.00" && (
             <PaymentForm id={id} balance={d.balance} paymentId={randomUUID()} />
           )}
           <ul className="mt-4 divide-y divide-border">
             {d.payments.map((p) => (
               <li key={p.id} className="flex justify-between py-3 text-sm">
                 <span>{displayDate(p.paid_on)}</span>
-                <strong>{money(p.amount)}</strong>
+                <strong>{money(p.amount, d.currency)}</strong>
               </li>
             ))}
           </ul>
         </section>
       )}
-      {issued && d.document_type === "invoice" && (
+      {issued && !d.imported && d.document_type === "invoice" && (
         <details className={card}>
           <summary className="cursor-pointer font-semibold">
             Corectează prin stornare

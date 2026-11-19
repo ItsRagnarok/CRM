@@ -1,5 +1,6 @@
 export type InvoiceRow = {
   id: string;
+  currency?: string;
   client_id: string;
   document_type: "invoice" | "proforma" | "credit_note";
   original_invoice_id: string | null;
@@ -32,6 +33,8 @@ export type Party = {
   banks?: { bank_name: string; iban: string }[];
 };
 export type InvoiceDetail = InvoiceRow & {
+  imported?: boolean;
+  vat_known?: boolean;
   request_status?: string | null;
   series_id: string | null;
   notes: string | null;
@@ -66,6 +69,7 @@ export type Dashboard = {
   latest: InvoiceRow[];
 };
 export type Report = {
+  unknownVat?: number;
   months: { month: string; revenue: string }[];
   vat: string;
   count: number;

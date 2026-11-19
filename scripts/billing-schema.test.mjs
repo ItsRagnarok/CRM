@@ -39,6 +39,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
     sql(readFileSync(new URL('../supabase/migrations/20261118045301_platform_billing_settings.sql', import.meta.url), 'utf8'));
     sql(readFileSync(new URL('../supabase/migrations/20261118085522_platform_billing_workflow.sql', import.meta.url), 'utf8'));
     sql(readFileSync(new URL('../supabase/migrations/20261118220446_platform_billing_credit_balances.sql', import.meta.url), 'utf8'));
+    sql(readFileSync(new URL('../supabase/migrations/20261119223559_platform_billing_oblio_sync.sql', import.meta.url), 'utf8'));
     const output = sql(`
       create function pg_temp.assert_true(value boolean, message text) returns void language plpgsql as $$
       begin if value is distinct from true then raise exception 'ASSERT: %', message; end if; end $$;
@@ -122,7 +123,7 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       select pg_temp.assert_true((select total=-1028.50 from public.billing_invoices where document_type='credit_note'),'negative credit total');
       delete from public.billing_invoices where document_type='credit_note';
       reset role;
-      select pg_temp.assert_true((select count(*)=12 from pg_tables where schemaname in ('public','private') and tablename like 'billing_%' and rowsecurity),'all new tables use RLS');
+      select pg_temp.assert_true((select count(*)=14 from pg_tables where schemaname in ('public','private') and tablename like 'billing_%' and rowsecurity),'all new tables use RLS');
 
       set role authenticated;
       insert into public.billing_series(id,name,document_type) values ('40000000-0000-0000-0000-000000000001','FCT','invoice'),('40000000-0000-0000-0000-000000000002','FCT','credit_note');
@@ -164,6 +165,28 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       select pg_temp.reject($q$insert into public.billing_payments(invoice_id,amount,paid_on,method) select id,-1,current_date,'bank' from public.billing_invoices where original_invoice_id='20000000-0000-0000-0000-000000000001'$q$);
       select pg_temp.assert_true(jsonb_array_length(public.billing_workflow('report')->'months')=6,'six months');
       select pg_temp.assert_true((public.billing_workflow('credentials')->>'secret')='rotated-test-secret','credentials retrieved only for admin');
+      select public.billing_sync('begin');
+      select public.billing_sync('apply',jsonb_build_object('key',(select run_key from public.billing_oblio_sync_state),'phase','clients','offset',0,'rows','[{"cif":"RO999999","name":"Client istoric","address":"Oradea"}]'::jsonb));
+      select public.billing_sync('apply',jsonb_build_object('key',(select run_key from public.billing_oblio_sync_state),'phase','invoices','offset',0,'rows',jsonb_build_array(
+       jsonb_build_object('id','remote1','seriesName','OLD','number','0001','issueDate',current_date,'dueDate',current_date+7,'total','121.0000','currency','RON','client','{"cif":"RO999999","name":"Client istoric"}'::jsonb,'products','[{"name":"Serviciu","quantity":"1","price":"100","vatPercentage":"21","vatIncluded":"0"}]'::jsonb,'collects',jsonb_build_array(jsonb_build_object('value','50.00','issueDate',current_date,'type','Ordin de plata'))),
+       jsonb_build_object('id','remote2','seriesName','OLD','number','0002','issueDate',current_date,'dueDate',current_date,'total','99.00','currency','RON','canceled','1','client','{"cif":"RO999999","name":"Client istoric"}'::jsonb,'collects','[]'::jsonb)
+      )));
+      select pg_temp.assert_true((select count(*)=1 from public.billing_clients where cui='RO999999'),'client imported once');
+      select pg_temp.assert_true((select total='121.00' and paid='50.00' and balance='71.00' and subtotal='100.00' and vat_total='21.00' from public.billing_invoice_overview where provider_series='OLD' and provider_number='0001'),'history monetary values');
+      select pg_temp.assert_true((public.billing_workflow('dashboard')->>'outstanding')::numeric=71,'history included in dashboard');
+      select pg_temp.assert_true((select balance='71.00' from public.billing_client_balances('istoric')),'history client balance excludes canceled');
+      select pg_temp.assert_true((public.billing_workflow('detail',jsonb_build_object('id',(select id from public.billing_oblio_documents where provider_id='remote1')))->>'imported')='true','history detail');
+      select pg_temp.assert_true((public.billing_sync('status')->>'phase')='done','sync completed');
+      select public.billing_sync('begin','{"force":true}');
+      select public.billing_sync('apply',jsonb_build_object('key',(select run_key from public.billing_oblio_sync_state),'phase','clients','offset',0,'rows','[{"cif":"RO999999","name":"Client istoric"}]'::jsonb));
+      select pg_temp.assert_true((select count(*)=1 from public.billing_clients where cui='RO999999'),'repeat client sync idempotent');
+      select public.billing_sync('apply',jsonb_build_object('key',(select run_key from public.billing_oblio_sync_state),'phase','invoices','offset',0,'rows',(select jsonb_agg(raw) from public.billing_oblio_documents)));
+      select pg_temp.assert_true((select count(*)=2 from public.billing_oblio_documents),'repeat invoice sync idempotent');
+      select pg_temp.assert_true((public.billing_workflow('dashboard')->>'collected')::numeric=50,'remote receipts counted once');
+      select pg_temp.assert_true(jsonb_array_length(public.billing_workflow('export',jsonb_build_object('month',to_char(current_date,'YYYY-MM'))))>=1,'history participates in monthly export');
+      select pg_temp.assert_true((public.billing_workflow('report',jsonb_build_object('month',to_char(current_date,'YYYY-MM')))->>'unknownVat')::integer=0,'canceled invoice excluded from incomplete VAT');
+
+
       select set_config('request.headers','{"x-ef-preview-org":"test"}',false);
       select pg_temp.reject($q$select public.billing_workflow('credentials')$q$);
       select set_config('request.headers','{}',false);
@@ -171,6 +194,8 @@ test('billing schema: permissions, exact totals, document locks and payments', (
       select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-000000000002',false);
       set role authenticated;
       select pg_temp.reject($q$select public.billing_workflow('dashboard')$q$);
+      select pg_temp.reject($q$select public.billing_sync('begin')$q$);
+      select pg_temp.assert_true((select count(*)=0 from public.billing_oblio_documents),'history tenant isolation');
       select pg_temp.reject($q$select public.billing_workflow('credentials')$q$);
       select pg_temp.assert_true((select count(*)=0 from public.billing_invoice_overview),'overview tenant isolation');
       reset role;

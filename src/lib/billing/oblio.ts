@@ -1,3 +1,4 @@
+import { parse } from "lossless-json";
 // Server callers only: never expose token/secret in props, errors or logs.
 const BASE = "https://www.oblio.eu/api";
 export class OblioError extends Error {
@@ -32,7 +33,11 @@ async function request(path: string, init: RequestInit) {
   }
   let body: ResponseBody;
   try {
-    body = await response.json();
+    body = parse(
+      await response.text(),
+      undefined,
+      (value) => value,
+    ) as ResponseBody;
   } catch {
     throw new OblioError("Răspunsul Oblio nu a putut fi citit.", true);
   }
@@ -56,7 +61,15 @@ async function request(path: string, init: RequestInit) {
     );
     const detail =
       typeof body.statusMessage === "string"
-        ? body.statusMessage.replace(new Headers(init.headers).get("Authorization")?.replace(/^Bearer /, "") || "__no_token__", "[redactat]").replace(/<[^>]*>/g, "").slice(0, 300)
+        ? body.statusMessage
+            .replace(
+              new Headers(init.headers)
+                .get("Authorization")
+                ?.replace(/^Bearer /, "") || "__no_token__",
+              "[redactat]",
+            )
+            .replace(/<[^>]*>/g, "")
+            .slice(0, 300)
         : "";
     throw new OblioError(
       "Oblio nu a acceptat operația." +

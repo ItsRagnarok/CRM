@@ -9,6 +9,7 @@ export const secondary =
   "inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-semibold hover:border-purple disabled:opacity-50";
 export const statusLabels: Record<string, string> = {
   draft: "Ciornă",
+  canceled: "Anulată",
   pending: "De verificat",
   paid: "Plătită",
   overdue: "Restantă",
@@ -53,7 +54,7 @@ export function InvoiceList({
               </p>
             </div>
             <div className="shrink-0 text-right">
-              <p className="mb-1.5 font-bold">{money(r.total)}</p>
+              <p className="mb-1.5 font-bold">{money(r.total, r.currency)}</p>
               <Badge status={r.payment_status} />
             </div>
           </Link>

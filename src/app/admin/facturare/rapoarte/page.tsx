@@ -26,6 +26,13 @@ export default async function Reports({
   return (
     <div className="space-y-5">
       <h1 className="text-3xl font-extrabold">Rapoarte</h1>
+      {!!r.unknownVat && (
+        <p role="status" className="rounded-xl bg-amber-soft p-4 text-sm">
+          Pentru {r.unknownVat} facturi istorice, API-ul nu oferă detaliile
+          necesare separării TVA. Aceste sume nu sunt incluse în estimarea TVA
+          și veniturile fără TVA. Verifică documentele originale.
+        </p>
+      )}
       <section className={card}>
         <h2 className="font-semibold">Venituri pe ultimele 6 luni</h2>
         <p className="mt-1 text-xs text-muted">
@@ -120,7 +127,7 @@ export default async function Reports({
           )}
         </div>
         <p className="mt-4 text-xs text-muted">
-          Descarcă arhiva și atașeaz-o mesajului. Trimiterea lunară automată nu
+          Pentru PDF-urile istorice indisponibile automat, arhiva include linkul originalului din Oblio. Descarcă arhiva și atașeaz-o mesajului. Trimiterea lunară automată nu
           este activată.
         </p>
       </section>

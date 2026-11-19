@@ -16,10 +16,15 @@ export function decimal(n: bigint, digits = 2) {
   const s = (neg ? -n : n).toString().padStart(digits + 1, "0");
   return (neg ? "-" : "") + s.slice(0, -digits) + "." + s.slice(-digits);
 }
-export function money(v: string) {
+export function money(v: string, currency = "RON") {
   const s = decimal(scaled(String(v), 2));
   const [a, b] = s.split(".");
-  return a.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "," + b + " lei";
+  return (
+    a.replace(/\B(?=(\d{3})+(?!\d))/g, ".") +
+    "," +
+    b +
+    (currency === "RON" ? " lei" : " " + currency)
+  );
 }
 export function preview(
   lines: { quantity: string; price: string; vat: string }[],
