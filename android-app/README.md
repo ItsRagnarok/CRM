@@ -132,3 +132,30 @@ permissions, icons, `AndroidManifest.xml`, Java code).
 6. On a phone: install over the old version, open Profil → the footer shows the
    installed version, then run "Trimite o notificare de test" with the app
    closed.
+
+
+## iOS (sideload with a free Apple ID, no Mac)
+
+`ios/` is the Capacitor iOS project (Swift Package Manager, no CocoaPods). Like Android it is a WebView of
+the live app, so web changes reach the iPhone without a new build. Only native changes need a new `.ipa`.
+
+**Get the `.ipa`:** GitHub → Actions → "iOS unsigned IPA" → *Run workflow* (also runs on pushes that touch
+`android-app/ios/**`). When it finishes, download the artifact **ElectroField-ios-unsigned** (a zip that
+contains `ElectroField-unsigned.ipa`). The build runs on `macos-15` with code signing disabled.
+
+**Install with Sideloadly (Windows/macOS):** connect the iPhone, drag the `.ipa` into Sideloadly, enter the
+free Apple ID, press Start. On the iPhone: Settings → General → VPN & Device Management → trust the profile,
+and enable Developer Mode (Settings → Privacy & Security) when iOS asks.
+
+**Limits of a free Apple ID (Apple's rules, not ours):** the app stops opening after **7 days** and must be
+re-signed with Sideloadly (same steps, data stays); at most **3 sideloaded apps** at a time; **no push
+notifications** (APNs needs the paid program), so `push-registration.tsx` skips registration on iOS and
+the in-app bell/messages remain the way to get notified.
+
+**What Info.plist declares (from what the code really uses):** camera (`<input capture>` for job photos,
+receipts, scanning), photo library (pick a photo or PDF), location while in use and in the background
+(`navigator.geolocation` + `@capacitor-community/background-geolocation`, `UIBackgroundModes=location`).
+There is no microphone use and no external-provider login (email + password), so no custom URL scheme.
+
+**Untested here:** this container has no macOS, so the first workflow run is the first real compile. If it
+fails, open the run, read the "Build unsigned app" step (and the `xcodebuild-log` artifact) and send it over.

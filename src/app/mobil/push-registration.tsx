@@ -22,6 +22,9 @@ export function PushRegistration() {
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
+    // iOS push needs the paid Apple Developer APNs entitlement; the free-Apple-ID sideload build has none,
+    // so skip registration instead of showing a permission prompt that can never lead to a notification.
+    if (Capacitor.getPlatform() === "ios") return;
 
     let cancelled = false;
 

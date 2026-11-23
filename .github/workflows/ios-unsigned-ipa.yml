@@ -1,0 +1,85 @@
+name: iOS unsigned IPA
+
+# Builds an UNSIGNED .ipa of the ElectroField iOS shell (Capacitor WebView of the live app).
+# No Apple Developer account is needed: the file is re-signed on the user's computer with
+# Sideloadly (free Apple ID). Run it from Actions → "iOS unsigned IPA" → Run workflow,
+# then download the "ElectroField-ios-unsigned" artifact.
+on:
+  workflow_dispatch:
+  push:
+    branches: [claude/great-meitner-obr9me]
+    paths:
+      - "android-app/ios/**"
+      - "android-app/capacitor.config.ts"
+      - "android-app/package.json"
+      - "android-app/package-lock.json"
+      - ".github/workflows/ios-unsigned-ipa.yml"
+
+jobs:
+  build:
+    # macos-15, not macos-13/14: those images are often unavailable on accounts without a paid plan.
+    runs-on: macos-15
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: android-app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - name: Install JS dependencies (the Swift packages of the plugins live in node_modules)
+        run: npm ci
+
+      - name: Sync Capacitor iOS project
+        run: npx cap sync ios
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Resolve Swift packages
+        run: xcodebuild -resolvePackageDependencies -project ios/App/App.xcodeproj -scheme App
+
+      - name: Build unsigned app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination "generic/platform=iOS" \
+            -derivedDataPath "$RUNNER_TEMP/derived" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            clean build | tee "$RUNNER_TEMP/xcodebuild.log" | tail -n 60
+
+      - name: Package .ipa (Payload/App.app, zipped)
+        run: |
+          APP="$RUNNER_TEMP/derived/Build/Products/Release-iphoneos/App.app"
+          test -d "$APP" || { echo "App.app not found at $APP"; ls -R "$RUNNER_TEMP/derived/Build/Products" | head -50; exit 1; }
+          rm -rf "$RUNNER_TEMP/ipa" && mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qry "$GITHUB_WORKSPACE/ElectroField-unsigned.ipa" Payload)
+          ls -lh "$GITHUB_WORKSPACE/ElectroField-unsigned.ipa"
+          unzip -l "$GITHUB_WORKSPACE/ElectroField-unsigned.ipa" | head -12
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ElectroField-ios-unsigned
+          path: ElectroField-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload build log when something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-log
+          path: ${{ runner.temp }}/xcodebuild.log
+          if-no-files-found: ignore

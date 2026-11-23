@@ -11,6 +11,13 @@ const config: CapacitorConfig = {
   server: {
     url: "https://electrofield-alporaro.vercel.app/mobil",
     cleartext: false,
+    // Links between the two production hosts stay inside the app; everything else opens in the system browser.
+    allowNavigation: ["electrofield-alporaro.vercel.app", "www.electrofield.ro", "electrofield.ro"],
+  },
+  ios: {
+    // Field app: the web UI handles its own safe areas, so the WebView fills the screen.
+    contentInset: "never",
+    backgroundColor: "#f4f4f6",
   },
   android: {
     allowMixedContent: false,
