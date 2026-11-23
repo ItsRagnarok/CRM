@@ -1,10 +1,14 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import s from "./mail.module.css";
 
 export function MailReaderBody({ html, text, showImages }: { html?: string; text: string; showImages: boolean }) {
   const [height, setHeight] = useState(160);
+  // Plain text is always available, so a message is readable even when its HTML layout renders badly.
+  const [plain, setPlain] = useState(false);
+  useEffect(() => { try { setPlain(localStorage.getItem("ef-mail-reader") === "text"); } catch { /* storage unavailable */ } }, []);
+  function choose(next: boolean) { setPlain(next); try { localStorage.setItem("ef-mail-reader", next ? "text" : "html"); } catch { /* storage unavailable */ } }
   const trackHeight = useCallback((frame: HTMLIFrameElement | null) => {
     if (!frame) return;
     let observer: ResizeObserver | undefined;
@@ -24,7 +28,12 @@ export function MailReaderBody({ html, text, showImages }: { html?: string; text
     };
   }, []);
 
-  if (!html?.trim()) return <div className={s.body}>{text}</div>;
+  if (!html?.trim() || plain) {
+    return <>
+      {html?.trim() && <div className={s.readerMode} role="group" aria-label="Mod de afișare"><button type="button" aria-pressed={false} onClick={() => choose(false)}>Format original</button><button type="button" aria-pressed onClick={() => choose(true)}>Text simplu</button></div>}
+      <div className={s.body}>{text}</div>
+    </>;
+  }
 
   const imageSources = showImages ? "data: https:" : "data:";
   const document = `<!doctype html><html><head><meta charset="utf-8">
@@ -35,6 +44,7 @@ export function MailReaderBody({ html, text, showImages }: { html?: string; text
 
   return (
     <div className={s.formattedBody}>
+      <div className={s.readerMode} role="group" aria-label="Mod de afișare"><button type="button" aria-pressed onClick={() => choose(false)}>Format original</button><button type="button" aria-pressed={false} onClick={() => choose(true)}>Text simplu</button></div>
       <iframe title="Conținutul emailului" ref={trackHeight}
         sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer" srcDoc={document} style={{ height }}

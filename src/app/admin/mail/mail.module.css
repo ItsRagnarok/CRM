@@ -35,3 +35,9 @@
   .readerToolbar { flex-wrap: wrap; }
   .readerToolbar > div { flex-wrap: wrap; }
 }
+
+/* Comutator Format original / Text simplu în cititorul de mesaje. */
+.readerMode{display:inline-flex;gap:2px;margin:0 0 10px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--soft)}
+.readerMode button{font:inherit;font-size:12px;font-weight:700;padding:6px 12px;border:0;border-radius:999px;background:transparent;color:var(--muted);cursor:pointer}
+.readerMode button[aria-pressed="true"]{background:var(--surface);color:var(--accent);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.formattedBody .readerMode{margin-bottom:8px}

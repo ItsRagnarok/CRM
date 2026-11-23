@@ -14,16 +14,25 @@ const dimension = /^(?:0|[0-9]{1,4}(?:\.[0-9]{1,2})?(?:px|pt|em|rem|%))$/i;
 const spacing = /^(?:0|[0-9]{1,4}(?:px|pt|em|rem|%))(?:\s+(?:0|[0-9]{1,4}(?:px|pt|em|rem|%))){0,3}$/i;
 const color = /^(?:#[0-9a-f]{3,8}|[a-z]{1,20}|rgba?\([0-9.,%\s]+\))$/i;
 
-export function sanitizeIncomingHtml(html: string, inlineImages: ReadonlyMap<string, string>) {
+// Marketing emails pad their hidden "preheader" with hundreds of invisible characters. If a client ignores display:none they render
+// as a dark smear, so long runs of them are collapsed before sanitizing.
+const INVISIBLE_RUN = /(?:&#847;|&#x34f;|&zwnj;|&#8204;|&#x200c;|&zwj;|&#8205;|&shy;|&#173;|&nbsp;|&#160;|[\u034f\u200b-\u200f\u2060\ufeff\u00ad\u00a0\s]){8,}/gi;
+
+export function sanitizeIncomingHtml(rawHtml: string, inlineImages: ReadonlyMap<string, string>) {
+  const html = rawHtml.replace(INVISIBLE_RUN, " ");
   let inlineBudget = 1_400_000;
   return sanitizeHtml(html, {
+    // <style> blocks and class names are what most marketing emails use for layout and for hiding their "preheader" filler text.
+    // This is safe only because the result is shown in a sandboxed iframe without scripts and with a CSP that blocks every network load
+    // except images, and https images only after the reader opts in (see MailReaderBody).
+    allowVulnerableTags: true,
     allowedTags: [
-      "div", "p", "br", "hr", "span", "a", "img", "center", "font", "strong", "b", "em", "i", "u", "s",
+      "style", "div", "p", "br", "hr", "span", "a", "img", "center", "font", "strong", "b", "em", "i", "u", "s",
       "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "pre", "code", "ul", "ol", "li",
       "table", "thead", "tbody", "tfoot", "tr", "th", "td", "caption", "colgroup", "col",
     ],
     allowedAttributes: {
-      "*": ["style", "dir", "lang", "align", "valign", "bgcolor", "width", "height"],
+      "*": ["style", "class", "dir", "lang", "align", "valign", "bgcolor", "width", "height"],
       a: ["href", "title", "target", "rel"],
       img: ["src", "alt"],
       table: ["border", "cellpadding", "cellspacing", "role"],
@@ -50,6 +59,11 @@ export function sanitizeIncomingHtml(html: string, inlineImages: ReadonlyMap<str
         "border-radius": [spacing], "border-collapse": [/^(collapse|separate)$/],
         "border-color": [color], "border-width": [spacing],
         "border-style": [/^(none|solid|dotted|dashed)$/],
+        // Hidden preheader text: without these it becomes a visible smear of invisible characters.
+        display: [/^(none|block|inline|inline-block|table|table-cell|table-row)$/],
+        visibility: [/^(hidden|visible)$/], opacity: [/^(0|1|0?\.[0-9]{1,3})$/],
+        overflow: [/^(hidden|visible)$/], "max-height": [dimension],
+        "mso-hide": [/^all$/],
         border: [/^(?:0|[0-9]{1,2}px (?:solid|dotted|dashed) #[0-9a-f]{3,8})$/i],
       },
     },
