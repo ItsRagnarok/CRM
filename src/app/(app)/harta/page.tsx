@@ -330,8 +330,9 @@ export default async function HartaPage({
           ))}
         </div>
       )}
-      <div className="flex flex-1 overflow-hidden">
-      <div className="flex w-[320px] shrink-0 flex-col border-r border-border bg-white">
+      {/* Telefon: harta sus, lista echipelor dedesubt (nu una lângă alta). */}
+      <div className="flex flex-1 flex-col-reverse overflow-hidden md:flex-row">
+      <div className="flex max-h-[42%] w-full shrink-0 flex-col border-t border-border bg-white md:max-h-none md:w-[320px] md:border-r md:border-t-0">
         <div className="px-[18px] pb-3 pt-[18px] text-[16px] font-extrabold text-foreground">
           Echipe pe teren
         </div>
@@ -382,7 +383,7 @@ export default async function HartaPage({
         </div>
       </div>
 
-      <div className="relative flex-1">
+      <div className="relative min-h-0 flex-1">
         {allMapMarkers.length > 0 ? (
           <DashboardMapLoader markers={allMapMarkers} trails={trails} selectedId={selectedTeamId} />
         ) : (

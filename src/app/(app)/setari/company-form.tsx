@@ -21,7 +21,7 @@ export function CompanyForm({
   return (
     <form action={formAction} className="rounded-[13px] border border-border bg-white p-[22px]">
       <div className="mb-[18px] text-[15px] font-bold text-foreground">Informații companie</div>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Denumire companie">
           <input
             name="name"
@@ -52,7 +52,7 @@ export function CompanyForm({
             className="w-full rounded-[9px] border border-[#d0d5dd] px-3.5 py-2.5 text-[13.5px] outline-none focus:border-electric"
           />
         </Field>
-        <div className="col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Adresă sediu">
             <input
               name="address"

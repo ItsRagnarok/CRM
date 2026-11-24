@@ -89,7 +89,7 @@ export default async function MaterialePage({
           ))}
         </div>
 
-        <form className="flex max-w-[280px] flex-1 items-center gap-2 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
+        <form className="flex min-w-[160px] max-w-[280px] flex-1 items-center gap-2 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
           <Search className="h-3.5 w-3.5 text-muted-2" />
           <input
             type="text"
@@ -133,7 +133,7 @@ export default async function MaterialePage({
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <StatCard label="Materiale în stoc" value={total} />
         <StatCard label="🟢 Stoc OK" value={okCount} color="text-success" />
         <StatCard label="🟠 Stoc scăzut" value={lowCount} color="text-warning" />
@@ -149,15 +149,15 @@ export default async function MaterialePage({
         </div>
         <div className="flex flex-col divide-y divide-[#f2f4f7]">
           {(warehouses ?? []).map((w) => (
-            <div key={w.id} className="flex items-center gap-3 px-5 py-3">
+            <div key={w.id} className="flex flex-wrap items-center gap-3 px-4 py-3 md:flex-nowrap md:px-5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-electric-soft">
                 <WarehouseIcon className="h-4 w-4 text-electric" />
               </div>
-              <div className="w-[160px] shrink-0 text-[13px] font-bold text-foreground">
+              <div className="min-w-0 flex-1 text-[13px] font-bold text-foreground md:w-[160px] md:flex-none md:shrink-0">
                 {w.name}
                 {w.is_central && <span className="ml-1.5 text-[10px] font-bold text-muted-2">CENTRAL</span>}
               </div>
-              <form action={updateWarehouseAddress} className="flex flex-1 items-center gap-2">
+              <form action={updateWarehouseAddress} className="order-last flex w-full items-center gap-2 md:order-none md:w-auto md:flex-1">
                 <input type="hidden" name="warehouseId" value={w.id} />
                 <input
                   name="address"
@@ -183,17 +183,17 @@ export default async function MaterialePage({
             </div>
           ))}
         </div>
-        <form action={createWarehouse} className="flex items-center gap-2 border-t border-[#f2f4f7] px-5 py-3">
+        <form action={createWarehouse} className="flex flex-wrap items-center gap-2 border-t border-[#f2f4f7] px-4 py-3 md:flex-nowrap md:px-5">
           <input
             name="name"
             required
             placeholder="Nume depozit nou — ex: Depozit Nord"
-            className="w-[220px] rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
+            className="w-full rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric md:w-[220px]"
           />
           <input
             name="address"
             placeholder="Adresă (opțional acum, o poți adăuga după)"
-            className="flex-1 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
+            className="min-w-0 flex-1 rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric"
           />
           <button type="submit" className="flex shrink-0 items-center gap-1.5 rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-bold text-white">
             <Plus className="h-3.5 w-3.5" /> Adaugă depozit

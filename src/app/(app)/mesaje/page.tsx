@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { MessagesThread } from "@/components/messages-thread";
 import { AutoMarkRead } from "@/components/auto-mark-read";
 import { sendTeamMessage, sendDirectMessage } from "./actions";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, ArrowLeft } from "lucide-react";
 
 export default async function MesajePage({
   searchParams,
@@ -96,12 +96,13 @@ export default async function MesajePage({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-[60px] shrink-0 items-center border-b border-border bg-white px-6">
+      <div className="flex h-[60px] shrink-0 items-center border-b border-border bg-white px-4 md:px-6">
         <h1 className="text-[16px] font-extrabold text-foreground">Mesaje</h1>
       </div>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex w-[320px] shrink-0 flex-col overflow-auto border-r border-border bg-white">
+        {/* Telefon: lista ocupă tot ecranul; după ce alegi o conversație, se vede doar conversația (cu „Înapoi”). */}
+        <div className={`${selectedTeamId || selectedProfileId ? "hidden md:flex" : "flex"} w-full shrink-0 flex-col overflow-auto border-r border-border bg-white md:w-[320px]`}>
           <div className="px-4 pb-1 pt-3.5 text-[11px] font-bold uppercase tracking-wide text-muted-2">Echipe</div>
           {(teams ?? []).map((t) => {
             const conv = convByTeam.get(t.id);
@@ -171,12 +172,15 @@ export default async function MesajePage({
           })}
         </div>
 
-        <div className="flex-1">
+        <div className={`${selectedTeamId || selectedProfileId ? "flex-1" : "hidden flex-1 md:block"} min-w-0`}>
           {selectedTeamId || selectedProfileId ? (
             <div className="flex h-full flex-col">
               {selectedConversation && <AutoMarkRead conversationId={selectedConversation.id} />}
-              <div className="flex h-[54px] shrink-0 items-center border-b border-[#f2f4f7] bg-white px-5">
-                <div className="text-[14px] font-extrabold text-foreground">{selectedTitle}</div>
+              <div className="flex h-[54px] shrink-0 items-center gap-2 border-b border-[#f2f4f7] bg-white px-3 md:px-5">
+                <Link href="/mesaje" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] text-neutral hover:bg-neutral-bg md:hidden" aria-label="Înapoi la conversații">
+                  <ArrowLeft className="h-5 w-5" strokeWidth={1.9} />
+                </Link>
+                <div className="min-w-0 truncate text-[14px] font-extrabold text-foreground">{selectedTitle}</div>
               </div>
               <div className="flex-1 overflow-hidden">
                 <MessagesThread

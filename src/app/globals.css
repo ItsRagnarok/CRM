@@ -156,3 +156,13 @@ html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"
   [data-mail-viewport="true"] { height: auto !important; min-height: 100dvh !important; overflow: visible !important; }
   [data-mail-viewport="true"] > main { overflow: visible !important; }
 }
+
+/* Telefon, platforma de birou: tabelele late se derulează orizontal în cardul lor
+   (cardurile au overflow-hidden pentru colțuri rotunde, care le tăia coloanele). */
+@media (max-width: 767px) {
+  .ef-app-theme main :is(div, section):has(> table) { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .ef-app-theme main table { min-width: 600px; }
+  /* marginile de 28–32px ale paginilor ocupă prea mult pe un ecran de 390px */
+  .ef-app-theme main :is(.p-7, .p-8) { padding: 16px; }
+  .ef-app-theme main :is(.px-7, .px-8) { padding-left: 16px; padding-right: 16px; }
+}

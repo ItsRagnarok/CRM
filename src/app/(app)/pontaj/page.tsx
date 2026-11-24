@@ -187,7 +187,7 @@ export default async function PontajPage({
         </a>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard label={`Ore lucrate (${view === "zi" ? "ziua" : "săptămâna"})`} value={formatHM(totalWorked)} />
         <StatCard label="Ore deplasare" value={formatHM(totalTravel)} />
         <StatCard label="Ore pauză" value={formatHM(totalBreak)} />

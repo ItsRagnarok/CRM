@@ -3,7 +3,8 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Search, Bell, MessageSquare, PhoneCall, Briefcase, ShoppingCart } from "lucide-react";
+import { Search, Bell, MessageSquare, PhoneCall, Briefcase, ShoppingCart, Menu } from "lucide-react";
+import { OPEN_MENU_EVENT } from "@/components/sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { markNotificationRead, markAllNotificationsRead } from "@/app/(app)/notifications-actions";
 import {
@@ -106,9 +107,20 @@ export function Topbar({
     notifications.filter((n) => !n.is_read && (t === "toate" || categoryOf(n.type) === t)).length;
 
   return (
-    <header className="relative flex h-[66px] shrink-0 items-center gap-4 border-b border-border bg-white px-6">
+    <header className="relative flex h-[58px] shrink-0 items-center gap-3 border-b border-border bg-white px-3 md:h-[66px] md:gap-4 md:px-6">
+      <button
+        type="button"
+        onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
+        className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-neutral-bg text-neutral md:hidden"
+        aria-label="Deschide meniul"
+      >
+        <Menu className="h-5 w-5" strokeWidth={1.9} />
+      </button>
+      <Link href="/dashboard" className="text-[15px] font-bold tracking-tight text-foreground md:hidden">
+        Electro<span className="text-electric">Field</span>
+      </Link>
       {showSearch && (
-        <div className="flex max-w-[420px] flex-1 items-center gap-2.5 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
+        <div className="hidden max-w-[420px] flex-1 items-center md:flex gap-2.5 rounded-[10px] bg-neutral-bg px-3.5 py-2.5">
           <Search className="h-4 w-4 text-muted-2" />
           <input
             placeholder="Caută clienți, lucrări, echipe…"

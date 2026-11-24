@@ -25,7 +25,7 @@ export default function JobDetailLoading() {
         <div className="flex flex-col gap-4">
           <div className="rounded-[13px] border border-border bg-white p-5">
             <Skeleton className="mb-3.5 h-4 w-40" />
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i}>
                   <Skeleton className="h-2.5 w-16" />

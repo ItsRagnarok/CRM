@@ -292,7 +292,7 @@ export default async function JobDetailPage({
               {isBackOfficeRole(profile.role) && <DosarPanel job={job} organization={organization} />}
               {isBackOfficeRole(profile.role) && <StatusLinkCard jobId={id} organizationId={organization.id} canEdit={!readOnly} />}
               <Card title="Informații generale">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   <InfoField label="DATA" value={job.scheduled_date} />
                   <InfoField label="DURATĂ" value={formatDuration(job.work_started_at, job.work_ended_at)} />
                   <InfoField label="DISTANȚĂ" value={job.distance_km != null ? `${job.distance_km} km` : "—"} />
@@ -741,7 +741,7 @@ function PhotosCard({
         </Link>
       )}
       {shown.length > 0 ? (
-        <div className="grid grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5">
           {shown.map((p) => (
             <a key={p.id} href={publicUrl(p.storage_path)} target="_blank" rel="noreferrer" className="block">
               <div className="mb-1.5 text-[10.5px] font-bold text-muted-2">

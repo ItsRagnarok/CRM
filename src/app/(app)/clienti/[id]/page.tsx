@@ -115,16 +115,16 @@ export default async function ClientDetailPage({
         <span className="text-[15px] font-bold text-foreground">{client.name}</span>
       </div>
 
-      <div className="flex items-center justify-between rounded-[14px] border border-border bg-white p-6">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[14px] border border-border bg-white p-4 md:p-6">
+        <div className="flex min-w-0 items-center gap-4">
           <div
             className="flex h-[60px] w-[60px] items-center justify-center rounded-2xl text-[18px] font-extrabold"
             style={{ background: color.bg, color: color.text }}
           >
             {initials(client.name)}
           </div>
-          <div>
-            <div className="flex items-center gap-2.5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2.5">
               <div className="text-[20px] font-extrabold text-foreground">{client.name}</div>
               <StatusBadge
                 label={client.status === "active" ? "Activ" : "Inactiv"}
@@ -150,7 +150,7 @@ export default async function ClientDetailPage({
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Link
             href={`/clienti/${client.id}/editeaza`}
             className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-[13px] font-bold text-[#344054]"
@@ -174,12 +174,12 @@ export default async function ClientDetailPage({
         </div>
       </div>
 
-      <div className="flex gap-1 border-b border-border">
+      <div className="flex gap-1 overflow-x-auto border-b border-border">
         {TABS.map((t) => (
           <Link
             key={t.id}
             href={tabHref(t.id)}
-            className={`px-4 py-2.5 text-[13.5px] font-semibold ${
+            className={`shrink-0 whitespace-nowrap px-4 py-2.5 text-[13.5px] font-semibold ${
               tab === t.id ? "border-b-2 border-electric text-electric" : "text-muted"
             }`}
           >
@@ -309,7 +309,7 @@ export default async function ClientDetailPage({
         <div className="rounded-[13px] border border-border bg-white p-5">
           <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">Fotografii — toate lucrările</h2>
           {photos && photos.length > 0 ? (
-            <div className="grid grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
               {photos.map((p) => (
                 <a key={p.id} href={publicUrl(p.storage_path)} target="_blank" rel="noreferrer" className="block">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

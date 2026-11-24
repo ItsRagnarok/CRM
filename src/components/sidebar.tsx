@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -20,6 +21,7 @@ import {
   Sun,
   Zap,
   MessageSquare,
+  X,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
@@ -72,6 +74,10 @@ const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
   },
 ];
 
+// On phones the sidebar is an off-canvas drawer; the topbar's menu button
+// opens it by dispatching this event (no shared state needed between them).
+export const OPEN_MENU_EVENT = "ef:open-menu";
+
 export function Sidebar({
   fullName,
   roleLabel,
@@ -86,6 +92,20 @@ export function Sidebar({
   badges?: Record<string, number>;
 }) {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    window.addEventListener(OPEN_MENU_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_MENU_EVENT, onOpen);
+  }, []);
+  // Close the drawer after navigating.
+  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
   const initials = fullName
     .split(" ")
     .map((p) => p[0])
@@ -94,8 +114,16 @@ export function Sidebar({
     .toUpperCase();
 
   return (
-    <aside className="flex h-screen w-[236px] shrink-0 flex-col bg-navy px-3.5 py-2.5">
-      <Link href="/dashboard" className="flex items-center gap-2.5 px-2 pb-2 pt-0.5">
+    <>
+    {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[264px] max-w-[85vw] shrink-0 flex-col bg-navy px-3.5 py-2.5 transition-transform duration-200 md:static md:z-auto md:w-[236px] md:max-w-none md:translate-x-0 md:transition-none ${
+        open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+      }`}
+      aria-label="Meniu principal"
+    >
+      <div className="flex items-center">
+      <Link href="/dashboard" className="flex flex-1 items-center gap-2.5 px-2 pb-2 pt-0.5">
         <Image
           src="/logo-mark.png"
           alt="ElectroField"
@@ -115,6 +143,15 @@ export function Sidebar({
           />
         </div>
       </Link>
+      <button
+        type="button"
+        onClick={() => setOpen(false)}
+        className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-[10px] text-[#cbcdd4] hover:bg-white/5 md:hidden"
+        aria-label="Închide meniul"
+      >
+        <X className="h-5 w-5" strokeWidth={1.9} />
+      </button>
+      </div>
 
       <nav className="mt-0.5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
         {NAV_SECTIONS.map((section, i) => (
@@ -170,5 +207,6 @@ export function Sidebar({
         </form>
       </div>
     </aside>
+    </>
   );
 }

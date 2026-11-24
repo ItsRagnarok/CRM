@@ -25,7 +25,10 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,system-
 .brandl b{color:var(--accent);font-weight:700}
 .toplinks{display:flex;gap:18px;align-items:center;font-size:.92rem}
 .toplinks a{color:var(--muted);text-decoration:none}.toplinks a:hover{color:var(--ink)}
-.toplinks a.pill{border:1px solid var(--line);border-radius:99px;padding:8px 14px;color:var(--ink)}
+.toplinks a.pill{border:1px solid var(--line);border-radius:99px;padding:8px 14px;color:var(--ink);white-space:nowrap}
+/* Telefon: antetul încape pe ecran (altfel pagina se micșorează și fuge lateral), iar formularul urcă mai sus */
+@media(max-width:600px){.top{padding:14px 16px}.toplinks{gap:12px}.toplinks a.home{display:none}.toplinks a.pill{padding:7px 12px}.intro .points{display:none}.intro h1{margin-bottom:10px}}
+@media(max-width:360px){.toplinks a.blog{display:none}}
 main{max-width:1040px;margin:0 auto;padding:10px 16px 70px}
 .wrap2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:28px;align-items:start}
 @media(max-width:860px){.wrap2{grid-template-columns:1fr}}
@@ -103,7 +106,7 @@ details summary{cursor:pointer;font-weight:600}
 <script defer src="/ef-analytics.js"></script>
 </head>
 <body>
-<header class="top"><a class="brandl" href="/" aria-label="ElectroField"><img src="/logo-mark.png" alt="" style="height:30px;width:auto"><span style="display:inline-flex;align-items:baseline">Electro<img src="/logo-wordmark-field.png" alt="" style="height:17px;width:auto;margin-left:1px"></span></a><nav class="toplinks"><a href="/">Acasă</a><a href="/blog">Blog</a><a class="pill" href="/login">Conectează-te</a></nav></header>
+<header class="top"><a class="brandl" href="/" aria-label="ElectroField"><img src="/logo-mark.png" alt="" style="height:30px;width:auto"><span style="display:inline-flex;align-items:baseline">Electro<img src="/logo-wordmark-field.png" alt="" style="height:17px;width:auto;margin-left:1px"></span></a><nav class="toplinks"><a class="home" href="/">Acasă</a><a class="blog" href="/blog">Blog</a><a class="pill" href="/login">Conectează-te</a></nav></header>
 <main>
 
 <!--  PARTEA PUBLICĂ  -->

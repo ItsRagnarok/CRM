@@ -52,7 +52,7 @@ export default async function AppLayout({
   }).length;
 
   return (
-    <div className="ef-app-theme flex h-screen overflow-hidden bg-background">
+    <div className="ef-app-theme flex h-dvh overflow-hidden bg-background">
       {!readOnly && <UsageTracker channel="web" />}
       <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} badges={navBadges} />
       <div className="flex min-w-0 flex-1 flex-col">

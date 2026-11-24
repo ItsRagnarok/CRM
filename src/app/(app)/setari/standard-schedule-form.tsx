@@ -25,7 +25,7 @@ export function StandardScheduleForm({
       <p className="mb-[18px] text-[12.5px] text-muted-2">
         Folosit ca referință în Pontaj → Concedii & absențe, pentru a calcula zilele lucrătoare dintr-un concediu.
       </p>
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-[12.5px] font-semibold text-[#344054]">Ore/zi</label>
           <input

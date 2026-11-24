@@ -74,18 +74,19 @@ export default async function SetariPage({
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-[66px] shrink-0 items-center border-b border-border bg-white px-6">
+      <div className="flex h-[56px] shrink-0 items-center border-b border-border bg-white px-4 md:h-[66px] md:px-6">
         <h1 className="text-[17px] font-extrabold text-foreground">Setări</h1>
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        <nav className="w-[230px] shrink-0 border-r border-border p-3">
+      {/* Telefon: filele devin o bandă orizontală deasupra conținutului. */}
+      <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
+        <nav className="flex w-full shrink-0 gap-1 overflow-x-auto border-b border-border bg-white p-2 md:block md:w-[230px] md:overflow-visible md:border-b-0 md:border-r md:bg-transparent md:p-3">
           {NAV.map((n) => (
             <Link
               key={n.id}
               href={`/setari?tab=${n.id}`}
               prefetch={false}
-              className={`block rounded-[9px] px-3 py-2.5 text-[13px] font-semibold ${
+              className={`block shrink-0 whitespace-nowrap rounded-[9px] px-3 py-2.5 text-[13px] font-semibold ${
                 tab === n.id ? "bg-electric-soft text-electric" : "text-[#475467] hover:bg-neutral-bg"
               }`}
             >
@@ -94,7 +95,7 @@ export default async function SetariPage({
           ))}
         </nav>
 
-        <div className="flex-1 overflow-auto p-7">
+        <div className="min-h-0 flex-1 overflow-auto p-4 md:p-7">
           <div className="mx-auto flex max-w-[920px] flex-col gap-4">
             {tab === "companie" && org && (
               <>
@@ -332,7 +333,7 @@ export default async function SetariPage({
                     <div className="mt-1 text-xl font-extrabold text-foreground">599 lei / lună</div>
                     <p className="mt-1 text-sm text-muted">Per companie · Fără TVA</p>
                   </div>
-                  <div className="mt-4 grid grid-cols-2 gap-3.5">
+                  <div className="mt-4 grid grid-cols-1 gap-3.5 sm:grid-cols-2">
                     <div>
                       <div className="text-[11.5px] font-semibold text-muted-2">LUCRĂRI LUNA ACEASTA</div>
                       <div className="mt-1 text-[13px] font-bold">{jobsThisMonth ?? 0}</div>
