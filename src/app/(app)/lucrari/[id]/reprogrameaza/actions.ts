@@ -12,7 +12,7 @@ const HM = /^\d{2}:\d{2}$/;
 
 export type RescheduleResult =
   | { error: string }
-  | { ok: true; message: string; phone: string | null; email: string | null; clientName: string | null };
+  | { ok: true; message: string; phone: string | null; email: string | null; clientName: string | null; preferred: string | null };
 
 /** Mută lucrarea, păstrează motivul în istoric, anunță echipa și întoarce mesajul pentru client. */
 export async function rescheduleWithReason(jobId: string, _prev: RescheduleResult | undefined, fd: FormData): Promise<RescheduleResult> {
@@ -34,7 +34,7 @@ export async function rescheduleWithReason(jobId: string, _prev: RescheduleResul
   const orgId = ctx.organization.id;
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, display_number, title, status, scheduled_date, start_time, end_time, clients(name, phone, email), job_assignments(profile_id)")
+    .select("id, display_number, title, status, scheduled_date, start_time, end_time, clients(name, phone, email, preferred_channel), job_assignments(profile_id)")
     .eq("id", jobId)
     .eq("organization_id", orgId)
     .maybeSingle();
@@ -83,6 +83,7 @@ export async function rescheduleWithReason(jobId: string, _prev: RescheduleResul
     clientName: job.clients?.name ?? null,
     phone: job.clients?.phone ?? null,
     email: job.clients?.email ?? null,
+    preferred: job.clients?.preferred_channel ?? null,
     message: rescheduleMessage({
       clientName: job.clients?.name ?? null,
       jobNumber: job.display_number,

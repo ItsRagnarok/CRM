@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { ipKey } from "@/lib/ip-key";
+import { isChannel, normMarketing } from "@/lib/contact-prefs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -36,6 +37,8 @@ export async function submitPublicRequest(token: string, _prev: { ok?: boolean; 
     p_date: ISO.test(date) ? date : null,
     p_window: String(fd.get("window") ?? ""),
     p_ip_hash: ipHash,
+    p_channel: isChannel(String(fd.get("channel") ?? "")) ? String(fd.get("channel")) : null,
+    p_marketing: normMarketing(fd.getAll("marketing")),
   });
   if (error) return { error: "Nu am putut trimite cererea. Încearcă din nou." };
   if (data !== "ok") return { error: MESSAGES[data as string] ?? "Nu am putut trimite cererea." };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/logo";
 import { arrivalWindow, longDay } from "@/lib/client-messages";
+import { StatusPrefsForm } from "./prefs-form";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Stadiul lucrării | ElectroField", robots: { index: false, follow: false } };
@@ -57,6 +58,7 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
   const supabase = await createClient();
   const { data } = UUID.test(token) ? await supabase.rpc("public_job_status_v2", { p_token: token }) : { data: null };
   const s = data as unknown as StatusData | null;
+  const prefs = s ? ((await supabase.rpc("public_status_prefs", { p_token: token })).data as { channel: string | null; marketing: string[]; has_phone: boolean; has_email: boolean } | null) : null;
 
   if (!s) {
     return (
@@ -165,6 +167,13 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
           )}
           {s.signature && <p className="mt-3 text-[13.5px] text-[#b7c2ba]">Lucrare confirmată la predare de <b className="text-[#f6f9f6]">{s.signature.name}</b>, {dayOf(s.signature.at)}, la {hm(s.signature.at)}.</p>}
           <p className="mt-2 text-[12px] text-[#b7c2ba]">Linkurile către fișiere sunt valabile o oră; reîncărcați pagina pentru linkuri noi.</p>
+        </div>
+      )}
+
+      {prefs && (prefs.has_phone || prefs.has_email) && j.status !== "anulata" && (
+        <div className={card}>
+          <p className="font-bold">Cum preferați să vă anunțăm?</p>
+          <StatusPrefsForm token={token} company={s.company.name} channel={prefs.channel} marketing={prefs.marketing ?? []} hasPhone={prefs.has_phone} hasEmail={prefs.has_email} />
         </div>
       )}
 

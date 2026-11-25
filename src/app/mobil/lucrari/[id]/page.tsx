@@ -71,7 +71,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, priority, domain, gas_building_id, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, priority, domain, gas_building_id, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone, preferred_channel), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -261,7 +261,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
         {isTraveling && (
           <>
-            {notifyText && <NotifyClient text={notifyText} phone={job.clients?.phone ?? null} />}
+            {notifyText && <NotifyClient text={notifyText} phone={job.clients?.phone ?? null} preferred={job.clients?.preferred_channel} />}
             {jobPin && (
               <div style={{ height: 230, borderRadius: 20, overflow: "hidden", border: "1px solid var(--m-ln)", flexShrink: 0 }}>
                 <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />

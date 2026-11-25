@@ -19,7 +19,7 @@ export async function StatusLinkCard({ jobId, organizationId, canEdit }: { jobId
     .limit(1)
     .maybeSingle();
   const [{ data: job }, { data: org }] = await Promise.all([
-    supabase.from("jobs").select("title, status, scheduled_date, start_time, clients(phone)").eq("id", jobId).maybeSingle(),
+    supabase.from("jobs").select("title, status, scheduled_date, start_time, clients(phone, email, preferred_channel)").eq("id", jobId).maybeSingle(),
     supabase.from("organizations").select("name, arrival_window_minutes").eq("id", organizationId).maybeSingle(),
   ]);
   const url = link ? `${SITE_URL}/status/${link.token}` : null;
@@ -39,8 +39,8 @@ export async function StatusLinkCard({ jobId, organizationId, canEdit }: { jobId
             <details className="rounded-[10px] border border-border p-3">
               <summary className="cursor-pointer text-[13px] font-bold">Mesaje gata de trimis clientului</summary>
               <div className="mt-3 flex flex-col gap-4">
-                {job.status === "programata" && <ClientMessage title="Confirmarea programării" text={confirmationMessage({ company: org?.name ?? "", date: job.scheduled_date, start: job.start_time, windowMinutes: minutes, link: url!, title: job.title.split(/\s[—–-]\s/)[0] })} phone={job.clients?.phone} />}
-                <ClientMessage title="Echipa e pe drum" text={onTheWayMessage({ company: org?.name ?? "", techName: null, link: url! })} phone={job.clients?.phone} />
+                {job.status === "programata" && <ClientMessage title="Confirmarea programării" text={confirmationMessage({ company: org?.name ?? "", date: job.scheduled_date, start: job.start_time, windowMinutes: minutes, link: url!, title: job.title.split(/\s[—–-]\s/)[0] })} phone={job.clients?.phone} email={job.clients?.email} preferred={job.clients?.preferred_channel} subject="Confirmarea programării" />}
+                <ClientMessage title="Echipa e pe drum" text={onTheWayMessage({ company: org?.name ?? "", techName: null, link: url! })} phone={job.clients?.phone} email={job.clients?.email} preferred={job.clients?.preferred_channel} subject="Echipa e pe drum" />
                 <p className="text-[11.5px] text-muted">Tehnicianul are același mesaj în aplicație când pornește spre client, cu numele lui.</p>
               </div>
             </details>

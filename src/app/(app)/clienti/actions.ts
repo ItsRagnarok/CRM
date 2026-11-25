@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 import type { Database } from "@/lib/supabase/database.types";
 import { geocodeAddress } from "@/lib/geocode";
+import { SOURCES, isChannel, normMarketing } from "@/lib/contact-prefs";
 
 type ClientType = Database["public"]["Tables"]["clients"]["Row"]["client_type"];
 
@@ -259,4 +260,24 @@ export async function deleteClientDocument(formData: FormData) {
   }
   await supabase.from("documents").delete().eq("id", documentId).eq("organization_id", ctx.organization.id);
   revalidatePath(`/clienti/${clientId}`);
+}
+
+/** Canalul preferat și acordul pentru oferte, cu sursa și o notă. Fiecare schimbare intră în jurnal. */
+export async function saveContactPrefs(clientId: string, fd: FormData): Promise<{ ok?: boolean; changed?: boolean; error?: string }> {
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return { error: "Doar biroul poate schimba preferințele de contact." };
+  const channel = String(fd.get("channel") ?? "");
+  const marketing = normMarketing(fd.getAll("marketing"));
+  const source = String(fd.get("source") ?? "");
+  if (!SOURCES.some((s) => s.id === source)) return { error: "Alege de unde ai acordul sau preferința." };
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("set_client_contact_prefs", {
+    p_client: clientId,
+    p_channel: isChannel(channel) ? channel : null,
+    p_marketing: marketing,
+    p_source: source,
+    p_note: String(fd.get("note") ?? "").slice(0, 300) || null,
+  });
+  if (error) return { error: "Nu am putut salva. Încearcă din nou." };
+  return { ok: true, changed: Boolean(data) };
 }

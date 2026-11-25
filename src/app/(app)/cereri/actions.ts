@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireBackOfficeContext } from "@/lib/auth";
 import { REQUEST_SOURCES, WINDOWS } from "@/lib/service-requests";
+import { normMarketing } from "@/lib/contact-prefs";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -103,6 +104,19 @@ export async function convertRequest(id: string) {
   }
   if (!clientId) return;
   if (clientId !== r.client_id) await supabase.from("service_requests").update({ client_id: clientId }).eq("id", id);
+
+  // Ce a ales clientul în formular trece în fișa lui: canalul, iar acordul pentru oferte se adaugă
+  // la cel existent (o cerere fără bifă nu retrage un acord dat înainte).
+  if (r.preferred_channel || (r.marketing_channels ?? []).length) {
+    const { data: c } = await supabase.from("clients").select("preferred_channel, marketing_channels").eq("id", clientId).maybeSingle();
+    await supabase.rpc("set_client_contact_prefs", {
+      p_client: clientId,
+      p_channel: r.preferred_channel ?? c?.preferred_channel ?? null,
+      p_marketing: normMarketing([...(c?.marketing_channels ?? []), ...(r.marketing_channels ?? [])]),
+      p_source: "formular_cerere",
+      p_note: `Cererea din ${new Date(r.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}`,
+    });
+  }
 
   const q = new URLSearchParams({ clientId, cerere: id });
   if (r.preferred_date) q.set("date", r.preferred_date);

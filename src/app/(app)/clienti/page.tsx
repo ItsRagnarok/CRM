@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/empty-state";
 import { StatusBadge } from "@/components/status-badge";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { Users, Plus, Search } from "lucide-react";
+import { isChannel, prefsSummary } from "@/lib/contact-prefs";
 
 const STATUS_TABS = [
   { value: "", label: "Toți" },
@@ -25,15 +26,15 @@ function formatDateRo(dateStr: string) {
 export default async function ClientiPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; type?: string }>;
+  searchParams: Promise<{ q?: string; status?: string; type?: string; oferte?: string }>;
 }) {
-  const { q = "", status = "", type = "" } = await searchParams;
+  const { q = "", status = "", type = "", oferte = "" } = await searchParams;
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
   let query = supabase
     .from("clients")
-    .select("id, name, company_name, client_type, cui, phone, email, address, status")
+    .select("id, name, company_name, client_type, cui, phone, email, address, status, preferred_channel, marketing_channels")
     .eq("organization_id", organization.id);
 
   if (status === "active" || status === "inactive") {
@@ -41,6 +42,9 @@ export default async function ClientiPage({
   }
   if (type === "company" || type === "individual") {
     query = query.eq("client_type", type);
+  }
+  if (oferte === "da") {
+    query = query.filter("marketing_channels", "neq", "{}");
   }
   if (q.trim()) {
     const term = q.trim().replace(/[%,]/g, "");
@@ -50,7 +54,7 @@ export default async function ClientiPage({
   }
 
   const { data: clients } = await query.order("created_at", { ascending: false });
-  const hasFilters = Boolean(q.trim()) || Boolean(status) || Boolean(type);
+  const hasFilters = Boolean(q.trim()) || Boolean(status) || Boolean(type) || oferte === "da";
 
   const clientIds = (clients ?? []).map((c) => c.id);
   const { data: jobRows } = clientIds.length
@@ -65,13 +69,15 @@ export default async function ClientiPage({
     jobStats.set(row.client_id, stat);
   }
 
-  const buildHref = (overrides: { status?: string; type?: string }) => {
+  const buildHref = (overrides: { status?: string; type?: string; oferte?: string }) => {
     const params = new URLSearchParams();
     if (q.trim()) params.set("q", q.trim());
     const nextStatus = overrides.status !== undefined ? overrides.status : status;
     const nextType = overrides.type !== undefined ? overrides.type : type;
     if (nextStatus) params.set("status", nextStatus);
     if (nextType) params.set("type", nextType);
+    const nextOferte = overrides.oferte !== undefined ? overrides.oferte : oferte;
+    if (nextOferte) params.set("oferte", nextOferte);
     return params.toString() ? `/clienti?${params}` : "/clienti";
   };
 
@@ -99,6 +105,7 @@ export default async function ClientiPage({
           />
           {status && <input type="hidden" name="status" value={status} />}
           {type && <input type="hidden" name="type" value={type} />}
+          {oferte && <input type="hidden" name="oferte" value={oferte} />}
         </form>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -133,8 +140,27 @@ export default async function ClientiPage({
               {tab.label}
             </Link>
           ))}
+          <div className="mx-1 h-5 w-px bg-border" />
+          <Link
+            href={buildHref({ oferte: oferte === "da" ? "" : "da" })}
+            title="Clienții care au acceptat oferte și promoții, pe cel puțin un canal"
+            className={`rounded-[9px] px-3.5 py-2 text-[13px] font-semibold ${
+              oferte === "da" ? "bg-[#101828] text-white" : "border border-[#d0d5dd] bg-white text-[#344054]"
+            }`}
+          >
+            Acceptă oferte
+          </Link>
         </div>
       </div>
+
+      {oferte === "da" && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] border border-border bg-white px-4 py-3 text-[13px] text-[#344054]">
+          <span>
+            <b>{clients?.length ?? 0}</b> {clients?.length === 1 ? "client a" : "clienți au"} acceptat oferte. Trimite oferte doar acestora și doar pe canalele acceptate; mesajele despre lucrări nu depind de acest acord.
+          </span>
+          <a href="/clienti/oferte-export" download className="rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[13px] font-bold">Descarcă lista (Excel)</a>
+        </div>
+      )}
 
       {clients && clients.length > 0 ? (
         <div className="overflow-hidden rounded-[13px] border border-border bg-white">
@@ -172,7 +198,12 @@ export default async function ClientiPage({
                         </div>
                       </Link>
                     </td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#344054]">{c.phone ?? "—"}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#344054]">
+                      {c.phone ?? "—"}
+                      {(isChannel(c.preferred_channel) || (c.marketing_channels ?? []).length > 0) && (
+                        <div className="text-[11.5px] text-muted-2">{prefsSummary(c.preferred_channel, c.marketing_channels)}</div>
+                      )}
+                    </td>
                     <td className="px-5 py-3.5 text-[13px] text-[#344054]">{c.address ?? "—"}</td>
                     <td className="px-5 py-3.5 text-center text-[13px] font-bold text-[#344054]">
                       {stat?.count ?? 0}

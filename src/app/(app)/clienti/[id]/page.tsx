@@ -32,6 +32,8 @@ import {
 } from "lucide-react";
 import type { Database } from "@/lib/supabase/database.types";
 import { todayInOrgTimeZone } from "@/lib/date";
+import { ContactPrefsCard } from "./contact-prefs-card";
+import { CHANNEL_LABEL, SOURCE_LABEL, isChannel, prefsSummary } from "@/lib/contact-prefs";
 
 const TABS = [
   { id: "overview", label: "Overview" },
@@ -84,7 +86,7 @@ export default async function ClientDetailPage({
     .sort((a, b) => a.scheduled_date.localeCompare(b.scheduled_date));
   const nextJob = upcoming[0] ?? null;
 
-  const [{ data: invoices }, { data: documents }, { data: photos }] = await Promise.all([
+  const [{ data: invoices }, { data: documents }, { data: photos }, { data: consentLog }] = await Promise.all([
     tab === "overview" || tab === "facturi"
       ? supabase.from("invoices").select("id, invoice_number, total_amount, status, issued_at").eq("client_id", id).order("issued_at", { ascending: false })
       : Promise.resolve({ data: null }),
@@ -93,6 +95,9 @@ export default async function ClientDetailPage({
       : Promise.resolve({ data: null }),
     tab === "fotografii" && jobs.length > 0
       ? supabase.from("photos").select("id, category, storage_path, job_id").in("job_id", jobs.map((j) => j.id)).order("taken_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    tab === "overview"
+      ? supabase.from("client_consent_log").select("id, preferred_channel, marketing_channels, prev_channel, prev_marketing, source, note, created_at, profiles(full_name)").eq("client_id", id).order("created_at", { ascending: false }).limit(20)
       : Promise.resolve({ data: null }),
   ]);
 
@@ -148,6 +153,7 @@ export default async function ClientDetailPage({
                 </span>
               )}
             </div>
+            <div className="mt-1.5 text-[12.5px] font-semibold text-[#475467]">{prefsSummary(client.preferred_channel, client.marketing_channels)}</div>
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
@@ -195,6 +201,40 @@ export default async function ClientDetailPage({
             <StatCard label="Valoare totală" value={`${totalValue.toFixed(0)} RON`} />
             <StatCard label="Ultima intervenție" value={jobs[0] ? formatDateRo(jobs[0].scheduled_date) : "—"} />
             <StatCard label="Următoarea lucrare" value={nextJob ? formatDateRo(nextJob.scheduled_date) : "—"} />
+          </div>
+
+          <div id="contact" className="rounded-[13px] border border-border bg-white">
+            <div className="border-b border-[#f2f4f7] px-5 py-3.5">
+              <div className="text-[14.5px] font-bold text-foreground">Cum îl contactăm</div>
+              <p className="mt-0.5 text-[12px] text-muted-2">
+                Mesajele despre lucrări pleacă pe canalul preferat. Ofertele sunt separate: doar cu acordul clientului, pe canalele bifate.
+              </p>
+            </div>
+            <ContactPrefsCard
+              clientId={client.id}
+              channel={client.preferred_channel}
+              marketing={client.marketing_channels ?? []}
+              hasPhone={Boolean(client.phone)}
+              hasEmail={Boolean(client.email)}
+            />
+            {consentLog && consentLog.length > 0 && (
+              <details className="border-t border-[#f2f4f7] px-5 py-3">
+                <summary className="cursor-pointer text-[12.5px] font-bold text-[#344054]">Istoric ({consentLog.length}) · dovada acordului</summary>
+                <ul className="mt-2 flex flex-col gap-2">
+                  {consentLog.map((e) => (
+                    <li key={e.id} className="text-[12.5px] text-[#475467]">
+                      <span className="font-semibold text-foreground">{new Date(e.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                      {" · "}
+                      {e.prev_channel !== e.preferred_channel && <>canal: {isChannel(e.prev_channel) ? CHANNEL_LABEL[e.prev_channel] : "nespecificat"} → <b>{isChannel(e.preferred_channel) ? CHANNEL_LABEL[e.preferred_channel] : "nespecificat"}</b>; </>}
+                      {(e.prev_marketing ?? []).join() !== (e.marketing_channels ?? []).join() && <>oferte: {(e.prev_marketing ?? []).length ? e.prev_marketing.map((c) => CHANNEL_LABEL[c as "sms"]).join(", ") : "nu"} → <b>{(e.marketing_channels ?? []).length ? e.marketing_channels.map((c) => CHANNEL_LABEL[c as "sms"]).join(", ") : "nu"}</b>; </>}
+                      sursa: {SOURCE_LABEL[e.source] ?? e.source}
+                      {e.profiles?.full_name ? `, ${e.source === "formular_cerere" ? "preluat în fișă" : "notat"} de ${e.profiles.full_name}` : ""}
+                      {e.note ? ` · „${e.note}”` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
 
           <div className="rounded-[13px] border border-border bg-white">

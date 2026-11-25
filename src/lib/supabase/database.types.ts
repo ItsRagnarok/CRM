@@ -37,6 +37,8 @@ export type Database = {
           source: string
           status: string
           urgent: boolean
+          preferred_channel: string | null
+          marketing_channels: string[]
         }
         Insert: {
           address?: string | null
@@ -60,6 +62,8 @@ export type Database = {
           source: string
           status?: string
           urgent?: boolean
+          preferred_channel?: string | null
+          marketing_channels?: string[]
         }
         Update: {
           address?: string | null
@@ -78,6 +82,8 @@ export type Database = {
           source?: string
           status?: string
           urgent?: boolean
+          preferred_channel?: string | null
+          marketing_channels?: string[]
         }
         Relationships: [
           { foreignKeyName: "service_requests_client_id_fkey"; columns: ["client_id"]; isOneToOne: false; referencedRelation: "clients"; referencedColumns: ["id"] },
@@ -992,6 +998,56 @@ export type Database = {
           },
         ]
       }
+      client_consent_log: {
+        Row: {
+          id: string
+          organization_id: string
+          client_id: string
+          preferred_channel: string | null
+          marketing_channels: string[]
+          prev_channel: string | null
+          prev_marketing: string[]
+          source: string
+          note: string | null
+          recorded_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          client_id: string
+          preferred_channel?: string | null
+          marketing_channels?: string[]
+          prev_channel?: string | null
+          prev_marketing?: string[]
+          source: string
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          client_id?: string
+          preferred_channel?: string | null
+          marketing_channels?: string[]
+          prev_channel?: string | null
+          prev_marketing?: string[]
+          source?: string
+          note?: string | null
+          recorded_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_consent_log_recorded_by_fkey"
+            columns: ["recorded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address: string | null
@@ -1010,6 +1066,9 @@ export type Database = {
           phone: string | null
           status: Database["public"]["Enums"]["client_status"]
           updated_at: string
+          preferred_channel: string | null
+          marketing_channels: string[]
+          contact_prefs_updated_at: string | null
         }
         Insert: {
           address?: string | null
@@ -1028,6 +1087,9 @@ export type Database = {
           phone?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
+          preferred_channel?: string | null
+          marketing_channels?: string[]
+          contact_prefs_updated_at?: string | null
         }
         Update: {
           address?: string | null
@@ -1046,6 +1108,9 @@ export type Database = {
           phone?: string | null
           status?: Database["public"]["Enums"]["client_status"]
           updated_at?: string
+          preferred_channel?: string | null
+          marketing_channels?: string[]
+          contact_prefs_updated_at?: string | null
         }
         Relationships: [
           {
@@ -3787,6 +3852,18 @@ export type Database = {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
       }
+      set_client_contact_prefs: {
+        Args: { p_client: string; p_channel: string | null; p_marketing: string[]; p_source: string; p_note: string | null }
+        Returns: boolean
+      }
+      public_status_prefs: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      set_status_prefs: {
+        Args: { p_token: string; p_channel: string | null; p_marketing: string[] }
+        Returns: string
+      }
       public_job_status_v2: {
         Args: { p_token: string }
         Returns: Json
@@ -3838,7 +3915,7 @@ export type Database = {
         }[]
       }
       submit_service_request: {
-        Args: { p_token: string; p_name: string; p_phone: string; p_email: string; p_address: string; p_description: string; p_domain: string; p_date: string | null; p_window: string; p_ip_hash: string | null }
+        Args: { p_token: string; p_name: string; p_phone: string; p_email: string; p_address: string; p_description: string; p_domain: string; p_date: string | null; p_window: string; p_ip_hash: string | null; p_channel?: string | null; p_marketing?: string[] }
         Returns: string
       }
       public_request_org: {

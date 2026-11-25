@@ -9,6 +9,7 @@ import { REQUEST_STATUSES, sourceLabel, windowLabel, longDate, type RequestStatu
 import { domainLabel } from "@/lib/domains";
 import { NewRequestForm } from "./new-request-form";
 import { RequestActions } from "./request-actions";
+import { prefsSummary } from "@/lib/contact-prefs";
 
 const SOURCE_TONE: Record<string, string> = {
   site: "bg-electric-soft text-[#3b5c0a]",
@@ -38,7 +39,7 @@ export default async function CereriPage({ searchParams }: { searchParams: Promi
   const [{ data: rows }, { data: clients }, { data: org }] = await Promise.all([
     supabase
       .from("service_requests")
-      .select("id, source, status, contact_name, phone, email, address, description, domain, preferred_date, preferred_window, urgent, job_id, decision_note, created_at, client_id, clients(name), jobs(display_number), profiles!service_requests_created_by_fkey(full_name)")
+      .select("id, source, status, contact_name, phone, email, address, description, domain, preferred_date, preferred_window, preferred_channel, marketing_channels, urgent, job_id, decision_note, created_at, client_id, clients(name), jobs(display_number), profiles!service_requests_created_by_fkey(full_name)")
       .eq("organization_id", organization.id)
       .order("created_at", { ascending: false })
       .limit(500),
@@ -110,6 +111,7 @@ export default async function CereriPage({ searchParams }: { searchParams: Promi
                   {(r.preferred_date || r.preferred_window) && (
                     <span className="flex items-center gap-1.5"><CalendarClock className="h-3.5 w-3.5 text-muted" /> Preferă {r.preferred_date ? longDate(r.preferred_date) : ""}{r.preferred_date && r.preferred_window ? ", " : ""}{windowLabel(r.preferred_window)}</span>
                   )}
+                  {(r.preferred_channel || (r.marketing_channels ?? []).length > 0) && <span>{prefsSummary(r.preferred_channel, r.marketing_channels)}</span>}
                 </div>
                 {r.status === "respinsa" && r.decision_note && <p className="mt-2 text-[12.5px] text-muted">Motiv: {r.decision_note}</p>}
                 {r.status === "programata" && r.job_id ? (

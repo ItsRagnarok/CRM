@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle2 } from "lucide-react";
 import { submitPublicRequest } from "./actions";
 import { WINDOWS } from "@/lib/service-requests";
+import { CHANNELS, MARKETING_CHANNELS } from "@/lib/contact-prefs";
 
 const DOMAIN_TEXT: Record<string, string> = { electric: "Instalații electrice", gaze: "Instalații de gaze", fotovoltaic: "Panouri fotovoltaice" };
 const input = "w-full rounded-[11px] border border-[#cfd8cd] bg-white px-3.5 py-2.5 text-[15px] outline-none focus:border-[#2f6b12] focus:ring-2 focus:ring-[#2f6b12]/20";
@@ -73,6 +74,29 @@ export function RequestForm({ token, domains }: { token: string; domains: string
           </select>
         </div>
       </div>
+      <fieldset>
+        <legend className={label}>Cum vrei să te anunțe firma despre lucrare?</legend>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[14.5px]">
+          {CHANNELS.map((c) => (
+            <label key={c.id} className="flex items-center gap-2">
+              <input type="radio" name="channel" value={c.id} className="h-4 w-4 accent-[#c6ff4a]" />
+              {c.id === "telefon" ? "Apel telefonic" : c.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className={label}>Oferte și noutăți de la firmă (opțional)</legend>
+        <div className="flex flex-wrap gap-x-4 gap-y-2 text-[14.5px]">
+          {MARKETING_CHANNELS.map((c) => (
+            <label key={c.id} className="flex items-center gap-2">
+              <input type="checkbox" name="marketing" value={c.id} className="h-4 w-4 accent-[#c6ff4a]" />
+              Da, pe {c.label}
+            </label>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[12.5px] text-[#7a887f]">Nebifat înseamnă fără oferte. Mesajele despre lucrarea ta le primești oricum.</p>
+      </fieldset>
       {state?.error && <p role="alert" className="text-[14px] font-semibold text-[#b42318]">{state.error}</p>}
       <button type="submit" disabled={pending} className="rounded-[12px] bg-[#c6ff4a] px-5 py-3 text-[15.5px] font-extrabold text-[#16201b] disabled:opacity-60">
         {pending ? "Se trimite…" : "Trimite cererea"}

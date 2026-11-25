@@ -7,6 +7,7 @@ import { rescheduleWithReason, type RescheduleResult } from "./actions";
 import { RESCHEDULE_REASONS, waNumber } from "@/lib/service-requests";
 import { LiveScheduleWarnings } from "@/components/schedule-warnings";
 import { DurationHint } from "@/components/duration-hint";
+import { channelActions, preferredHint } from "@/lib/contact-prefs";
 import type { DurationStat } from "@/lib/job-durations";
 
 const input = "w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric";
@@ -50,15 +51,14 @@ export function RescheduleForm({
           >
             <Copy className="h-3.5 w-3.5" /> {copied ? "Copiat" : "Copiază mesajul"}
           </button>
-          {wa && (
-            <a href={`https://wa.me/${wa}?text=${encodeURIComponent(state.message)}`} target="_blank" rel="noopener" className="flex items-center gap-1.5 rounded-[10px] border border-[#d0d5dd] px-4 py-2 text-[13px] font-bold text-[#344054]">
-              <MessageCircle className="h-3.5 w-3.5" /> Trimite pe WhatsApp
+          {channelActions({ text: state.message, phone: state.phone, email: state.email, preferred: state.preferred, subject: "Reprogramare intervenție", wa }).map((c) => (
+            <a key={c.id} href={c.href} target={c.id === "whatsapp" ? "_blank" : undefined} rel="noopener" className={`flex items-center gap-1.5 rounded-[10px] border px-4 py-2 text-[13px] font-bold ${c.preferred ? "border-electric text-electric" : "border-[#d0d5dd] text-[#344054]"}`}>
+              {c.id === "whatsapp" && <MessageCircle className="h-3.5 w-3.5" />} {c.label}{c.preferred ? " · preferat" : ""}
             </a>
-          )}
-          {state.phone && <a href={`sms:${state.phone}?body=${encodeURIComponent(state.message)}`} className="rounded-[10px] border border-[#d0d5dd] px-4 py-2 text-[13px] font-bold text-[#344054]">SMS</a>}
-          {state.email && <a href={`mailto:${state.email}?subject=${encodeURIComponent("Reprogramare intervenție")}&body=${encodeURIComponent(state.message)}`} className="rounded-[10px] border border-[#d0d5dd] px-4 py-2 text-[13px] font-bold text-[#344054]">E-mail</a>}
+          ))}
           <Link href={`/lucrari/${jobId}`} className="ml-auto rounded-[10px] px-3 py-2 text-[13px] font-bold text-electric">Înapoi la lucrare</Link>
         </div>
+        {preferredHint(state.preferred, state) && <p className="text-[12.5px] font-semibold text-[#475467]">{preferredHint(state.preferred, state)}</p>}
         {!state.phone && !state.email && <p className="text-[12.5px] text-muted">Clientul nu are telefon sau e-mail salvat; copiază mesajul și trimite-l cum vorbiți de obicei.</p>}
       </section>
     );
