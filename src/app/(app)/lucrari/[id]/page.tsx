@@ -13,6 +13,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { StatusActions } from "./status-actions";
 import { FORM_TEMPLATES } from "@/lib/forms/templates";
 import { LiveJobTimer } from "./live-timer";
+import { toggleDocumentForClient } from "./status-link-actions";
 import {
   addChecklistItem,
   addExpense,
@@ -167,7 +168,7 @@ export default async function JobDetailPage({
       .from("material_usage")
       .select("id, quantity, materials(name, unit, unit_cost)")
       .eq("job_id", id),
-    supabase.from("documents").select("id, name, doc_type, storage_path, created_at").eq("job_id", id).order("created_at"),
+    supabase.from("documents").select("id, name, doc_type, storage_path, created_at, client_visible").eq("job_id", id).order("created_at"),
     supabase.from("signatures").select("signer_name, storage_path, signed_at").eq("job_id", id).maybeSingle(),
     supabase
       .from("job_required_items")
@@ -701,6 +702,14 @@ export default async function JobDetailPage({
                       </a>
                       <div className="text-[11.5px] text-muted-2">{doc.doc_type ?? "Document"}</div>
                     </div>
+                    <form action={toggleDocumentForClient}>
+                      <input type="hidden" name="documentId" value={doc.id} />
+                      <input type="hidden" name="jobId" value={id} />
+                      <input type="hidden" name="on" value={doc.client_visible ? "0" : "1"} />
+                      <button type="submit" title="Documentele bifate apar pe linkul de status al clientului, după finalizare" className={`shrink-0 rounded-full border px-2.5 py-1 text-[11.5px] font-bold ${doc.client_visible ? "border-[#b7e4c7] bg-success-bg text-success" : "border-border text-muted"}`}>
+                        {doc.client_visible ? "✓ Pentru client" : "Pentru client"}
+                      </button>
+                    </form>
                     <form action={deleteDocument}>
                       <input type="hidden" name="documentId" value={doc.id} />
                       <input type="hidden" name="storagePath" value={doc.storage_path} />

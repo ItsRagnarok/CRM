@@ -25,3 +25,14 @@ export async function revokeStatusLink(formData: FormData) {
   await supabase.from("job_status_links").update({ revoked_at: new Date().toISOString() }).eq("job_id", jobId).eq("organization_id", ctx.organization.id).is("revoked_at", null);
   revalidatePath(`/lucrari/${jobId}`);
 }
+
+/** Documentul intră (sau iese) din pachetul pe care clientul îl vede pe linkul de status. */
+export async function toggleDocumentForClient(formData: FormData) {
+  const ctx = await requireBackOfficeContext();
+  const docId = String(formData.get("documentId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!ctx || !UUID.test(docId) || !UUID.test(jobId)) return;
+  const supabase = await createClient();
+  await supabase.from("documents").update({ client_visible: formData.get("on") === "1" }).eq("id", docId).eq("organization_id", ctx.organization.id);
+  revalidatePath(`/lucrari/${jobId}`);
+}

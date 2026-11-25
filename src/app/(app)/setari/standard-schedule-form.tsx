@@ -15,9 +15,11 @@ const WEEKDAYS = [
 export function StandardScheduleForm({
   hoursPerDay,
   workdays,
+  arrivalWindow,
 }: {
   hoursPerDay: number;
   workdays: number[];
+  arrivalWindow: number;
 }) {
   return (
     <form action={updateStandardSchedule} className="rounded-[13px] border border-border bg-white p-[22px]">
@@ -25,7 +27,14 @@ export function StandardScheduleForm({
       <p className="mb-[18px] text-[12.5px] text-muted-2">
         Folosit ca referință în Pontaj → Concedii & absențe, pentru a calcula zilele lucrătoare dintr-un concediu.
       </p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div>
+          <label className="mb-1.5 block text-[12.5px] font-semibold text-[#344054]">Fereastra de sosire pentru client</label>
+          <select name="arrivalWindow" defaultValue={String(arrivalWindow)} className="w-full rounded-[9px] border border-[#d0d5dd] px-3.5 py-2.5 text-[13.5px] outline-none focus:border-electric">
+            {[30, 60, 90, 120, 180, 240].map((m) => <option key={m} value={m}>{m < 60 ? `${m} de minute` : m === 60 ? "1 oră" : `${m / 60} ore`.replace(".5", ",5")}</option>)}
+          </select>
+          <p className="mt-1 text-[11.5px] text-muted-2">Pe linkul de status: „sosire între 09:00 și 11:00”.</p>
+        </div>
         <div>
           <label className="mb-1.5 block text-[12.5px] font-semibold text-[#344054]">Ore/zi</label>
           <input

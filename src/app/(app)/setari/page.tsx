@@ -106,7 +106,7 @@ export default async function SetariPage({
                   phone={org.phone}
                   address={org.address}
                 />
-                <StandardScheduleForm hoursPerDay={org.standard_hours_per_day} workdays={org.standard_workdays} />
+                <StandardScheduleForm hoursPerDay={org.standard_hours_per_day} workdays={org.standard_workdays} arrivalWindow={org.arrival_window_minutes ?? 120} />
               </>
             )}
 

@@ -1255,6 +1255,7 @@ export type Database = {
       }
       documents: {
         Row: {
+          client_visible: boolean
           client_id: string | null
           created_at: string
           doc_type: string | null
@@ -1268,6 +1269,7 @@ export type Database = {
           uploaded_by: string | null
         }
         Insert: {
+          client_visible?: boolean
           client_id?: string | null
           created_at?: string
           doc_type?: string | null
@@ -1281,6 +1283,7 @@ export type Database = {
           uploaded_by?: string | null
         }
         Update: {
+          client_visible?: boolean
           client_id?: string | null
           created_at?: string
           doc_type?: string | null
@@ -2500,6 +2503,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          arrival_window_minutes: number
           monday_config: Json
           request_token: string
           address: string | null
@@ -2530,6 +2534,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          arrival_window_minutes?: number
           monday_config?: Json
           request_token?: string
           address?: string | null
@@ -2560,6 +2565,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          arrival_window_minutes?: number
           monday_config?: Json
           request_token?: string
           address?: string | null
@@ -3780,6 +3786,14 @@ export type Database = {
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
+      }
+      public_job_status_v2: {
+        Args: { p_token: string }
+        Returns: Json
+      }
+      ensure_job_status_link: {
+        Args: { p_job: string }
+        Returns: string
       }
       tool_calibration_expires: {
         Args: { p_tool: string }

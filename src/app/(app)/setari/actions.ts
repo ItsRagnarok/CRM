@@ -135,6 +135,7 @@ export async function updateStandardSchedule(formData: FormData) {
     .update({
       standard_hours_per_day: Number.isFinite(hoursPerDay) && hoursPerDay > 0 ? hoursPerDay : organization.standard_hours_per_day,
       standard_workdays: workdays.length > 0 ? workdays : organization.standard_workdays,
+      ...([30, 60, 90, 120, 180, 240].includes(Number(formData.get("arrivalWindow"))) ? { arrival_window_minutes: Number(formData.get("arrivalWindow")) } : {}),
     })
     .eq("id", organization.id);
 

@@ -14,6 +14,9 @@ import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { FORM_TEMPLATES, TEMPLATE_BY_DOMAIN } from "@/lib/forms/templates";
 import { defaultPhotoTag } from "@/lib/photo-tags";
 import { QuickPhotoButton } from "./foto/photo-capture";
+import { NotifyClient } from "./notify-client";
+import { onTheWayMessage } from "@/lib/client-messages";
+import { SITE_URL } from "@/lib/seo";
 
 type Step = "pregatire" | "drum" | "loc" | "inchidere";
 const STEPS: { id: Step; label: string; icon: typeof Clock }[] = [
@@ -128,6 +131,13 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
   const pendingPickup = (purchases.data ?? []).find((r) => r.status === "approved" && !r.fulfilled_at);
   const unseenRejections = (purchases.data ?? []).filter((r) => r.status === "denied" && !r.technician_acknowledged_at);
+
+  // Pe drum: mesajul pentru client, cu linkul de status (se creează dacă lucrarea nu are încă unul).
+  let notifyText: string | null = null;
+  if (isTraveling) {
+    const { data: tok } = await supabase.rpc("ensure_job_status_link", { p_job: id });
+    if (tok) notifyText = onTheWayMessage({ company: organization.name, techName: profile.full_name.split(" ")[0], link: `${SITE_URL}/status/${tok}` });
+  }
 
   const hasCoords = job.locations?.lat != null && job.locations?.lng != null;
   const destination = hasCoords ? `${job.locations!.lat},${job.locations!.lng}` : job.locations?.address ? encodeURIComponent(job.locations.address) : null;
@@ -251,6 +261,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
         {isTraveling && (
           <>
+            {notifyText && <NotifyClient text={notifyText} phone={job.clients?.phone ?? null} />}
             {jobPin && (
               <div style={{ height: 230, borderRadius: 20, overflow: "hidden", border: "1px solid var(--m-ln)", flexShrink: 0 }}>
                 <MobileMapLoader jobs={[jobPin]} routeTo={jobPin} hq={hq} />
