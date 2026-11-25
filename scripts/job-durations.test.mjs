@@ -28,7 +28,7 @@ test("mediană, interval, plan, fără pontaje aberante", () => {
 });
 
 test("formatare și ora de sfârșit", () => {
-  assert.equal(formatMinutes(285), "4 h 45 min");
+  assert.equal(formatMinutes(285), "4 h 45 min");
   assert.equal(formatMinutes(120), "2 h");
   assert.equal(formatMinutes(40), "40 min");
   assert.equal(addMinutes("09:30", 200), "12:50");

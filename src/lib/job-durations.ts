@@ -82,7 +82,7 @@ export function formatMinutes(min: number): string {
   const m = Math.max(0, Math.round(min));
   const h = Math.floor(m / 60), r = m % 60;
   if (!h) return `${r} min`;
-  return r ? `${h} h ${r} min` : `${h} h`;
+  return r ? `${h} h ${r} min` : `${h} h`;
 }
 
 /** „09:30” + 200 min → „12:50”; null dacă trece de miezul nopții. */
