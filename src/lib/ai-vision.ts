@@ -5,7 +5,7 @@ export type VisionResult = { ok: true; data: unknown; provider: string; model: s
 
 /**
  * Citește o poză cu un model AI și întoarce JSON-ul cerut în prompt.
- * Întâi Groq (planul gratuit, rapid), apoi Gemini dacă Groq nu răspunde sau nu are modelul.
+ * Întâi Google Gemini (citește bine bonuri și plăcuțe), apoi Groq dacă e setat GROQ_VISION_MODEL.
  * Modelele se pot schimba fără cod: GROQ_VISION_MODEL, GEMINI_VISION_MODEL.
  */
 export async function readImageJson(image: Blob, prompt: string): Promise<VisionResult> {
@@ -14,9 +14,40 @@ export async function readImageJson(image: Blob, prompt: string): Promise<Vision
   const b64 = Buffer.from(await image.arrayBuffer()).toString("base64");
   const errors: string[] = [];
 
+  const geminiKey = process.env.GEMINI_API_KEY;
+  if (geminiKey) {
+    const model = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+        method: "POST",
+        headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: b64 } }] }],
+          generationConfig: { temperature: 0, responseMimeType: "application/json" },
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (res.ok) {
+        const j = await res.json();
+        const text = (j?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
+        const data = parseModelJson(text);
+        if (data) return { ok: true, data, provider: "gemini", model, ms: Date.now() - started };
+        errors.push("gemini: răspuns fără JSON");
+      } else {
+        errors.push(`gemini: ${res.status}`);
+        console.error("readImageJson gemini", res.status, (await res.text().catch(() => "")).slice(0, 300));
+      }
+    } catch (e) {
+      errors.push("gemini: fără răspuns");
+      console.error("readImageJson gemini", e);
+    }
+  }
+
+  // Groq doar dacă firma i-a ales un model de imagine (modelele Groq se schimbă des).
   const groqKey = process.env.GROQ_API_KEY;
-  if (groqKey) {
-    const model = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+  const groqModel = process.env.GROQ_VISION_MODEL;
+  if (groqKey && groqModel) {
+    const model = groqModel;
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
@@ -45,35 +76,6 @@ export async function readImageJson(image: Blob, prompt: string): Promise<Vision
     }
   }
 
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (geminiKey) {
-    const model = process.env.GEMINI_VISION_MODEL || "gemini-2.5-flash";
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: b64 } }] }],
-          generationConfig: { temperature: 0, responseMimeType: "application/json" },
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) {
-        const j = await res.json();
-        const text = (j?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
-        const data = parseModelJson(text);
-        if (data) return { ok: true, data, provider: "gemini", model, ms: Date.now() - started };
-        errors.push("gemini: răspuns fără JSON");
-      } else {
-        errors.push(`gemini: ${res.status}`);
-        console.error("readImageJson gemini", res.status, (await res.text().catch(() => "")).slice(0, 300));
-      }
-    } catch (e) {
-      errors.push("gemini: fără răspuns");
-      console.error("readImageJson gemini", e);
-    }
-  }
-
-  if (!groqKey && !geminiKey) return { ok: false, error: "AI-ul nu e configurat pe server.", provider: null, model: null, ms: 0 };
+  if (!geminiKey && !(groqKey && groqModel)) return { ok: false, error: "AI-ul nu e configurat pe server.", provider: null, model: null, ms: 0 };
   return { ok: false, error: errors.join("; ").slice(0, 300), provider: null, model: null, ms: Date.now() - started };
 }

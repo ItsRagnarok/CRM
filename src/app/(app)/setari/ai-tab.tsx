@@ -54,7 +54,7 @@ export async function AiTab({ organizationId, enabled, canEdit }: { organization
           <li className="rounded-[10px] bg-[#f9fafb] p-3"><b>Bon → cheltuială</b> (telefon: Cheltuială nouă, Am cumpărat de la magazin): suma, data, furnizorul, articolele.</li>
           <li className="rounded-[10px] bg-[#f9fafb] p-3"><b>Plăcuță → marcă, model, serie</b> (formularele tehnice: invertor, panou, baterie, tablou, aparat de măsură; Scanează → Etichetă).</li>
           <li className="rounded-[10px] bg-[#f9fafb] p-3"><b>Lucrare nouă din descriere</b> și <b>dictare</b> (birou): ca până acum, acum cu jurnal.</li>
-          <li className="rounded-[10px] bg-[#f9fafb] p-3"><b>Unde pleacă datele:</b> poza sau textul ajunge la Groq (servere în SUA); dacă nu răspunde, la Google Gemini. Doar când omul apasă butonul AI, niciodată automat.</li>
+          <li className="rounded-[10px] bg-[#f9fafb] p-3"><b>Unde pleacă datele:</b> pozele ajung la Google Gemini (dacă nu răspunde și e configurat, la Groq); textul de la „Lucrare nouă” și dictarea, la Groq. Doar când omul apasă butonul AI, niciodată automat.</li>
         </ul>
         <p className="mt-3 text-[12px] text-muted">
           Pozele pot conține date personale (nume pe bon, adresa clientului). Înainte de folosirea cu clienți reali: acord de prelucrare (DPA) cu furnizorul, mențiune în politica de confidențialitate și informarea angajaților. Oprit, butoanele AI dispar din aplicație și de pe platformă.
