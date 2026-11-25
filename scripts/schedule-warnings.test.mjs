@@ -72,3 +72,21 @@ test("roșiile primele", () => {
   const w = computeScheduleWarnings({ ...base, materials: [{ name: "X", unit: "buc", needed: 1, available: 0 }], vehicles: [{ label: "B 1", docs: [{ title: "RCA", expiresOn: "2026-01-01" }] }] });
   assert.deepEqual(kinds(w), ["bad:masina", "warn:material"]);
 });
+
+test("aparat cu calibrarea expirată la omul lucrării", () => {
+  const w = computeScheduleWarnings({
+    date: "2026-12-01", start: "08:00", end: "12:00", domain: "electric", teamName: "Echipa A",
+    people: [{ id: "p1", name: "Andrei Pop" }, { id: "p2", name: "Mihai" }],
+    personDocs: [], vehicles: [], leaves: [], otherJobs: [], hoursPerDay: 8, materials: [],
+    devices: [
+      { holderId: "p1", name: "Multimetru Fluke 117", expiresOn: "2026-10-30" },
+      { holderId: "p2", name: "Megohmmetru", expiresOn: "2027-01-10" },
+      { holderId: "p9", name: "Alt aparat", expiresOn: "2020-01-01" },
+      { holderId: "p2", name: "Clește", expiresOn: null },
+    ],
+  });
+  const ap = w.filter((x) => x.kind === "aparat");
+  assert.equal(ap.length, 2);
+  assert.match(ap[0].text, /Multimetru Fluke 117 \(la Andrei Pop\): calibrarea a expirat pe 30 oct\./);
+  assert.match(ap[1].text, /fără|nu are dată/);
+});

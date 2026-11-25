@@ -4,6 +4,7 @@ import Link from "next/link";
 const TABS = [
   { href: "/materiale", label: "Stoc și scule" },
   { href: "/materiale/masini", label: "Stoc pe mașini" },
+  { href: "/materiale/scule", label: "Registru scule" },
   { href: "/aprobari", label: "Cereri de materiale" },
   { href: "/foaie-parcurs", label: "Foaie de parcurs" },
 ] as const;

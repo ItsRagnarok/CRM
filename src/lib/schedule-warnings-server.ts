@@ -93,6 +93,19 @@ export async function loadScheduleWarnings(supabase: Supabase, org: { id: string
     materials = (mats ?? []).map((m) => ({ name: m.name, unit: m.unit, needed: qty.get(m.id) ?? 1, available: avail.get(m.id) ?? 0 }));
   }
 
+  // Aparatele de măsură aflate la oamenii lucrării (registrul de scule, calibrarea din Conformitate).
+  let devices: { holderId: string; name: string; expiresOn: string | null }[] = [];
+  if (peopleIds.length) {
+    const { data: tools } = await supabase
+      .from("tools")
+      .select("name, holder_profile_id, compliance_items(expires_on)")
+      .eq("organization_id", org.id)
+      .eq("needs_calibration", true)
+      .eq("status", "predat")
+      .in("holder_profile_id", peopleIds);
+    devices = (tools ?? []).filter((t) => t.holder_profile_id).map((t) => ({ holderId: t.holder_profile_id!, name: t.name, expiresOn: t.compliance_items?.expires_on ?? null }));
+  }
+
   return computeScheduleWarnings({
     date: req.date,
     start: req.start || null,
@@ -120,5 +133,6 @@ export async function loadScheduleWarnings(supabase: Supabase, org: { id: string
       })),
     hoursPerDay: Number(org.standard_hours_per_day ?? 8),
     materials,
+    devices,
   });
 }

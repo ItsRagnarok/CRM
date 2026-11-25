@@ -11,7 +11,7 @@
 export type WarningLevel = "bad" | "warn";
 export type ScheduleWarning = {
   level: WarningLevel;
-  kind: "autorizatie" | "masina" | "concediu" | "suprapunere" | "incarcare" | "material";
+  kind: "autorizatie" | "masina" | "concediu" | "suprapunere" | "incarcare" | "material" | "aparat";
   text: string;
   /** Unde se rezolvă problema (pagina din platformă). */
   href?: string;
@@ -31,6 +31,8 @@ export type WarningInput = {
   otherJobs: { number: number; title: string; start: string | null; end: string | null; assigneeIds: string[]; onTeam: boolean }[];
   hoursPerDay: number;
   materials: { name: string; unit: string; needed: number; available: number }[];
+  /** Aparatele de măsură aflate la oamenii lucrării, cu data până la care sunt calibrate (null = fără dată). */
+  devices?: { holderId: string; name: string; expiresOn: string | null }[];
 };
 
 const MONTHS = ["ian.", "feb.", "mar.", "apr.", "mai", "iun.", "iul.", "aug.", "sept.", "oct.", "nov.", "dec."];
@@ -119,6 +121,17 @@ export function computeScheduleWarnings(input: WarningInput): ScheduleWarning[] 
         ? `${m.name}: în stoc ${m.available} ${m.unit}, trebuie ${m.needed} ${m.unit}.`
         : `${m.name}: nu e în stoc (nici în depozit, nici pe mașina echipei).`,
       href: "/materiale",
+    });
+  }
+
+  // 7. Aparate de măsură la oamenii lucrării, cu calibrarea expirată la data lucrării.
+  for (const d of input.devices ?? []) {
+    if (!name.has(d.holderId) || (d.expiresOn && d.expiresOn >= date)) continue;
+    out.push({
+      level: "warn",
+      kind: "aparat",
+      text: dot(d.expiresOn ? `${d.name} (la ${name.get(d.holderId)}): calibrarea a expirat pe ${shortDate(d.expiresOn)}; măsurătorile nu au valoare legală` : `${d.name} (la ${name.get(d.holderId)}) nu are dată de calibrare în registru`),
+      href: "/materiale/scule?f=probleme",
     });
   }
 

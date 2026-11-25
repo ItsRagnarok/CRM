@@ -3380,6 +3380,126 @@ export type Database = {
           },
         ]
       }
+      tool_handovers: {
+        Row: {
+          id: string
+          organization_id: string
+          tool_id: string
+          kind: string
+          status: string
+          from_profile_id: string | null
+          to_profile_id: string | null
+          to_vehicle_id: string | null
+          condition: string
+          condition_confirmed: string | null
+          note: string | null
+          confirm_note: string | null
+          created_by: string | null
+          confirmed_by: string | null
+          confirmed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          tool_id: string
+          kind: string
+          status?: string
+          from_profile_id?: string | null
+          to_profile_id?: string | null
+          to_vehicle_id?: string | null
+          condition?: string
+          condition_confirmed?: string | null
+          note?: string | null
+          confirm_note?: string | null
+          created_by?: string | null
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          tool_id?: string
+          kind?: string
+          status?: string
+          from_profile_id?: string | null
+          to_profile_id?: string | null
+          to_vehicle_id?: string | null
+          condition?: string
+          condition_confirmed?: string | null
+          note?: string | null
+          confirm_note?: string | null
+          created_by?: string | null
+          confirmed_by?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "tool_handovers_tool_id_fkey"; columns: ["tool_id"]; isOneToOne: false; referencedRelation: "tools"; referencedColumns: ["id"] },
+        ]
+      }
+      tools: {
+        Row: {
+          id: string
+          organization_id: string
+          name: string
+          category: string
+          serial: string | null
+          inventory_code: string | null
+          value: number | null
+          needs_calibration: boolean
+          compliance_item_id: string | null
+          status: string
+          condition: string
+          holder_profile_id: string | null
+          holder_vehicle_id: string | null
+          notes: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          name: string
+          category?: string
+          serial?: string | null
+          inventory_code?: string | null
+          value?: number | null
+          needs_calibration?: boolean
+          compliance_item_id?: string | null
+          status?: string
+          condition?: string
+          holder_profile_id?: string | null
+          holder_vehicle_id?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          name?: string
+          category?: string
+          serial?: string | null
+          inventory_code?: string | null
+          value?: number | null
+          needs_calibration?: boolean
+          compliance_item_id?: string | null
+          status?: string
+          condition?: string
+          holder_profile_id?: string | null
+          holder_vehicle_id?: string | null
+          notes?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "tools_compliance_item_id_fkey"; columns: ["compliance_item_id"]; isOneToOne: false; referencedRelation: "compliance_items"; referencedColumns: ["id"] },
+          { foreignKeyName: "tools_holder_profile_id_fkey"; columns: ["holder_profile_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "tools_holder_vehicle_id_fkey"; columns: ["holder_vehicle_id"]; isOneToOne: false; referencedRelation: "vehicles"; referencedColumns: ["id"] },
+        ]
+      }
       vehicle_restock_requests: {
         Row: {
           created_at: string
@@ -3659,6 +3779,26 @@ export type Database = {
       }
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
+        Returns: undefined
+      }
+      tool_calibration_expires: {
+        Args: { p_tool: string }
+        Returns: string | null
+      }
+      tool_handover: {
+        Args: { p_tool: string; p_to: string; p_vehicle: string | null; p_condition: string; p_note: string; p_force?: boolean }
+        Returns: string
+      }
+      tool_confirm: {
+        Args: { p_handover: string; p_condition: string; p_note: string }
+        Returns: undefined
+      }
+      tool_return_request: {
+        Args: { p_tool: string; p_condition: string; p_note: string }
+        Returns: string
+      }
+      tool_receive: {
+        Args: { p_tool: string; p_condition: string; p_note: string }
         Returns: undefined
       }
       load_vehicle_from_warehouse: {
