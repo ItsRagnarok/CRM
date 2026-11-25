@@ -1,4 +1,4 @@
-import { Package, Wrench, Wallet, Clock, FileText, CalendarOff, Settings, LifeBuoy, ChevronRight } from "lucide-react";
+import { HardHat, Package, Wrench, Wallet, Clock, FileText, CalendarOff, Settings, LifeBuoy, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { requireSessionContext, ROLE_LABELS } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -28,6 +28,7 @@ export default async function MobileMenuPage() {
           <div className="m-list">
             <MenuRow href="/mobil/materiale" icon={Package} title="Materiale și mașină" />
             <MenuRow href="/mobil/scule" icon={Wrench} title="Sculele mele" />
+            <MenuRow href="/mobil/ssm" icon={HardHat} title="Siguranță (SSM)" />
             <MenuRow href="/mobil/cheltuieli" icon={Wallet} title="Cheltuieli" />
             <MenuRow href="/mobil/pontaj" icon={Clock} title="Pontaj" />
             <MenuRow href="/mobil/documente" icon={FileText} title="Documente și autorizații" />

@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Camera, CloudUpload, Flag, Pause, Wrench } from "lucide-react";
+import { Camera, CloudUpload, Flag, Pause, ShieldCheck, Wrench } from "lucide-react";
+import { TEMPLATES, type Template } from "@/lib/ssm";
 import { listQueue, onQueueChange, type QueueItem } from "@/lib/offline/queue";
 import { runOrQueue } from "@/lib/offline/send";
 import { ArriveButton } from "./arrive-button";
@@ -32,20 +33,51 @@ export function SavedOnPhone({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function StartWorkButton({ jobId }: { jobId: string }) {
+export function StartWorkButton({ jobId, ssm }: { jobId: string; ssm?: { template: Template; done: boolean } }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const items = ssm && !ssm.done ? TEMPLATES[ssm.template].items : [];
+  const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const allOk = items.every((i) => checked[i.id]);
   return (
     <>
+      {items.length > 0 && (
+        <div className="m-cd" style={{ display: "grid", gap: 10 }}>
+          <div className="m-r" style={{ gap: 10 }}>
+            <span className="m-ic"><ShieldCheck className="m-i" /></span>
+            <div className="m-fl">
+              <div style={{ fontSize: 15, fontWeight: 800 }}>Verificare de siguranță</div>
+              <div className="m-mu m-sm">Înainte să pornești lucrul. Bifează doar ce ai făcut cu adevărat.</div>
+            </div>
+          </div>
+          {items.map((i) => (
+            <label key={i.id} className="m-sm" style={{ display: "flex", gap: 10, alignItems: "flex-start", lineHeight: 1.4 }}>
+              <input type="checkbox" checked={Boolean(checked[i.id])} onChange={(e) => setChecked((c) => ({ ...c, [i.id]: e.target.checked }))} style={{ width: 22, height: 22, flexShrink: 0, accentColor: "#c6ff4a" }} />
+              <span>{i.text}</span>
+            </label>
+          ))}
+          {!allOk && (
+            <Link href={`/mobil/ssm/incident?job=${jobId}&tip=echipament`} className="m-link m-sm" style={{ color: "var(--m-wr)" }}>
+              Nu poți bifa tot? Nu porni lucrul. Anunță biroul →
+            </Link>
+          )}
+        </div>
+      )}
       <button
         type="button"
-        className="m-btn"
-        disabled={busy}
+        className={`m-btn${allOk ? "" : " off"}`}
+        disabled={busy || !allOk}
         onClick={async () => {
           setBusy(true);
           setError(null);
-          const r = await runOrQueue({ kind: "event", jobId, event: "work_start", at: new Date().toISOString() });
+          const r = await runOrQueue({
+            kind: "event",
+            jobId,
+            event: "work_start",
+            at: new Date().toISOString(),
+            ...(items.length ? { ssm: { template: ssm!.template, items: Object.fromEntries(items.map((i) => [i.id, Boolean(checked[i.id])])) } } : {}),
+          });
           setBusy(false);
           if (r.status === "error") setError(r.error);
           else router.refresh();
@@ -75,6 +107,7 @@ export function JobFooter(p: {
   requireFinal: boolean;
   serverPhotos: { before: number; during: number; after: number };
   missingFormLabel: string | null;
+  ssm?: { template: Template; done: boolean };
 }) {
   const q = useQueuedForJob(p.jobId);
   const isWorking = p.isWorking || ((p.isArrived || p.isTraveling) && q.working);
@@ -101,7 +134,7 @@ export function JobFooter(p: {
           </>
         ) : (
           <>
-            <StartWorkButton jobId={p.jobId} />
+            <StartWorkButton jobId={p.jobId} ssm={p.ssm} />
             {q.arrived && <SavedOnPhone>Sosirea e salvată pe telefon.</SavedOnPhone>}
           </>
         ))}
@@ -124,6 +157,7 @@ export function JobFooter(p: {
               <Pause className="m-i" style={{ width: 16, height: 16 }} /> Nu pot finaliza
             </Link>
           </div>
+          <Link href={`/mobil/ssm/incident?job=${p.jobId}`} className="m-link m-sm" style={{ textAlign: "center" }}>Incident de siguranță? Raportează-l</Link>
         </>
       )}
     </>

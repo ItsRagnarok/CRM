@@ -115,6 +115,7 @@ const OFFICE_PAGES = [
   ["/luni", "Luni dimineața"],
   ["/materiale/masini", "Stoc pe mașini"],
   ["/materiale/scule", "Registru de scule"],
+  ["/ssm", "SSM · siguranța pe teren"],
   ["/mesaje", "Mesaje"],
   ["/notificari", "Notificări"],
   ["/setari", "Informații companie"],

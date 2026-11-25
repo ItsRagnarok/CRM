@@ -998,6 +998,195 @@ export type Database = {
           },
         ]
       }
+      ssm_trainings: {
+        Row: {
+          id: string
+          organization_id: string
+          profile_id: string
+          phase: string
+          done_on: string
+          next_due: string | null
+          instructor: string | null
+          topic: string | null
+          duration_minutes: number | null
+          confirmed_at: string | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          profile_id: string
+          phase: string
+          done_on: string
+          next_due?: string | null
+          instructor?: string | null
+          topic?: string | null
+          duration_minutes?: number | null
+          confirmed_at?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          profile_id?: string
+          phase?: string
+          done_on?: string
+          next_due?: string | null
+          instructor?: string | null
+          topic?: string | null
+          duration_minutes?: number | null
+          confirmed_at?: string | null
+          created_by?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ssm_trainings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ssm_trainings_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ssm_checks: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          profile_id: string
+          template: string
+          items: Json
+          all_ok: boolean
+          note: string | null
+          checked_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          profile_id: string
+          template: string
+          items?: Json
+          all_ok: boolean
+          note?: string | null
+          checked_at: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          profile_id?: string
+          template?: string
+          items?: Json
+          all_ok?: boolean
+          note?: string | null
+          checked_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ssm_checks_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ssm_checks_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ssm_incidents: {
+        Row: {
+          id: string
+          organization_id: string
+          reported_by: string | null
+          job_id: string | null
+          kind: string
+          injured: boolean
+          description: string | null
+          photo_path: string | null
+          lat: number | null
+          lng: number | null
+          occurred_at: string
+          status: string
+          measures: string | null
+          closed_by: string | null
+          closed_at: string | null
+          client_op_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          reported_by?: string | null
+          job_id?: string | null
+          kind: string
+          injured?: boolean
+          description?: string | null
+          photo_path?: string | null
+          lat?: number | null
+          lng?: number | null
+          occurred_at?: string
+          status?: string
+          measures?: string | null
+          closed_by?: string | null
+          closed_at?: string | null
+          client_op_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          reported_by?: string | null
+          job_id?: string | null
+          kind?: string
+          injured?: boolean
+          description?: string | null
+          photo_path?: string | null
+          lat?: number | null
+          lng?: number | null
+          occurred_at?: string
+          status?: string
+          measures?: string | null
+          closed_by?: string | null
+          closed_at?: string | null
+          client_op_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ssm_incidents_reported_by_fkey"
+            columns: ["reported_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ssm_incidents_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_consent_log: {
         Row: {
           id: string
@@ -2079,6 +2268,8 @@ export type Database = {
           status: Database["public"]["Enums"]["job_status"]
           team_id: string | null
           title: string
+          at_height: boolean
+          ssm_override: Json | null
           updated_at: string
           warehouse_id: string | null
           work_ended_at: string | null
@@ -2115,6 +2306,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           team_id?: string | null
           title: string
+          at_height?: boolean
+          ssm_override?: Json | null
           updated_at?: string
           warehouse_id?: string | null
           work_ended_at?: string | null
@@ -2151,6 +2344,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["job_status"]
           team_id?: string | null
           title?: string
+          at_height?: boolean
+          ssm_override?: Json | null
           updated_at?: string
           warehouse_id?: string | null
           work_ended_at?: string | null
@@ -3851,6 +4046,10 @@ export type Database = {
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
+      }
+      ssm_confirm_training: {
+        Args: { p_id: string }
+        Returns: boolean
       }
       set_client_contact_prefs: {
         Args: { p_client: string; p_channel: string | null; p_marketing: string[]; p_source: string; p_note: string | null }

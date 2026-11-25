@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { updateJob } from "../actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { LiveScheduleWarnings } from "@/components/schedule-warnings";
+import { AtHeightField } from "@/components/at-height-field";
 import { DurationHint } from "@/components/duration-hint";
 import type { DurationStat } from "@/lib/job-durations";
 
@@ -69,6 +70,9 @@ export function EditJobForm({ job, teams, enabledDomains, durations = [] }: { jo
               {enabledDomains.includes("electric") && <option value="electric">Electric — verificare tablou</option>}
             </select>
           </Field>
+          <div className="col-span-2">
+            <AtHeightField defaultChecked={Boolean((job as { at_height?: boolean }).at_height)} />
+          </div>
           <Field label="Prioritate">
             <select name="priority" defaultValue={job.priority} className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric">
               {Object.entries(JOB_PRIORITY_LABELS).map(([value, label]) => (

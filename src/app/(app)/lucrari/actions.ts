@@ -10,6 +10,7 @@ import { notifyProfiles } from "@/lib/notify";
 import { geocodeAddress } from "@/lib/geocode";
 import { todayInOrgTimeZone, nowTimeInOrgTimeZone } from "@/lib/date";
 import { ensureChecklist } from "./[id]/actions";
+import { heightGate } from "@/lib/ssm-server";
 
 type JobStatus = Database["public"]["Enums"]["job_status"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -47,6 +48,10 @@ export async function createJob(
   if (!clientId || !title) {
     return { error: "Client și titlu sunt obligatorii." };
   }
+
+  const atHeight = formData.get("atHeight") === "on";
+  const gate = await heightGate(supabase, organization, userId, { teamId, date: scheduledDate, start: startTime, end: endTime, domain, atHeight }, formData);
+  if ("error" in gate) return { error: gate.error };
 
   let locationId: string | null = null;
   if (existingLocationId) {
@@ -100,6 +105,8 @@ export async function createJob(
       photo_guidance_before: photoGuidanceBefore,
       photo_guidance_during: photoGuidanceDuring,
       photo_guidance_after: photoGuidanceAfter,
+      at_height: atHeight,
+      ssm_override: gate.override,
     })
     .select("id, display_number")
     .single();

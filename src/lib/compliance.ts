@@ -9,7 +9,7 @@ export const KIND_LABELS: Record<ComplianceKind, string> = {
 
 // Suggestions only; the title is free text, so the firm can use its own names.
 export const TITLE_PRESETS: Record<ComplianceKind, string[]> = {
-  person: ["Autorizație ANRE", "Legitimație instalator gaze", "Instructaj SSM", "Fișă de aptitudine medicală", "Permis de conducere"],
+  person: ["Autorizație ANRE", "Legitimație instalator gaze", "Apt pentru lucru la înălțime (fișa medicală)", "Fișă de aptitudine medicală", "Permis de conducere"],
   device: ["Calibrare / verificare metrologică", "Verificare periodică", "Garanție"],
   vehicle: ["ITP", "RCA", "Rovinietă", "Asigurare CASCO"],
   company: ["Autorizație firmă ANRE", "Atestat", "Asigurare de răspundere", "Alt document"],

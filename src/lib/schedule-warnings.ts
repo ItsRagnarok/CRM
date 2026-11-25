@@ -11,7 +11,7 @@
 export type WarningLevel = "bad" | "warn";
 export type ScheduleWarning = {
   level: WarningLevel;
-  kind: "autorizatie" | "masina" | "concediu" | "suprapunere" | "incarcare" | "material" | "aparat";
+  kind: "autorizatie" | "masina" | "concediu" | "suprapunere" | "incarcare" | "material" | "aparat" | "ssm" | "inaltime";
   text: string;
   /** Unde se rezolvă problema (pagina din platformă). */
   href?: string;
@@ -33,6 +33,11 @@ export type WarningInput = {
   materials: { name: string; unit: string; needed: number; available: number }[];
   /** Aparatele de măsură aflate la oamenii lucrării, cu data până la care sunt calibrate (null = fără dată). */
   devices?: { holderId: string; name: string; expiresOn: string | null }[];
+  /** Instruirea SSM: doar dacă firma ține evidența (are cel puțin o instruire); due = data următoarei instruiri. */
+  ssm?: { tracked: boolean; people: { profileId: string; due: string | null }[] };
+  /** Lucrare la înălțime și oamenii care au „apt pentru lucru la înălțime” valabil la data lucrării. */
+  atHeight?: boolean;
+  heightOk?: string[];
 };
 
 const MONTHS = ["ian.", "feb.", "mar.", "apr.", "mai", "iun.", "iul.", "aug.", "sept.", "oct.", "nov.", "dec."];
@@ -58,6 +63,8 @@ export function computeScheduleWarnings(input: WarningInput): ScheduleWarning[] 
   // 1. Autorizații / legitimații expirate la data lucrării (pe domeniul lucrării, dacă e ales).
   for (const d of input.personDocs) {
     if (!name.has(d.profileId) || d.expiresOn >= date) continue;
+    // Aptitudinea pentru înălțime are avertizarea ei (mai jos), doar pe lucrările la înălțime.
+    if (/[iî]n[aă]l[tț]ime/i.test(d.title)) continue;
     if (input.domain && d.domain && d.domain !== input.domain) continue;
     out.push({ level: "bad", kind: "autorizatie", text: dot(`${name.get(d.profileId)}: ${d.title} a expirat pe ${shortDate(d.expiresOn)}`), href: "/conformitate" });
   }
@@ -133,6 +140,26 @@ export function computeScheduleWarnings(input: WarningInput): ScheduleWarning[] 
       text: dot(d.expiresOn ? `${d.name} (la ${name.get(d.holderId)}): calibrarea a expirat pe ${shortDate(d.expiresOn)}; măsurătorile nu au valoare legală` : `${d.name} (la ${name.get(d.holderId)}) nu are dată de calibrare în registru`),
       href: "/materiale/scule?f=probleme",
     });
+  }
+
+  // 8. Instruirea SSM expirată sau lipsă la data lucrării (doar când firma ține evidența în platformă).
+  if (input.ssm?.tracked) {
+    const due = new Map(input.ssm.people.map((p) => [p.profileId, p.due]));
+    for (const p of input.people) {
+      if (!due.has(p.id)) out.push({ level: "bad", kind: "ssm", text: `${p.name} nu are instruire SSM în evidență.`, href: "/ssm" });
+      else {
+        const d = due.get(p.id);
+        if (d && d < date) out.push({ level: "bad", kind: "ssm", text: dot(`${p.name}: instruirea SSM periodică a expirat pe ${shortDate(d)}`), href: "/ssm" });
+      }
+    }
+  }
+
+  // 9. Lucru la înălțime fără „apt pentru lucru la înălțime” valabil (fișa medicală, în Conformitate).
+  if (input.atHeight) {
+    const ok = new Set(input.heightOk ?? []);
+    for (const p of input.people) {
+      if (!ok.has(p.id)) out.push({ level: "bad", kind: "inaltime", text: dot(`${p.name} nu are „apt pentru lucru la înălțime” valabil pe ${shortDate(date)}`), href: "/conformitate" });
+    }
   }
 
   return out.sort((a, b) => (a.level === b.level ? 0 : a.level === "bad" ? -1 : 1));

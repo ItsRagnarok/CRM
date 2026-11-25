@@ -7,10 +7,11 @@
 export type QueuedOp =
   | { kind: "photo"; jobId: string; category: string; file: Blob; fileName: string; takenAt: string }
   | { kind: "signature"; jobId: string; signerName: string; dataUrl: string; signedAt: string }
-  | { kind: "event"; jobId: string; event: "arrival" | "work_start"; at: string; lat?: number | null; lng?: number | null }
+  | { kind: "event"; jobId: string; event: "arrival" | "work_start"; at: string; lat?: number | null; lng?: number | null; ssm?: { template: string; items: Record<string, boolean>; note?: string } }
   | { kind: "finalize"; jobId: string; observations: string; equipmentIssue: string; at: string }
   | { kind: "form"; jobId: string; template: string; label: string; data: Record<string, unknown>; complete: boolean; at: string }
   | { kind: "gas"; jobId: string; unitId: string | null; unitLabel: string; recordKind: "verificare" | "revizie"; data: Record<string, unknown>; complete: boolean; at: string }
+  | { kind: "incident"; jobId: string | null; incidentKind: string; injured: boolean; description: string; file: Blob | null; at: string; lat: number | null; lng: number | null }
   | { kind: "gas_visit"; jobId: string; unitId: string; unitLabel: string; outcome: "absent" | "refuz" | "reprogramat"; rescheduleOn: string | null; note: string; at: string };
 
 export type QueueItem = { id: string; op: QueuedOp; createdAt: string; attempts: number; lastError?: string; failed?: boolean };
@@ -135,6 +136,7 @@ export function describeOp(op: QueuedOp): string {
     case "finalize": return "Închiderea lucrării";
     case "form": return op.complete ? `Formular: ${op.label}` : `Formular (ciornă): ${op.label}`;
     case "gas": return `Fișa de gaze (${op.recordKind}) · ${op.unitLabel}`;
+    case "incident": return "Raport de siguranță (incident)";
     case "gas_visit": return `${op.outcome === "absent" ? "Absent" : op.outcome === "refuz" ? "Refuz" : "Reprogramare"} · ${op.unitLabel}`;
   }
 }

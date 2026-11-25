@@ -317,6 +317,15 @@ export default async function JobDetailPage({
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
             <div className="flex flex-col gap-4">
               {scheduleWarnings.length > 0 && <WarningList warnings={scheduleWarnings} footer="Schimbă echipa, data sau ora din Editează, ori rezolvă problema din pagina indicată." />}
+              {job.at_height && (() => {
+                const o = job.ssm_override as { at?: string; note?: string; warnings?: string[] } | null;
+                return (
+                  <div className={`rounded-[12px] border px-4 py-3 text-[13px] ${o ? "border-warning/40 bg-warning-bg text-[#7a4a03]" : "border-border bg-white text-[#344054]"}`}>
+                    <b>Lucru la înălțime.</b> Pe telefon, verificarea de dinainte include hamul, ancorarea și scara.
+                    {o && <> Alocată fără „apt” valabil, confirmat de birou pe {o.at ? new Date(o.at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "—"}: „{o.note}”.</>}
+                  </div>
+                );
+              })()}
               {isBackOfficeRole(profile.role) && <DosarPanel job={job} organization={organization} />}
               {isBackOfficeRole(profile.role) && <StatusLinkCard jobId={id} organizationId={organization.id} canEdit={!readOnly} />}
               <Card title="Informații generale">

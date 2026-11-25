@@ -12,7 +12,7 @@ import { useQueuedForJob } from "../job-footer";
  * se văd la fel de bine în dosar și pleacă de ~10 ori mai repede pe semnal slab.
  * Dacă browserul nu poate (format neobișnuit), trimitem originalul.
  */
-async function shrink(file: File): Promise<Blob> {
+export async function shrink(file: File): Promise<Blob> {
   if (file.size < 1_200_000 || !("createImageBitmap" in window)) return file;
   try {
     const bmp = await createImageBitmap(file);

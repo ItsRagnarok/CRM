@@ -18,6 +18,8 @@ export type NotificationType =
   | "compliance_alert"
   | "restock_request"
   | "tool_handover"
+  | "ssm_incident"
+  | "ssm_training"
   | "test";
 
 // Per-category push preferences (profiles.notification_prefs). A missing key
@@ -47,6 +49,8 @@ const PREF_FOR_TYPE: Partial<Record<NotificationType, PrefKey>> = {
   compliance_alert: "jobs",
   restock_request: "purchases",
   tool_handover: "jobs",
+  ssm_incident: "jobs",
+  ssm_training: "jobs",
 };
 
 export function prefEnabled(prefs: unknown, key: PrefKey) {

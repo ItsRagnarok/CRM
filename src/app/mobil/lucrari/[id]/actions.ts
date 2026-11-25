@@ -7,6 +7,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { notifyBackOffice, notifyProfiles } from "@/lib/notify";
 import { mobileStagePath, type MobileStage } from "./mobile-stage";
 import { acceptClientTime, safeOpId } from "@/lib/client-time";
+import { TEMPLATES, checkResult, type Template } from "@/lib/ssm";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export type SyncResult = { ok: true } | { error: string };
@@ -542,12 +543,22 @@ export async function saveSignature(formData: FormData): Promise<SyncResult> {
  * Păstrează ora reală de pe telefon și e sigură la retrimitere. Nu dă statusul lucrării
  * înapoi: dacă lucrarea a trecut deja de pasul ăsta (ex. birou a închis-o), doar notează ora în pontaj.
  */
-export async function syncJobEvent(input: { opId: string; jobId: string; event: "arrival" | "work_start"; at: string; lat?: number | null; lng?: number | null }): Promise<SyncResult> {
+export async function syncJobEvent(input: { opId: string; jobId: string; event: "arrival" | "work_start"; at: string; lat?: number | null; lng?: number | null; ssm?: { template: string; items: Record<string, boolean>; note?: string } | null }): Promise<SyncResult> {
   if (!UUID.test(String(input?.jobId)) || !safeOpId(input?.opId) || !["arrival", "work_start"].includes(input?.event)) return { error: "Date invalide." };
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
   const at = acceptClientTime(input.at);
   const coord = (v: unknown, max: number) => (typeof v === "number" && Number.isFinite(v) && Math.abs(v) <= max ? v : null);
+
+  // Verificarea SSM de dinainte de lucru pleacă împreună cu „Pornește lucrul” (și fără semnal).
+  if (input.event === "work_start" && input.ssm && ["electric", "gaze", "fotovoltaic", "general"].includes(input.ssm.template)) {
+    const template = input.ssm.template as Template;
+    const items = Object.fromEntries(TEMPLATES[template].items.map((i) => [i.id, input.ssm!.items?.[i.id] === true]));
+    await supabase.from("ssm_checks").upsert(
+      { organization_id: organization.id, job_id: input.jobId, profile_id: userId, template, items, all_ok: checkResult(template, items).allOk, note: (input.ssm.note ?? "").slice(0, 500) || null, checked_at: at },
+      { onConflict: "job_id,profile_id,checked_at", ignoreDuplicates: true },
+    );
+  }
 
   const { data: already } = await supabase.from("time_entries").select("id").eq("job_id", input.jobId).eq("profile_id", userId).eq("event_type", input.event).eq("occurred_at", at).limit(1);
   if (already?.length) return { ok: true };

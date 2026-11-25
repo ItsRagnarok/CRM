@@ -6,7 +6,6 @@ import { addDays, dailyWorkedHours, formatHM, startOfWeek, toISODate } from "@/a
 import { startOfOrgDay, todayInOrgTimeZone } from "@/lib/date";
 import { EmptyScreen, ScreenHeader } from "@/components/mobile/ui";
 import { EVENT_LABEL, gpsProof, orgTime } from "@/lib/time-corrections";
-import { StartWorkButton } from "../lucrari/[id]/job-footer";
 import { withdrawTimeCorrection } from "./actions";
 
 const DAY_NAMES = ["luni", "marți", "miercuri", "joi", "vineri", "sâmbătă", "duminică"];
@@ -104,7 +103,7 @@ export default async function MobileTimesheetPage({ searchParams }: { searchPara
           <div className="m-cd m-col" style={{ gap: 10 }}>
             <div className="m-lb">Lucrarea de acum</div>
             <Link href={`/mobil/lucrari/${active.id}`} style={{ fontSize: 16, fontWeight: 800 }}>#{active.display_number} · {active.title}</Link>
-            {active.status === "ajunsa" && activeHasArrivalPhoto && <StartWorkButton jobId={active.id} />}
+            {active.status === "ajunsa" && activeHasArrivalPhoto && <Link href={`/mobil/lucrari/${active.id}`} className="m-btn">Verificarea de siguranță și pornirea lucrului</Link>}
             {active.status === "ajunsa" && !activeHasArrivalPhoto && <Link href={`/mobil/lucrari/${active.id}/foto?cat=before`} className="m-btn">Fă poza de sosire, apoi pornește lucrul</Link>}
             {active.status !== "ajunsa" && <Link href={`/mobil/lucrari/${active.id}/finalizare`} className="m-btn">Închide lucrarea</Link>}
           </div>

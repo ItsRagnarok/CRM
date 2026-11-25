@@ -53,6 +53,7 @@ export function LiveScheduleWarnings({ jobId, names = { date: "scheduledDate", s
   const ref = useRef<HTMLDivElement>(null);
   const [warnings, setWarnings] = useState<ScheduleWarning[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [guardHit, setGuardHit] = useState(false);
 
   useEffect(() => {
     const form = ref.current?.closest("form");
@@ -70,6 +71,7 @@ export function LiveScheduleWarnings({ jobId, names = { date: "scheduledDate", s
         end: String(fd.get(names.end) ?? "") || (jobId ? null : "20:00"),
         domain: String(fd.get("domain") ?? "") || null,
         materialIds: fd.getAll("requiredMaterialIds").map(String),
+        atHeight: form.querySelector('[name="atHeight"]') ? fd.get("atHeight") === "on" : null,
       };
       // Pe formularul de editare materialele vin din lucrare (null = ia-le din baza de date).
       const payload = { ...req, materialIds: jobId && req.materialIds.length === 0 ? null : req.materialIds };
@@ -100,10 +102,39 @@ export function LiveScheduleWarnings({ jobId, names = { date: "scheduledDate", s
     };
   }, [jobId, names.date, names.start, names.end]);
 
+  // Lucrul la înălțime fără „apt”: oprim trimiterea aici (serverul verifică oricum), ca formularul
+  // să nu se golească după un refuz.
+  const heightBlock = Boolean(warnings?.some((w) => w.kind === "inaltime"));
+  useEffect(() => {
+    const form = ref.current?.closest("form");
+    if (!form || !heightBlock) return;
+    const guard = (e: SubmitEvent) => {
+      const fd = new FormData(form);
+      if (fd.get("ssmOverride") === "on" && String(fd.get("ssmOverrideNote") ?? "").trim().length >= 5) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      const box = form.querySelector<HTMLInputElement>('[name="ssmOverride"]');
+      (box?.checked ? form.querySelector<HTMLInputElement>('[name="ssmOverrideNote"]') : box)?.focus();
+      setGuardHit(true);
+    };
+    form.addEventListener("submit", guard, true);
+    return () => form.removeEventListener("submit", guard, true);
+  }, [heightBlock]);
+
   return (
     <div ref={ref} aria-live="polite">
       {warnings && warnings.length > 0 ? (
-        <WarningList warnings={warnings} />
+        <>
+          <WarningList warnings={warnings} footer={warnings.some((w) => w.kind === "inaltime") ? "Celelalte avertizări nu blochează salvarea; lucrul la înălțime fără „apt” da." : undefined} />
+          {warnings.some((w) => w.kind === "inaltime") && (
+            <div className="mt-2 flex flex-col gap-2 rounded-[10px] border border-danger/40 bg-danger-bg/40 p-3 text-[12.5px] text-[#344054]">
+              <b className="text-danger" role={guardHit ? "alert" : undefined}>Lucrarea la înălțime nu se salvează așa.{guardHit ? " Bifează confirmarea și scrie motivul, sau rezolvă mai întâi." : ""}</b>
+              <span>Adaugă „apt pentru lucru la înălțime” în Conformitate, schimbă echipa, sau confirmă pe răspunderea ta, cu motivul (rămâne notat pe lucrare).</span>
+              <label className="flex items-center gap-2 font-semibold"><input type="checkbox" name="ssmOverride" className="h-4 w-4" /> Confirm alocarea</label>
+              <input name="ssmOverrideNote" maxLength={300} placeholder="Motivul (ex. fișa medicală nouă e la birou, o încarc azi)" className="rounded-[8px] border border-[#d0d5dd] bg-white px-3 py-2 text-[13px]" />
+            </div>
+          )}
+        </>
       ) : warnings && !busy ? (
         <div className="flex items-center gap-1.5 text-[12px] text-muted">
           <CheckCircle2 className="h-3.5 w-3.5 text-success" aria-hidden /> Nicio problemă la programare: autorizații, mașină, concedii, suprapuneri, stoc.

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import {
+import { HardHat,
   LayoutDashboard,
   Users,
   Briefcase,
@@ -63,6 +63,7 @@ const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
     label: "Firmă",
     items: [
       { href: "/conformitate", label: "Conformitate", icon: ShieldCheck, module: "conformitate" },
+      { href: "/ssm", label: "SSM", icon: HardHat },
       { href: "/materiale", label: "Stoc și mașini", icon: Package, also: ["/aprobari", "/foaie-parcurs"] },
       { href: "/pontaj", label: "Pontaj și concedii", icon: Clock, also: ["/cheltuieli"] },
       { href: "/rapoarte", label: "Rapoarte", icon: BarChart3 },

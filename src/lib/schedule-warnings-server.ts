@@ -1,6 +1,7 @@
 import "server-only";
 import type { createClient } from "@/lib/supabase/server";
 import { computeScheduleWarnings, type ScheduleWarning } from "@/lib/schedule-warnings";
+import { isHeightFitness } from "@/lib/ssm";
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;
 
@@ -13,6 +14,8 @@ export type WarningRequest = {
   domain?: string | null;
   /** Materialele bifate în formular (1 bucată fiecare). Fără ele, se iau cele cerute pe lucrare. */
   materialIds?: string[] | null;
+  /** Lucrare la înălțime. null/undefined = ia valoarea din lucrare (la editare). */
+  atHeight?: boolean | null;
 };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -106,6 +109,28 @@ export async function loadScheduleWarnings(supabase: Supabase, org: { id: string
     devices = (tools ?? []).filter((t) => t.holder_profile_id).map((t) => ({ holderId: t.holder_profile_id!, name: t.name, expiresOn: t.compliance_items?.expires_on ?? null }));
   }
 
+  // SSM: instruirea (doar dacă firma ține evidența) și aptitudinea pentru înălțime.
+  let atHeight = req.atHeight ?? null;
+  if (atHeight === null && jobId) {
+    const { data: j } = await supabase.from("jobs").select("at_height").eq("id", jobId).maybeSingle();
+    atHeight = Boolean(j?.at_height);
+  }
+  let ssm: { tracked: boolean; people: { profileId: string; due: string | null }[] } | undefined;
+  let heightOk: string[] = [];
+  if (peopleIds.length) {
+    const [{ count }, { data: trainings }, { data: fit }] = await Promise.all([
+      supabase.from("ssm_trainings").select("id", { count: "exact", head: true }).eq("organization_id", org.id),
+      supabase.from("ssm_trainings").select("profile_id, done_on, next_due").eq("organization_id", org.id).in("profile_id", peopleIds).order("done_on", { ascending: false }),
+      atHeight
+        ? supabase.from("compliance_items").select("profile_id, title").eq("organization_id", org.id).eq("kind", "person").in("profile_id", peopleIds).gte("expires_on", req.date)
+        : Promise.resolve({ data: [] as { profile_id: string | null; title: string }[] }),
+    ]);
+    const latest = new Map<string, string | null>();
+    for (const t of trainings ?? []) if (!latest.has(t.profile_id)) latest.set(t.profile_id, t.next_due);
+    ssm = { tracked: (count ?? 0) > 0, people: [...latest].map(([profileId, due]) => ({ profileId, due })) };
+    heightOk = (fit ?? []).filter((d) => d.profile_id && isHeightFitness(d.title)).map((d) => d.profile_id!);
+  }
+
   return computeScheduleWarnings({
     date: req.date,
     start: req.start || null,
@@ -134,5 +159,8 @@ export async function loadScheduleWarnings(supabase: Supabase, org: { id: string
     hoursPerDay: Number(org.standard_hours_per_day ?? 8),
     materials,
     devices,
+    ssm,
+    atHeight: Boolean(atHeight),
+    heightOk,
   });
 }

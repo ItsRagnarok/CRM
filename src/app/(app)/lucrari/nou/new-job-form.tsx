@@ -8,6 +8,7 @@ import { generateJobSuggestion, transcribeAudio } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { JOB_TITLE_TEMPLATES } from "../job-templates";
 import { LiveScheduleWarnings } from "@/components/schedule-warnings";
+import { AtHeightField } from "@/components/at-height-field";
 import { DurationHint } from "@/components/duration-hint";
 import type { DurationStat } from "@/lib/job-durations";
 
@@ -589,6 +590,9 @@ export function NewJobForm({
                 {enabledDomains.includes("electric") && <option value="electric">Electric — verificare tablou</option>}
               </select>
             </Field>
+            <div className="sm:col-span-2">
+              <AtHeightField autoFromDomain />
+            </div>
             <Field label="Prioritate">
               <select
                 name="priority"

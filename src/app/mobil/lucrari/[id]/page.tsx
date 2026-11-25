@@ -17,6 +17,7 @@ import { QuickPhotoButton } from "./foto/photo-capture";
 import { NotifyClient } from "./notify-client";
 import { onTheWayMessage } from "@/lib/client-messages";
 import { SITE_URL } from "@/lib/seo";
+import { templateFor } from "@/lib/ssm";
 
 type Step = "pregatire" | "drum" | "loc" | "inchidere";
 const STEPS: { id: Step; label: string; icon: typeof Clock }[] = [
@@ -71,7 +72,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, priority, domain, gas_building_id, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone, preferred_channel), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, priority, domain, at_height, gas_building_id, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone, preferred_channel), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -131,6 +132,11 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
 
   const pendingPickup = (purchases.data ?? []).find((r) => r.status === "approved" && !r.fulfilled_at);
   const unseenRejections = (purchases.data ?? []).filter((r) => r.status === "denied" && !r.technician_acknowledged_at);
+
+  // SSM: verificarea de dinainte de lucru e făcută (de omul ăsta, pe lucrarea asta)?
+  const ssmDone = isArrived
+    ? Boolean((await supabase.from("ssm_checks").select("id").eq("job_id", id).eq("profile_id", profile.id).limit(1)).data?.length)
+    : false;
 
   // Pe drum: mesajul pentru client, cu linkul de status (se creează dacă lucrarea nu are încă unul).
   let notifyText: string | null = null;
@@ -389,6 +395,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             requireFinal={Boolean(job.require_final_photo)}
             serverPhotos={{ before: count("before"), during: count("during"), after: count("after") }}
             missingFormLabel={missingForm ? formTemplate!.label : missingGasRecord ? "Fișa de evidență gaze" : null}
+            ssm={{ template: templateFor(job.domain, job.at_height), done: ssmDone }}
           />
         </div>
       )}

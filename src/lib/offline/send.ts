@@ -3,6 +3,7 @@
 import { uploadJobPhoto, saveSignature, syncJobEvent, syncFinalizeJob } from "@/app/mobil/lucrari/[id]/actions";
 import { saveJobForm } from "@/app/mobil/lucrari/[id]/formular/actions";
 import { recordGasVisit, saveGasRecord } from "@/app/mobil/lucrari/[id]/gaze/actions";
+import { reportIncident } from "@/app/mobil/ssm/actions";
 import { enqueue, isNetworkError, newOpId, type QueuedOp, type Sender } from "./queue";
 
 /** Trimite o operație la server. Același drum și pentru „acum”, și pentru coada offline. */
@@ -28,7 +29,7 @@ export const sendOp: Sender = async (id, op) => {
       return saveSignature(fd);
     }
     case "event":
-      return syncJobEvent({ opId: id, jobId: op.jobId, event: op.event, at: op.at, lat: op.lat ?? null, lng: op.lng ?? null });
+      return syncJobEvent({ opId: id, jobId: op.jobId, event: op.event, at: op.at, lat: op.lat ?? null, lng: op.lng ?? null, ssm: op.ssm ?? null });
     case "finalize":
       return syncFinalizeJob({ opId: id, jobId: op.jobId, observations: op.observations, equipmentIssue: op.equipmentIssue, at: op.at });
     case "form": {
@@ -38,6 +39,19 @@ export const sendOp: Sender = async (id, op) => {
     case "gas": {
       const r = await saveGasRecord({ jobId: op.jobId, unitId: op.unitId, kind: op.recordKind, data: op.data, complete: op.complete, at: op.at });
       return "ok" in r ? { ok: true } : { error: r.missing?.length ? `${r.error} (${r.missing.slice(0, 3).join(", ")})` : r.error };
+    }
+    case "incident": {
+      const fd = new FormData();
+      fd.set("kind", op.incidentKind);
+      fd.set("injured", op.injured ? "1" : "0");
+      fd.set("description", op.description);
+      if (op.jobId) fd.set("jobId", op.jobId);
+      if (op.file) fd.set("file", new File([op.file], "incident.jpg", { type: op.file.type || "image/jpeg" }));
+      if (op.lat !== null) fd.set("lat", String(op.lat));
+      if (op.lng !== null) fd.set("lng", String(op.lng));
+      fd.set("occurredAt", op.at);
+      fd.set("opId", id);
+      return reportIncident(fd);
     }
     case "gas_visit":
       return recordGasVisit({ opId: id, jobId: op.jobId, unitId: op.unitId, outcome: op.outcome, rescheduleOn: op.rescheduleOn, note: op.note, at: op.at });

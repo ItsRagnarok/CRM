@@ -8,6 +8,7 @@ import type { Database } from "@/lib/supabase/database.types";
 import { syncJobAssignmentsToTeam } from "../team-sync";
 import { geocodeAddress } from "@/lib/geocode";
 import { notifyBackOffice, notifyProfiles } from "@/lib/notify";
+import { heightGate } from "@/lib/ssm-server";
 
 type JobType = Database["public"]["Enums"]["job_type"];
 type JobPriority = Database["public"]["Enums"]["job_priority"];
@@ -37,6 +38,17 @@ export async function updateJob(
   const address = String(formData.get("address") ?? "").trim();
   const currentAddress = String(formData.get("currentAddress") ?? "").trim();
 
+  const domainValue = (["gaze", "electric", "fotovoltaic"].includes(String(formData.get("domain") ?? "")) ? String(formData.get("domain")) : null) as "gaze" | "electric" | "fotovoltaic" | null;
+  const atHeight = formData.get("atHeight") === "on";
+  const gate = await heightGate(
+    supabase,
+    organization,
+    userId,
+    { jobId, teamId, date: scheduledDate, start: String(formData.get("startTime") ?? "") || null, end: String(formData.get("endTime") ?? "") || null, domain: domainValue, atHeight },
+    formData,
+  );
+  if ("error" in gate) return { error: gate.error };
+
   const { error } = await supabase
     .from("jobs")
     .update({
@@ -58,6 +70,8 @@ export async function updateJob(
       photo_guidance_before: String(formData.get("photoGuidanceBefore") ?? "").trim() || null,
       photo_guidance_during: String(formData.get("photoGuidanceDuring") ?? "").trim() || null,
       photo_guidance_after: String(formData.get("photoGuidanceAfter") ?? "").trim() || null,
+      at_height: atHeight,
+      ...(gate.override ? { ssm_override: gate.override } : {}),
     })
     .eq("id", jobId)
     .eq("organization_id", organization.id);
