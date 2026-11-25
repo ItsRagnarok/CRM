@@ -24,8 +24,7 @@ export function BookingRotation({ saved, today, onApply }: {
   }
 
   return (
-    <section className="space-y-4 rounded-xl border border-border bg-white p-5">
-      <h2 className="text-lg font-bold">Program în rotație</h2>
+    <div className="space-y-4">
       <p className="text-sm text-muted">Alege prima zi din ciclu. Cele patru zile se repetă până la data de final, inclusiv. Aplicarea înlocuiește disponibilitatea din interval, începând de azi, și închide programul săptămânal. Rezervările confirmate se păstrează.</p>
       <div className="flex flex-wrap gap-3">
         <label className="flex flex-col gap-1 text-sm">Prima zi din ciclu
@@ -51,6 +50,6 @@ export function BookingRotation({ saved, today, onApply }: {
       <button type="button" className="rounded-lg bg-purple px-4 py-2 text-sm font-semibold text-white" onClick={() => {
         if (window.confirm("Înlocuiești disponibilitatea din perioada aleasă? Programările confirmate rămân în calendar.")) onApply(rotation);
       }}>Aplică rotația</button>
-    </section>
+    </div>
   );
 }
