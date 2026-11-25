@@ -53,7 +53,7 @@ export function StandardScheduleForm({
             {WEEKDAYS.map((d) => (
               <label
                 key={d.value}
-                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[8px] border border-[#d0d5dd] text-[12px] font-bold has-[:checked]:border-electric has-[:checked]:bg-electric-soft has-[:checked]:text-electric"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-[8px] border border-[#d0d5dd] text-[12px] font-bold has-[:checked]:border-[#3f6212] has-[:checked]:bg-electric has-[:checked]:text-[#0a0d0a]"
               >
                 <input
                   type="checkbox"

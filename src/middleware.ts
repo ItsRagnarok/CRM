@@ -38,10 +38,11 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Verify the identity before making authentication routing decisions.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Verify the identity before making authentication routing decisions. getClaims() reîmprospătează
+  // sesiunea dacă a expirat și verifică semnătura tokenului local (chei ES256), fără un drum la
+  // serverul de autentificare la fiecare cerere, cum făcea getUser().
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
   const { pathname } = request.nextUrl;
   const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));

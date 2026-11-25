@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { usePathname } from "next/navigation";
 import { HardHat,
   LayoutDashboard,
@@ -122,12 +122,12 @@ export function Sidebar({
     <>
     {open && <div className="fixed inset-0 z-40 bg-black/50 md:hidden" onClick={() => setOpen(false)} aria-hidden="true" />}
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex h-dvh w-[264px] max-w-[85vw] shrink-0 flex-col bg-navy px-3.5 py-2.5 transition-transform duration-200 md:static md:z-auto md:w-[236px] md:max-w-none md:translate-x-0 md:transition-none ${
+      className={`fixed inset-y-0 left-0 z-50 flex h-dvh overflow-hidden w-[264px] max-w-[85vw] shrink-0 flex-col bg-navy px-3.5 py-2.5 transition-transform duration-200 md:relative md:z-auto md:w-[236px] md:max-w-none md:translate-x-0 md:transition-none ${
         open ? "translate-x-0 shadow-2xl" : "-translate-x-full"
       }`}
       aria-label="Meniu principal"
     >
-      <div className="flex items-center">
+      <div className="relative z-10 flex items-center">
       <Link href="/dashboard" className="flex flex-1 items-center gap-2.5 px-2 pb-2 pt-0.5">
         <Image
           src="/logo-mark.png"
@@ -158,7 +158,7 @@ export function Sidebar({
       </button>
       </div>
 
-      <nav className="mt-0.5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
+      <nav className="relative z-10 mt-0.5 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto [scrollbar-width:thin] [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-track]:bg-transparent">
         {NAV_SECTIONS.map((section, i) => (
           <div key={section.label ?? `section-${i}`} className="flex flex-col gap-0.5">
             {section.label && (
@@ -191,7 +191,9 @@ export function Sidebar({
         ))}
       </nav>
 
-      <div className="mt-auto flex items-center gap-2.5 border-t border-navy-border px-2.5 pt-2">
+      <SidebarStreak />
+
+      <div className="relative z-10 mt-auto flex items-center gap-2.5 px-2.5 pt-2">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric text-[13px] font-bold text-white">
           {initials || "?"}
         </div>
@@ -213,5 +215,48 @@ export function Sidebar({
       </div>
     </aside>
     </>
+  );
+}
+
+/**
+ * Dunga verde din colțul de jos al meniului: o curbă care urcă spre dreapta, cu o linie
+ * lime luminoasă și o lumină difuză sub ea. Pur decorativă: stă în spatele meniului și al
+ * cardului cu numele și nu prinde clicuri.
+ */
+function SidebarStreak() {
+  const id = useId().replace(/:/g, "");
+  return (
+    <svg
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[200px] w-full"
+      viewBox="0 0 240 200"
+      preserveAspectRatio="none"
+    >
+      <defs>
+        <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#c6ff4a" stopOpacity="0.2" />
+          <stop offset="0.5" stopColor="#4d7c0f" stopOpacity="0.1" />
+          <stop offset="1" stopColor="#0f1210" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id={`${id}-line`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#c6ff4a" stopOpacity="0" />
+          <stop offset="0.35" stopColor="#c6ff4a" stopOpacity="0.55" />
+          <stop offset="0.7" stopColor="#e4ff9e" stopOpacity="0.8" />
+          <stop offset="1" stopColor="#c6ff4a" stopOpacity="0.35" />
+        </linearGradient>
+        <filter id={`${id}-glow`} x="-20%" y="-60%" width="140%" height="220%">
+          <feGaussianBlur stdDeviation="7" />
+        </filter>
+        <filter id={`${id}-soft`} x="-10%" y="-10%" width="120%" height="140%">
+          <feGaussianBlur stdDeviation="14" />
+        </filter>
+      </defs>
+      {/* lumina difuză de sub curbă */}
+      <path d="M0 150 C 80 146, 150 120, 240 84 L 240 200 L 0 200 Z" fill={`url(#${id}-fill)`} filter={`url(#${id}-soft)`} />
+      {/* strălucirea liniei */}
+      <path d="M-10 152 C 80 146, 150 120, 250 80" fill="none" stroke="#c6ff4a" strokeOpacity="0.35" strokeWidth="8" filter={`url(#${id}-glow)`} />
+      {/* linia propriu-zisă */}
+      <path d="M-10 152 C 80 146, 150 120, 250 80" fill="none" stroke={`url(#${id}-line)`} strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+    </svg>
   );
 }

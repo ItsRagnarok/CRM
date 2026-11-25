@@ -34,11 +34,25 @@ export type AdminContext = {
  * profile is scoped to one tenant organization_id, and a platform admin
  * manages every tenant, not one of them. See public.platform_admins.
  */
+/**
+ * Identitatea verificată din token: semnătura (ES256) se verifică local, cu cheile publice ale
+ * proiectului ținute în memorie, fără un drum la serverul de autentificare la fiecare pagină.
+ * Supabase recomandă getClaims() în locul getUser() când cheile de semnare sunt asimetrice.
+ */
+async function verifiedUser(supabase: Awaited<ReturnType<typeof createClient>>) {
+  const { data, error } = await supabase.auth.getClaims();
+  const c = data?.claims;
+  if (error || !c?.sub) return null;
+  return {
+    id: c.sub,
+    email: typeof c.email === "string" && c.email ? c.email : null,
+    user_metadata: (c.user_metadata ?? {}) as Record<string, unknown>,
+  };
+}
+
 export async function requireAdminContext(): Promise<AdminContext> {
   const supabase = await createClient({ ignorePreview: true });
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await verifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
@@ -79,10 +93,9 @@ export async function requireAdminContext(): Promise<AdminContext> {
  */
 async function requireSessionContextUncached(): Promise<SessionContext> {
   const supabase = await createClient();
-  // Never use an unverified cookie to choose a company or administrator context.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Never use an unverified cookie to choose a company or administrator context:
+  // getClaims() verifică semnătura tokenului înainte să-l folosim.
+  const user = await verifiedUser(supabase);
 
   if (!user) {
     redirect("/login");
