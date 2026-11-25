@@ -1,6 +1,19 @@
 "use server";
 
 import { requireSessionContext } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+
+const AI_OFF = "AI-ul e oprit pentru firmă (Setări → AI). Completează de mână.";
+
+/** Jurnalul AI al firmei: ce funcție, cât a durat. Textul trimis nu se păstrează. */
+async function logText(orgId: string, userId: string, feature: "descriere" | "dictare", ms: number, model: string) {
+  try {
+    const supabase = await createClient();
+    await supabase.from("ai_log").insert({ organization_id: orgId, profile_id: userId, feature, provider: "groq", model, ok: true, ms });
+  } catch {
+    /* jurnalul nu oprește funcția */
+  }
+}
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 
 export type TranscribeState = { error?: string; text?: string };
@@ -10,7 +23,9 @@ export type TranscribeState = { error?: string; text?: string };
 // pinned explicitly since technicians dictate in Romanian and Whisper's
 // language auto-detect is noticeably less accurate on short clips.
 export async function transcribeAudio(formData: FormData): Promise<TranscribeState> {
-  await requireSessionContext();
+  const { organization, userId } = await requireSessionContext();
+  if (organization.ai_enabled === false) return { error: AI_OFF };
+  const started = Date.now();
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -54,6 +69,7 @@ export async function transcribeAudio(formData: FormData): Promise<TranscribeSta
   const data = await res.json();
   const text = typeof data?.text === "string" ? data.text.trim() : "";
   if (!text) return { error: "Nu am înțeles nimic din înregistrare. Încearcă din nou, mai aproape de microfon." };
+  await logText(organization.id, userId, "dictare", Date.now() - started, "whisper-large-v3-turbo");
   return { text };
 }
 
@@ -81,7 +97,9 @@ export async function generateJobSuggestion(
   _prevState: AiJobSuggestionState | undefined,
   formData: FormData
 ): Promise<AiJobSuggestionState> {
-  await requireSessionContext();
+  const { organization, userId } = await requireSessionContext();
+  if (organization.ai_enabled === false) return { error: AI_OFF };
+  const started = Date.now();
 
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
@@ -235,5 +253,6 @@ Răspunde DOAR cu JSON valid (fără text suplimentar, fără markdown), exact �
     parsed.estimatedHoursTwoPeople = 2;
   }
 
+  await logText(organization.id, userId, "descriere", Date.now() - started, process.env.GROQ_MODEL || "groq");
   return { suggestion: parsed };
 }

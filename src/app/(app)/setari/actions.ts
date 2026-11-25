@@ -158,3 +158,12 @@ export async function updateGpsSettings(formData: FormData) {
 
   revalidatePath("/setari");
 }
+
+/** Comutatorul AI al firmei: oprit = nicio poză sau text nu pleacă la un furnizor AI. Doar administratorul. */
+export async function setAiEnabled(formData: FormData) {
+  const { organization, profile, readOnly } = await requireSessionContext();
+  if (readOnly || profile.role !== "admin") return;
+  const supabase = await createClient();
+  await supabase.from("organizations").update({ ai_enabled: formData.get("on") === "1" }).eq("id", organization.id);
+  revalidatePath("/setari");
+}

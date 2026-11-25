@@ -14,6 +14,7 @@ import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
 import { InvoicingForm } from "./invoicing-form";
 import { loadConnection } from "@/lib/invoicing";
+import { AiTab } from "./ai-tab";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 type JobType = Database["public"]["Enums"]["job_type"];
@@ -29,6 +30,7 @@ const NAV = [
   { id: "gps", label: "GPS și confidențialitate" },
   { id: "abonament", label: "Facturare și abonament" },
   { id: "integrari", label: "Integrări" },
+  { id: "ai", label: "AI" },
 ] as const;
 
 const ROLE_OPTIONS: UserRole[] = ["admin", "manager", "team_leader", "technician", "client"];
@@ -221,6 +223,8 @@ export default async function SetariPage({
             )}
 
             {tab === "integrari" && <InvoicingForm initial={invoicingConnection} canEdit={!readOnly && profile.role === "admin"} />}
+
+            {tab === "ai" && <AiTab organizationId={organization.id} enabled={organization.ai_enabled !== false} canEdit={!readOnly && profile.role === "admin"} />}
 
             {tab === "gps" && org && (
               <div className="rounded-[13px] border border-border bg-white p-[22px]">

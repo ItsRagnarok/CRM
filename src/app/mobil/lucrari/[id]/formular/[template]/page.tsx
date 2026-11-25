@@ -22,6 +22,7 @@ export default async function JobFormPage({ params }: { params: Promise<{ id: st
       template={template}
       initialData={(saved?.data ?? {}) as Record<string, unknown>}
       alreadyCompleted={Boolean(saved?.completed_at)}
+      aiEnabled={organization.ai_enabled !== false}
     />
   );
 }

@@ -23,6 +23,8 @@ export type FieldDef = {
   scan?: boolean;
   /** Câmpul apare (și e cerut) doar când alt câmp are valoarea dată. */
   showIf?: { key: string; equals: string | boolean };
+  /** Se poate completa din poza plăcuței (AI, cu verificare): grupul (un echipament) și ce valoare ia. */
+  plate?: { group: string; role: "model" | "serie" | "putere" };
 };
 
 export type RepeaterDef = {
@@ -67,8 +69,8 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
       {
         title: "Aparat de măsură",
         fields: [
-          { key: "aparat", label: "Aparat de măsură", type: "text", required: true, placeholder: "ex. Manometru digital" },
-          { key: "serie_aparat", label: "Serie aparat", type: "text", required: true },
+          { key: "aparat", label: "Aparat de măsură", type: "text", required: true, placeholder: "ex. Manometru digital", plate: { group: "aparatul de măsură", role: "model" } },
+          { key: "serie_aparat", label: "Serie aparat", type: "text", required: true, plate: { group: "aparatul de măsură", role: "serie" } },
           { key: "calibrare_pana", label: "Calibrare valabilă până la", type: "date", required: true, hint: "Un aparat necalibrat face procesul-verbal contestabil." },
         ],
       },
@@ -100,11 +102,11 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
       {
         title: "Invertor și panouri",
         fields: [
-          { key: "invertor_model", label: "Model invertor", type: "text", required: true },
-          { key: "invertor_serie", label: "Serie invertor", type: "text", required: true, scan: true },
+          { key: "invertor_model", label: "Model invertor", type: "text", required: true, plate: { group: "invertorului", role: "model" } },
+          { key: "invertor_serie", label: "Serie invertor", type: "text", required: true, scan: true, plate: { group: "invertorului", role: "serie" } },
           { key: "nr_panouri", label: "Număr panouri", type: "number", required: true },
-          { key: "putere_panou", label: "Putere panou", type: "number", unit: "W", required: true },
-          { key: "panou_model", label: "Model panou", type: "text" },
+          { key: "putere_panou", label: "Putere panou", type: "number", unit: "W", required: true, plate: { group: "panoului", role: "putere" } },
+          { key: "panou_model", label: "Model panou", type: "text", plate: { group: "panoului", role: "model" } },
           { key: "panou_voc", label: "Voc panou la STC (din fișa tehnică)", type: "number", unit: "V", hint: "Folosit doar ca să-ți arate Voc-ul așteptat pe string, la pasul următor." },
           { key: "panou_coef", label: "Coeficient de temperatură Voc", type: "number", unit: "%/°C", placeholder: "ex. -0,28" },
         ],
@@ -113,8 +115,8 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
         title: "Baterie și serii",
         note: "Scanează codul de pe etichetă cu camera sau scrie seria. Seriile panourilor: câte una pe rând.",
         fields: [
-          { key: "baterie_model", label: "Model baterie (dacă există)", type: "text" },
-          { key: "baterie_serie", label: "Serie baterie", type: "text", scan: true },
+          { key: "baterie_model", label: "Model baterie (dacă există)", type: "text", plate: { group: "bateriei", role: "model" } },
+          { key: "baterie_serie", label: "Serie baterie", type: "text", scan: true, plate: { group: "bateriei", role: "serie" } },
           { key: "baterie_kwh", label: "Capacitate baterie", type: "number", unit: "kWh" },
           { key: "serii_panouri", label: "Serii panouri", type: "textarea", scan: true, placeholder: "o serie pe rând" },
         ],
@@ -160,8 +162,8 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
         title: "Tablou",
         fields: [
           { key: "tablou", label: "Tablou / locație", type: "text", required: true, placeholder: "ex. Tablou general, parter" },
-          { key: "producator", label: "Producător și tip", type: "text" },
-          { key: "serie", label: "Serie", type: "text" },
+          { key: "producator", label: "Producător și tip", type: "text", plate: { group: "tabloului", role: "model" } },
+          { key: "serie", label: "Serie", type: "text", plate: { group: "tabloului", role: "serie" } },
         ],
       },
       {

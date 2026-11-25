@@ -188,6 +188,13 @@ export async function addExpense(formData: FormData) {
   const { data: ownJob } = await supabase.from("jobs").select("id").eq("id", jobId).eq("organization_id", organization.id).maybeSingle();
   if (!ownJob) return;
 
+  // Articolele citite de AI de pe bon (doar ca listă informativă pentru birou).
+  let aiItems: { name: string; qty: number | null; total: number | null }[] | null = null;
+  try {
+    const raw = JSON.parse(String(formData.get("items") ?? "null"));
+    if (Array.isArray(raw)) aiItems = raw.slice(0, 30).map((i) => ({ name: String(i?.name ?? "").slice(0, 120), qty: typeof i?.qty === "number" ? i.qty : null, total: typeof i?.total === "number" ? i.total : null })).filter((i) => i.name);
+  } catch { aiItems = null; }
+
   let receiptPath: string | null = null;
   const receipt = formData.get("receipt") as File | null;
   if (receipt && receipt.size > 0) {
@@ -209,6 +216,7 @@ export async function addExpense(formData: FormData) {
     receipt_path: receiptPath,
     paid_with: paidWith,
     ...(expenseDate ? { expense_date: expenseDate } : {}),
+    ...(aiItems ? { items: aiItems, notes: "Completat din bon cu AI, verificat de tehnician." } : {}),
   });
 
   await notifyBackOffice(supabase, {

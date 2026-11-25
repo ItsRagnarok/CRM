@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { notifyBackOffice } from "@/lib/notify";
+import { confirmAi } from "@/app/mobil/ai/actions";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -73,6 +74,14 @@ export async function submitUrgentPurchase(_prev: { error?: string } | undefined
     link: "/cheltuieli",
     exceptProfileId: userId,
   });
+
+  // Bon citit cu AI: notăm în jurnal ce a rămas după verificarea omului.
+  const logId = String(fd.get("aiLogId") ?? "");
+  if (logId) {
+    let suggested: Record<string, unknown> = {};
+    try { suggested = JSON.parse(String(fd.get("aiSuggested") ?? "{}")); } catch { /* fără propuneri */ }
+    await confirmAi(logId, suggested, { amount: String(fd.get("amount") ?? ""), vendor: vendor ?? "", items: items.map((i) => i.name).join("|") });
+  }
 
   revalidatePath("/cheltuieli");
   revalidatePath("/materiale/masini");

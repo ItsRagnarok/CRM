@@ -148,7 +148,7 @@ export default async function CheltuieliPage({
                       {Array.isArray(e.items) && e.items.length > 0 && (
                         <div className="mt-1 pl-[38px] text-[11.5px] text-muted">
                           <span className="mr-1 rounded-full bg-warning-bg px-1.5 py-0.5 font-bold text-warning">Achiziție urgentă</span>
-                          {(e.items as { name: string; qty: number; unit?: string | null }[]).map((i) => `${i.name} × ${i.qty}${i.unit ? ` ${i.unit}` : ""}`).join(", ")}
+                          {(e.items as { name: string; qty: number | null; unit?: string | null }[]).map((i) => `${i.name}${i.qty ? ` × ${i.qty}${i.unit ? ` ${i.unit}` : ""}` : ""}`).join(", ")}
                         </div>
                       )}
                     </td>

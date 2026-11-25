@@ -4,6 +4,8 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { Camera, CheckCircle2, FileText, Plus, Receipt, Tag, Trash2, Wallet } from "lucide-react";
 import { saveScan, type ScanType } from "./actions";
+import { AiReadButton } from "@/app/mobil/ai/ai-read-button";
+import { brandModel } from "@/lib/ai-extract";
 
 const TYPES: { id: ScanType; label: string; icon: typeof Receipt }[] = [
   { id: "bon", label: "Bon", icon: Receipt },
@@ -32,7 +34,7 @@ async function compress(file: File): Promise<File> {
 
 type Page = { file: File; url: string };
 
-export function ScanFlow({ jobs, defaultJobId, defaultType }: { jobs: { id: string; label: string }[]; defaultJobId: string; defaultType: ScanType }) {
+export function ScanFlow({ jobs, defaultJobId, defaultType, aiEnabled = false }: { jobs: { id: string; label: string }[]; defaultJobId: string; defaultType: ScanType; aiEnabled?: boolean }) {
   const [type, setType] = useState<ScanType>(defaultType);
   const [pages, setPages] = useState<Page[]>([]);
   const [jobId, setJobId] = useState(defaultJobId);
@@ -40,6 +42,7 @@ export function ScanFlow({ jobs, defaultJobId, defaultType }: { jobs: { id: stri
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [ai, setAi] = useState<{ logId: string | null; note: string } | null>(null);
   const input = useRef<HTMLInputElement>(null);
 
   async function onPick(files: FileList | null) {
@@ -60,6 +63,7 @@ export function ScanFlow({ jobs, defaultJobId, defaultType }: { jobs: { id: stri
     fd.set("type", type);
     fd.set("jobId", jobId);
     fd.set("note", note);
+    if (ai?.logId) { fd.set("aiLogId", ai.logId); fd.set("aiSuggested", JSON.stringify({ note: ai.note })); }
     for (const p of pages) fd.append("pages", p.file);
     const result = await saveScan(fd);
     setBusy(false);
@@ -136,11 +140,24 @@ export function ScanFlow({ jobs, defaultJobId, defaultType }: { jobs: { id: stri
               <label htmlFor="scanNote">Notă (opțional)</label>
               <input id="scanNote" className="m-in" value={note} maxLength={80} onChange={(e) => setNote(e.target.value)} placeholder="ex. Factură Electro Depot" />
             </div>
+            {aiEnabled && type === "eticheta" && (
+              <AiReadButton kind="eticheta" file={pages[0].file} label="Citește eticheta (AI)" onResult={(p, logId) => {
+                const text = [brandModel(p), p.putere, p.serie ? `SN ${p.serie}` : null].filter(Boolean).join(" · ").slice(0, 80);
+                setNote(text);
+                setAi({ logId, note: text });
+              }} />
+            )}
           </>
         )}
         {error && <div className="m-note bad" role="alert" style={{ fontWeight: 700 }}>{error}</div>}
         <div className="m-mu m-sm" style={{ textAlign: "center" }}>
-          Citirea automată a sumelor și datelor din poză (AI) se activează într-o etapă următoare. Până atunci documentul se salvează ca imagine.
+          {!aiEnabled
+            ? "AI-ul e oprit pentru firmă: documentul se salvează ca imagine."
+            : type === "eticheta"
+              ? "AI-ul citește marca, modelul și seria în notă. Verifică seria literă cu literă înainte de salvare."
+              : type === "bon"
+                ? "Pentru decont: după salvare, „Adaugă și ca cheltuială”. Acolo AI-ul completează suma, data și furnizorul din bon."
+                : "Documentul se salvează ca imagine."}
         </div>
       </div>
       {pages.length > 0 && (

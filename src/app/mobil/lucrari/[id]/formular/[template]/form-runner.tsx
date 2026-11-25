@@ -8,6 +8,8 @@ import { isFieldVisible, missingRequired, type FieldDef, type FormTemplate, type
 import { runOrQueue } from "@/lib/offline/send";
 import type { QueuedOp } from "@/lib/offline/queue";
 import { expectedStringVoc, parseSerials } from "@/lib/forms/pv";
+import { AiBadge, AiReadButton } from "@/app/mobil/ai/ai-read-button";
+import { brandModel, type Plate } from "@/lib/ai-extract";
 
 type Detector = { detect: (src: ImageBitmap) => Promise<{ rawValue: string }[]> };
 
@@ -174,7 +176,7 @@ function SignatureField({ def, value, onChange }: { def: FieldDef; value: unknow
   );
 }
 
-function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: string | boolean) => void }) {
+function Field({ def, value, onChange, aiFilled = false }: { def: FieldDef; value: unknown; onChange: (v: string | boolean) => void; aiFilled?: boolean }) {
   const id = `f-${def.key}`;
   if (def.type === "yesno") {
     return (
@@ -239,7 +241,7 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
   }
   return (
     <div className="m-fld">
-      <label htmlFor={id}>{def.label}{def.required ? "" : " (opțional)"}</label>
+      <label htmlFor={id}>{def.label}{def.required ? "" : " (opțional)"}{aiFilled && <AiBadge />}</label>
       <div style={{ position: "relative" }}>
         <input
           id={id}
@@ -261,7 +263,7 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
 }
 
 export function FormRunner({
-  jobId, jobLabel, template, initialData, alreadyCompleted, buildOp, doneHref, lockedNotice,
+  jobId, jobLabel, template, initialData, alreadyCompleted, buildOp, doneHref, lockedNotice, aiEnabled = false,
 }: {
   jobId: string;
   jobLabel: string;
@@ -272,6 +274,7 @@ export function FormRunner({
   buildOp?: (data: Data, complete: boolean, at: string) => QueuedOp;
   doneHref?: string;
   lockedNotice?: string | null;
+  aiEnabled?: boolean;
 }) {
   const router = useRouter();
   const [data, setData] = useState<Data>(initialData);
@@ -289,6 +292,27 @@ export function FormRunner({
   }, [step]);
   const last = step === template.steps.length - 1;
   const set = (key: string, v: unknown) => setData((d) => ({ ...d, [key]: v }));
+
+  // Plăcuța citită cu AI: completăm câmpurile echipamentului și ținem minte ce a propus AI-ul
+  // (în __ai, ca să meargă și fără semnal); la salvarea finală, serverul notează corecturile în jurnal.
+  type AiMap = Record<string, Record<string, unknown>>;
+  const aiFilled = (key: string) => Object.values((data.__ai ?? {}) as AiMap).some((m) => m[key] !== undefined && m[key] !== null && String(m[key]) === String(data[key] ?? ""));
+  function applyPlate(group: string, p: Plate, logId: string | null) {
+    const fields = template.steps.flatMap((st) => st.fields ?? []).filter((f) => f.plate?.group === group);
+    const proposed: Record<string, unknown> = {};
+    for (const f of fields) {
+      const role = f.plate!.role;
+      let v: string | null = null;
+      if (role === "model") v = brandModel(p);
+      else if (role === "serie") v = p.serie;
+      else if (role === "putere" && p.putere) {
+        const n = Number(p.putere.replace(",", ".").replace(/[^\d.]/g, ""));
+        if (Number.isFinite(n) && n > 0) v = String(f.unit === "W" && /kw/i.test(p.putere) ? Math.round(n * 1000) : n);
+      }
+      if (v) proposed[f.key] = v;
+    }
+    setData((d) => ({ ...d, ...proposed, ...(logId ? { __ai: { ...((d.__ai ?? {}) as AiMap), [logId]: proposed } } : {}) }));
+  }
 
   const rep = current.repeater;
   const rows: Row[] = rep ? (Array.isArray(data[rep.key]) ? (data[rep.key] as Row[]) : Array.from({ length: rep.min }, () => ({}))) : [];
@@ -374,15 +398,23 @@ export function FormRunner({
         <div className="m-cd m-col" style={{ gap: 14 }}>
           <div className="m-mu m-sm" style={{ marginTop: -4 }}>{jobLabel}</div>
           {current.note && <div className="m-note ac m-sm">{current.note}</div>}
-          {(current.fields ?? []).filter((f) => isFieldVisible(f, data)).map((f) =>
-            f.type === "ops" ? (
+          {(current.fields ?? []).filter((f) => isFieldVisible(f, data)).map((f, idx, visible) => {
+            // „Citește plăcuța”: o dată pe echipament, deasupra primului lui câmp.
+            const firstOfGroup = aiEnabled && f.plate && visible.findIndex((g) => g.plate?.group === f.plate!.group) === idx;
+            const input = f.type === "ops" ? (
               <OpsField key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
             ) : f.type === "signature" ? (
               <SignatureField key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
             ) : (
-              <Field key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
-            ),
-          )}
+              <Field key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} aiFilled={aiFilled(f.key)} />
+            );
+            return firstOfGroup ? (
+              <div key={f.key} className="m-col" style={{ gap: 14 }}>
+                <AiReadButton kind="placuta" label={`Citește plăcuța ${f.plate!.group} (AI)`} onResult={(p, logId) => applyPlate(f.plate!.group, p, logId)} />
+                {input}
+              </div>
+            ) : input;
+          })}
           {rep && (
             <>
               {rows.map((row, i) => (

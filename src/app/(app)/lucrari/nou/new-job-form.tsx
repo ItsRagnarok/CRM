@@ -29,6 +29,7 @@ export function NewJobForm({
   enabledDomains,
   durations = [],
   fromRequest,
+  aiEnabled = true,
 }: {
   clients: { id: string; name: string; address: string | null }[];
   teams: { id: string; name: string }[];
@@ -40,6 +41,7 @@ export function NewJobForm({
   enabledDomains: string[];
   durations?: DurationStat[];
   fromRequest?: { id: string; contactName: string; title: string; description: string; address: string | null };
+  aiEnabled?: boolean;
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
   const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
@@ -384,7 +386,7 @@ export function NewJobForm({
             )}
           </Field>
 
-          <div className="rounded-[12px] border border-electric bg-electric-soft/40 p-4">
+          <div hidden={!aiEnabled} className="rounded-[12px] border border-electric bg-electric-soft/40 p-4">
             <div className="mb-1 flex items-center gap-1.5 text-[13px] font-bold text-foreground">
               <Sparkles className="h-4 w-4 text-electric" /> Completează cu AI
             </div>

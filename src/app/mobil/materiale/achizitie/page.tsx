@@ -26,6 +26,7 @@ export default async function UrgentPurchasePage() {
         jobs={jobs.map((j) => ({ id: j.id, label: `#${j.display_number} · ${j.clients?.name ?? "Client"} · ${j.title}` }))}
         defaultJobId={current?.id ?? ""}
         materials={(materials ?? []).map((m) => ({ id: m.id, name: m.name, unit: m.unit }))}
+        aiEnabled={organization.ai_enabled !== false}
       />
     </div>
   );

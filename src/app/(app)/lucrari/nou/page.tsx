@@ -68,6 +68,7 @@ export default async function NewJobPage({
       enabledDomains={organization.enabled_domains}
       durations={durations}
       fromRequest={fromRequest}
+      aiEnabled={organization.ai_enabled !== false}
     />
   );
 }

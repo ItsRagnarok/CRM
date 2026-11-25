@@ -998,6 +998,68 @@ export type Database = {
           },
         ]
       }
+      ai_log: {
+        Row: {
+          id: string
+          organization_id: string
+          profile_id: string | null
+          feature: string
+          provider: string | null
+          model: string | null
+          ok: boolean
+          error: string | null
+          ms: number | null
+          suggested: Json | null
+          final: Json | null
+          fields: number | null
+          corrected: number | null
+          confirmed_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          profile_id?: string | null
+          feature: string
+          provider?: string | null
+          model?: string | null
+          ok: boolean
+          error?: string | null
+          ms?: number | null
+          suggested?: Json | null
+          final?: Json | null
+          fields?: number | null
+          corrected?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          profile_id?: string | null
+          feature?: string
+          provider?: string | null
+          model?: string | null
+          ok?: boolean
+          error?: string | null
+          ms?: number | null
+          suggested?: Json | null
+          final?: Json | null
+          fields?: number | null
+          corrected?: number | null
+          confirmed_at?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_log_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ssm_trainings: {
         Row: {
           id: string
@@ -2764,6 +2826,7 @@ export type Database = {
       organizations: {
         Row: {
           arrival_window_minutes: number
+          ai_enabled: boolean
           monday_config: Json
           request_token: string
           address: string | null
@@ -2795,6 +2858,7 @@ export type Database = {
         }
         Insert: {
           arrival_window_minutes?: number
+          ai_enabled?: boolean
           monday_config?: Json
           request_token?: string
           address?: string | null
@@ -2826,6 +2890,7 @@ export type Database = {
         }
         Update: {
           arrival_window_minutes?: number
+          ai_enabled?: boolean
           monday_config?: Json
           request_token?: string
           address?: string | null
@@ -4046,6 +4111,10 @@ export type Database = {
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
+      }
+      ai_log_confirm: {
+        Args: { p_id: string; p_final: Json; p_fields: number; p_corrected: number }
+        Returns: boolean
       }
       ssm_confirm_training: {
         Args: { p_id: string }

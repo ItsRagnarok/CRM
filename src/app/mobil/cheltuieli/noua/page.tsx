@@ -6,7 +6,7 @@ import { ExpenseForm } from "./expense-form";
 
 export default async function NewExpensePage({ searchParams }: { searchParams: Promise<{ job?: string }> }) {
   const { job: preselected } = await searchParams;
-  const { profile } = await requireSessionContext();
+  const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const { data: assignments } = await supabase
     .from("job_assignments")
@@ -22,7 +22,7 @@ export default async function NewExpensePage({ searchParams }: { searchParams: P
   return (
     <div className="flex h-full flex-col">
       <ScreenHeader title="Cheltuială nouă" subtitle="Se trimite la birou pentru aprobare" back="/mobil/cheltuieli" />
-      <ExpenseForm jobs={jobs} defaultJobId={preselected && jobs.some((j) => j.id === preselected) ? preselected : jobs[0]?.id ?? ""} today={todayInOrgTimeZone()} />
+      <ExpenseForm jobs={jobs} defaultJobId={preselected && jobs.some((j) => j.id === preselected) ? preselected : jobs[0]?.id ?? ""} today={todayInOrgTimeZone()} aiEnabled={organization.ai_enabled !== false} />
     </div>
   );
 }

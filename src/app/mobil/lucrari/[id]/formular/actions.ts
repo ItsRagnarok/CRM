@@ -5,6 +5,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FORM_TEMPLATES, missingRequired, type JobFormId } from "@/lib/forms/templates";
 import { acceptClientTime } from "@/lib/client-time";
+import { confirmAi } from "@/app/mobil/ai/actions";
 
 // Saves a draft (every step) or the finished form (complete = true). A finished
 // form must have every required field.
@@ -31,6 +32,14 @@ export async function saveJobForm(
   if (complete) {
     const missing = missingRequired(template, data);
     if (missing.length > 0) return { error: "Mai ai câmpuri obligatorii necompletate.", missing };
+    // Plăcuțe citite cu AI: în jurnal intră ce a rămas după verificarea omului; propunerile nu se păstrează în formular.
+    const ai = data.__ai && typeof data.__ai === "object" ? (data.__ai as Record<string, Record<string, unknown>>) : null;
+    if (ai) {
+      for (const [logId, suggested] of Object.entries(ai).slice(0, 20)) {
+        await confirmAi(logId, suggested, Object.fromEntries(Object.keys(suggested).map((k) => [k, data[k] ?? null])));
+      }
+      data = Object.fromEntries(Object.entries(data).filter(([k]) => k !== "__ai"));
+    }
   }
 
   const { error } = await supabase.from("job_forms").upsert(

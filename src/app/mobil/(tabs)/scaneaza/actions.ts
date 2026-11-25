@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { confirmAi } from "@/app/mobil/ai/actions";
 
 const SCAN_TYPES = ["bon", "factura", "eticheta", "document"] as const;
 export type ScanType = (typeof SCAN_TYPES)[number];
@@ -48,6 +49,13 @@ export async function saveScan(formData: FormData): Promise<{ error?: string; ok
       storage_path: path,
     });
     if (error) return { error: "Poza s-a încărcat, dar nu am putut-o salva în documente." };
+  }
+
+  const logId = String(formData.get("aiLogId") ?? "");
+  if (logId) {
+    let suggested: Record<string, unknown> = {};
+    try { suggested = JSON.parse(String(formData.get("aiSuggested") ?? "{}")); } catch { /* fără propuneri */ }
+    await confirmAi(logId, suggested, { note });
   }
 
   revalidatePath("/mobil/documente");

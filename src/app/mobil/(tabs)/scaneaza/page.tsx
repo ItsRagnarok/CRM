@@ -5,7 +5,7 @@ import { ScanFlow } from "./scan-flow";
 
 export default async function ScanPage({ searchParams }: { searchParams: Promise<{ job?: string; tip?: string }> }) {
   const sp = await searchParams;
-  const { profile } = await requireSessionContext();
+  const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
   const { data: assignments } = await supabase
     .from("job_assignments")
@@ -21,7 +21,7 @@ export default async function ScanPage({ searchParams }: { searchParams: Promise
   return (
     <div className="flex h-full flex-col">
       <ScreenHeader title="Scanează" subtitle="Bon, factură, etichetă sau document" />
-      <ScanFlow jobs={jobs} defaultJobId={sp.job && jobs.some((j) => j.id === sp.job) ? sp.job : ""} defaultType={["bon", "factura", "eticheta", "document"].includes(sp.tip ?? "") ? (sp.tip as "bon") : "bon"} />
+      <ScanFlow jobs={jobs} defaultJobId={sp.job && jobs.some((j) => j.id === sp.job) ? sp.job : ""} defaultType={["bon", "factura", "eticheta", "document"].includes(sp.tip ?? "") ? (sp.tip as "bon") : "bon"} aiEnabled={organization.ai_enabled !== false} />
     </div>
   );
 }
