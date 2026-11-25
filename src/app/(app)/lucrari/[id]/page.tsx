@@ -112,6 +112,11 @@ export default async function JobDetailPage({
     .from("job_forms")
     .select("id, template, data, completed_at, profiles!job_forms_completed_by_fkey(full_name)")
     .eq("job_id", id);
+  const { data: gasRecords } = await supabase
+    .from("gas_records")
+    .select("id, kind, number, year, drawn_up_on, completed_at, conform, gas_interrupted, os_registered_on, data")
+    .eq("job_id", id)
+    .order("drawn_up_on");
 
   const [
     { data: photos },
@@ -605,6 +610,25 @@ export default async function JobDetailPage({
         )}
 
         {tab === "raport" && <ReportCard jobId={id} full />}
+
+        {tab === "documente" && (gasRecords ?? []).length > 0 && (
+          <Card title="Fișe de evidență gaze">
+            <div className="flex flex-col divide-y divide-[#f2f4f7]">
+              {(gasRecords ?? []).map((r) => {
+                const d = (r.data ?? {}) as Record<string, unknown>;
+                return (
+                  <div key={r.id} className="flex flex-wrap items-center gap-3 py-2.5 text-[13px]">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold">{r.completed_at ? `Nr. ${r.number}/${r.year}` : "Ciornă"} · {r.kind} · {String(d.client ?? "")}</div>
+                      <div className="text-[11.5px] text-muted-2">{String(d.adresa ?? "")}{r.gas_interrupted ? " · gaz întrerupt" : ""}{r.completed_at ? (r.os_registered_on ? " · înregistrată la operator" : " · de înregistrat la operator") : ""}</div>
+                    </div>
+                    {r.completed_at && <a href={`/fise-gaze/${r.id}`} target="_blank" className="font-semibold text-electric">Fișa / PDF →</a>}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        )}
 
         {tab === "documente" && (jobForms ?? []).map((f) => {
           const template = FORM_TEMPLATES[f.template as keyof typeof FORM_TEMPLATES];

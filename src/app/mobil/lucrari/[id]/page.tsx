@@ -317,6 +317,15 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
               required={missing.length > 0}
               status={missing.length > 0 ? <span className="m-pl wr">{missing.length} lipsă</span> : photoRows.length > 0 ? <span className="m-pl ok"><Check className="m-i" />OK</span> : undefined}
             />
+            {job.domain === "electric" && (
+              <Section
+                href={`/mobil/lucrari/${id}/foto?cat=hidden`}
+                icon={Camera}
+                title="Lucrări ascunse"
+                detail={count("hidden") ? `${count("hidden")} poze · intră în procesul-verbal` : "Fă poze înainte să închizi traseele"}
+                status={count("hidden") ? <span className="m-pl ok"><Check className="m-i" />{count("hidden")}</span> : undefined}
+              />
+            )}
             <Section href="/mobil/materiale" icon={Package} title="Materiale folosite" detail={(usage.count ?? 0) > 0 ? `${usage.count} ${usage.count === 1 ? "articol" : "articole"} înregistrate` : "Notează ce ai consumat"} />
             <Section href={`/mobil/cheltuieli/noua?job=${id}`} icon={Wallet} title="Cheltuială" detail={(expenses.count ?? 0) > 0 ? `${expenses.count} trimise la birou` : "Bon, combustibil, parcare"} />
             <Section href={`/mobil/scaneaza?job=${id}`} icon={ScanLine} title="Scanează un document" detail="Factură, etichetă, aviz" />

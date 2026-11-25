@@ -67,3 +67,13 @@ test("registrul anual: ordine după dată, coloanele anexei 6, CSV pentru Excel"
   assert.ok(csv.includes('"Ion; Pop"'));
   assert.ok(csv.includes(";Nu\r\n"));
 });
+
+test("fotovoltaic: Voc așteptat pe string, corectat cu temperatura", async () => {
+  const { expectedStringVoc, parseSerials } = await import("../src/lib/forms/pv.ts");
+  const r = expectedStringVoc({ panou_voc: "49,6", panou_coef: "-0,28", temp_celule: "10", stringuri: [{ panouri: "10", voc: "510" }, { panouri: "", voc: "400" }] });
+  assert.equal(r.length, 1);
+  assert.equal(r[0].expected, 516.8); // 10 × 49,6 × (1 + 0,042)
+  assert.equal(r[0].deviationPct, -1.3);
+  assert.deepEqual(expectedStringVoc({ stringuri: [{ panouri: 10, voc: 500 }] }), []);
+  assert.deepEqual(parseSerials("A1\nA2, A2\n\nA3"), ["A1", "A2", "A3"]);
+});

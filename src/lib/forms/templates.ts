@@ -19,6 +19,8 @@ export type FieldDef = {
   hint?: string;
   /** Pentru „ops”: textul operațiunilor, în ordine. */
   items?: string[];
+  /** Buton „Scanează” (cod de bare / QR de pe etichetă) care completează câmpul. */
+  scan?: boolean;
   /** Câmpul apare (și e cerut) doar când alt câmp are valoarea dată. */
   showIf?: { key: string; equals: string | boolean };
 };
@@ -34,6 +36,8 @@ export type RepeaterDef = {
 
 export type StepDef = {
   title: string;
+  /** Text de ajutor afișat deasupra câmpurilor pasului. */
+  note?: string;
   fields?: FieldDef[];
   repeater?: RepeaterDef;
 };
@@ -91,19 +95,35 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
     id: "pv_punere_in_functiune",
     domain: "fotovoltaic",
     label: "Punere în funcțiune fotovoltaic",
-    description: "Invertor, stringuri, rezultat",
+    description: "Invertor, baterie, serii, stringuri, rezultat",
     steps: [
       {
         title: "Invertor și panouri",
         fields: [
           { key: "invertor_model", label: "Model invertor", type: "text", required: true },
-          { key: "invertor_serie", label: "Serie invertor", type: "text", required: true },
+          { key: "invertor_serie", label: "Serie invertor", type: "text", required: true, scan: true },
           { key: "nr_panouri", label: "Număr panouri", type: "number", required: true },
           { key: "putere_panou", label: "Putere panou", type: "number", unit: "W", required: true },
+          { key: "panou_model", label: "Model panou", type: "text" },
+          { key: "panou_voc", label: "Voc panou la STC (din fișa tehnică)", type: "number", unit: "V", hint: "Folosit doar ca să-ți arate Voc-ul așteptat pe string, la pasul următor." },
+          { key: "panou_coef", label: "Coeficient de temperatură Voc", type: "number", unit: "%/°C", placeholder: "ex. -0,28" },
+        ],
+      },
+      {
+        title: "Baterie și serii",
+        note: "Scanează codul de pe etichetă cu camera sau scrie seria. Seriile panourilor: câte una pe rând.",
+        fields: [
+          { key: "baterie_model", label: "Model baterie (dacă există)", type: "text" },
+          { key: "baterie_serie", label: "Serie baterie", type: "text", scan: true },
+          { key: "baterie_kwh", label: "Capacitate baterie", type: "number", unit: "kWh" },
+          { key: "serii_panouri", label: "Serii panouri", type: "textarea", scan: true, placeholder: "o serie pe rând" },
         ],
       },
       {
         title: "Măsurători pe stringuri",
+        fields: [
+          { key: "temp_celule", label: "Temperatura celulelor la măsurare", type: "number", unit: "°C", hint: "Aproximativ, cu termometrul IR pe spatele panoului." },
+        ],
         repeater: {
           key: "stringuri",
           itemLabel: "String",
@@ -111,14 +131,17 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
           min: 1,
           max: 12,
           fields: [
+            { key: "panouri", label: "Panouri în string", type: "number" },
             { key: "voc", label: "Voc", type: "number", unit: "V", required: true },
             { key: "isc", label: "Isc", type: "number", unit: "A", required: true },
             { key: "izolatie", label: "Rezistență izolație", type: "number", unit: "MΩ", required: true },
+            { key: "polaritate", label: "Polaritate", type: "choice", options: [{ value: "ok", label: "Corectă" }, { value: "inversata", label: "Inversată" }] },
           ],
         },
       },
       {
         title: "Rezultat",
+        note: "Poze pentru dosar (eticheta în paranteză): panourile și prinderile (În lucru), eticheta invertorului și a bateriei (În lucru), tabloul AC/DC și împământarea (Ascuns, înainte de închidere), instalația gata (După).",
         fields: [
           { key: "priza_pamant", label: "Rezistență priză de pământ", type: "number", unit: "Ω" },
           { key: "rezultat", label: "Rezultat punere în funcțiune", type: "choice", options: RESULT_CHOICE, required: true },
@@ -156,6 +179,19 @@ export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
             { key: "bucla", label: "Impedanță buclă defect", type: "number", unit: "Ω" },
             { key: "continuitate_pe", label: "Continuitate PE", type: "number", unit: "Ω" },
             { key: "rcd_ms", label: "Timp declanșare RCD", type: "number", unit: "ms" },
+            {
+              key: "cod",
+              label: "Observație",
+              type: "choice",
+              options: [
+                { value: "ok", label: "Fără" },
+                { value: "C1", label: "C1 pericol" },
+                { value: "C2", label: "C2 potențial" },
+                { value: "C3", label: "C3 recomandat" },
+              ],
+              hint: "C1: pericol acum, se intervine pe loc. C2: potențial periculos, remediere urgentă. C3: îmbunătățire recomandată. Coduri după modelul raportului EICR, ca observații ale firmei.",
+            },
+            { key: "constatare", label: "Ce ai constatat", type: "text", placeholder: "ex. lipsă PE la priza din baie" },
           ],
         },
       },

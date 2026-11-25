@@ -5,6 +5,13 @@
 // „ce măsoară tehnicianul nu apare la birou”.
 
 export type MeasurementSource = "aplicatie" | "birou";
+export type ObservationCode = "C1" | "C2" | "C3";
+const toCode = (v: unknown): ObservationCode | null => (v === "C1" || v === "C2" || v === "C3" ? v : null);
+
+/** Câte observații din fiecare cod are o lucrare (C1 primul: e pericol). */
+export function codeSummary(rows: { code: ObservationCode | null }[]) {
+  return { C1: rows.filter((r) => r.code === "C1").length, C2: rows.filter((r) => r.code === "C2").length, C3: rows.filter((r) => r.code === "C3").length };
+}
 
 export type UnifiedMeasurement = {
   id: string;
@@ -16,6 +23,8 @@ export type UnifiedMeasurement = {
   protection: string | null;
   rcdMs: number | null;
   result: "conform" | "neconform" | null;
+  /** Observația codificată pe circuit (model EICR): C1 pericol, C2 potențial periculos, C3 recomandare. */
+  code: ObservationCode | null;
   notes: string | null;
   source: MeasurementSource;
   /** Cine a completat formularul în aplicație (doar pentru sursa „aplicatie”). */
@@ -62,6 +71,7 @@ export function fromOffice(row: OfficeMeasurementRow): UnifiedMeasurement {
     protection: null,
     rcdMs: null,
     result: toResult(row.result),
+    code: null,
     notes: row.notes,
     source: "birou",
     by: null,
@@ -91,6 +101,7 @@ export function fromElectricForm(form: ElectricFormRow): UnifiedMeasurement[] {
       protection: null,
       rcdMs: null,
       result,
+      code: null,
       notes: boardNotes,
       source: "aplicatie",
       by,
@@ -109,7 +120,8 @@ export function fromElectricForm(form: ElectricFormRow): UnifiedMeasurement[] {
       protection: toText(c.protectie, 40),
       rcdMs: toNum(c.rcd_ms),
       result,
-      notes: null,
+      code: toCode(c.cod),
+      notes: toText(c.constatare, 300),
       source: "aplicatie",
       by,
     });

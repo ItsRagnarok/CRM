@@ -51,3 +51,16 @@ test("aplicație + birou într-o singură listă", () => {
   assert.equal(all[3].source, "birou");
   assert.equal(all[3].result, "neconform");
 });
+
+test("observațiile C1/C2/C3 din aplicație ajung la birou, cu constatarea", async () => {
+  const { fromElectricForm, codeSummary } = await import("../src/lib/forms/electric-measurements.ts");
+  const rows = fromElectricForm({
+    id: "f1",
+    completed_at: "2026-11-25T10:00:00Z",
+    data: { tablou: "TG", rezultat: "neconform", circuite: [{ denumire: "C1 baie", izolatie: "0,4", cod: "C1", constatare: "lipsă PE" }, { denumire: "C2 prize", izolatie: "300", cod: "ok" }, { denumire: "C3", cod: "C3" }] },
+  });
+  assert.equal(rows[1].code, "C1");
+  assert.equal(rows[1].notes, "lipsă PE");
+  assert.equal(rows[2].code, null);
+  assert.deepEqual(codeSummary(rows), { C1: 1, C2: 0, C3: 1 });
+});

@@ -35,7 +35,19 @@ export async function DosarPanel({
   ]);
 
   const checks: Check[] = [];
-  const required = Object.values(FORM_TEMPLATES).filter((t) => job.domain && t.domain === job.domain);
+  // Gazele au fișa de evidență proprie (gas_records), nu un formular din job_forms.
+  const required = Object.values(FORM_TEMPLATES).filter((t) => job.domain && job.domain !== "gaze" && t.domain === job.domain);
+  if (job.domain === "gaze") {
+    const { data: recs } = await supabase.from("gas_records").select("completed_at, os_registered_on").eq("job_id", job.id);
+    const done = (recs ?? []).filter((r) => r.completed_at);
+    const registered = done.filter((r) => r.os_registered_on).length;
+    checks.push({
+      key: "gas",
+      ok: done.length > 0 && registered === done.length,
+      title: "Fișe de evidență gaze",
+      detail: done.length === 0 ? ((recs ?? []).length ? "Începută pe telefon, neîncheiată" : "Încă nu a fost începută") : `${done.length} încheiate · ${registered} înregistrate la operator`,
+    });
+  }
   for (const t of required) {
     const f = (forms.data ?? []).find((x) => x.template === t.id);
     checks.push({ key: `f-${t.id}`, ok: Boolean(f?.completed_at), title: t.label, detail: f?.completed_at ? "Completat de tehnician" : f ? "Început, nefinalizat" : "Încă nu a fost început" });

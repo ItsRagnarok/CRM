@@ -3,10 +3,63 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Eraser, Plus, Trash2 } from "lucide-react";
+import { ChevronLeft, Eraser, Plus, ScanLine, Trash2 } from "lucide-react";
 import { isFieldVisible, missingRequired, type FieldDef, type FormTemplate, type OpsValue } from "@/lib/forms/templates";
 import { runOrQueue } from "@/lib/offline/send";
 import type { QueuedOp } from "@/lib/offline/queue";
+import { expectedStringVoc, parseSerials } from "@/lib/forms/pv";
+
+type Detector = { detect: (src: ImageBitmap) => Promise<{ rawValue: string }[]> };
+
+/**
+ * Citește codul de bare / QR de pe etichetă dintr-o poză (BarcodeDetector, prezent în Chrome pe
+ * Android). Unde nu există, tehnicianul scrie seria de mână.
+ */
+function ScanButton({ onResult }: { onResult: (values: string[]) => void }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  // Detectăm suportul după montare: pe server nu există window, iar un buton apărut doar pe
+  // client ar strica hidratarea paginii.
+  const [Ctor, setCtor] = useState<(new () => Detector) | null>(null);
+  useEffect(() => {
+    const C = (window as unknown as { BarcodeDetector?: new () => Detector }).BarcodeDetector;
+    if (C) setCtor(() => C);
+  }, []);
+  if (!Ctor) return null;
+  return (
+    <div className="m-col" style={{ gap: 4 }}>
+      <label className="m-pl" style={{ alignSelf: "flex-start", cursor: "pointer", display: "inline-flex", gap: 6, alignItems: "center" }}>
+        <input
+          type="file"
+          accept="image/*"
+          capture="environment"
+          className="hidden"
+          onChange={async (e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            setBusy(true);
+            setMsg(null);
+            try {
+              const bmp = await createImageBitmap(file);
+              const codes = await new Ctor().detect(bmp);
+              bmp.close?.();
+              const values = [...new Set(codes.map((c) => c.rawValue.trim()).filter(Boolean))];
+              if (values.length) { onResult(values); setMsg(values.length === 1 ? `Citit: ${values[0]}` : `${values.length} coduri citite`); }
+              else setMsg("Nu am găsit niciun cod în poză. Apropie camera de etichetă sau scrie seria.");
+            } catch {
+              setMsg("Nu am putut citi poza. Scrie seria de mână.");
+            } finally {
+              setBusy(false);
+            }
+          }}
+        />
+        <ScanLine style={{ width: 15, height: 15 }} /> {busy ? "Citesc…" : "Scanează eticheta"}
+      </label>
+      {msg && <div className="m-mu" style={{ fontSize: 12.5 }}>{msg}</div>}
+    </div>
+  );
+}
 
 type Row = Record<string, string>;
 type Data = Record<string, unknown>;
@@ -153,8 +206,8 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
         <div style={{ display: "flex", gap: 8, flexWrap: def.options!.length > 3 ? "wrap" : undefined }}>
           {def.options!.map((o) => {
             const on = value === o.value;
-            const good = o.value === "conform" || o.value === "da" || o.value === "admis";
-            const bad = o.value === "neconform" || o.value === "nu" || o.value === "respins";
+            const good = ["conform", "da", "admis", "ok"].includes(o.value);
+            const bad = ["neconform", "nu", "respins", "C1", "C2"].includes(o.value);
             return (
               <button
                 key={o.value}
@@ -175,10 +228,12 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
     );
   }
   if (def.type === "textarea") {
+    const serials = def.scan ? parseSerials(value) : [];
     return (
       <div className="m-fld">
-        <label htmlFor={id}>{def.label}</label>
-        <textarea id={id} className="m-in" value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />
+        <label htmlFor={id}>{def.label}{def.scan && serials.length ? ` · ${serials.length}` : ""}</label>
+        <textarea id={id} className="m-in" placeholder={def.placeholder} value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} />
+        {def.scan && <ScanButton onResult={(vals) => onChange(parseSerials([String(value ?? ""), ...vals].join("\n")).join("\n"))} />}
       </div>
     );
   }
@@ -199,6 +254,7 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
         />
         {def.unit && <span style={{ position: "absolute", right: 14, top: 0, bottom: 0, display: "flex", alignItems: "center", color: "var(--m-mu)", fontWeight: 700, fontSize: 14 }}>{def.unit}</span>}
       </div>
+      {def.scan && <ScanButton onResult={(vals) => onChange(vals[0])} />}
       {def.hint && <div className="m-mu" style={{ fontSize: 12.5 }}>{def.hint}</div>}
     </div>
   );
@@ -317,6 +373,7 @@ export function FormRunner({
         {!lockedNotice && alreadyCompleted && step === 0 && <div className="m-note ac m-sm">Acest formular a fost deja completat. Dacă îl salvezi din nou, valorile se actualizează.</div>}
         <div className="m-cd m-col" style={{ gap: 14 }}>
           <div className="m-mu m-sm" style={{ marginTop: -4 }}>{jobLabel}</div>
+          {current.note && <div className="m-note ac m-sm">{current.note}</div>}
           {(current.fields ?? []).filter((f) => isFieldVisible(f, data)).map((f) =>
             f.type === "ops" ? (
               <OpsField key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
@@ -351,6 +408,22 @@ export function FormRunner({
             </>
           )}
         </div>
+
+        {template.id === "pv_punere_in_functiune" && rep?.key === "stringuri" && (() => {
+          const checks = expectedStringVoc({ ...data, stringuri: rows });
+          if (!checks.length) return null;
+          return (
+            <div className="m-note m-sm">
+              <div className="m-fl">
+                <b>Voc așteptat (din fișa panoului, la temperatura dată)</b>
+                {checks.map((c) => (
+                  <div key={c.index}>String {c.index}: așteptat ~{c.expected.toLocaleString("ro-RO")} V, măsurat {c.measured.toLocaleString("ro-RO")} V ({c.deviationPct > 0 ? "+" : ""}{c.deviationPct.toLocaleString("ro-RO")}%)</div>
+                ))}
+                <div className="m-mu" style={{ marginTop: 4 }}>Doar informativ. O abatere mare poate însemna un panou lipsă din string, un conector sau o polaritate greșită; rezultatul îl stabilești tu.</div>
+              </div>
+            </div>
+          );
+        })()}
 
         {drop !== null && Number.isFinite(drop) && (
           <div className={`m-note ${drop > 0 ? "warn" : ""}`} style={drop <= 0 ? { background: "var(--m-ok-bg)", borderColor: "#86d39a", color: "var(--m-ok)" } : undefined}>
