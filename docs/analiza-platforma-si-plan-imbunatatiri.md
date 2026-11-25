@@ -12,7 +12,7 @@ Data: 2026-11-24. Bazată pe: analiza codului (rute, tabele, fluxuri, build) și
 2. **Două sisteme paralele pentru formulare tehnice [C, cod].** Aplicația salvează formularele în `job_forms` (șabloane din `src/lib/forms/templates.ts`), iar modulul Electric de la birou citește `electric_measurements`. Ce măsoară tehnicianul nu apare în pagina Electric. Trebuie unificate înainte de a adăuga formulare noi.
 3. **Fără mod offline [C, cod].** Aplicația e un WebView al site-ului live, fără service worker. Fără semnal apare eroarea Chrome. Offline e cel mai repetat reproș în recenziile aplicațiilor concurente [S]. La subsoluri și blocuri e o problemă reală [E].
 4. **Gazele au acum o bază legală citită, nu doar estimată [C, Ord. ANRE 179/2015 consolidat].**
-   - Fișa de evidență are 14 operațiuni la verificare și 16 la revizie, cu 3 semnături.
+   - Fișa de evidență are 15 operațiuni la verificare și 17 la revizie (forma consolidată după Ord. 96/2023; 14/16 în forma din 2020), cu 3 semnături.
    - Firma o înregistrează la operator în 5 zile lucrătoare, iar clientul primește exemplarul în încă 2 zile lucrătoare.
    - Firma ține un registru anual electronic.
    - E cel mai bine documentat și mai diferențiator lucru pe care îl putem construi.
