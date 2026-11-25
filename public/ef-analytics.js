@@ -14,7 +14,9 @@
   window.efTrackLead = function () { if (!off) send({ type: "lead", path: path }); };
   if (off) return;
   var q = new URLSearchParams(location.search);
-  send({ path: path, referrer: document.referrer || "", utm: q.get("utm_source") || "" });
+  var scr = "";
+  try { scr = Math.round(screen.width) + "x" + Math.round(screen.height); } catch (e) { /* fără ecran */ }
+  send({ path: path, referrer: document.referrer || "", utm: q.get("utm_source") || "", screen: scr, lang: navigator.language || "" });
 
   // Timpul se numără doar cât pagina e vizibilă; se trimite când vizitatorul pleacă sau schimbă tabul.
   var visibleMs = 0, since = document.visibilityState === "visible" ? Date.now() : 0, sent = 0;

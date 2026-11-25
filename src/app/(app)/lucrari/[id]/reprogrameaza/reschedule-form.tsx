@@ -39,7 +39,7 @@ export function RescheduleForm({
           <CheckCircle2 className="h-5 w-5 text-success" aria-hidden /> Lucrarea a fost mutată. Echipa a primit notificare.
         </div>
         <div className="text-[13px] font-semibold text-[#344054]">Mesaj pentru {state.clientName ?? "client"}, gata de trimis:</div>
-        <textarea readOnly value={state.message} rows={9} className={`${input} bg-[#f9fafb] leading-relaxed`} aria-label="Mesajul pentru client" onFocus={(e) => e.currentTarget.select()} />
+        <textarea readOnly value={state.message} rows={11} className={`${input} bg-[#f9fafb] leading-relaxed`} aria-label="Mesajul pentru client" onFocus={(e) => e.currentTarget.select()} />
         <div className="flex flex-wrap gap-2">
           <button
             type="button"

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { ipHash } from "@/lib/ip-key";
+import { parseUserAgent, cleanScreen, cleanLang } from "@/lib/user-agent";
 
 // Public page-view beacon. No cookies and no stored IP: the visitor id is a daily-rotating hash, so the same person
 // cannot be followed across days. Bots and "Do Not Track" visitors are not counted.
@@ -22,7 +23,7 @@ export async function POST(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!ua || BOT.test(ua)) return quiet();
 
-  let body: { path?: unknown; referrer?: unknown; utm?: unknown; type?: unknown; seconds?: unknown };
+  let body: { path?: unknown; referrer?: unknown; utm?: unknown; type?: unknown; seconds?: unknown; screen?: unknown; lang?: unknown };
   try { body = JSON.parse(await request.text()); } catch { return new Response("Invalid", { status: 400 }); }
   const path = typeof body.path === "string" ? body.path : "";
   if (!/^\/[A-Za-z0-9/_.-]{0,198}$/.test(path) || path.startsWith("/admin") || path.startsWith("/api")) return quiet();
@@ -50,9 +51,12 @@ export async function POST(request: NextRequest) {
   // Județul (codul ISO, ex. CJ) și orașul vin de la Vercel, din IP; IP-ul nu se păstrează.
   let city = "";
   try { city = decodeURIComponent(request.headers.get("x-vercel-ip-city") ?? ""); } catch { /* oraș cu codare greșită */ }
+  // Sistemul, browserul și tipul de telefon (pe Android, Chrome trimite modelul în Sec-CH-UA-Model).
+  const info = parseUserAgent(ua, request.headers.get("sec-ch-ua-model"));
   await db.rpc("ef_record_site_view", {
     p_path: path, p_referrer_host: referrerHost, p_utm_source: utm, p_country: request.headers.get("x-vercel-ip-country") ?? "", p_device: device, p_visitor: visitor,
     p_region: request.headers.get("x-vercel-ip-country-region") ?? "", p_city: city, p_kind: body.type === "lead" ? "lead" : "view",
+    p_os: info.os ?? "", p_browser: info.browser ?? "", p_model: info.model ?? "", p_screen: cleanScreen(body.screen) ?? "", p_lang: cleanLang(body.lang) ?? "",
   });
   return quiet();
 }

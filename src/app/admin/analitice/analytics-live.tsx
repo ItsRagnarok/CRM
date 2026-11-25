@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { pageName } from "@/lib/site-pages";
 
 export type SiteAnalytics = {
   online: number; last30: { t: string; views: number }[];
@@ -16,8 +17,12 @@ export type SiteAnalytics = {
   regions?: { country: string | null; region: string; visitors: number }[];
   cities?: { country: string | null; region: string | null; city: string; visitors: number }[];
   journeys?: Journey[];
+  systems?: { name: string; visitors: number }[];
+  models?: { name: string; visitors: number }[];
+  browsers?: { name: string; visitors: number }[];
 };
-type Journey = { first_at: string; last_at: string; entry: string; channel: string; country: string | null; region: string | null; city: string | null; device: string; pages: number; seconds: number; trail: string[]; lead: boolean };
+type Step = { p: string; s: number | null; t: string };
+type Journey = { first_at: string; last_at: string; entry: string; channel: string; country: string | null; region: string | null; city: string | null; device: string; os?: string | null; browser?: string | null; model?: string | null; screen?: string | null; pages: number; seconds: number; trail: string[]; steps?: Step[]; lead: boolean };
 
 // Județele României după codul ISO 3166-2 (Vercel trimite partea de după „RO-”).
 const JUDETE: Record<string, string> = {
@@ -27,8 +32,18 @@ const JUDETE: Record<string, string> = {
   OT: "Olt", PH: "Prahova", SM: "Satu Mare", SJ: "Sălaj", SB: "Sibiu", SV: "Suceava", TR: "Teleorman", TM: "Timiș", TL: "Tulcea", VS: "Vaslui", VL: "Vâlcea", VN: "Vrancea",
 };
 const regionName = (c: string | null | undefined, r: string | null | undefined) => (!r ? "" : c === "RO" ? (JUDETE[r] ?? r) : `${r}, ${c ?? "?"}`);
+// Vercel trimite orașele în engleză sau fără diacritice; le afișăm cum le scriem noi.
+const ORASE: Record<string, string> = {
+  bucharest: "București", bucuresti: "București", timisoara: "Timișoara", "targu mures": "Târgu Mureș", "targu-mures": "Târgu Mureș", constanta: "Constanța",
+  iasi: "Iași", brasov: "Brașov", galati: "Galați", ploiesti: "Ploiești", pitesti: "Pitești", braila: "Brăila", bacau: "Bacău", "ramnicu valcea": "Râmnicu Vâlcea",
+  "piatra neamt": "Piatra Neamț", buzau: "Buzău", botosani: "Botoșani", focsani: "Focșani", "targu jiu": "Târgu Jiu", calarasi: "Călărași", slatina: "Slatina",
+  resita: "Reșița", "drobeta-turnu severin": "Drobeta-Turnu Severin", "satu mare": "Satu Mare", "baia mare": "Baia Mare", "sfantu gheorghe": "Sfântu Gheorghe",
+  "miercurea ciuc": "Miercurea Ciuc", "alba iulia": "Alba Iulia", bistrita: "Bistrița", targoviste: "Târgoviște", "medias": "Mediaș", "sighisoara": "Sighișoara",
+  "voluntari": "Voluntari", otopeni: "Otopeni", "popesti-leordeni": "Popești-Leordeni", "chiajna": "Chiajna", "floresti": "Florești",
+};
+const cityName = (c: string | null | undefined) => (c ? ORASE[c.trim().toLowerCase()] ?? c : "");
 const place = (v: { country?: string | null; region?: string | null; city?: string | null }) =>
-  [v.city, v.country === "RO" ? (v.region ? (v.region === "B" ? "" : `jud. ${JUDETE[v.region] ?? v.region}`) : "") : regionName(v.country, v.region), v.country !== "RO" ? country(v.country ?? null) : ""].filter(Boolean).join(", ") || country(v.country ?? null);
+  [cityName(v.city), v.country === "RO" ? (v.region ? (v.region === "B" ? "" : `jud. ${JUDETE[v.region] ?? v.region}`) : "") : regionName(v.country, v.region), v.country !== "RO" ? country(v.country ?? null) : ""].filter(Boolean).join(", ") || country(v.country ?? null);
 const dur = (s: number | null | undefined) => (!s ? "—" : s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`);
 type Period = "24h" | "today" | "yesterday" | "7d" | "30d" | "custom";
 const PERIODS: { id: Period; label: string }[] = [
@@ -38,6 +53,43 @@ const PERIODS: { id: Period; label: string }[] = [
 const dayIso = (d: Date) => new Intl.DateTimeFormat("sv-SE", { timeZone: "Europe/Bucharest" }).format(d);
 const DEVICE: Record<string, string> = { desktop: "Calculator", mobile: "Telefon", tablet: "Tabletă" };
 const nf = new Intl.NumberFormat("ro-RO");
+const hhmm = (iso: string) => new Intl.DateTimeFormat("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" }).format(new Date(iso));
+/** „Campanie: dmo-energy” înseamnă că a intrat pe un link marcat de noi (ex. din mesajul trimis unui lead). */
+const channelName = (c: string) => (c.startsWith("Campanie: ") ? `Link marcat · ${c.slice(10)}` : c === "Direct" ? "Direct (a scris adresa sau link fără sursă)" : c);
+const deviceLine = (j: { device: string; model?: string | null; os?: string | null; browser?: string | null; screen?: string | null }) =>
+  [j.model && j.model !== "Calculator" ? j.model : DEVICE[j.device] ?? j.device, j.os, j.browser, j.screen ? `ecran ${j.screen.replace("x", "×")}` : null].filter(Boolean).join(" · ");
+
+function JourneyCard({ j }: { j: Journey }) {
+  const steps: Step[] = j.steps ?? j.trail.map((p) => ({ p, s: null, t: j.first_at }));
+  return (
+    <li className={`rounded-xl border p-3.5 ${j.lead ? "border-success/40 bg-success-bg" : "border-[#eef0f4]"}`}>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[14px] font-bold">{place(j)}</div>
+          <div className="text-[12px] text-muted">{deviceLine(j)}</div>
+        </div>
+        <div className="text-right text-[12px] tabular-nums text-muted">
+          {hhmm(j.first_at)}{j.last_at && hhmm(j.last_at) !== hhmm(j.first_at) ? `–${hhmm(j.last_at)}` : ""} · {dur(j.seconds)} · {j.pages} {j.pages === 1 ? "pagină" : "pagini"}
+        </div>
+      </div>
+      <div className="mt-1.5 flex flex-wrap items-center gap-1.5 text-[12px]">
+        <span className="rounded-full bg-purple-soft px-2 py-0.5 font-semibold">{channelName(j.channel)}</span>
+        {j.lead && <span className="rounded-full bg-success px-2 py-0.5 font-bold text-white">A trimis cerere de programare</span>}
+      </div>
+      <ol className="mt-2.5 border-l-2 border-[#e4e7ec] pl-3">
+        {steps.map((st, k) => (
+          <li key={k} className="relative flex items-baseline gap-2 py-0.5 text-[13px]">
+            <span className="absolute -left-[17px] top-[9px] h-2 w-2 rounded-full bg-purple" aria-hidden />
+            <span className="w-11 shrink-0 tabular-nums text-[11.5px] text-muted">{hhmm(st.t)}</span>
+            <span className="min-w-0 flex-1">{pageName(st.p)}</span>
+            <span className="shrink-0 tabular-nums text-[11.5px] text-muted">{st.s ? dur(st.s) : ""}</span>
+          </li>
+        ))}
+        {j.pages > steps.length && <li className="py-0.5 text-[12px] text-muted">+{j.pages - steps.length} pagini</li>}
+      </ol>
+    </li>
+  );
+}
 
 function delta(now: number, before: number) {
   if (before === 0) return now > 0 ? { text: "nou", up: true } : null;
@@ -211,17 +263,17 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">De unde vin</h2>
-              <p className="mb-3 text-[12px] text-muted">Sursa primei pagini văzute de fiecare vizitator. „Direct” = a scris adresa, a folosit un semn de carte sau linkul nu spune de unde vine.</p>
-              <Bars rows={(data.channels ?? []).map((c) => ({ label: `${c.name}${c.leads ? ` · ${c.leads} ${c.leads === 1 ? "cerere" : "cereri"}` : ""}`, value: c.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+              <p className="mb-3 text-[12px] text-muted">Sursa primei pagini văzute de fiecare vizitator. „Link marcat” = a intrat pe un link etichetat de noi (ex. ?utm_source=dmo-energy din mesajul trimis lui DMO), deci știi exact de unde vine. „Direct” = a scris adresa, a folosit un semn de carte sau linkul nu spune de unde vine.</p>
+              <Bars rows={(data.channels ?? []).map((c) => ({ label: `${channelName(c.name)}${c.leads ? ` · ${c.leads} ${c.leads === 1 ? "cerere" : "cereri"}` : ""}`, value: c.visitors }))} empty="Nicio vizită în această perioadă." /></div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">Județe și orașe</h2>
               <p className="mb-3 text-[12px] text-muted">Aproximativ, după rețeaua de internet a vizitatorului (pe date mobile poate apărea orașul operatorului).</p>
               <Bars rows={(data.regions ?? []).map((r) => ({ label: regionName(r.country, r.region), value: r.visitors }))} empty="Încă nu avem județe: apar pentru vizitele de acum înainte." />
               {(data.cities ?? []).length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Orașe</h3><Bars rows={(data.cities ?? []).map((c) => ({ label: place(c), value: c.visitors }))} empty="" /></>}</div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Pagini</h2>
-              <Bars rows={data.pages.map((p) => ({ label: `${p.path}${p.avg_seconds ? ` · ${dur(p.avg_seconds)} în medie` : ""}`, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+              <Bars rows={data.pages.map((p) => ({ label: `${pageName(p.path)}${p.avg_seconds ? ` · ${dur(p.avg_seconds)} în medie` : ""}`, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">Pagina pe care au intrat</h2>
               <p className="mb-3 text-[12px] text-muted">Prima pagină văzută: arată ce aduce oameni noi (de obicei articolele din blog).</p>
-              <Bars rows={(data.entries ?? []).map((p) => ({ label: p.path, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+              <Bars rows={(data.entries ?? []).map((p) => ({ label: pageName(p.path), value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Site-uri care trimit vizitatori</h2>
               <Bars rows={data.referrers.map((r) => ({ label: r.name, value: r.visitors }))} empty="Nicio vizită în această perioadă." />
               {data.sources.length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Campanii (utm_source)</h3><Bars rows={data.sources.map((r) => ({ label: r.name, value: r.visitors }))} empty="" /></>}</div>
@@ -229,28 +281,18 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
               <Bars rows={data.countries.map((c) => ({ label: country(c.code), value: c.visitors }))} empty="Nicio vizită în această perioadă." /></div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Dispozitive</h2>
               <Bars rows={data.devices.map((d) => ({ label: `${DEVICE[d.name] ?? d.name}${total ? ` · ${Math.round((d.visitors / total) * 100)}%` : ""}`, value: d.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">Telefoane și sisteme</h2>
+              <p className="mb-3 text-[12px] text-muted">Din datele trimise de browser. iPhone-urile nu își spun modelul exact; Chrome pe Android îl spune (ex. Samsung SM-S918B). Apar pentru vizitele de acum înainte.</p>
+              <Bars rows={(data.models ?? []).map((m) => ({ label: m.name, value: m.visitors }))} empty="Încă nu avem date: apar pentru vizitele noi." />
+              {(data.systems ?? []).length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Sistem</h3><Bars rows={(data.systems ?? []).map((m) => ({ label: m.name, value: m.visitors }))} empty="" /></>}
+              {(data.browsers ?? []).length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Browser</h3><Bars rows={(data.browsers ?? []).map((m) => ({ label: m.name, value: m.visitors }))} empty="" /></>}</div>
           </div>
 
           <div className="rounded-2xl border border-border bg-white p-5">
             <h2 className="mb-1 text-[15px] font-bold">Drumul vizitatorilor</h2>
-            <p className="mb-3 text-[12px] text-muted">Fiecare rând e un vizitator (în aceeași zi): de unde a venit, ce a citit, în ordine, și cât a stat. Cine a trimis o cerere de programare apare primul. Nu păstrăm nimic care să identifice persoana.</p>
+            <p className="mb-3 text-[12px] text-muted">Fiecare fișă e un vizitator (în aceeași zi): de unde a venit, de pe ce dispozitiv, ce pagini a deschis în ordine, la ce oră și cât a stat pe fiecare. Cine a trimis o cerere de programare apare primul, pe verde. Nu păstrăm nimic care să identifice persoana.</p>
             {(data.journeys ?? []).length === 0 ? <p className="py-3 text-[13px] text-muted">Nicio vizită în această perioadă.</p> : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[760px] text-left text-[13px]">
-                  <thead><tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted"><th className="py-2 pr-3">Când</th><th className="py-2 pr-3">De unde</th><th className="py-2 pr-3">Sursa</th><th className="py-2 pr-3">Ce a citit</th><th className="py-2 pr-3 text-right">Timp</th></tr></thead>
-                  <tbody>
-                    {(data.journeys ?? []).map((j, i) => (
-                      <tr key={`${j.first_at}-${i}`} className={`border-b border-[#eef0f4] align-top last:border-0 ${j.lead ? "bg-success-bg" : ""}`}>
-                        <td className="whitespace-nowrap py-2.5 pr-3 tabular-nums text-muted">{new Intl.DateTimeFormat("ro-RO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" }).format(new Date(j.first_at))}</td>
-                        <td className="py-2.5 pr-3">{place(j)}<div className="text-[11.5px] text-muted">{DEVICE[j.device] ?? j.device}</div></td>
-                        <td className="py-2.5 pr-3">{j.channel}{j.lead && <div><span className="mt-1 inline-block rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-white">A cerut programare</span></div>}</td>
-                        <td className="py-2.5 pr-3"><div className="flex flex-wrap items-center gap-1">{j.trail.map((p, k) => <span key={k} className="flex items-center gap-1">{k > 0 && <span className="text-muted" aria-hidden>→</span>}<span className="rounded bg-[#f2f4f7] px-1.5 py-0.5 text-[12px]">{p}</span></span>)}{j.pages > j.trail.length && <span className="text-[12px] text-muted">+{j.pages - j.trail.length}</span>}</div></td>
-                        <td className="whitespace-nowrap py-2.5 pr-3 text-right tabular-nums">{dur(j.seconds)}<div className="text-[11.5px] text-muted">{j.pages} {j.pages === 1 ? "pagină" : "pagini"}</div></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <ul className="grid grid-cols-1 gap-3 lg:grid-cols-2">{(data.journeys ?? []).map((j, i) => <JourneyCard key={`${j.first_at}-${i}`} j={j} />)}</ul>
             )}
           </div>
 
@@ -261,7 +303,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
               {data.recent.length === 0 && <li className="py-3 text-[13px] text-muted">Nicio vizită încă. Deschide electrofield.ro într-o fereastră nouă și apare aici în câteva secunde.</li>}
               {data.recent.map((r, i) => (
                 <li key={`${r.t}-${i}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[13px]">
-                  <span className="min-w-0 truncate">{r.kind === "lead" && <span className="mr-1.5 rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-white">Cerere de programare</span>}<b>{r.path}</b> <span className="text-muted">· {place(r)} · {DEVICE[r.device] ?? r.device}{r.referrer_host ? ` · de la ${r.referrer_host}` : ""}</span></span>
+                  <span className="min-w-0 truncate">{r.kind === "lead" && <span className="mr-1.5 rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-white">Cerere de programare</span>}<b>{pageName(r.path)}</b> <span className="text-muted">· {place(r)} · {(r as { model?: string | null }).model && (r as { model?: string | null }).model !== "Calculator" ? (r as { model?: string | null }).model : DEVICE[r.device] ?? r.device}{r.referrer_host ? ` · de la ${r.referrer_host}` : ""}</span></span>
                   <span className="shrink-0 text-[12px] text-muted tabular-nums">{ago(r.t, now)}</span>
                 </li>
               ))}

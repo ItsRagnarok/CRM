@@ -3552,7 +3552,7 @@ export type Database = {
         Returns: number
       }
       ef_record_site_view: {
-        Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string; p_region?: string; p_city?: string; p_kind?: string }
+        Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string; p_region?: string; p_city?: string; p_kind?: string; p_os?: string; p_browser?: string; p_model?: string; p_screen?: string; p_lang?: string }
         Returns: undefined
       }
       ef_record_site_time: {

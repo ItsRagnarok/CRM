@@ -13,6 +13,8 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // Service worker-ul aplicației: telefonul verifică mereu versiunea nouă după un deploy.
+      // Analitice: Chrome pe Android trimite modelul telefonului (ex. SM-S918B) doar dacă îl cerem.
+      { source: "/:path*", headers: [{ key: "Accept-CH", value: "Sec-CH-UA-Model, Sec-CH-UA-Platform-Version" }] },
       { source: "/sw.js", headers: [{ key: "Cache-Control", value: "no-cache, no-store, must-revalidate" }, { key: "Content-Type", value: "application/javascript; charset=utf-8" }] },
     ];
   },

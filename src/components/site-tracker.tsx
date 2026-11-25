@@ -20,7 +20,7 @@ export function SiteTracker() {
     try {
       if (localStorage.getItem("ef-no-track") || navigator.doNotTrack === "1") return;
     } catch { if (navigator.doNotTrack === "1") return; }
-    send({ path: pathname, referrer: document.referrer || "", utm: new URLSearchParams(location.search).get("utm_source") || "" });
+    send({ path: pathname, referrer: document.referrer || "", utm: new URLSearchParams(location.search).get("utm_source") || "", screen: `${Math.round(screen.width)}x${Math.round(screen.height)}`, lang: navigator.language || "" });
     // Cât timp a stat pe pagină: doar cât a fost vizibilă, trimis la plecare sau la schimbarea tabului.
     let visibleMs = 0;
     let since = document.visibilityState === "visible" ? Date.now() : 0;
