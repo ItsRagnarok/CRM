@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { arriveAtJobForm } from "./actions";
+import { useRouter } from "next/navigation";
+import { runOrQueue } from "@/lib/offline/send";
 
 function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
   const R = 6371000;
@@ -16,17 +17,25 @@ function distanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) 
 const ARRIVAL_RADIUS_M = 50;
 
 export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?: number; jobLng?: number }) {
-  const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
   const [pending, setPending] = useState(false);
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const at = useRef("");
+  const coords = useRef<{ lat: number | null; lng: number | null }>({ lat: null, lng: null });
 
-  function submit() {
+  // Fără semnal, sosirea (cu ora și locul de acum) se salvează pe telefon și pleacă singură mai târziu.
+  async function submit() {
     setPending(true);
-    formRef.current?.requestSubmit();
+    setError(null);
+    const r = await runOrQueue({ kind: "event", jobId, event: "arrival", at: at.current || new Date().toISOString(), lat: coords.current.lat, lng: coords.current.lng });
+    setPending(false);
+    if (r.status === "error") setError(r.error);
+    else router.refresh();
   }
 
   function handleClick() {
+    at.current = new Date().toISOString();
+    coords.current = { lat: null, lng: null };
     setPending(true);
     if (jobLat == null || jobLng == null) {
       // Job has no known coordinates (e.g. address failed to geocode) — we
@@ -47,8 +56,7 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
     }
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLat(pos.coords.latitude);
-        setLng(pos.coords.longitude);
+        coords.current = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         const d = distanceMeters(pos.coords.latitude, pos.coords.longitude, jobLat, jobLng);
         if (d <= ARRIVAL_RADIUS_M) {
           submit();
@@ -70,10 +78,7 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
   }
 
   return (
-    <form ref={formRef} action={arriveAtJobForm} style={{ width: "100%" }}>
-      <input type="hidden" name="jobId" value={jobId} />
-      <input type="hidden" name="lat" value={lat ?? ""} />
-      <input type="hidden" name="lng" value={lng ?? ""} />
+    <div style={{ width: "100%" }}>
       <button
         type="button"
         onClick={handleClick}
@@ -82,6 +87,7 @@ export function ArriveButton({ jobId, jobLat, jobLng }: { jobId: string; jobLat?
       >
         {pending ? "Se confirmă…" : "Am ajuns la locație"}
       </button>
-    </form>
+      {error && <div className="m-sm" style={{ color: "var(--m-er, #b42318)", textAlign: "center", marginTop: 6 }}>{error}</div>}
+    </div>
   );
 }

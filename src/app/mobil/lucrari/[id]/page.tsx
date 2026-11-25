@@ -1,14 +1,14 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import {
-  AlertTriangle, Camera, Check, ChevronRight, ClipboardList, Clock, FileText, Flag, MessageSquare, Navigation, Package, Pause, Phone, PenLine, ScanLine, Store, Truck, Wallet, Warehouse, Wrench, XCircle,
+  AlertTriangle, Camera, Check, ChevronRight, ClipboardList, Clock, FileText, Flag, MessageSquare, Navigation, Package, Phone, PenLine, ScanLine, Store, Truck, Wallet, Warehouse, Wrench, XCircle,
 } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { JOB_STATUS_LABELS } from "@/lib/status";
-import { startWork, acknowledgeRejectedPurchase } from "./actions";
+import { acknowledgeRejectedPurchase } from "./actions";
+import { JobFooter, WarmJobPages } from "./job-footer";
 import { mobileStagePath } from "./mobile-stage";
-import { ArriveButton } from "./arrive-button";
 import { StartJobButton } from "../../(tabs)/start-job-button";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { FORM_TEMPLATES, TEMPLATE_BY_DOMAIN } from "@/lib/forms/templates";
@@ -112,7 +112,6 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const count = (cat: string) => photoRows.filter((p) => p.category === cat).length;
   const missingArrival = job.require_arrival_photo && count("before") === 0;
   const missingDuring = job.require_during_photo && count("during") === 0;
-  const missingFinal = job.require_final_photo && count("after") === 0;
   const missing = [missingArrival && "poza de sosire", missingDuring && "poza din timpul lucrării"].filter(Boolean) as string[];
   const problemCount = (notes.data ?? []).filter((n) => n.kind === "problem").length;
 
@@ -322,40 +321,22 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
           {job.status === "programata" && !job.mobile_stage && (
             <StartJobButton jobId={job.id} jobTitle={job.title} address={job.locations?.address ?? null} />
           )}
-          {isTraveling && <ArriveButton jobId={job.id} jobLat={job.locations?.lat ?? undefined} jobLng={job.locations?.lng ?? undefined} />}
-          {isArrived &&
-            (missingArrival ? (
-              <>
-                <Link href={`/mobil/lucrari/${id}/foto?cat=before`} className="m-btn"><Camera className="m-i" /> Fă poza de sosire</Link>
-                <div className="m-mu m-sm" style={{ textAlign: "center" }}>Poza de sosire e obligatorie înainte să pornești lucrul.</div>
-              </>
-            ) : (
-              <form action={startWork.bind(null, job.id)}>
-                <button type="submit" className="m-btn"><Wrench className="m-i" /> Pornește lucrul</button>
-              </form>
-            ))}
-          {isWorking && (
-            <>
-              {missingDuring || missingForm ? (
-                <>
-                  <button type="button" className="m-btn off" disabled><Flag className="m-i" /> Închide lucrarea</button>
-                  <div className="m-mu m-sm" style={{ textAlign: "center" }}>
-                    Mai ai de făcut: {[missingDuring && "poza din timpul lucrării", missingForm && `formularul „${formTemplate!.label}”`].filter(Boolean).join(" și ")}.
-                  </div>
-                </>
-              ) : (
-                <Link href={`/mobil/lucrari/${id}/finalizare`} className="m-btn"><Flag className="m-i" /> Închide lucrarea</Link>
-              )}
-              <div className="m-r" style={{ justifyContent: "space-between" }}>
-                <span className="m-mu m-sm">{missingFinal ? "Poza finală e cerută la închidere" : " "}</span>
-                <Link href={`/mobil/lucrari/${id}/extra`} className="m-link" style={{ color: "var(--m-wr)", display: "flex", gap: 6, alignItems: "center" }}>
-                  <Pause className="m-i" style={{ width: 16, height: 16 }} /> Nu pot finaliza
-                </Link>
-              </div>
-            </>
-          )}
+          <JobFooter
+            jobId={job.id}
+            isTraveling={isTraveling}
+            isArrived={isArrived}
+            isWorking={isWorking}
+            jobLat={job.locations?.lat ?? undefined}
+            jobLng={job.locations?.lng ?? undefined}
+            requireArrival={Boolean(job.require_arrival_photo)}
+            requireDuring={Boolean(job.require_during_photo)}
+            requireFinal={Boolean(job.require_final_photo)}
+            serverPhotos={{ before: count("before"), during: count("during"), after: count("after") }}
+            missingFormLabel={missingForm ? formTemplate!.label : null}
+          />
         </div>
       )}
+      {!isDone && <WarmJobPages jobId={job.id} formTemplateId={formTemplate?.id ?? null} />}
     </div>
   );
 }

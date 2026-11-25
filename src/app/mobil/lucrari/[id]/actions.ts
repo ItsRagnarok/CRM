@@ -6,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
 import { notifyBackOffice, notifyProfiles } from "@/lib/notify";
 import { mobileStagePath, type MobileStage } from "./mobile-stage";
+import { acceptClientTime, safeOpId } from "@/lib/client-time";
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export type SyncResult = { ok: true } | { error: string };
 
 function paths(jobId: string) {
   revalidatePath(`/mobil/lucrari/${jobId}`);
@@ -214,13 +218,30 @@ export async function startWork(jobId: string) {
 
 export async function finalizeJob(formData: FormData) {
   const jobId = String(formData.get("jobId") ?? "");
-  const observations = String(formData.get("observations") ?? "").trim();
-  const equipmentIssue = String(formData.get("equipmentIssue") ?? "").trim();
   if (!jobId) return;
+  await finalizeCore(jobId, String(formData.get("observations") ?? ""), String(formData.get("equipmentIssue") ?? ""), null);
+  redirect(`/mobil/lucrari/${jobId}/semnatura`);
+}
 
+/**
+ * Închiderea lucrării trimisă din aplicație (online sau din coada offline a telefonului).
+ * `at` = ora reală a închiderii pe telefon. Sigură la retrimitere: dacă lucrarea e deja
+ * închisă cu aceeași oră, nu mai face nimic.
+ */
+export async function syncFinalizeJob(input: { opId: string; jobId: string; observations: string; equipmentIssue: string; at: string }): Promise<SyncResult> {
+  if (!UUID.test(String(input?.jobId)) || !safeOpId(input?.opId)) return { error: "Date invalide." };
+  return finalizeCore(input.jobId, String(input.observations ?? ""), String(input.equipmentIssue ?? ""), input.at);
+}
+
+async function finalizeCore(jobId: string, observationsRaw: string, equipmentRaw: string, at: string | null): Promise<SyncResult> {
+  const observations = observationsRaw.trim().slice(0, 4000);
+  const equipmentIssue = equipmentRaw.trim().slice(0, 2000);
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
-  const now = new Date().toISOString();
+  const now = acceptClientTime(at);
+
+  const { data: already } = await supabase.from("time_entries").select("id").eq("job_id", jobId).eq("profile_id", userId).eq("event_type", "work_end").eq("occurred_at", now).limit(1);
+  if (already?.length) return { ok: true };
 
   await supabase
     .from("jobs")
@@ -255,7 +276,7 @@ export async function finalizeJob(formData: FormData) {
 
   paths(jobId);
   revalidatePath(`/mobil/lucrari/${jobId}/finalizare`);
-  redirect(`/mobil/lucrari/${jobId}/semnatura`);
+  return { ok: true };
 }
 
 export async function uploadJobPhoto(formData: FormData) {
@@ -267,15 +288,23 @@ export async function uploadJobPhoto(formData: FormData) {
   const { organization, userId } = await requireSessionContext();
   const supabase = await createClient();
 
-  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-  const path = `${organization.id}/jobs/${jobId}/photos/${Date.now()}-${safeName}`;
+  const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_").slice(-80);
+  // opId vine de pe telefon (o poză făcută fără semnal se trimite mai târziu, poate de două ori):
+  // aceeași poză are mereu aceeași cale, deci a doua trimitere nu creează un duplicat.
+  const opId = safeOpId(formData.get("opId"));
+  const path = `${organization.id}/jobs/${jobId}/photos/${opId ?? Date.now()}-${safeName}`;
+  if (opId) {
+    const { data: existing } = await supabase.from("photos").select("id").eq("storage_path", path).limit(1);
+    if (existing?.length) return;
+  }
 
   const { error: uploadError } = await supabase.storage
     .from("attachments")
     .upload(path, file, { contentType: file.type || "image/jpeg" });
   // Previously failed silently here — the technician saw "Se încarcă…" and
   // then nothing, stuck with no photo and no way to tell why.
-  if (uploadError) return { error: `Încărcarea a eșuat: ${uploadError.message}` };
+  const duplicate = opId && uploadError && /exist|duplicate/i.test(uploadError.message);
+  if (uploadError && !duplicate) return { error: `Încărcarea a eșuat: ${uploadError.message}` };
 
   const { error: insertError } = await supabase.from("photos").insert({
     organization_id: organization.id,
@@ -283,7 +312,7 @@ export async function uploadJobPhoto(formData: FormData) {
     category,
     storage_path: path,
     uploaded_by: userId,
-    taken_at: new Date().toISOString(),
+    taken_at: acceptClientTime(formData.get("takenAt")),
   });
   // The file can land in storage just fine while this insert is rejected
   // (e.g. a category the DB doesn't recognize yet) — that combination is
@@ -468,33 +497,82 @@ export async function flagClientAbsent(jobId: string) {
   revalidatePath("/dashboard");
 }
 
-export async function saveSignature(formData: FormData) {
+export async function saveSignature(formData: FormData): Promise<SyncResult> {
   const jobId = String(formData.get("jobId") ?? "");
-  const signerName = String(formData.get("signerName") ?? "").trim();
+  const signerName = String(formData.get("signerName") ?? "").trim().slice(0, 160);
   const dataUrl = String(formData.get("dataUrl") ?? "");
-  if (!jobId || !signerName || !dataUrl.startsWith("data:image/")) return;
+  if (!jobId || !signerName || !dataUrl.startsWith("data:image/")) return { error: "Semnătura lipsește." };
+  if (dataUrl.length > 3_000_000) return { error: "Semnătura e prea mare." };
 
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
   const base64 = dataUrl.split(",")[1];
   const bytes = Buffer.from(base64, "base64");
-  const path = `${organization.id}/jobs/${jobId}/signatures/${Date.now()}.png`;
+  // Semnătura luată fără semnal se trimite mai târziu, cu id-ul ei: a doua trimitere nu o dublează.
+  const opId = safeOpId(formData.get("opId"));
+  const path = `${organization.id}/jobs/${jobId}/signatures/${opId ?? Date.now()}.png`;
+  if (opId) {
+    const { data: existing } = await supabase.from("signatures").select("id").eq("storage_path", path).limit(1);
+    if (existing?.length) return { ok: true };
+  }
 
   const { error: uploadError } = await supabase.storage
     .from("attachments")
     .upload(path, bytes, { contentType: "image/png" });
-  if (uploadError) return;
+  if (uploadError && !(opId && /exist|duplicate/i.test(uploadError.message))) return { error: "Nu am putut salva semnătura." };
 
-  await supabase.from("signatures").insert({
+  const { error: insertError } = await supabase.from("signatures").insert({
     organization_id: organization.id,
     job_id: jobId,
     signer_name: signerName,
     signer_role: "client",
     storage_path: path,
-    signed_at: new Date().toISOString(),
+    signed_at: acceptClientTime(formData.get("signedAt")),
   });
+  if (insertError) return { error: "Nu am putut salva semnătura." };
 
   paths(jobId);
   revalidatePath(`/mobil/lucrari/${jobId}/semnatura`);
+  return { ok: true };
+}
+
+/**
+ * Sosire / început lucru trimise din aplicație (online sau din coada offline a telefonului).
+ * Păstrează ora reală de pe telefon și e sigură la retrimitere. Nu dă statusul lucrării
+ * înapoi: dacă lucrarea a trecut deja de pasul ăsta (ex. birou a închis-o), doar notează ora în pontaj.
+ */
+export async function syncJobEvent(input: { opId: string; jobId: string; event: "arrival" | "work_start"; at: string; lat?: number | null; lng?: number | null }): Promise<SyncResult> {
+  if (!UUID.test(String(input?.jobId)) || !safeOpId(input?.opId) || !["arrival", "work_start"].includes(input?.event)) return { error: "Date invalide." };
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+  const at = acceptClientTime(input.at);
+  const coord = (v: unknown, max: number) => (typeof v === "number" && Number.isFinite(v) && Math.abs(v) <= max ? v : null);
+
+  const { data: already } = await supabase.from("time_entries").select("id").eq("job_id", input.jobId).eq("profile_id", userId).eq("event_type", input.event).eq("occurred_at", at).limit(1);
+  if (already?.length) return { ok: true };
+
+  const { data: job } = await supabase.from("jobs").select("id, status").eq("id", input.jobId).eq("organization_id", organization.id).maybeSingle();
+  if (!job) return { error: "Lucrarea nu a fost găsită." };
+
+  const before = input.event === "arrival" ? ["programata", "in_drum"] : ["programata", "in_drum", "ajunsa"];
+  if (before.includes(job.status)) {
+    await supabase
+      .from("jobs")
+      .update(input.event === "arrival" ? { status: "ajunsa", arrived_at: at } : { status: "in_lucru", work_started_at: at })
+      .eq("id", input.jobId)
+      .eq("organization_id", organization.id);
+  }
+  const { error } = await supabase.from("time_entries").insert({
+    organization_id: organization.id,
+    job_id: input.jobId,
+    profile_id: userId,
+    event_type: input.event,
+    occurred_at: at,
+    lat: input.event === "arrival" ? coord(input.lat, 90) : null,
+    lng: input.event === "arrival" ? coord(input.lng, 180) : null,
+  });
+  if (error) return { error: "Nu am putut salva în pontaj." };
+  paths(input.jobId);
+  return { ok: true };
 }

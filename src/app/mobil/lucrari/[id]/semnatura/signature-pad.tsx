@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { saveSignature, flagClientAbsent } from "../actions";
+import { flagClientAbsent } from "../actions";
+import { runOrQueue } from "@/lib/offline/send";
 
 export function SignaturePad({
   jobId,
@@ -87,12 +88,14 @@ export function SignaturePad({
   function submit() {
     if (!hasDrawn) return;
     const dataUrl = canvasRef.current!.toDataURL("image/png");
-    const formData = new FormData();
-    formData.set("jobId", jobId);
-    formData.set("signerName", signerName);
-    formData.set("dataUrl", dataUrl);
+    const signedAt = new Date().toISOString();
     startTransition(async () => {
-      await saveSignature(formData);
+      // Fără semnal, semnătura rămâne pe telefon (cu ora de acum) și pleacă singură mai târziu.
+      const r = await runOrQueue({ kind: "signature", jobId, signerName, dataUrl, signedAt });
+      if (r.status === "error") {
+        alert(r.error);
+        return;
+      }
       router.push(`/mobil/lucrari/${jobId}/facturare`);
       router.refresh();
     });

@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Plus, Camera } from "lucide-react";
+import { ArrowLeft, Plus } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { addChecklistItem, toggleChecklistItem, ensureChecklist } from "@/app/(app)/lucrari/[id]/actions";
 import { pairHours, formatHM } from "@/app/(app)/pontaj/lib";
-import { finalizeJob } from "../actions";
+import { FinalizeForm } from "./finalize-form";
 import { StepBadge } from "../step-badge";
 
 export default async function MobileFinalizarePage({ params }: { params: Promise<{ id: string }> }) {
@@ -35,8 +35,6 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
     supabase.from("expenses").select("amount").eq("job_id", id),
     supabase.from("time_entries").select("profile_id, job_id, event_type, occurred_at").eq("job_id", id),
   ]);
-
-  const hasFinalPhoto = !job.require_final_photo || (afterPhotoCount ?? 0) > 0;
 
   const items = rawItems ?? [];
   const totalExpenses = (expenses ?? []).reduce((s, e) => s + Number(e.amount), 0);
@@ -89,62 +87,18 @@ export default async function MobileFinalizarePage({ params }: { params: Promise
           <AddItemForm jobId={id} />
         </div>
 
-        <form action={finalizeJob} className="flex flex-1 flex-col">
-        <input type="hidden" name="jobId" value={id} />
-        <div className="px-4 pt-4">
-          <div className="mb-1.5 text-[12.5px] font-bold text-[#344054]">Observații (opțional)</div>
-          <textarea
-            name="observations"
-            defaultValue={job.observations ?? ""}
-            rows={3}
-            className="w-full resize-none rounded-[12px] border border-[#d0d5dd] p-3 text-[13.5px] outline-none focus:border-electric"
-          />
-        </div>
-
-        <div className="px-4 pt-3">
-          <div className="mb-1.5 text-[12.5px] font-bold text-[#344054]">Defecțiuni scule/echipamente (dacă au fost)</div>
-          <textarea
-            name="equipmentIssue"
-            rows={2}
-            placeholder="Lasă gol dacă nu au fost probleme"
-            className="w-full resize-none rounded-[12px] border border-[#d0d5dd] p-3 text-[13.5px] outline-none focus:border-electric"
-          />
-        </div>
-
-        <div className="mx-4 mt-4 rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-3.5 text-[12.5px] leading-relaxed text-muted">
+        <FinalizeForm
+          jobId={id}
+          defaultObservations={job.observations ?? ""}
+          requireFinal={Boolean(job.require_final_photo)}
+          serverFinalPhotos={afterPhotoCount ?? 0}
+          summary={
+            <div className="mx-4 mt-4 rounded-[12px] border border-[#eaecf0] bg-neutral-bg p-3.5 text-[12.5px] leading-relaxed text-muted">
           <b className="text-foreground">Rezumat:</b> {formatHM(workedHours)} lucrate · {photoCount ?? 0} fotografii ·{" "}
           {totalExpenses.toFixed(2)} RON cheltuieli · checklist {items.length ? Math.round((items.filter(i=>i.is_checked).length/items.length)*100) : 0}% complet
         </div>
-
-        <div className="flex-1" />
-
-        {!hasFinalPhoto && (
-          <div className="mx-4 mb-3 flex items-center gap-3 rounded-[12px] border border-warning-bg bg-warning-bg p-3.5">
-            <Camera className="h-5 w-5 shrink-0 text-warning" />
-            <div className="flex-1 text-[12.5px] font-semibold text-[#7a5b0e]">
-              Ai nevoie de o poză la lucrarea finalizată înainte să poți încheia.
-            </div>
-          </div>
-        )}
-
-        <div className="p-4">
-          {hasFinalPhoto ? (
-            <button
-              type="submit"
-              className="block w-full rounded-[12px] bg-success py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(21,128,61,0.28)]"
-            >
-              FINALIZEAZĂ LUCRAREA
-            </button>
-          ) : (
-            <Link
-              href={`/mobil/lucrari/${id}/foto?cat=after`}
-              className="flex items-center justify-center gap-2 rounded-[12px] bg-electric py-[15px] text-center text-[15px] font-extrabold text-white shadow-[0_4px_12px_rgba(47,111,237,0.3)]"
-            >
-              <Camera className="h-[18px] w-[18px]" /> FĂ POZA FINALĂ
-            </Link>
-          )}
-        </div>
-        </form>
+          }
+        />
       </div>
     </div>
   );

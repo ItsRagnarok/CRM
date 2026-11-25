@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FORM_TEMPLATES, missingRequired, type FormTemplate } from "@/lib/forms/templates";
+import { acceptClientTime } from "@/lib/client-time";
 
 // Saves a draft (every step) or the finished form (complete = true). A finished
 // form must have every required field.
@@ -11,7 +12,9 @@ export async function saveJobForm(
   jobId: string,
   templateId: string,
   data: Record<string, unknown>,
-  complete: boolean
+  complete: boolean,
+  // Ora reală de pe telefon (formular completat fără semnal și trimis mai târziu).
+  at?: string
 ): Promise<{ ok: true } | { error: string; missing?: string[] }> {
   const template = FORM_TEMPLATES[templateId as FormTemplate["id"]];
   if (!template) return { error: "Formular necunoscut." };
@@ -36,9 +39,9 @@ export async function saveJobForm(
       job_id: jobId,
       template: template.id,
       data: data as never,
-      updated_at: new Date().toISOString(),
+      updated_at: acceptClientTime(at),
       completed_by: complete ? userId : null,
-      completed_at: complete ? new Date().toISOString() : null,
+      completed_at: complete ? acceptClientTime(at) : null,
     },
     { onConflict: "job_id,template" }
   );

@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
   // Public site assets do not need a session lookup.
-  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js"].includes(request.nextUrl.pathname)) {
+  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html"].includes(request.nextUrl.pathname)) {
     return NextResponse.next({ request });
   }
   let response = NextResponse.next({ request });

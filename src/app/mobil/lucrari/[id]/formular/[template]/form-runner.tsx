@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Plus, Trash2 } from "lucide-react";
-import { saveJobForm } from "../actions";
-import type { FieldDef, FormTemplate } from "@/lib/forms/templates";
+import { missingRequired, type FieldDef, type FormTemplate } from "@/lib/forms/templates";
+import { runOrQueue } from "@/lib/offline/send";
 
 type Row = Record<string, string>;
 type Data = Record<string, unknown>;
@@ -119,11 +119,26 @@ export function FormRunner({
   async function persist(payload: Data, complete: boolean) {
     setBusy(true);
     setError(null);
-    const result = await saveJobForm(jobId, template.id, payload, complete);
+    // Câmpurile obligatorii le verificăm și pe telefon: fără semnal, serverul nu poate spune ce lipsește.
+    if (complete) {
+      const miss = missingRequired(template, payload);
+      if (miss.length) {
+        setBusy(false);
+        setError("Mai ai câmpuri obligatorii necompletate.");
+        setMissing(miss);
+        return false;
+      }
+    }
+    // Fără semnal, pașii intermediari rămân doar pe ecran; formularul terminat se salvează pe
+    // telefon și pleacă singur când revine semnalul.
+    if (!complete && typeof navigator !== "undefined" && !navigator.onLine) {
+      setBusy(false);
+      return true;
+    }
+    const result = await runOrQueue({ kind: "form", jobId, template: template.id, label: template.label, data: payload, complete, at: new Date().toISOString() });
     setBusy(false);
-    if ("error" in result) {
+    if (result.status === "error") {
       setError(result.error);
-      setMissing(result.missing ?? []);
       return false;
     }
     setMissing([]);

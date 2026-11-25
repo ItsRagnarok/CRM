@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertTriangle } from "lucide-react";
-import { arriveAtJob, recordArrivalPromptDismissal } from "../lucrari/[id]/actions";
+import { recordArrivalPromptDismissal } from "../lucrari/[id]/actions";
+import { runOrQueue } from "@/lib/offline/send";
 
 const RADIUS_M = 50;
 const GRACE_MS = 5 * 60 * 1000;
@@ -85,13 +86,17 @@ export function ArrivalAlert({
                 setPending(false);
                 router.refresh();
               };
+              // Ora sosirii e cea de acum, chiar dacă fără semnal se trimite mai târziu.
+              const at = new Date().toISOString();
+              const arrive = (lat?: number, lng?: number) => runOrQueue({ kind: "event", jobId: job.id, event: "arrival", at, lat, lng }).finally(finish);
               if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                  (pos) => arriveAtJob(job.id, pos.coords.latitude, pos.coords.longitude).then(finish),
-                  () => arriveAtJob(job.id).then(finish)
+                  (pos) => arrive(pos.coords.latitude, pos.coords.longitude),
+                  () => arrive(),
+                  { timeout: 8000 }
                 );
               } else {
-                arriveAtJob(job.id).then(finish);
+                arrive();
               }
             }}
             className="flex-1 rounded-[12px] bg-success py-3 text-center text-[13.5px] font-extrabold text-white disabled:opacity-60"
