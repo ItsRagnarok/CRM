@@ -17,6 +17,8 @@ const eslintConfig = [
       "out/**",
       "build/**",
       "next-env.d.ts",
+      // proiectul nativ Android/iOS: fișiere generate de Gradle/Xcode
+      "android-app/**",
       "node_modules/**",
     ],
   },

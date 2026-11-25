@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "check:android": "node scripts/check-android-version.mjs"
+    "check:android": "node scripts/check-android-version.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:unit": "node --experimental-strip-types --test scripts/admin-security.test.mjs scripts/mail-security.test.mjs && jiti scripts/invoicing-providers.test.mts",
+    "test:e2e": "node e2e/smoke.mjs",
+    "check": "npm run typecheck && npm run lint && npm run test:unit"
   },
   "dependencies": {
     "@capacitor-community/background-geolocation": "^1.2.26",
@@ -45,6 +49,8 @@
     "@types/sanitize-html": "2.16.2",
     "eslint": "^9",
     "eslint-config-next": "^15.5.26",
+    "jiti": "2.7.0",
+    "playwright": "1.63.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

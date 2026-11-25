@@ -1,5 +1,6 @@
-import { smartbillBody, smartbillIssue, smartbillCheck, smartbillPayment } from "./smartbill.ts";
-import { oblioBody, oblioIssue, oblioPayment, oblioCheck } from "./oblio.ts";
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-expressions -- test cu mock-uri de fetch */
+import { smartbillBody, smartbillIssue, smartbillCheck, smartbillPayment } from "../src/lib/invoicing/smartbill";
+import { oblioBody, oblioIssue, oblioPayment, oblioCheck } from "../src/lib/invoicing/oblio";
 const conn = (provider: any) => ({ provider, accountEmail: "a@b.ro", vatCode: "RO123", series: "EF", taxPercent: 21, dueDays: 15, sendEmail: true, simulated: false });
 const draft = { client: { name: "Hotel X", vatCode: "RO999", isTaxPayer: true, address: "Str A 1, Cluj-Napoca", city: "Cluj-Napoca", email: "c@x.ro" }, lines: [{ name: "Manoperă", unit: "buc", quantity: 1, price: 825, isService: true }, { name: "Materiale", unit: "buc", quantity: 1, price: 840, isService: false }], issueDate: "2026-11-09", dueDate: "2026-11-24" };
 let ok = 0, bad = 0; const t = (n: string, c: boolean) => { c ? ok++ : bad++; console.log((c ? "PASS " : "FAIL ") + n); };
