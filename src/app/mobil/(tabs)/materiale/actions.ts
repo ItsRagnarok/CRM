@@ -164,6 +164,6 @@ export async function requestRestock(_prev: { ok?: boolean; error?: string } | u
     link: `/materiale/masini?v=${vehicleId}`,
     exceptProfileId: userId,
   });
-  revalidatePath("/mobil/materiale");
+  // Fără revalidare: formularul arată confirmarea din răspuns; lista se reîmprospătează la următoarea deschidere.
   return { ok: true };
 }
