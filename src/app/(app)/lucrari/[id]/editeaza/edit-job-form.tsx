@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { updateJob } from "../actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
+import { LiveScheduleWarnings } from "@/components/schedule-warnings";
 
 type Job = {
   id: string;
@@ -97,6 +98,8 @@ export function EditJobForm({ job, teams, enabledDomains }: { job: Job; teams: {
             <input name="endTime" type="time" defaultValue={job.end_time?.slice(0, 5) ?? ""} className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric" />
           </Field>
         </div>
+
+        <LiveScheduleWarnings jobId={job.id} />
 
         <Field label="Adresă">
           <input type="hidden" name="currentAddress" value={job.locations?.address ?? ""} />

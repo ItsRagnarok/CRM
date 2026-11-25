@@ -2,6 +2,9 @@ import Link from "next/link";
 import { PHOTO_CATEGORY_LABELS } from "@/lib/photo-tags";
 import { notFound } from "next/navigation";
 import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
+import { loadScheduleWarnings } from "@/lib/schedule-warnings-server";
+import { WarningList } from "@/components/schedule-warnings";
+import { todayInOrgTimeZone } from "@/lib/date";
 import { StatusLinkCard } from "@/components/status-link-card";
 import { DosarPanel } from "@/components/dosar-panel";
 import { createClient } from "@/lib/supabase/server";
@@ -107,6 +110,19 @@ export default async function JobDetailPage({
     .maybeSingle();
 
   if (!job) notFound();
+
+  // Avertizări doar pentru lucrările care urmează (nu pentru cele începute, încheiate sau anulate).
+  const upcoming = job.status === "programata" && job.scheduled_date >= todayInOrgTimeZone();
+  const scheduleWarnings = upcoming && isBackOfficeRole(profile.role)
+    ? await loadScheduleWarnings(supabase, organization, {
+        jobId: job.id,
+        teamId: job.team_id,
+        date: job.scheduled_date,
+        start: job.start_time,
+        end: job.end_time,
+        domain: (job as { domain?: string | null }).domain ?? null,
+      })
+    : [];
 
   const { data: jobForms } = await supabase
     .from("job_forms")
@@ -290,6 +306,7 @@ export default async function JobDetailPage({
         {tab === "rezumat" && (
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[1.3fr_1fr]">
             <div className="flex flex-col gap-4">
+              {scheduleWarnings.length > 0 && <WarningList warnings={scheduleWarnings} footer="Schimbă echipa, data sau ora din Editează, ori rezolvă problema din pagina indicată." />}
               {isBackOfficeRole(profile.role) && <DosarPanel job={job} organization={organization} />}
               {isBackOfficeRole(profile.role) && <StatusLinkCard jobId={id} organizationId={organization.id} canEdit={!readOnly} />}
               <Card title="Informații generale">

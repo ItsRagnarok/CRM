@@ -7,6 +7,7 @@ import { createJob } from "../actions";
 import { generateJobSuggestion, transcribeAudio } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { JOB_TITLE_TEMPLATES } from "../job-templates";
+import { LiveScheduleWarnings } from "@/components/schedule-warnings";
 
 const NEW_LOCATION = "__new__";
 const CUSTOM_TITLE = "__custom__";
@@ -641,6 +642,8 @@ export function NewJobForm({
           <p className="-mt-2 text-[11.5px] text-muted-2">
             Lăsate necompletate, lucrarea se programează azi, cu ora de start acum și ora de sfârșit la 20:00.
           </p>
+
+          <LiveScheduleWarnings />
 
           <Field label="Descriere">
             <textarea

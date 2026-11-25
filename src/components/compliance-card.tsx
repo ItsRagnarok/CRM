@@ -34,7 +34,7 @@ export async function ComplianceCard({ organizationId, today }: { organizationId
           {items.map((i) => (
             <li key={i.id} className="flex items-center justify-between gap-3 px-4 py-2.5 text-[13px]">
               <span className="min-w-0"><span className="block truncate font-semibold">{i.title}</span><span className="block truncate text-xs text-muted">{i.subject}</span></span>
-              <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11.5px] font-bold ${LEVEL_STYLE[complianceLevel(i.left)]}`}>{daysLabel(i.left)}</span>
+              <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[11.5px] font-bold ${LEVEL_STYLE[complianceLevel(i.left)]}`}>{daysLabel(i.left)}</span>
             </li>
           ))}
         </ul>

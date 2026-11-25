@@ -71,7 +71,7 @@ export default async function ConformitatePage({ searchParams }: { searchParams:
                   <td className="px-4 py-3"><div className="font-bold">{i.title}</div><div className="text-xs text-muted">{KIND_LABELS[i.kind]}{i.domain ? ` · ${domainLabel(i.domain)}` : ""}{i.notes ? ` · ${i.notes}` : ""}</div></td>
                   <td className="px-4 py-3">{i.subject}</td>
                   <td className="px-4 py-3 tabular-nums">{new Date(`${i.expires_on}T12:00:00Z`).toLocaleDateString("ro-RO", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" })}</td>
-                  <td className="px-4 py-3"><span className={`rounded-full px-2.5 py-1 text-[12px] font-bold ${LEVEL_STYLE[complianceLevel(i.left)]}`}>{daysLabel(i.left)}</span></td>
+                  <td className="px-4 py-3"><span className={`inline-block whitespace-nowrap rounded-full px-2.5 py-1 text-[12px] font-bold ${LEVEL_STYLE[complianceLevel(i.left)]}`}>{daysLabel(i.left)}</span></td>
                   <td className="px-4 py-3">
                     {!readOnly && (
                       <div className="flex flex-wrap items-center justify-end gap-2">

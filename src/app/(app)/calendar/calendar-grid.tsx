@@ -3,7 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
+import { WarningList } from "@/components/schedule-warnings";
+import type { ScheduleWarning } from "@/lib/schedule-warnings";
 import { rescheduleJob } from "./actions";
 import {
   JOB_STATUS_LABELS,
@@ -153,6 +155,7 @@ export function CalendarGrid({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
+  const [moved, setMoved] = useState<{ label: string; date: string; warnings: ScheduleWarning[] } | null>(null);
 
   const baseHref = (overrides: { date?: string; view?: string; teamId?: string }) => {
     const params = new URLSearchParams();
@@ -177,13 +180,27 @@ export function CalendarGrid({
     const fromDate = e.dataTransfer.getData("text/job-date");
     if (!jobId || fromDate === dateStr) return;
     startTransition(async () => {
-      await rescheduleJob(jobId, dateStr);
+      const res = await rescheduleJob(jobId, dateStr);
+      setMoved(res.warnings.length ? { label: res.label ?? "", date: dateStr, warnings: res.warnings } : null);
       router.refresh();
     });
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="relative flex h-full flex-col">
+      {moved && (
+        <div className="fixed bottom-5 right-5 z-50 w-[min(440px,calc(100vw-40px))] rounded-[14px] bg-white shadow-[0_18px_40px_rgba(16,24,40,.18)]">
+          <div className="flex items-center justify-between px-4 pt-3 text-[13px] font-bold text-foreground">
+            Lucrarea {moved.label} a fost mutată
+            <button type="button" onClick={() => setMoved(null)} aria-label="Închide" className="rounded-md p-1 text-muted hover:bg-neutral-bg">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="p-3 pt-2">
+            <WarningList warnings={moved.warnings} footer="Mutarea s-a salvat. Dacă nu e bine, trage lucrarea înapoi sau deschide-o și schimbă echipa." />
+          </div>
+        </div>
+      )}
       <div className="flex h-[66px] shrink-0 items-center gap-3.5 border-b border-border bg-white px-6">
         <div className="text-[17px] font-extrabold text-foreground">Calendar</div>
 

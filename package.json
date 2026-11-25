@@ -9,7 +9,7 @@
     "lint": "eslint",
     "check:android": "node scripts/check-android-version.mjs",
     "typecheck": "tsc --noEmit",
-    "test:unit": "node --experimental-strip-types --test scripts/admin-security.test.mjs scripts/mail-security.test.mjs scripts/electric-measurements.test.mjs scripts/offline.test.mjs scripts/time-corrections.test.mjs scripts/gas-records.test.mjs && jiti scripts/invoicing-providers.test.mts",
+    "test:unit": "node --experimental-strip-types --test scripts/admin-security.test.mjs scripts/mail-security.test.mjs scripts/electric-measurements.test.mjs scripts/offline.test.mjs scripts/time-corrections.test.mjs scripts/gas-records.test.mjs scripts/schedule-warnings.test.mjs && jiti scripts/invoicing-providers.test.mts",
     "test:e2e": "node e2e/smoke.mjs",
     "check": "npm run typecheck && npm run lint && npm run test:unit"
   },
