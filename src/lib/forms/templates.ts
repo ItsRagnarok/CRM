@@ -3,7 +3,10 @@
 // confirmed with an authorized person) — the technician records the values and
 // states the result; the office reviews.
 
-export type FieldType = "text" | "number" | "date" | "yesno" | "textarea" | "choice";
+export type FieldType = "text" | "number" | "date" | "yesno" | "textarea" | "choice" | "ops" | "signature";
+
+/** Valoarea unui câmp „ops”: pentru fiecare operațiune, da / nu / nu e cazul și justificarea la „nu”. */
+export type OpsValue = Record<string, { v?: "da" | "nu" | "nc"; j?: string }>;
 
 export type FieldDef = {
   key: string;
@@ -14,6 +17,10 @@ export type FieldDef = {
   required?: boolean;
   placeholder?: string;
   hint?: string;
+  /** Pentru „ops”: textul operațiunilor, în ordine. */
+  items?: string[];
+  /** Câmpul apare (și e cerut) doar când alt câmp are valoarea dată. */
+  showIf?: { key: string; equals: string | boolean };
 };
 
 export type RepeaterDef = {
@@ -31,8 +38,10 @@ export type StepDef = {
   repeater?: RepeaterDef;
 };
 
+export type JobFormId = "gaze_etanseitate" | "pv_punere_in_functiune" | "electric_verificare";
+
 export type FormTemplate = {
-  id: "gaze_etanseitate" | "pv_punere_in_functiune" | "electric_verificare";
+  id: JobFormId | "gaze_verificare" | "gaze_revizie";
   domain: "gaze" | "fotovoltaic" | "electric";
   label: string;
   description: string;
@@ -44,7 +53,7 @@ const RESULT_CHOICE = [
   { value: "neconform", label: "Neconform" },
 ];
 
-export const FORM_TEMPLATES: Record<FormTemplate["id"], FormTemplate> = {
+export const FORM_TEMPLATES: Record<JobFormId, FormTemplate> = {
   gaze_etanseitate: {
     id: "gaze_etanseitate",
     domain: "gaze",
@@ -161,7 +170,7 @@ export const FORM_TEMPLATES: Record<FormTemplate["id"], FormTemplate> = {
   },
 };
 
-export const TEMPLATE_BY_DOMAIN: Record<string, FormTemplate["id"]> = {
+export const TEMPLATE_BY_DOMAIN: Record<string, JobFormId> = {
   gaze: "gaze_etanseitate",
   fotovoltaic: "pv_punere_in_functiune",
   electric: "electric_verificare",
@@ -169,12 +178,28 @@ export const TEMPLATE_BY_DOMAIN: Record<string, FormTemplate["id"]> = {
 
 export type FormValues = Record<string, string | number | boolean | Record<string, string>[] | undefined>;
 
+/** Câmpul e vizibil (deci se completează și se verifică) pentru datele date? */
+export function isFieldVisible(f: FieldDef, data: Record<string, unknown>): boolean {
+  if (!f.showIf) return true;
+  return data[f.showIf.key] === f.showIf.equals;
+}
+
 /** Returns the labels of required fields that are still empty. */
 export function missingRequired(template: FormTemplate, data: Record<string, unknown>): string[] {
   const missing: string[] = [];
   const empty = (v: unknown) => v === undefined || v === null || v === "";
   for (const step of template.steps) {
     for (const f of step.fields ?? []) {
+      if (!isFieldVisible(f, data)) continue;
+      if (f.type === "ops") {
+        const ops = (data[f.key] ?? {}) as OpsValue;
+        (f.items ?? []).forEach((_, i) => {
+          const o = ops[String(i + 1)];
+          if (!o?.v) missing.push(`Operațiunea ${i + 1}`);
+          else if (o.v === "nu" && !o.j?.trim()) missing.push(`Operațiunea ${i + 1}: motivul pentru „Nu”`);
+        });
+        continue;
+      }
       if (f.required && empty(data[f.key])) missing.push(f.label);
     }
     if (step.repeater) {

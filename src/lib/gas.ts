@@ -6,6 +6,7 @@ export const CONTACT_STATUSES = [
   { id: "nu_raspunde", label: "Nu răspunde" },
   { id: "refuz", label: "Refuză" },
   { id: "efectuat", label: "Efectuat" },
+  { id: "sistat", label: "Gaz întrerupt" },
 ] as const;
 export type ContactStatus = (typeof CONTACT_STATUSES)[number]["id"];
 export const statusLabel = (id: string) => CONTACT_STATUSES.find((s) => s.id === id)?.label ?? id;

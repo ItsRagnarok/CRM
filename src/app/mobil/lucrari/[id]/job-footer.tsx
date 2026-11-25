@@ -134,13 +134,15 @@ export function JobFooter(p: {
  * Cu semnal, încarcă dinainte în telefon pașii lucrării (poze, închidere, semnătură),
  * ca să meargă și dacă tehnicianul pierde semnalul la client (subsol, bloc, câmp).
  */
-export function WarmJobPages({ jobId, formTemplateId }: { jobId: string; formTemplateId?: string | null }) {
+export function WarmJobPages({ jobId, formTemplateId, extra = [] }: { jobId: string; formTemplateId?: string | null; extra?: string[] }) {
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !navigator.onLine) return;
     const base = `/mobil/lucrari/${jobId}`;
     const urls = [base, `${base}/foto?cat=before`, `${base}/foto?cat=during`, `${base}/foto?cat=after`, `${base}/foto?cat=hidden`, `${base}/foto?cat=receipt`, `${base}/foto?cat=problem`, `${base}/finalizare`, `${base}/semnatura`, `${base}/facturare`];
     if (formTemplateId) urls.push(`${base}/formular/${formTemplateId}`);
+    urls.push(...extra);
     navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage({ type: "warm", urls })).catch(() => {});
-  }, [jobId, formTemplateId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId, formTemplateId, extra.join("|")]);
   return null;
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { FORM_TEMPLATES, missingRequired, type FormTemplate } from "@/lib/forms/templates";
+import { FORM_TEMPLATES, missingRequired, type JobFormId } from "@/lib/forms/templates";
 import { acceptClientTime } from "@/lib/client-time";
 
 // Saves a draft (every step) or the finished form (complete = true). A finished
@@ -16,7 +16,7 @@ export async function saveJobForm(
   // Ora reală de pe telefon (formular completat fără semnal și trimis mai târziu).
   at?: string
 ): Promise<{ ok: true } | { error: string; missing?: string[] }> {
-  const template = FORM_TEMPLATES[templateId as FormTemplate["id"]];
+  const template = FORM_TEMPLATES[templateId as JobFormId];
   if (!template) return { error: "Formular necunoscut." };
   // Keep the payload small and plain: this lands in a jsonb column.
   if (JSON.stringify(data).length > 60_000) return { error: "Formularul e prea mare." };

@@ -123,3 +123,54 @@ export async function updateGasSettings(_prev: State, formData: FormData): Promi
   revalidatePath("/gaze");
   return { success: "Termene salvate." };
 }
+
+// ---------- fișe de evidență: înregistrare la operator și predare către client ----------
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+export async function markRecordRegistered(formData: FormData) {
+  const { organization } = await context();
+  const id = String(formData.get("id") ?? "");
+  const no = String(formData.get("no") ?? "").trim().slice(0, 80);
+  const on = String(formData.get("on") ?? "") || todayInOrgTimeZone();
+  if (!UUID.test(id) || !ISO_DATE.test(on)) return;
+  const supabase = await createClient();
+  await supabase.from("gas_records").update({ os_registered_on: on, os_registration_no: no || null }).eq("id", id).eq("organization_id", organization.id).not("completed_at", "is", null);
+  revalidatePath("/gaze/fise");
+  revalidatePath(`/fise-gaze/${id}`);
+}
+
+export async function markRecordDelivered(formData: FormData) {
+  const { organization } = await context();
+  const id = String(formData.get("id") ?? "");
+  const on = String(formData.get("on") ?? "") || todayInOrgTimeZone();
+  if (!UUID.test(id) || !ISO_DATE.test(on)) return;
+  const supabase = await createClient();
+  await supabase.from("gas_records").update({ client_delivered_on: on }).eq("id", id).eq("organization_id", organization.id).not("os_registered_on", "is", null);
+  revalidatePath("/gaze/fise");
+  revalidatePath(`/fise-gaze/${id}`);
+}
+
+/** O lucrare „pe bloc”: tehnicianul vede pe telefon lista apartamentelor. */
+export async function linkJobToBuilding(formData: FormData) {
+  const { organization } = await context();
+  const buildingId = String(formData.get("buildingId") ?? "");
+  const jobId = String(formData.get("jobId") ?? "");
+  if (!UUID.test(buildingId) || !UUID.test(jobId)) return;
+  const supabase = await createClient();
+  const { data: building } = await supabase.from("gas_buildings").select("id").eq("id", buildingId).eq("organization_id", organization.id).maybeSingle();
+  if (!building) return;
+  await supabase.from("jobs").update({ gas_building_id: buildingId, domain: "gaze" }).eq("id", jobId).eq("organization_id", organization.id);
+  revalidatePath(`/gaze/${buildingId}`);
+  revalidatePath(`/lucrari/${jobId}`);
+}
+
+export async function unlinkJobFromBuilding(formData: FormData) {
+  const { organization } = await context();
+  const jobId = String(formData.get("jobId") ?? "");
+  const buildingId = String(formData.get("buildingId") ?? "");
+  if (!UUID.test(jobId)) return;
+  const supabase = await createClient();
+  await supabase.from("jobs").update({ gas_building_id: null }).eq("id", jobId).eq("organization_id", organization.id);
+  if (UUID.test(buildingId)) revalidatePath(`/gaze/${buildingId}`);
+}

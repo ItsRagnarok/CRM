@@ -8,7 +8,7 @@ import { todayInOrgTimeZone } from "@/lib/date";
 import { CONTACT_STATUSES, dueText, unitDue } from "@/lib/gas";
 import { LEVEL_STYLE } from "@/lib/compliance";
 import { ImportForm, UnitForm } from "../gas-forms";
-import { deleteBuilding, deleteUnit, markUnitDone, updateUnitStatus } from "../actions";
+import { deleteBuilding, deleteUnit, linkJobToBuilding, markUnitDone, unlinkJobFromBuilding, updateUnitStatus } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -32,9 +32,11 @@ export default async function BuildingPage({ params, searchParams }: { params: P
   const supabase = await createClient();
   const today = todayInOrgTimeZone();
   const settings = { inspectionMonths: organization.gas_inspection_months, revisionMonths: organization.gas_revision_months };
-  const [{ data: building }, { data: units }] = await Promise.all([
+  const [{ data: building }, { data: units }, { data: linkedJobs }, { data: openJobs }] = await Promise.all([
     supabase.from("gas_buildings").select("id, name, address").eq("id", id).eq("organization_id", organization.id).maybeSingle(),
     supabase.from("gas_units").select("*").eq("building_id", id).eq("organization_id", organization.id).limit(5000),
+    supabase.from("jobs").select("id, display_number, title, status, scheduled_date").eq("gas_building_id", id).eq("organization_id", organization.id).order("scheduled_date", { ascending: false }).limit(20),
+    supabase.from("jobs").select("id, display_number, title, scheduled_date").eq("organization_id", organization.id).is("gas_building_id", null).not("status", "in", "(finalizata,anulata)").order("scheduled_date", { ascending: false }).limit(200),
   ]);
   if (!building) notFound();
 
@@ -63,6 +65,37 @@ export default async function BuildingPage({ params, searchParams }: { params: P
         )}
       </div>
 
+      <section className="rounded-2xl border border-border bg-white p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-[15px] font-bold">Lucrări pe acest bloc</h2>
+            <p className="text-[12.5px] text-muted">Tehnicianul unei lucrări legate vede pe telefon lista apartamentelor: fișă, absent, refuz, altă zi. Totul se scrie aici, în scadențar.</p>
+          </div>
+          {!readOnly && (openJobs ?? []).length > 0 && (
+            <form action={linkJobToBuilding} className="flex flex-wrap items-center gap-2">
+              <input type="hidden" name="buildingId" value={id} />
+              <select name="jobId" required aria-label="Lucrarea de legat" className="max-w-[320px] rounded-lg border border-[#d0d5dd] px-2 py-1.5 text-[13px]">
+                {(openJobs ?? []).map((j) => <option key={j.id} value={j.id}>#{j.display_number} · {j.title} · {fmt(j.scheduled_date)}</option>)}
+              </select>
+              <button className="rounded-lg bg-electric px-3 py-1.5 text-[13px] font-bold">Leagă de bloc</button>
+            </form>
+          )}
+        </div>
+        {(linkedJobs ?? []).length > 0 && (
+          <ul className="mt-3 divide-y divide-[#f2f4f7] text-[13.5px]">
+            {(linkedJobs ?? []).map((j) => (
+              <li key={j.id} className="flex flex-wrap items-center gap-3 py-2">
+                <Link href={`/lucrari/${j.id}`} className="font-semibold text-electric">#{j.display_number} {j.title}</Link>
+                <span className="text-xs text-muted">{fmt(j.scheduled_date)}</span>
+                {!readOnly && (
+                  <form action={unlinkJobFromBuilding} className="ml-auto"><input type="hidden" name="jobId" value={j.id} /><input type="hidden" name="buildingId" value={id} /><button className="text-xs font-semibold text-muted">Dezleagă</button></form>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="flex flex-wrap gap-2">
         {FILTERS.map((f) => <Link key={f.id} href={link(f.id, scara)} className={`rounded-full border px-3.5 py-1.5 text-[13px] font-bold ${filter === f.id ? "border-[#1f2024] bg-[#1f2024] text-white" : "border-border bg-white text-[#344054]"}`}>{f.label}</Link>)}
         {stairs.length > 1 && <span className="mx-1 self-center text-muted">·</span>}
@@ -70,10 +103,10 @@ export default async function BuildingPage({ params, searchParams }: { params: P
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-white">
-        <table className="w-full min-w-[980px] text-left text-[13.5px]">
-          <thead><tr className="border-b border-border text-[11.5px] uppercase tracking-wide text-muted"><th className="px-3 py-3">Sc.</th><th className="px-3 py-3">Ap.</th><th className="px-3 py-3">Locatar</th><th className="px-3 py-3">Ultima verificare</th><th className="px-3 py-3">Ultima revizie</th><th className="px-3 py-3">Următoarea scadență</th><th className="px-3 py-3">Contact</th><th className="px-3 py-3 text-right">Acțiuni</th></tr></thead>
+        <table className="w-full min-w-[1100px] text-left text-[13.5px]">
+          <thead><tr className="border-b border-border text-[11.5px] uppercase tracking-wide text-muted"><th className="px-3 py-3">Sc.</th><th className="px-3 py-3">Ap.</th><th className="px-3 py-3">Locatar</th><th className="px-3 py-3">Ultima verificare</th><th className="px-3 py-3">Ultima revizie</th><th className="px-3 py-3">Racord / detector</th><th className="px-3 py-3">Următoarea scadență</th><th className="px-3 py-3">Contact</th><th className="px-3 py-3 text-right">Acțiuni</th></tr></thead>
           <tbody>
-            {shown.length === 0 && <tr><td colSpan={8} className="px-4 py-10 text-center text-muted">{rows.length ? "Niciun apartament pentru filtrul ales." : "Niciun apartament încă. Lipește lista din Excel mai jos."}</td></tr>}
+            {shown.length === 0 && <tr><td colSpan={9} className="px-4 py-10 text-center text-muted">{rows.length ? "Niciun apartament pentru filtrul ales." : "Niciun apartament încă. Lipește lista din Excel mai jos."}</td></tr>}
             {shown.map((r) => (
               <tr key={r.id} className="border-b border-[#f2f4f7] align-top last:border-0">
                 <td className="px-3 py-3">{r.stair || "—"}</td>
@@ -81,6 +114,14 @@ export default async function BuildingPage({ params, searchParams }: { params: P
                 <td className="px-3 py-3">{r.owner_name ?? "—"}{r.phone && <a href={`tel:${r.phone}`} className="block text-xs font-semibold text-electric">{r.phone}</a>}</td>
                 <td className="px-3 py-3 tabular-nums">{fmt(r.last_inspection_on)}</td>
                 <td className="px-3 py-3 tabular-nums">{fmt(r.last_revision_on)}</td>
+                <td className="px-3 py-3 text-xs tabular-nums">
+                  {r.hose_valid_until || r.detector_valid_until ? (
+                    <>
+                      <div className={r.hose_valid_until && r.hose_valid_until < today ? "font-bold text-danger" : ""}>Racord: {fmt(r.hose_valid_until)}</div>
+                      <div className={r.detector_valid_until && r.detector_valid_until < today ? "font-bold text-danger" : ""}>Detector: {fmt(r.detector_valid_until)}</div>
+                    </>
+                  ) : <span className="text-muted">—</span>}
+                </td>
                 <td className="px-3 py-3"><span className={`rounded-full px-2.5 py-1 text-[12px] font-bold ${r.due.level === "unknown" ? "bg-neutral-bg text-neutral" : LEVEL_STYLE[r.due.level]}`}>{dueText(r.due)}</span>{r.due.kind && <div className="mt-1 text-xs text-muted">{r.due.kind} · {fmt(r.due.dueOn)}</div>}</td>
                 <td className="px-3 py-3">
                   {readOnly ? <span>{CONTACT_STATUSES.find((s) => s.id === r.contact_status)?.label}</span> : (

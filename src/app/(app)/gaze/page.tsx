@@ -18,9 +18,10 @@ export default async function GazePage() {
   const today = todayInOrgTimeZone();
   const settings = { inspectionMonths: organization.gas_inspection_months, revisionMonths: organization.gas_revision_months };
 
-  const [{ data: buildings }, { data: units }] = await Promise.all([
+  const [{ data: buildings }, { data: units }, { count: pendingRecords }] = await Promise.all([
     supabase.from("gas_buildings").select("id, name, address").eq("organization_id", organization.id).order("name"),
     supabase.from("gas_units").select("building_id, last_inspection_on, last_revision_on, contact_status").eq("organization_id", organization.id).limit(20000),
+    supabase.from("gas_records").select("id", { count: "exact", head: true }).eq("organization_id", organization.id).not("completed_at", "is", null).is("os_registered_on", null),
   ]);
 
   const stats = new Map<string, { total: number; overdue: number; soon: number; unknown: number; scheduled: number }>();
@@ -39,9 +40,17 @@ export default async function GazePage() {
 
   return (
     <div className="mx-auto w-full max-w-[1100px] space-y-5 p-6">
-      <div>
-        <h1 className="text-[22px] font-extrabold text-foreground">Gaze · scadențar</h1>
-        <p className="mt-1 text-sm text-muted">Pe bloc, scară și apartament: cine are verificarea sau revizia scadentă, cine e programat, cine nu răspunde.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-extrabold text-foreground">Gaze · scadențar</h1>
+          <p className="mt-1 text-sm text-muted">Pe bloc, scară și apartament: cine are verificarea sau revizia scadentă, cine e programat, cine nu răspunde.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/gaze/fise" className="rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13px] font-bold">
+            Fișe de evidență{pendingRecords ? <span className="ml-1.5 rounded-full bg-warning-bg px-2 py-0.5 text-[11.5px] text-warning">{pendingRecords} de înregistrat</span> : null}
+          </Link>
+          <Link href="/gaze/registru" className="rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13px] font-bold">Registrul anual</Link>
+        </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-4">

@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { FORM_TEMPLATES, type FormTemplate } from "@/lib/forms/templates";
+import { FORM_TEMPLATES, type JobFormId } from "@/lib/forms/templates";
 import { FormRunner } from "./form-runner";
 
 export default async function JobFormPage({ params }: { params: Promise<{ id: string; template: string }> }) {
   const { id, template: templateId } = await params;
-  const template = FORM_TEMPLATES[templateId as FormTemplate["id"]];
+  const template = FORM_TEMPLATES[templateId as JobFormId];
   if (!template) notFound();
 
   const { organization } = await requireSessionContext();

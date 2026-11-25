@@ -98,6 +98,8 @@ const OFFICE_PAGES = [
   ["/echipe", "Echipe"],
   ["/harta", "Echipe pe teren"],
   ["/gaze", "Gaze"],
+  ["/gaze/fise", "Fișe de evidență"],
+  ["/gaze/registru", "Registrul de evidență"],
   ["/fotovoltaic", "Fotovoltaic"],
   ["/electric", "Electric"],
   ["/clienti", "Client nou"],
@@ -176,7 +178,8 @@ const run = async () => {
   // Date demo vizibile (dacă dispar, ceva a stricat interogările)
   await go(ap, "/lucrari");
   t = await text(ap);
-  ok("lucrări: compania demo are 100 de lucrări", /Toate · 100\b/.test(t), (t.match(/Toate · \d+/) || [""])[0]);
+  // 100 de lucrări din seed + cele 2 de gaze (bloc și casă) adăugate pentru fișa de evidență.
+  ok("lucrări: compania demo are cel puțin 100 de lucrări", Number((t.match(/Toate · (\d+)/) || [])[1] ?? 0) >= 100, (t.match(/Toate · \d+/) || [""])[0]);
   await go(ap, "/foaie-parcurs");
   ok("foaie de parcurs: mașinile demo", (await text(ap)).includes("CJ 41 DMO"));
   await go(ap, "/facturare");

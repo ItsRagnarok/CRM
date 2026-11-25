@@ -2,6 +2,7 @@
 
 import { uploadJobPhoto, saveSignature, syncJobEvent, syncFinalizeJob } from "@/app/mobil/lucrari/[id]/actions";
 import { saveJobForm } from "@/app/mobil/lucrari/[id]/formular/actions";
+import { recordGasVisit, saveGasRecord } from "@/app/mobil/lucrari/[id]/gaze/actions";
 import { enqueue, isNetworkError, newOpId, type QueuedOp, type Sender } from "./queue";
 
 /** Trimite o operație la server. Același drum și pentru „acum”, și pentru coada offline. */
@@ -34,6 +35,12 @@ export const sendOp: Sender = async (id, op) => {
       const r = await saveJobForm(op.jobId, op.template, op.data, op.complete, op.at);
       return "ok" in r ? { ok: true } : { error: r.missing?.length ? `${r.error} (${r.missing.slice(0, 3).join(", ")})` : r.error };
     }
+    case "gas": {
+      const r = await saveGasRecord({ jobId: op.jobId, unitId: op.unitId, kind: op.recordKind, data: op.data, complete: op.complete, at: op.at });
+      return "ok" in r ? { ok: true } : { error: r.missing?.length ? `${r.error} (${r.missing.slice(0, 3).join(", ")})` : r.error };
+    }
+    case "gas_visit":
+      return recordGasVisit({ opId: id, jobId: op.jobId, unitId: op.unitId, outcome: op.outcome, rescheduleOn: op.rescheduleOn, note: op.note, at: op.at });
   }
 };
 

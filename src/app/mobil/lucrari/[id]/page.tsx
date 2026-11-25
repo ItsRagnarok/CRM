@@ -68,7 +68,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const { data: job } = await supabase
     .from("jobs")
     .select(
-      "id, display_number, title, description, admin_message, status, priority, domain, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
+      "id, display_number, title, description, admin_message, status, priority, domain, gas_building_id, mobile_stage, require_arrival_photo, require_during_photo, require_final_photo, photo_guidance_during, scheduled_date, start_time, end_time, arrived_at, work_ended_at, observations, clients(name, phone), locations(address, lat, lng)"
     )
     .eq("id", id)
     .eq("organization_id", organization.id)
@@ -87,8 +87,10 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
   const isDone = job.status === "finalizata";
   const current: Step | null = isDone ? null : isOnSite ? "loc" : isTraveling ? "drum" : "pregatire";
 
-  const formTemplate = job.domain ? FORM_TEMPLATES[TEMPLATE_BY_DOMAIN[job.domain]] : null;
-  const [photos, expenses, usage, notes, signatures, purchases, required, jobForm] = await Promise.all([
+  // Gazele au fișa de evidență proprie (Ord. 179): pe bloc, o fișă pe apartament; altfel, una pe lucrare.
+  const isGas = job.domain === "gaze";
+  const formTemplate = job.domain && !isGas ? FORM_TEMPLATES[TEMPLATE_BY_DOMAIN[job.domain]] : null;
+  const [photos, expenses, usage, notes, signatures, purchases, required, jobForm, gasRecords, gasUnits] = await Promise.all([
     supabase.from("photos").select("category").eq("job_id", id),
     supabase.from("expenses").select("id", { count: "exact", head: true }).eq("job_id", id).eq("submitted_by", profile.id),
     supabase.from("material_usage").select("id", { count: "exact", head: true }).eq("job_id", id),
@@ -106,7 +108,14 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
     formTemplate
       ? supabase.from("job_forms").select("completed_at").eq("job_id", id).eq("template", formTemplate.id).maybeSingle()
       : Promise.resolve({ data: null }),
+    isGas ? supabase.from("gas_records").select("unit_id, kind, completed_at").eq("job_id", id) : Promise.resolve({ data: [] as { unit_id: string | null; kind: string; completed_at: string | null }[] }),
+    isGas && job.gas_building_id
+      ? supabase.from("gas_units").select("id", { count: "exact", head: true }).eq("building_id", job.gas_building_id)
+      : Promise.resolve({ count: 0 }),
   ]);
+  const gasHere = (gasRecords.data ?? []).find((r) => r.unit_id === null);
+  const gasDoneUnits = (gasRecords.data ?? []).filter((r) => r.unit_id && r.completed_at).length;
+  const missingGasRecord = isGas && !job.gas_building_id && !gasHere?.completed_at;
   const formDone = Boolean(jobForm.data?.completed_at);
   const missingForm = Boolean(formTemplate) && !formDone;
 
@@ -264,6 +273,28 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             <div className="m-r" style={{ gap: 10 }}>
               <QuickPhotoButton jobId={id} category={defaultPhotoTag({ arrived: isOnSite, working: isWorking, beforeCount: count("before") })} />
             </div>
+            {isGas && job.gas_building_id && (
+              <Section
+                href={`/mobil/lucrari/${id}/bloc`}
+                icon={ClipboardList}
+                title="Apartamentele din bloc"
+                detail={`${gasDoneUnits} din ${gasUnits.count ?? 0} făcute · fișă, absent, refuz, altă zi`}
+                status={<span className="m-pl ac">{gasDoneUnits}/{gasUnits.count ?? 0}</span>}
+              />
+            )}
+            {isGas && !job.gas_building_id && (
+              <>
+                <Section
+                  href={`/mobil/lucrari/${id}/gaze/loc${gasHere ? "" : "?tip=verificare"}`}
+                  icon={FileText}
+                  title={gasHere?.kind === "revizie" ? "Fișa de evidență · revizie" : "Fișa de evidență · verificare"}
+                  detail={gasHere?.completed_at ? "Încheiată și trimisă la birou" : "Ord. ANRE 179/2015 · obligatorie la închidere"}
+                  required={!gasHere?.completed_at}
+                  status={gasHere?.completed_at ? <span className="m-pl ok"><Check className="m-i" />Gata</span> : <span className="m-pl wr">{gasHere ? "Începută" : "De completat"}</span>}
+                />
+                {!gasHere && <Link href={`/mobil/lucrari/${id}/gaze/loc?tip=revizie`} className="m-link m-sm" style={{ color: "var(--m-mu)", paddingLeft: 4 }}>E revizie, nu verificare? Deschide fișa de revizie →</Link>}
+              </>
+            )}
             {formTemplate && (
               <Section
                 href={`/mobil/lucrari/${id}/formular/${formTemplate.id}`}
@@ -337,11 +368,11 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             requireDuring={Boolean(job.require_during_photo)}
             requireFinal={Boolean(job.require_final_photo)}
             serverPhotos={{ before: count("before"), during: count("during"), after: count("after") }}
-            missingFormLabel={missingForm ? formTemplate!.label : null}
+            missingFormLabel={missingForm ? formTemplate!.label : missingGasRecord ? "Fișa de evidență gaze" : null}
           />
         </div>
       )}
-      {!isDone && <WarmJobPages jobId={job.id} formTemplateId={formTemplate?.id ?? null} />}
+      {!isDone && <WarmJobPages jobId={job.id} formTemplateId={formTemplate?.id ?? null} extra={isGas ? [job.gas_building_id ? `/mobil/lucrari/${job.id}/bloc` : `/mobil/lucrari/${job.id}/gaze/loc${gasHere ? "" : "?tip=verificare"}`] : []} />}
     </div>
   );
 }

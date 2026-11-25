@@ -301,6 +301,118 @@ export type Database = {
           { foreignKeyName: "gas_buildings_client_id_fkey", columns: ["client_id"], isOneToOne: false, referencedRelation: "clients", referencedColumns: ["id"] },
         ]
       }
+      gas_records: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          unit_id: string | null
+          kind: "verificare" | "revizie"
+          year: number | null
+          number: number | null
+          drawn_up_on: string | null
+          data: Json
+          conform: boolean | null
+          gas_interrupted: boolean
+          completed_by: string | null
+          completed_at: string | null
+          notice_due_on: string | null
+          os_registered_on: string | null
+          os_registration_no: string | null
+          client_delivered_on: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          unit_id?: string | null
+          kind: "verificare" | "revizie"
+          year?: number | null
+          number?: number | null
+          drawn_up_on?: string | null
+          data?: Json
+          conform?: boolean | null
+          gas_interrupted?: boolean
+          completed_by?: string | null
+          completed_at?: string | null
+          notice_due_on?: string | null
+          os_registered_on?: string | null
+          os_registration_no?: string | null
+          client_delivered_on?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          unit_id?: string | null
+          kind?: "verificare" | "revizie"
+          year?: number | null
+          number?: number | null
+          drawn_up_on?: string | null
+          data?: Json
+          conform?: boolean | null
+          gas_interrupted?: boolean
+          completed_by?: string | null
+          completed_at?: string | null
+          notice_due_on?: string | null
+          os_registered_on?: string | null
+          os_registration_no?: string | null
+          client_delivered_on?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "gas_records_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+          { foreignKeyName: "gas_records_unit_id_fkey", columns: ["unit_id"], isOneToOne: false, referencedRelation: "gas_units", referencedColumns: ["id"] },
+          { foreignKeyName: "gas_records_completed_by_fkey", columns: ["completed_by"], isOneToOne: false, referencedRelation: "profiles", referencedColumns: ["id"] },
+        ]
+      }
+      gas_visits: {
+        Row: {
+          id: string
+          organization_id: string
+          job_id: string
+          unit_id: string
+          outcome: "absent" | "refuz" | "reprogramat"
+          reschedule_on: string | null
+          note: string | null
+          op_id: string | null
+          created_by: string | null
+          occurred_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          job_id: string
+          unit_id: string
+          outcome: "absent" | "refuz" | "reprogramat"
+          reschedule_on?: string | null
+          note?: string | null
+          op_id?: string | null
+          created_by?: string | null
+          occurred_at?: string
+        }
+        Update: {
+          id?: string
+          organization_id?: string
+          job_id?: string
+          unit_id?: string
+          outcome?: "absent" | "refuz" | "reprogramat"
+          reschedule_on?: string | null
+          note?: string | null
+          op_id?: string | null
+          created_by?: string | null
+          occurred_at?: string
+        }
+        Relationships: [
+          { foreignKeyName: "gas_visits_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+          { foreignKeyName: "gas_visits_unit_id_fkey", columns: ["unit_id"], isOneToOne: false, referencedRelation: "gas_units", referencedColumns: ["id"] },
+        ]
+      }
       gas_units: {
         Row: {
           id: string
@@ -314,6 +426,10 @@ export type Database = {
           last_revision_on: string | null
           contact_status: string
           scheduled_on: string | null
+          chimney_doc_on: string | null
+          iscir_doc_on: string | null
+          hose_valid_until: string | null
+          detector_valid_until: string | null
           notes: string | null
           created_at: string
         }
@@ -329,6 +445,10 @@ export type Database = {
           last_revision_on?: string | null
           contact_status?: string
           scheduled_on?: string | null
+          chimney_doc_on?: string | null
+          iscir_doc_on?: string | null
+          hose_valid_until?: string | null
+          detector_valid_until?: string | null
           notes?: string | null
           created_at?: string
         }
@@ -344,6 +464,10 @@ export type Database = {
           last_revision_on?: string | null
           contact_status?: string
           scheduled_on?: string | null
+          chimney_doc_on?: string | null
+          iscir_doc_on?: string | null
+          hose_valid_until?: string | null
+          detector_valid_until?: string | null
           notes?: string | null
           created_at?: string
         }
@@ -1742,6 +1866,7 @@ export type Database = {
       }
       jobs: {
         Row: {
+          gas_building_id: string | null
           admin_message: string | null
           arrived_at: string | null
           client_id: string
@@ -1777,6 +1902,7 @@ export type Database = {
           work_started_at: string | null
         }
         Insert: {
+          gas_building_id?: string | null
           admin_message?: string | null
           arrived_at?: string | null
           client_id: string
@@ -1812,6 +1938,7 @@ export type Database = {
           work_started_at?: string | null
         }
         Update: {
+          gas_building_id?: string | null
           admin_message?: string | null
           arrived_at?: string | null
           client_id?: string
@@ -1847,6 +1974,7 @@ export type Database = {
           work_started_at?: string | null
         }
         Relationships: [
+          { foreignKeyName: "jobs_gas_building_id_fkey", columns: ["gas_building_id"], isOneToOne: false, referencedRelation: "gas_buildings", referencedColumns: ["id"] },
           {
             foreignKeyName: "jobs_client_id_fkey"
             columns: ["client_id"]

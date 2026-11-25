@@ -1,14 +1,125 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Plus, Trash2 } from "lucide-react";
-import { missingRequired, type FieldDef, type FormTemplate } from "@/lib/forms/templates";
+import { ChevronLeft, Eraser, Plus, Trash2 } from "lucide-react";
+import { isFieldVisible, missingRequired, type FieldDef, type FormTemplate, type OpsValue } from "@/lib/forms/templates";
 import { runOrQueue } from "@/lib/offline/send";
+import type { QueuedOp } from "@/lib/offline/queue";
 
 type Row = Record<string, string>;
 type Data = Record<string, unknown>;
+
+const OPS_CHOICES = [
+  { v: "da", label: "Da" },
+  { v: "nu", label: "Nu" },
+  { v: "nc", label: "Nu e cazul" },
+] as const;
+
+/** Operațiunile fișei: da / nu / nu e cazul, cu motiv obligatoriu la „Nu”. */
+function OpsField({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: OpsValue) => void }) {
+  const ops = (value ?? {}) as OpsValue;
+  const set = (n: string, patch: { v?: "da" | "nu" | "nc"; j?: string }) => onChange({ ...ops, [n]: { ...ops[n], ...patch } });
+  const items = def.items ?? [];
+  const done = items.filter((_, i) => ops[String(i + 1)]?.v).length;
+  return (
+    <div className="m-col" style={{ gap: 12 }}>
+      <div className="m-r" style={{ gap: 8 }}>
+        <span className="m-mu m-sm m-fl">{done} din {items.length} completate. {def.hint}</span>
+        <button
+          type="button"
+          className="m-pl"
+          onClick={() => onChange(Object.fromEntries(items.map((_, i) => [String(i + 1), ops[String(i + 1)]?.v ? ops[String(i + 1)] : { v: "da" as const }])))}
+        >
+          Restul: Da
+        </button>
+      </div>
+      {items.map((text, i) => {
+        const n = String(i + 1);
+        const cur = ops[n];
+        return (
+          <div key={n} className="m-col" style={{ gap: 8, paddingTop: i ? 12 : 0, borderTop: i ? "1px solid var(--m-ln)" : "none" }}>
+            <div style={{ fontSize: 14, lineHeight: 1.4 }}><b>{n}.</b> {text}</div>
+            <div style={{ display: "flex", gap: 6 }}>
+              {OPS_CHOICES.map((c) => {
+                const on = cur?.v === c.v;
+                const tone = c.v === "da" ? { background: "var(--m-ok-bg)", borderColor: "#86d39a", color: "var(--m-ok)" } : c.v === "nu" ? { background: "var(--m-bad-bg)", borderColor: "#f0a3a3", color: "var(--m-bad)" } : { background: "var(--m-chip)", borderColor: "var(--m-mu)", color: "var(--m-tx, inherit)" };
+                return (
+                  <button key={c.v} type="button" aria-pressed={on} onClick={() => set(n, { v: c.v })} className="m-chip" style={{ flex: 1, justifyContent: "center", padding: "11px 4px", fontSize: 14, fontWeight: 800, ...(on ? tone : {}) }}>
+                    {c.label}
+                  </button>
+                );
+              })}
+            </div>
+            {cur?.v === "nu" && (
+              <input className="m-in" aria-label={`Motivul pentru operațiunea ${n}`} placeholder="De ce nu s-a efectuat (obligatoriu)" value={cur.j ?? ""} onChange={(e) => set(n, { j: e.target.value })} />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Semnătură desenată pe ecran, păstrată ca imagine mică (PNG) în fișă. */
+function SignatureField({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: string) => void }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const drawing = useRef(false);
+  const last = useRef<{ x: number; y: number } | null>(null);
+  const signed = typeof value === "string" && value.startsWith("data:image/");
+  useEffect(() => {
+    const c = ref.current;
+    if (!c || signed) return;
+    const rect = c.getBoundingClientRect();
+    c.width = Math.round(rect.width);
+    c.height = Math.round(rect.height);
+  }, [signed]);
+  const point = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const r = ref.current!.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  };
+  function finish() {
+    drawing.current = false;
+    last.current = null;
+    const c = ref.current;
+    if (c) onChange(c.toDataURL("image/png"));
+  }
+  return (
+    <div className="m-fld">
+      <span>{def.label}{def.required ? "" : " (opțional)"}</span>
+      {signed ? (
+        <div className="m-col" style={{ gap: 6 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={value as string} alt={def.label} style={{ height: 110, width: "100%", objectFit: "contain", background: "#fff", borderRadius: 12, border: "1px solid var(--m-ln)" }} />
+          <button type="button" className="m-link m-sm" style={{ display: "flex", gap: 6, alignItems: "center", color: "var(--m-mu)" }} onClick={() => onChange("")}>
+            <Eraser style={{ width: 15, height: 15 }} /> Semnează din nou
+          </button>
+        </div>
+      ) : (
+        <canvas
+          ref={ref}
+          aria-label={def.label}
+          style={{ height: 150, width: "100%", background: "#fff", borderRadius: 12, border: "1.5px dashed var(--m-ln)", touchAction: "none" }}
+          onPointerDown={(e) => { e.preventDefault(); ref.current?.setPointerCapture(e.pointerId); drawing.current = true; last.current = point(e); }}
+          onPointerMove={(e) => {
+            if (!drawing.current) return;
+            const ctx = ref.current!.getContext("2d");
+            const p = point(e);
+            if (ctx && last.current) {
+              ctx.strokeStyle = "#101828"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+              ctx.beginPath(); ctx.moveTo(last.current.x, last.current.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+            }
+            last.current = p;
+          }}
+          onPointerUp={finish}
+          onPointerCancel={finish}
+        />
+      )}
+      {def.hint && <div className="m-mu" style={{ fontSize: 12.5 }}>{def.hint}</div>}
+    </div>
+  );
+}
 
 function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChange: (v: string | boolean) => void }) {
   const id = `f-${def.key}`;
@@ -39,10 +150,11 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
     return (
       <div className="m-fld">
         <span>{def.label}</span>
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: def.options!.length > 3 ? "wrap" : undefined }}>
           {def.options!.map((o) => {
             const on = value === o.value;
-            const good = o.value === "conform";
+            const good = o.value === "conform" || o.value === "da" || o.value === "admis";
+            const bad = o.value === "neconform" || o.value === "nu" || o.value === "respins";
             return (
               <button
                 key={o.value}
@@ -50,8 +162,8 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
                 onClick={() => onChange(o.value)}
                 className="m-chip"
                 style={{
-                  flex: 1, justifyContent: "center", padding: "15px 8px", fontSize: 15.5, fontWeight: 800,
-                  ...(on ? (good ? { background: "var(--m-ok-bg)", borderColor: "#86d39a", color: "var(--m-ok)" } : { background: "var(--m-bad-bg)", borderColor: "#f0a3a3", color: "var(--m-bad)" }) : {}),
+                  flex: def.options!.length > 3 ? "1 1 40%" : 1, justifyContent: "center", padding: "15px 8px", fontSize: 15.5, fontWeight: 800,
+                  ...(on ? (good ? { background: "var(--m-ok-bg)", borderColor: "#86d39a", color: "var(--m-ok)" } : bad ? { background: "var(--m-bad-bg)", borderColor: "#f0a3a3", color: "var(--m-bad)" } : { background: "var(--m-acs)", borderColor: "var(--m-ac)", color: "var(--m-aci)" }) : {}),
                 }}
               >
                 {o.label}
@@ -93,8 +205,18 @@ function Field({ def, value, onChange }: { def: FieldDef; value: unknown; onChan
 }
 
 export function FormRunner({
-  jobId, jobLabel, template, initialData, alreadyCompleted,
-}: { jobId: string; jobLabel: string; template: FormTemplate; initialData: Data; alreadyCompleted: boolean }) {
+  jobId, jobLabel, template, initialData, alreadyCompleted, buildOp, doneHref, lockedNotice,
+}: {
+  jobId: string;
+  jobLabel: string;
+  template: FormTemplate;
+  initialData: Data;
+  alreadyCompleted: boolean;
+  /** Altă destinație decât job_forms (ex. fișa de gaze). */
+  buildOp?: (data: Data, complete: boolean, at: string) => QueuedOp;
+  doneHref?: string;
+  lockedNotice?: string | null;
+}) {
   const router = useRouter();
   const [data, setData] = useState<Data>(initialData);
   const [step, setStep] = useState(0);
@@ -102,6 +224,13 @@ export function FormRunner({
   const [error, setError] = useState<string | null>(null);
   const [missing, setMissing] = useState<string[]>([]);
   const current = template.steps[step];
+  // Eroarea apare sub formular: o aducem în ecran. La pas nou, începem de sus.
+  useEffect(() => {
+    if (error) document.querySelector(".m-bd [role=alert]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [error, missing]);
+  useEffect(() => {
+    document.querySelector(".m-bd")?.scrollTo({ top: 0 });
+  }, [step]);
   const last = step === template.steps.length - 1;
   const set = (key: string, v: unknown) => setData((d) => ({ ...d, [key]: v }));
 
@@ -135,7 +264,9 @@ export function FormRunner({
       setBusy(false);
       return true;
     }
-    const result = await runOrQueue({ kind: "form", jobId, template: template.id, label: template.label, data: payload, complete, at: new Date().toISOString() });
+    const at = new Date().toISOString();
+    const op: QueuedOp = buildOp ? buildOp(payload, complete, at) : { kind: "form", jobId, template: template.id, label: template.label, data: payload, complete, at };
+    const result = await runOrQueue(op);
     setBusy(false);
     if (result.status === "error") {
       setError(result.error);
@@ -150,8 +281,17 @@ export function FormRunner({
     const payload = rep && !Array.isArray(data[rep.key]) ? { ...data, [rep.key]: rows } : data;
     if (payload !== data) setData(payload);
     if (last) {
-      if (await persist(payload, true)) router.push(`/mobil/lucrari/${jobId}`);
+      if (await persist(payload, true)) router.push(doneHref ?? `/mobil/lucrari/${jobId}`);
     } else {
+      // Fiecare pas se verifică pe loc: tehnicianul află acum ce lipsește, nu abia la semnături.
+      const stepMissing = missingRequired({ ...template, steps: [current] }, payload);
+      if (stepMissing.length) {
+        setError("Completează ce lipsește la acest pas.");
+        setMissing(stepMissing);
+        return;
+      }
+      setError(null);
+      setMissing([]);
       await persist(payload, false);
       setStep((s) => s + 1);
     }
@@ -173,12 +313,19 @@ export function FormRunner({
       </div>
 
       <div className="m-bd">
-        {alreadyCompleted && step === 0 && <div className="m-note ac m-sm">Acest formular a fost deja completat. Dacă îl salvezi din nou, valorile se actualizează.</div>}
+        {lockedNotice && <div className="m-note warn m-sm">{lockedNotice}</div>}
+        {!lockedNotice && alreadyCompleted && step === 0 && <div className="m-note ac m-sm">Acest formular a fost deja completat. Dacă îl salvezi din nou, valorile se actualizează.</div>}
         <div className="m-cd m-col" style={{ gap: 14 }}>
           <div className="m-mu m-sm" style={{ marginTop: -4 }}>{jobLabel}</div>
-          {(current.fields ?? []).map((f) => (
-            <Field key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
-          ))}
+          {(current.fields ?? []).filter((f) => isFieldVisible(f, data)).map((f) =>
+            f.type === "ops" ? (
+              <OpsField key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
+            ) : f.type === "signature" ? (
+              <SignatureField key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
+            ) : (
+              <Field key={f.key} def={f} value={data[f.key]} onChange={(v) => set(f.key, v)} />
+            ),
+          )}
           {rep && (
             <>
               {rows.map((row, i) => (
@@ -225,7 +372,7 @@ export function FormRunner({
       </div>
 
       <div className="m-ft">
-        <button type="button" className="m-btn" disabled={busy} onClick={next}>
+        <button type="button" className="m-btn" disabled={busy || (Boolean(lockedNotice) && last)} onClick={next}>
           {busy ? "Se salvează…" : last ? "Salvează formularul" : "Continuă"}
         </button>
         {step > 0 && <button type="button" className="m-link" style={{ textAlign: "center", color: "var(--m-mu)" }} onClick={() => setStep((s) => s - 1)}>Înapoi</button>}
