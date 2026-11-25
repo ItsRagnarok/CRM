@@ -10,6 +10,9 @@ const norm = (host: string) => host.replace(/^www\./, "").toLowerCase();
 
 export async function POST(request: NextRequest) {
   const quiet = () => new Response(null, { status: 204 });
+  // Se numără doar vizitele de pe site-ul public (deploy-ul de producție de pe Vercel). Testele
+  // automate, serverele locale și previzualizările scriu în aceeași bază de date, dar nu sunt vizitatori.
+  if (process.env.VERCEL_ENV !== "production") return quiet();
   if (request.headers.get("dnt") === "1") return quiet();
   const origin = request.headers.get("origin");
   let originHost = "";
