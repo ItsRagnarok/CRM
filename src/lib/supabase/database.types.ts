@@ -551,6 +551,52 @@ export type Database = {
           { foreignKeyName: "electric_hidden_works_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
         ]
       }
+      time_corrections: {
+        Row: {
+          id: string
+          organization_id: string
+          profile_id: string
+          job_id: string
+          event_type: "work_start" | "work_end"
+          entry_id: string | null
+          original_at: string | null
+          requested_at: string
+          reason: string
+          status: "pending" | "approved" | "rejected"
+          reviewed_by: string | null
+          reviewed_at: string | null
+          review_note: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          organization_id: string
+          profile_id: string
+          job_id: string
+          event_type: "work_start" | "work_end"
+          entry_id?: string | null
+          original_at?: string | null
+          requested_at: string
+          reason: string
+          status?: "pending" | "approved" | "rejected"
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_note?: string | null
+          created_at?: string
+        }
+        Update: {
+          requested_at?: string
+          reason?: string
+          status?: "pending" | "approved" | "rejected"
+          reviewed_by?: string | null
+          reviewed_at?: string | null
+          review_note?: string | null
+        }
+        Relationships: [
+          { foreignKeyName: "time_corrections_job_id_fkey", columns: ["job_id"], isOneToOne: false, referencedRelation: "jobs", referencedColumns: ["id"] },
+          { foreignKeyName: "time_corrections_profile_id_fkey", columns: ["profile_id"], isOneToOne: false, referencedRelation: "profiles", referencedColumns: ["id"] },
+        ]
+      }
       compliance_items: {
         Row: {
           id: string
@@ -3174,6 +3220,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      review_time_correction: { Args: { p_id: string; p_approve: boolean; p_note?: string }; Returns: string }
       apply_booking_rotation: { Args: { p_start: string; p_end: string; p_pattern: Json }; Returns: number }
       ef_platform_mail: { Args: { operation: string; p_id?: string; config?: Json }; Returns: Json }
       _ddl_probe_fn2: { Args: never; Returns: number }

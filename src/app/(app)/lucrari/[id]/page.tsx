@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PHOTO_CATEGORY_LABELS } from "@/lib/photo-tags";
 import { notFound } from "next/navigation";
 import { requireSessionContext, isBackOfficeRole } from "@/lib/auth";
 import { StatusLinkCard } from "@/components/status-link-card";
@@ -54,11 +55,6 @@ const TABS = [
   { id: "documente", label: "Documente" },
 ] as const;
 
-const PHOTO_CATEGORY_LABELS: Record<string, string> = {
-  before: "ÎNAINTE",
-  during: "ÎN TIMPUL LUCRĂRII",
-  after: "DUPĂ",
-};
 
 const TIME_EVENT_LABELS: Record<string, string> = {
   travel_start: "Plecare spre locație",
@@ -745,7 +741,7 @@ function PhotosCard({
           {shown.map((p) => (
             <a key={p.id} href={publicUrl(p.storage_path)} target="_blank" rel="noreferrer" className="block">
               <div className="mb-1.5 text-[10.5px] font-bold text-muted-2">
-                {PHOTO_CATEGORY_LABELS[p.category] ?? p.category.toUpperCase()}
+                {(PHOTO_CATEGORY_LABELS[p.category] ?? p.category).toUpperCase()}
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={publicUrl(p.storage_path)} alt="" className="h-[100px] w-full rounded-[9px] object-cover" />

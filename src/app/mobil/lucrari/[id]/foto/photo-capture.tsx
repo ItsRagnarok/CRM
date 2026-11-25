@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera } from "lucide-react";
+import { Camera, Check, CloudOff, ImagePlus, Loader2, TriangleAlert } from "lucide-react";
 import { runOrQueue } from "@/lib/offline/send";
+import { PHOTO_CATEGORY_LABELS } from "@/lib/photo-tags";
 import { useQueuedForJob } from "../job-footer";
 
 /**
@@ -28,64 +29,131 @@ async function shrink(file: File): Promise<Blob> {
   }
 }
 
-export function PhotoCapture({ jobId, category }: { jobId: string; category: string }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  const [notice, setNotice] = useState<string | null>(null);
-  const queued = useQueuedForJob(jobId).photos(category);
+type Local = { key: string; url: string; state: "sending" | "sent" | "queued" | "error"; error?: string };
 
-  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const takenAt = new Date().toISOString();
-    setNotice(null);
-    startTransition(async () => {
-      try {
-        const blob = await shrink(file);
-        const name = blob === file ? file.name : file.name.replace(/\.[a-z0-9]+$/i, "") + ".jpg";
-        const result = await runOrQueue({ kind: "photo", jobId, category, file: blob, fileName: name || "poza.jpg", takenAt });
-        if (result.status === "error") {
-          alert(result.error);
-          return;
-        }
-        if (result.status === "queued") setNotice("Fără semnal: poza e salvată pe telefon și se trimite singură când revine semnalul.");
-        router.refresh();
-      } catch {
-        alert("Nu am putut salva poza. Încearcă din nou.");
-      } finally {
-        if (inputRef.current) inputRef.current.value = "";
+/**
+ * Încărcare în fundal: poza apare imediat pe ecran, iar tehnicianul poate face următoarea
+ * fără să aștepte. Trimiterea (sau salvarea pe telefon, fără semnal) se face în spate.
+ */
+export function usePhotoUploader(jobId: string) {
+  const router = useRouter();
+  const [items, setItems] = useState<Local[]>([]);
+  const urls = useRef<string[]>([]);
+  useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
+
+  const add = useCallback(
+    (files: File[], category: string) => {
+      for (const file of files) {
+        const key = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+        const url = URL.createObjectURL(file);
+        urls.current.push(url);
+        const takenAt = new Date().toISOString();
+        setItems((list) => [...list, { key, url, state: "sending" }]);
+        const update = (patch: Partial<Local>) => setItems((list) => list.map((i) => (i.key === key ? { ...i, ...patch } : i)));
+        void (async () => {
+          try {
+            const blob = await shrink(file);
+            const name = blob === file ? file.name : file.name.replace(/\.[a-z0-9]+$/i, "") + ".jpg";
+            const result = await runOrQueue({ kind: "photo", jobId, category, file: blob, fileName: name || "poza.jpg", takenAt });
+            if (result.status === "error") update({ state: "error", error: result.error });
+            else update({ state: result.status === "queued" ? "queued" : "sent" });
+            if (result.status === "sent") router.refresh();
+          } catch {
+            update({ state: "error", error: "Nu am putut salva poza. Încearcă din nou." });
+          }
+        })();
       }
-    });
+    },
+    [jobId, router],
+  );
+  return { items, add };
+}
+
+function LocalThumbs({ items }: { items: Local[] }) {
+  if (!items.length) return null;
+  return (
+    <div className="flex max-w-[320px] flex-wrap justify-center gap-2">
+      {items.slice(-8).map((i) => (
+        <div key={i.key} className="relative h-12 w-12 overflow-hidden rounded-[9px] bg-white/10" title={i.error}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={i.url} alt="" className="h-full w-full object-cover" />
+          <span className="absolute bottom-0.5 right-0.5 flex h-[18px] w-[18px] items-center justify-center rounded-full bg-black/70">
+            {i.state === "sending" && <Loader2 className="h-3 w-3 animate-spin text-white" />}
+            {i.state === "sent" && <Check className="h-3 w-3 text-[#8be39f]" />}
+            {i.state === "queued" && <CloudOff className="h-3 w-3 text-[#f5c27a]" />}
+            {i.state === "error" && <TriangleAlert className="h-3 w-3 text-[#ff8a80]" />}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function PhotoCapture({ jobId, category }: { jobId: string; category: string }) {
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const galleryRef = useRef<HTMLInputElement>(null);
+  const { items, add } = usePhotoUploader(jobId);
+  const queued = useQueuedForJob(jobId).photos(category);
+  const sending = items.filter((i) => i.state === "sending").length;
+  const failed = items.filter((i) => i.state === "error");
+
+  function onFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []).slice(0, 20);
+    if (files.length) add(files, category);
+    e.target.value = "";
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <label className="flex flex-col items-center gap-2">
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleChange}
-          className="hidden"
-          disabled={pending}
-        />
-        <div
-          className={`flex h-[74px] w-[74px] items-center justify-center rounded-full border-[5px] border-white/30 bg-white ${
-            pending ? "opacity-60" : ""
-          }`}
-        >
-          <Camera className="h-7 w-7 text-[#0b1530]" strokeWidth={1.8} />
-        </div>
-        <div className="text-[11px] font-semibold text-white/80">{pending ? "Se salvează…" : "Fă o poză"}</div>
-      </label>
+    <div className="flex flex-col items-center gap-3">
+      <LocalThumbs items={items} />
+      <div className="flex items-center gap-8">
+        <label className="flex flex-col items-center gap-1.5">
+          <input ref={galleryRef} type="file" accept="image/*" multiple onChange={onFiles} className="hidden" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15"><ImagePlus className="h-5 w-5 text-white" /></div>
+          <div className="text-[10.5px] font-semibold text-white/70">Din galerie</div>
+        </label>
+        <label className="flex flex-col items-center gap-2">
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" onChange={onFiles} className="hidden" />
+          <div className="flex h-[74px] w-[74px] items-center justify-center rounded-full border-[5px] border-white/30 bg-white">
+            <Camera className="h-7 w-7 text-[#0b1530]" strokeWidth={1.8} />
+          </div>
+          <div className="text-[11px] font-semibold text-white/80">Fă o poză · {PHOTO_CATEGORY_LABELS[category] ?? category}</div>
+        </label>
+        <div className="w-12" />
+      </div>
+      {sending > 0 && <div className="text-[11.5px] text-white/75">Se trimite în fundal ({sending}). Poți face în continuare poze.</div>}
       {queued > 0 && (
         <div className="max-w-[300px] text-center text-[11.5px] font-semibold text-white/85">
           {queued === 1 ? "O poză salvată pe telefon" : `${queued} poze salvate pe telefon`}, se trimit când revine semnalul.
         </div>
       )}
-      {notice && queued === 0 && <div className="max-w-[300px] text-center text-[11.5px] text-white/85">{notice}</div>}
+      {failed.length > 0 && <div role="alert" className="max-w-[300px] text-center text-[11.5px] font-semibold text-[#ff8a80]">{failed[failed.length - 1].error}</div>}
     </div>
+  );
+}
+
+/**
+ * Poză în 2 atingeri, direct din pagina lucrării: o atingere deschide camera, a doua face poza.
+ * Eticheta e aleasă după etapă (înainte / în lucru), iar trimiterea merge în fundal.
+ */
+export function QuickPhotoButton({ jobId, category }: { jobId: string; category: string }) {
+  const { items, add } = usePhotoUploader(jobId);
+  const last = items[items.length - 1];
+  return (
+    <label className="m-bt2 sm" style={{ flex: 1, cursor: "pointer" }}>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []).slice(0, 1);
+          if (files.length) add(files, category);
+          e.target.value = "";
+        }}
+      />
+      <Camera className="m-i" style={{ width: 18, height: 18 }} />
+      {!last ? `Poză rapidă · ${PHOTO_CATEGORY_LABELS[category]}` : last.state === "sending" ? "Se trimite…" : last.state === "error" ? "Poza nu s-a salvat. Mai încearcă" : last.state === "queued" ? "Salvată pe telefon ✓ · încă una" : `Trimisă ✓ · încă una`}
+    </label>
   );
 }

@@ -6,12 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { PhotoCapture } from "./photo-capture";
 import { JOB_STEPS, type JobStepKey } from "../step-badge";
+import { PHOTO_TAGS } from "@/lib/photo-tags";
 
 const CATEGORY_STEP: Record<string, JobStepKey> = {
   depot_pickup: "ridicare",
   before: "sosire",
   during: "executie",
   after: "finalizare",
+  hidden: "executie",
+  receipt: "executie",
+  problem: "executie",
 };
 
 // The photo screen is entered from one fixed place in the flow each time
@@ -38,6 +42,21 @@ const CATEGORY_INFO: Record<string, { title: string; caption: string; continueLa
     title: "Poze la finalizarea lucrării",
     caption: "Fă poza cu lucrarea finalizată (ex: rețeaua montată, tabloul montat).",
     continueLabel: "CONTINUĂ",
+  },
+  hidden: {
+    title: "Poze lucrări ascunse",
+    caption: "Fă poza înainte să închizi peretele sau șapa: trasee, doze, împământare. Se folosește la procesul-verbal de lucrări ascunse.",
+    continueLabel: "ÎNAPOI LA LUCRARE",
+  },
+  receipt: {
+    title: "Poze bonuri",
+    caption: "Fotografiază bonul sau factura întreagă, cu suma și data vizibile.",
+    continueLabel: "ÎNAPOI LA LUCRARE",
+  },
+  problem: {
+    title: "Poze problemă",
+    caption: "Arată defectul sau ce te împiedică să lucrezi. Biroul vede poza imediat.",
+    continueLabel: "ÎNAPOI LA LUCRARE",
   },
 };
 
@@ -103,6 +122,23 @@ export default async function MobilePhotoPage({
           </div>
         </div>
       </div>
+
+      {category !== "depot_pickup" && (
+        <nav aria-label="Eticheta pozei" className="flex flex-shrink-0 gap-2 overflow-x-auto px-4 pb-1 pt-1">
+          {PHOTO_TAGS.map((t) => (
+            <Link
+              key={t.id}
+              href={`/mobil/lucrari/${id}/foto?cat=${t.id}`}
+              replace
+              aria-current={t.id === category ? "true" : undefined}
+              className="flex-shrink-0 rounded-full px-3.5 py-2 text-[13px] font-bold"
+              style={t.id === category ? { background: "#ffffff", color: "#0b1530" } : { background: "rgba(255,255,255,.12)", color: "rgba(255,255,255,.88)" }}
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       <div className="mx-4 mt-2 rounded-[10px] bg-white/10 px-3.5 py-2.5 text-[12px] leading-snug text-white/80">
         {guidance || info.caption}

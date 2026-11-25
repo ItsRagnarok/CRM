@@ -19,6 +19,7 @@ import {
   statusKind,
   bestTodayStatus,
 } from "./lib";
+import { CorrectionsPanel } from "./corrections-panel";
 
 export default async function PontajPage({
   searchParams,
@@ -28,7 +29,7 @@ export default async function PontajPage({
   const { view: rawView, date, calc: rawCalc } = await searchParams;
   const view: View = rawView === "zi" ? "zi" : "saptamana";
   const calc: "simplu" | "suplimentare" = rawCalc === "suplimentare" ? "suplimentare" : "simplu";
-  const { organization } = await requireSessionContext();
+  const { organization, readOnly } = await requireSessionContext();
   const supabase = await createClient();
 
   const { todayStr, anchor, rangeStart, rangeEnd, rangeStartStr, rangeEndStr, rangeEndExclusiveStr } =
@@ -186,6 +187,8 @@ export default async function PontajPage({
           <Download className="h-3.5 w-3.5" /> Export
         </a>
       </div>
+
+      <CorrectionsPanel organizationId={organization.id} readOnly={Boolean(readOnly)} />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <StatCard label={`Ore lucrate (${view === "zi" ? "ziua" : "săptămâna"})`} value={formatHM(totalWorked)} />

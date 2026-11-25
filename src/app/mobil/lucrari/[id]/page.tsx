@@ -12,6 +12,8 @@ import { mobileStagePath } from "./mobile-stage";
 import { StartJobButton } from "../../(tabs)/start-job-button";
 import { MobileMapLoader } from "@/components/mobile-map-loader";
 import { FORM_TEMPLATES, TEMPLATE_BY_DOMAIN } from "@/lib/forms/templates";
+import { defaultPhotoTag } from "@/lib/photo-tags";
+import { QuickPhotoButton } from "./foto/photo-capture";
 
 type Step = "pregatire" | "drum" | "loc" | "inchidere";
 const STEPS: { id: Step; label: string; icon: typeof Clock }[] = [
@@ -259,6 +261,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
         {isOnSite && (
           <>
             <div className="m-lb" style={{ marginTop: 4 }}>La locație</div>
+            <div className="m-r" style={{ gap: 10 }}>
+              <QuickPhotoButton jobId={id} category={defaultPhotoTag({ arrived: isOnSite, working: isWorking, beforeCount: count("before") })} />
+            </div>
             {formTemplate && (
               <Section
                 href={`/mobil/lucrari/${id}/formular/${formTemplate.id}`}

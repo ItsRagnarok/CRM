@@ -14,6 +14,7 @@ export type NotificationType =
   | "job_finished"
   | "expense_submitted"
   | "time_off_request"
+  | "time_correction"
   | "compliance_alert"
   | "test";
 

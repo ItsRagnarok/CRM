@@ -32,7 +32,7 @@ export function SavedOnPhone({ children }: { children: React.ReactNode }) {
   );
 }
 
-function StartWorkButton({ jobId }: { jobId: string }) {
+export function StartWorkButton({ jobId }: { jobId: string }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,7 +138,7 @@ export function WarmJobPages({ jobId, formTemplateId }: { jobId: string; formTem
   useEffect(() => {
     if (!("serviceWorker" in navigator) || !navigator.onLine) return;
     const base = `/mobil/lucrari/${jobId}`;
-    const urls = [base, `${base}/foto?cat=before`, `${base}/foto?cat=during`, `${base}/foto?cat=after`, `${base}/finalizare`, `${base}/semnatura`, `${base}/facturare`];
+    const urls = [base, `${base}/foto?cat=before`, `${base}/foto?cat=during`, `${base}/foto?cat=after`, `${base}/foto?cat=hidden`, `${base}/foto?cat=receipt`, `${base}/foto?cat=problem`, `${base}/finalizare`, `${base}/semnatura`, `${base}/facturare`];
     if (formTemplateId) urls.push(`${base}/formular/${formTemplateId}`);
     navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage({ type: "warm", urls })).catch(() => {});
   }, [jobId, formTemplateId]);
