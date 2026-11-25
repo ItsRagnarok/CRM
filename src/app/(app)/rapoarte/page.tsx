@@ -4,6 +4,8 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EmptyState } from "@/components/empty-state";
 import { todayInOrgTimeZone } from "@/lib/date";
+import { loadDurationStats } from "@/lib/job-durations-server";
+import { formatMinutes, planningGap, MIN_COUNT } from "@/lib/job-durations";
 
 function startOfWeek(d: Date) {
   const c = new Date(d);
@@ -44,7 +46,7 @@ export default async function RapoartePage({ searchParams }: { searchParams: Pro
   const thisWeekStart = startOfWeek(today);
   const rangeStart = addDays(thisWeekStart, -21); // 4 weeks total, including this one
 
-  const [{ data: jobs }, { data: signatures }, { data: expenses }] = await Promise.all([
+  const [{ data: jobs }, { data: signatures }, { data: expenses }, durations] = await Promise.all([
     supabase
       .from("jobs")
       .select("id, display_number, title, status, scheduled_date, clients(name)")
@@ -52,6 +54,7 @@ export default async function RapoartePage({ searchParams }: { searchParams: Pro
       .order("scheduled_date", { ascending: false }),
     supabase.from("signatures").select("job_id").eq("organization_id", organization.id),
     supabase.from("expenses").select("category, amount").eq("organization_id", organization.id),
+    loadDurationStats(supabase, organization.id),
   ]);
 
   const signedJobIds = new Set((signatures ?? []).map((s) => s.job_id));
@@ -170,6 +173,58 @@ export default async function RapoartePage({ searchParams }: { searchParams: Pro
             <p className="text-[13px] text-muted">Nicio cheltuială înregistrată încă.</p>
           )}
         </div>
+      </div>
+
+      <div id="durate" className="overflow-hidden rounded-[13px] border border-border bg-white">
+        <div className="border-b border-[#f2f4f7] px-5 py-3.5">
+          <div className="text-[14.5px] font-bold">Cât durează lucrările</div>
+          <p className="mt-0.5 text-[12.5px] text-muted">
+            Din pontajul lucrărilor finalizate în ultimele 12 luni: de la „Pornește lucrul” la „Termină lucrul”, fără drum. Tipul lucrării e titlul fără numele clientului.
+            La programare, formularul îți propune ora de sfârșit după aceste durate.
+          </p>
+        </div>
+        {durations.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[720px] border-collapse">
+              <thead>
+                <tr className="bg-[#f9fafb] text-left text-[11px] font-bold uppercase tracking-wide text-muted">
+                  <th className="px-5 py-3">Tip lucrare</th>
+                  <th className="px-5 py-3 text-right">Lucrări</th>
+                  <th className="px-5 py-3 text-right">De obicei</th>
+                  <th className="px-5 py-3 text-right">Interval obișnuit</th>
+                  <th className="px-5 py-3 text-right">Planificat</th>
+                  <th className="px-5 py-3">Planificare</th>
+                </tr>
+              </thead>
+              <tbody>
+                {durations.map((d) => {
+                  const few = d.count < MIN_COUNT;
+                  const gap = planningGap(d);
+                  return (
+                    <tr key={d.key} className="border-t border-[#f2f4f7] text-[13px] tabular-nums">
+                      <td className="px-5 py-3 font-semibold text-foreground">{d.label}</td>
+                      <td className="px-5 py-3 text-right text-muted">{d.count}</td>
+                      <td className="px-5 py-3 text-right font-bold">{few ? <span className="font-normal text-muted-2">puține date</span> : formatMinutes(d.medianMin)}</td>
+                      <td className="px-5 py-3 text-right text-muted">{few || d.highMin <= d.lowMin ? "—" : `${formatMinutes(d.lowMin)} – ${formatMinutes(d.highMin)}`}</td>
+                      <td className="px-5 py-3 text-right text-muted">{d.plannedMedianMin ? formatMinutes(d.plannedMedianMin) : "—"}</td>
+                      <td className="px-5 py-3">
+                        {gap?.kind === "under" ? (
+                          <span className="whitespace-nowrap rounded-full bg-warning-bg px-2.5 py-1 text-[11.5px] font-bold text-warning">planificat cu {formatMinutes(gap.diffMin)} prea puțin</span>
+                        ) : gap?.kind === "over" ? (
+                          <span className="whitespace-nowrap rounded-full bg-neutral-bg px-2.5 py-1 text-[11.5px] font-bold text-muted">planificat cu {formatMinutes(gap.diffMin)} în plus</span>
+                        ) : few ? null : (
+                          <span className="whitespace-nowrap text-[12px] font-semibold text-success">potrivit</span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="px-5 py-4 text-[13px] text-muted">Apare după primele lucrări finalizate cu pontaj (tehnicianul apasă „Pornește lucrul” și „Termină lucrul”).</p>
+        )}
       </div>
 
       <div className="overflow-hidden rounded-[13px] border border-border bg-white">

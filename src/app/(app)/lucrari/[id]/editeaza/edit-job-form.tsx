@@ -6,6 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { updateJob } from "../actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { LiveScheduleWarnings } from "@/components/schedule-warnings";
+import { DurationHint } from "@/components/duration-hint";
+import type { DurationStat } from "@/lib/job-durations";
 
 type Job = {
   id: string;
@@ -28,7 +30,7 @@ type Job = {
   photo_guidance_after: string | null;
 };
 
-export function EditJobForm({ job, teams, enabledDomains }: { job: Job; teams: { id: string; name: string }[]; enabledDomains: string[] }) {
+export function EditJobForm({ job, teams, enabledDomains, durations = [] }: { job: Job; teams: { id: string; name: string }[]; enabledDomains: string[]; durations?: DurationStat[] }) {
   const updateJobWithId = updateJob.bind(null, job.id);
   const [state, formAction, pending] = useActionState(updateJobWithId, undefined);
 
@@ -99,6 +101,7 @@ export function EditJobForm({ job, teams, enabledDomains }: { job: Job; teams: {
           </Field>
         </div>
 
+        <DurationHint stats={durations} />
         <LiveScheduleWarnings jobId={job.id} />
 
         <Field label="Adresă">

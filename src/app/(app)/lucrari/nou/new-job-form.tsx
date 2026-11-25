@@ -8,6 +8,8 @@ import { generateJobSuggestion, transcribeAudio } from "./ai-actions";
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
 import { JOB_TITLE_TEMPLATES } from "../job-templates";
 import { LiveScheduleWarnings } from "@/components/schedule-warnings";
+import { DurationHint } from "@/components/duration-hint";
+import type { DurationStat } from "@/lib/job-durations";
 
 const NEW_LOCATION = "__new__";
 const CUSTOM_TITLE = "__custom__";
@@ -24,6 +26,7 @@ export function NewJobForm({
   defaultDate,
   defaultTeamId,
   enabledDomains,
+  durations = [],
 }: {
   clients: { id: string; name: string; address: string | null }[];
   teams: { id: string; name: string }[];
@@ -33,6 +36,7 @@ export function NewJobForm({
   defaultDate?: string;
   defaultTeamId?: string;
   enabledDomains: string[];
+  durations?: DurationStat[];
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
   const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
@@ -643,6 +647,7 @@ export function NewJobForm({
             Lăsate necompletate, lucrarea se programează azi, cu ora de start acum și ora de sfârșit la 20:00.
           </p>
 
+          <DurationHint stats={durations} />
           <LiveScheduleWarnings />
 
           <Field label="Descriere">

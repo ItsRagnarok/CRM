@@ -1,6 +1,7 @@
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NewJobForm } from "./new-job-form";
+import { loadDurationStats } from "@/lib/job-durations-server";
 
 export default async function NewJobPage({
   searchParams,
@@ -11,7 +12,7 @@ export default async function NewJobPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const [{ data: clients }, { data: teams }, { data: locations }, { data: materials }] = await Promise.all([
+  const [{ data: clients }, { data: teams }, { data: locations }, { data: materials }, durations] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name, address")
@@ -33,6 +34,7 @@ export default async function NewJobPage({
       .eq("organization_id", organization.id)
       .order("category")
       .order("name"),
+    loadDurationStats(supabase, organization.id),
   ]);
 
   const locationsByClient: Record<string, { id: string; address: string; label: string | null }[]> = {};
@@ -50,6 +52,7 @@ export default async function NewJobPage({
       defaultDate={date}
       defaultTeamId={teamId}
       enabledDomains={organization.enabled_domains}
+      durations={durations}
     />
   );
 }

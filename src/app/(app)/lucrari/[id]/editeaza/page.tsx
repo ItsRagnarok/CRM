@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EditJobForm } from "./edit-job-form";
+import { loadDurationStats } from "@/lib/job-durations-server";
 
 export default async function EditJobPage({
   params,
@@ -12,7 +13,7 @@ export default async function EditJobPage({
   const { organization } = await requireSessionContext();
   const supabase = await createClient();
 
-  const [{ data: job }, { data: teams }] = await Promise.all([
+  const [{ data: job }, { data: teams }, durations] = await Promise.all([
     supabase
       .from("jobs")
       .select(
@@ -22,9 +23,10 @@ export default async function EditJobPage({
       .eq("id", id)
       .maybeSingle(),
     supabase.from("teams").select("id, name").eq("organization_id", organization.id).order("name"),
+    loadDurationStats(supabase, organization.id),
   ]);
 
   if (!job) notFound();
 
-  return <EditJobForm job={job} teams={teams ?? []} enabledDomains={organization.enabled_domains} />;
+  return <EditJobForm job={job} teams={teams ?? []} enabledDomains={organization.enabled_domains} durations={durations} />;
 }
