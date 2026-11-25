@@ -3,12 +3,16 @@ import { ScreenHeader } from "@/components/mobile/ui";
 import { createClient } from "@/lib/supabase/server";
 import { signedAttachmentUrls } from "@/lib/storage";
 import { EmptyState } from "@/components/empty-state";
-import { Package, Truck, User, Wrench, Send, Warehouse } from "lucide-react";
+import Link from "next/link";
+import { Package, Truck, User, Wrench, Send, Warehouse, Store, RefreshCw } from "lucide-react";
 import { consumeMaterial, reportShortage, requestPurchase } from "./actions";
+import { RestockForm } from "./restock-form";
+import { restockNeed, vehicleStockStatus, qty as fmtQty } from "@/lib/vehicle-stock";
 import { MaterialThumb } from "./material-thumb";
 import { todayInOrgTimeZone } from "@/lib/date";
 
-export default async function MobileMaterialsPage() {
+export default async function MobileMaterialsPage({ searchParams }: { searchParams: Promise<{ achizitie?: string }> }) {
+  const sp = await searchParams;
   const { profile, organization } = await requireSessionContext();
   const supabase = await createClient();
 
@@ -24,7 +28,7 @@ export default async function MobileMaterialsPage() {
     vehicle
       ? supabase
           .from("material_stock")
-          .select("id, quantity, materials(id, name, category, unit, min_stock, kind, image_path)")
+          .select("id, quantity, target_qty, min_qty, materials(id, name, category, unit, min_stock, kind, image_path)")
           .eq("vehicle_id", vehicle.id)
           .order("name", { foreignTable: "materials" })
       : Promise.resolve({ data: null }),
@@ -82,7 +86,15 @@ export default async function MobileMaterialsPage() {
   // hand tools) are only critical when actually out; bulk consumables (cable, doze,
   // etc.) are critical only when the van itself is nearly empty of them.
   const isCritical = (qty: number, minStock: number) => (minStock <= 3 ? qty === 0 : qty < minStock * 0.15);
-  const criticalCount = rows.filter((s) => isCritical(s.quantity, s.materials?.min_stock ?? 0)).length;
+  // Cu listă setată de birou (țintă + prag) contează pragul mașinii; altfel, regula veche.
+  const rowCritical = (s: (typeof rows)[number]) =>
+    s.target_qty != null ? restockNeed(s) > 0 : isCritical(s.quantity, s.materials?.min_stock ?? 0);
+  const criticalCount = rows.filter(rowCritical).length;
+  const toRestock = rows.filter((s) => restockNeed(s) > 0);
+  const { data: openRestock } = vehicle
+    ? await supabase.from("vehicle_restock_requests").select("id, created_at").eq("vehicle_id", vehicle.id).eq("status", "noua").order("created_at", { ascending: false }).limit(1)
+    : { data: null };
+  const pendingRestock = openRestock?.[0] ?? null;
 
   const stockByMaterialId = new Map(rows.map((s) => [s.materials!.id, s.quantity]));
   const requestedKeys = new Set(
@@ -131,6 +143,37 @@ export default async function MobileMaterialsPage() {
       </div>
 
       <div className="flex flex-col gap-4 px-4 py-4">
+        {sp.achizitie && (
+          <div role="status" className="rounded-[12px] bg-success-bg p-3 text-[13px] font-semibold text-success">Achiziția a fost trimisă la birou, cu bonul.</div>
+        )}
+        <div className="rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+          <div className="flex items-start gap-2.5">
+            <RefreshCw className="mt-0.5 h-4 w-4 shrink-0 text-muted-2" />
+            <div className="flex-1">
+              <div className="text-[14px] font-bold">Reaprovizionare</div>
+              <div className="text-[12px] text-muted-2">
+                {pendingRestock
+                  ? "Cererea a ajuns la birou. Când încarcă mașina din depozit, stocul de mai jos se actualizează."
+                  : toRestock.length
+                    ? `${toRestock.length} ${toRestock.length === 1 ? "articol e" : "articole sunt"} sub prag: ${toRestock.slice(0, 3).map((s) => s.materials?.name).join(", ")}${toRestock.length > 3 ? "…" : ""}`
+                    : "Totul e peste prag. Dacă îți lipsește altceva, scrie mai jos."}
+              </div>
+            </div>
+          </div>
+          {pendingRestock ? (
+            <div className="mt-2.5 rounded-[10px] bg-[#fef9ec] px-3 py-2 text-[12px] font-bold text-[#b45309]">Cerere trimisă</div>
+          ) : (
+            <RestockForm vehicleId={vehicle.id} count={toRestock.length} />
+          )}
+        </div>
+        <Link href="/mobil/materiale/achizitie" className="flex items-center gap-2.5 rounded-[13px] border border-[#eaecf0] bg-white p-3.5">
+          <Store className="h-4 w-4 shrink-0 text-muted-2" />
+          <span className="flex-1">
+            <span className="block text-[14px] font-bold">Am cumpărat de la magazin</span>
+            <span className="block text-[12px] text-muted-2">Poza bonului, ce ai luat și pentru ce lucrare. Ajunge la birou ca o cheltuială.</span>
+          </span>
+          <span className="text-[18px] text-muted-2">›</span>
+        </Link>
         {currentJob && (
           <div className="rounded-[13px] border border-electric bg-electric-soft/40 p-3.5">
             <div className="text-[11.5px] font-bold text-electric">
@@ -218,7 +261,8 @@ export default async function MobileMaterialsPage() {
           <div className="flex flex-col gap-2.5">
             {rows.map((s) => {
               const m = s.materials!;
-              const critical = isCritical(s.quantity, m.min_stock);
+              const critical = rowCritical(s);
+              const st = vehicleStockStatus(s);
               return (
                 <div
                   key={s.id}
@@ -239,7 +283,7 @@ export default async function MobileMaterialsPage() {
                       />
                       <div>
                         <div className="text-[14px] font-bold">{m.name}</div>
-                        <div className="text-[11.5px] text-muted-2">{m.category ?? "—"}</div>
+                        <div className="text-[11.5px] text-muted-2">{m.category ?? "—"}{s.target_qty != null ? ` · țintă ${fmtQty(s.target_qty)}${st === "sub_prag" || st === "lipsa" ? ` · de încărcat ${fmtQty(restockNeed(s))}` : ""}` : ""}</div>
                       </div>
                     </div>
                     <div className={`text-[15px] font-extrabold ${critical ? "text-danger" : ""}`}>

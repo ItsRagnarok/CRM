@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notifyBackOffice } from "@/lib/notify";
 import { createClient } from "@/lib/supabase/server";
 import { requireSessionContext } from "@/lib/auth";
+import { restockNeed } from "@/lib/vehicle-stock";
 
 export async function consumeMaterial(formData: FormData) {
   const stockId = String(formData.get("stockId") ?? "");
@@ -123,4 +124,46 @@ export async function requestPurchase(formData: FormData) {
   });
 
   revalidatePath("/mobil/materiale");
+}
+
+/**
+ * „Cere reaprovizionare”: tehnicianul trimite lista a ce e sub prag în mașina lui.
+ * Biroul o vede la Stoc pe mașini și o rezolvă încărcând din depozit.
+ */
+export async function requestRestock(_prev: { ok?: boolean; error?: string } | undefined, formData: FormData): Promise<{ ok?: boolean; error?: string }> {
+  const vehicleId = String(formData.get("vehicleId") ?? "");
+  const note = String(formData.get("note") ?? "").trim().slice(0, 500) || null;
+  if (!vehicleId) return { error: "Nu ai mașină asociată." };
+  const { organization, userId } = await requireSessionContext();
+  const supabase = await createClient();
+
+  const { data: open } = await supabase.from("vehicle_restock_requests").select("id").eq("vehicle_id", vehicleId).eq("status", "noua").limit(1);
+  if (open?.length) return { ok: true };
+
+  const { data: rows } = await supabase
+    .from("material_stock")
+    .select("material_id, quantity, target_qty, min_qty, materials(name, unit)")
+    .eq("vehicle_id", vehicleId);
+  const items = (rows ?? [])
+    .map((r) => ({ material_id: r.material_id, name: r.materials?.name ?? "—", unit: r.materials?.unit ?? null, qty: restockNeed(r) }))
+    .filter((i) => i.qty > 0);
+  if (!items.length && !note) return { error: "Totul e peste prag. Scrie ce îți lipsește." };
+
+  const { error } = await supabase.from("vehicle_restock_requests").insert({ organization_id: organization.id, vehicle_id: vehicleId, requested_by: userId, note, items });
+  if (error) return { error: "Nu am putut trimite. Încearcă din nou." };
+
+  const [{ data: requester }, { data: vehicle }] = await Promise.all([
+    supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
+    supabase.from("vehicles").select("name").eq("id", vehicleId).maybeSingle(),
+  ]);
+  await notifyBackOffice(supabase, {
+    organizationId: organization.id,
+    type: "restock_request",
+    title: `Reaprovizionare: ${vehicle?.name ?? "mașină"}`,
+    body: `${requester?.full_name ?? "Tehnicianul"} cere ${items.length ? `${items.length} articole` : "reaprovizionare"}${note ? ` · ${note}` : ""}`,
+    link: `/materiale/masini?v=${vehicleId}`,
+    exceptProfileId: userId,
+  });
+  revalidatePath("/mobil/materiale");
+  return { ok: true };
 }

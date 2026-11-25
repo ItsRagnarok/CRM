@@ -47,7 +47,7 @@ export default async function CheltuieliPage({
       let query = supabase
         .from("expenses")
         .select(
-          "id, category, amount, vendor, expense_date, status, rejection_reason, receipt_path, jobs(display_number, title), profiles!expenses_submitted_by_fkey(full_name)"
+          "id, category, amount, vendor, expense_date, status, rejection_reason, receipt_path, items, jobs(display_number, title), profiles!expenses_submitted_by_fkey(full_name)"
         )
         .eq("organization_id", organization.id);
       if (status) query = query.eq("status", status);
@@ -145,6 +145,12 @@ export default async function CheltuieliPage({
                           </a>
                         )}
                       </div>
+                      {Array.isArray(e.items) && e.items.length > 0 && (
+                        <div className="mt-1 pl-[38px] text-[11.5px] text-muted">
+                          <span className="mr-1 rounded-full bg-warning-bg px-1.5 py-0.5 font-bold text-warning">Achiziție urgentă</span>
+                          {(e.items as { name: string; qty: number; unit?: string | null }[]).map((i) => `${i.name} × ${i.qty}${i.unit ? ` ${i.unit}` : ""}`).join(", ")}
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-3 text-[13px] capitalize text-[#344054]">{e.category}</td>
                     <td className="px-5 py-3">

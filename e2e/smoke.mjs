@@ -113,6 +113,7 @@ const OFFICE_PAGES = [
   ["/rapoarte", "Rapoarte"],
   ["/cereri", "Cereri noi"],
   ["/luni", "Luni dimineața"],
+  ["/materiale/masini", "Stoc pe mașini"],
   ["/mesaje", "Mesaje"],
   ["/notificari", "Notificări"],
   ["/setari", "Informații companie"],

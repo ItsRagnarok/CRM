@@ -1365,6 +1365,8 @@ export type Database = {
       }
       expenses: {
         Row: {
+          vehicle_id: string | null
+          items: Json | null
           amount: number
           approved_at: string | null
           approved_by: string | null
@@ -1384,6 +1386,8 @@ export type Database = {
           vendor: string | null
         }
         Insert: {
+          vehicle_id?: string | null
+          items?: Json | null
           amount: number
           approved_at?: string | null
           approved_by?: string | null
@@ -1403,6 +1407,8 @@ export type Database = {
           vendor?: string | null
         }
         Update: {
+          vehicle_id?: string | null
+          items?: Json | null
           amount?: number
           approved_at?: string | null
           approved_by?: string | null
@@ -2239,6 +2245,8 @@ export type Database = {
       }
       material_stock: {
         Row: {
+          target_qty: number | null
+          min_qty: number | null
           id: string
           material_id: string
           organization_id: string
@@ -2248,6 +2256,8 @@ export type Database = {
           warehouse_id: string | null
         }
         Insert: {
+          target_qty?: number | null
+          min_qty?: number | null
           id?: string
           material_id: string
           organization_id: string
@@ -2257,6 +2267,8 @@ export type Database = {
           warehouse_id?: string | null
         }
         Update: {
+          target_qty?: number | null
+          min_qty?: number | null
           id?: string
           material_id?: string
           organization_id?: string
@@ -3362,6 +3374,48 @@ export type Database = {
           },
         ]
       }
+      vehicle_restock_requests: {
+        Row: {
+          created_at: string
+          id: string
+          items: Json
+          note: string | null
+          organization_id: string
+          requested_by: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          items?: Json
+          note?: string | null
+          organization_id: string
+          requested_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          items?: Json
+          note?: string | null
+          organization_id?: string
+          requested_by?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          { foreignKeyName: "vehicle_restock_requests_vehicle_id_fkey"; columns: ["vehicle_id"]; isOneToOne: false; referencedRelation: "vehicles"; referencedColumns: ["id"] },
+          { foreignKeyName: "vehicle_restock_requests_requested_by_fkey"; columns: ["requested_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ]
+      }
       vehicles: {
         Row: {
           assigned_team_id: string | null
@@ -3600,6 +3654,10 @@ export type Database = {
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
+      }
+      load_vehicle_from_warehouse: {
+        Args: { p_vehicle: string; p_items: Json }
+        Returns: Json
       }
       monday_report: {
         Args: { p_today: string }

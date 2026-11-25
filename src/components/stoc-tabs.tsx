@@ -3,6 +3,7 @@ import Link from "next/link";
 // Mockup "Stoc și mașini": stock and the purchase requests coming from the field.
 const TABS = [
   { href: "/materiale", label: "Stoc și scule" },
+  { href: "/materiale/masini", label: "Stoc pe mașini" },
   { href: "/aprobari", label: "Cereri de materiale" },
   { href: "/foaie-parcurs", label: "Foaie de parcurs" },
 ] as const;
