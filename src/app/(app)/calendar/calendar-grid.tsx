@@ -155,7 +155,7 @@ export function CalendarGrid({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [dragOverDate, setDragOverDate] = useState<string | null>(null);
-  const [moved, setMoved] = useState<{ label: string; date: string; warnings: ScheduleWarning[] } | null>(null);
+  const [moved, setMoved] = useState<{ id: string; label: string; date: string; warnings: ScheduleWarning[] } | null>(null);
 
   const baseHref = (overrides: { date?: string; view?: string; teamId?: string }) => {
     const params = new URLSearchParams();
@@ -181,7 +181,7 @@ export function CalendarGrid({
     if (!jobId || fromDate === dateStr) return;
     startTransition(async () => {
       const res = await rescheduleJob(jobId, dateStr);
-      setMoved(res.warnings.length ? { label: res.label ?? "", date: dateStr, warnings: res.warnings } : null);
+      setMoved(res.warnings.length ? { id: jobId, label: res.label ?? "", date: dateStr, warnings: res.warnings } : null);
       router.refresh();
     });
   }
@@ -198,6 +198,7 @@ export function CalendarGrid({
           </div>
           <div className="p-3 pt-2">
             <WarningList warnings={moved.warnings} footer="Mutarea s-a salvat. Dacă nu e bine, trage lucrarea înapoi sau deschide-o și schimbă echipa." />
+            <Link href={`/lucrari/${moved.id}/reprogrameaza`} className="mt-2 inline-block text-[12.5px] font-bold text-electric">Reprogramează cu motiv și mesaj pentru client →</Link>
           </div>
         </div>
       )}

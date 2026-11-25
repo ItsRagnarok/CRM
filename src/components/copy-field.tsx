@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 
-export function CopyField({ value }: { value: string }) {
+export function CopyField({ value, label = "Link de status" }: { value: string; label?: string }) {
   const [done, setDone] = useState(false);
   return (
     <div className="flex gap-2">
-      <input readOnly value={value} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-[10px] border border-[#d0d5dd] bg-[#f9fafb] px-3 py-2 text-[12.5px]" aria-label="Link de status" />
+      <input readOnly value={value} onFocus={(e) => e.currentTarget.select()} className="min-w-0 flex-1 rounded-[10px] border border-[#d0d5dd] bg-[#f9fafb] px-3 py-2 text-[12.5px]" aria-label={label} />
       <button
         type="button"
         onClick={async () => {

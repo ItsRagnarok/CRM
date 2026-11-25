@@ -116,6 +116,16 @@ export async function createJob(
 
   await syncJobAssignmentsToTeam(supabase, job.id, teamId);
 
+  // Lucrare făcută dintr-o cerere: cererea trece la „Programate” și duce la lucrare.
+  const requestId = String(formData.get("requestId") ?? "");
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(requestId)) {
+    await supabase
+      .from("service_requests")
+      .update({ status: "programata", job_id: job.id, client_id: clientId, decided_by: userId, decided_at: new Date().toISOString() })
+      .eq("id", requestId)
+      .eq("organization_id", organization.id);
+  }
+
   if (teamId) {
     const { data: members } = await supabase.from("team_members").select("profile_id").eq("team_id", teamId);
     await notifyProfiles(supabase, {
@@ -205,6 +215,7 @@ export async function createJob(
   }
 
   revalidatePath("/lucrari");
+  revalidatePath("/cereri");
   revalidatePath("/dashboard");
   revalidatePath("/mobil/materiale");
   revalidatePath("/mobil");

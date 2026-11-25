@@ -8,7 +8,7 @@ import { addMinutes, estimateFor, formatMinutes, type DurationStat } from "@/lib
  * Sub orele din formular: „De obicei durează …”, din pontajul lucrărilor de același tip.
  * Butonul pune ora de sfârșit după ora de start (biroul poate schimba oricând).
  */
-export function DurationHint({ stats }: { stats: DurationStat[] }) {
+export function DurationHint({ stats, names = { start: "startTime", end: "endTime" } }: { stats: DurationStat[]; names?: { start: string; end: string } }) {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<{ title: string; start: string; end: string }>({ title: "", start: "", end: "" });
 
@@ -17,7 +17,7 @@ export function DurationHint({ stats }: { stats: DurationStat[] }) {
     if (!form) return;
     const read = () => {
       const fd = new FormData(form);
-      setState({ title: String(fd.get("title") ?? ""), start: String(fd.get("startTime") ?? ""), end: String(fd.get("endTime") ?? "") });
+      setState({ title: String(fd.get("title") ?? ""), start: String(fd.get(names.start) ?? ""), end: String(fd.get(names.end) ?? "") });
     };
     read();
     form.addEventListener("input", read);
@@ -29,14 +29,14 @@ export function DurationHint({ stats }: { stats: DurationStat[] }) {
       form.removeEventListener("change", read);
       mo.disconnect();
     };
-  }, []);
+  }, [names.start, names.end]);
 
   const est = estimateFor(state.title, stats);
   const suggested = est && state.start ? addMinutes(state.start, est.medianMin) : null;
 
   function apply() {
     const form = ref.current?.closest("form");
-    const input = form?.querySelector<HTMLInputElement>('input[name="endTime"]');
+    const input = form?.querySelector<HTMLInputElement>(`input[name="${names.end}"]`);
     if (!input || !suggested) return;
     // Setter-ul nativ + evenimentul „input”: funcționează și pe câmpurile controlate de React.
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set?.call(input, suggested);

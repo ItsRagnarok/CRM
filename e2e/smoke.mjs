@@ -111,6 +111,7 @@ const OFFICE_PAGES = [
   ["/pontaj", "Pontaj"],
   ["/cheltuieli", "Cheltuieli"],
   ["/rapoarte", "Rapoarte"],
+  ["/cereri", "Cereri noi"],
   ["/mesaje", "Mesaje"],
   ["/notificari", "Notificări"],
   ["/setari", "Informații companie"],
@@ -151,6 +152,8 @@ const run = async () => {
     ok("offline: pagina „Fără semnal” există", off.status() === 200 && (await off.text()).includes("Fără semnal"), `HTTP ${off.status()}`);
     await go(page, "/status/00000000-0000-0000-0000-000000000000");
     ok("status public: link greșit arată mesaj clar", (await text(page)).includes("nu mai este valabil"));
+    await go(page, "/solicitare/00000000-0000-0000-0000-000000000000");
+    ok("formular public de cereri: link greșit arată mesaj clar", (await text(page)).includes("nu mai este activ"));
     await go(page, "/dashboard");
     ok("fără cont: /dashboard trimite la login", page.url().includes("/login"), page.url().replace(BASE, ""));
     await ctx.close();

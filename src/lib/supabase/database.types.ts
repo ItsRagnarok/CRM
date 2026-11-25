@@ -14,6 +14,112 @@ export type Database = {
   }
   public: {
     Tables: {
+      service_requests: {
+        Row: {
+          address: string | null
+          client_id: string | null
+          contact_name: string
+          created_at: string
+          created_by: string | null
+          decided_at: string | null
+          decided_by: string | null
+          decision_note: string | null
+          description: string
+          domain: string | null
+          email: string | null
+          id: string
+          ip_hash: string | null
+          job_id: string | null
+          organization_id: string
+          phone: string | null
+          preferred_date: string | null
+          preferred_window: string | null
+          source: string
+          status: string
+          urgent: boolean
+        }
+        Insert: {
+          address?: string | null
+          client_id?: string | null
+          contact_name: string
+          created_at?: string
+          created_by?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description: string
+          domain?: string | null
+          email?: string | null
+          id?: string
+          ip_hash?: string | null
+          job_id?: string | null
+          organization_id: string
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_window?: string | null
+          source: string
+          status?: string
+          urgent?: boolean
+        }
+        Update: {
+          address?: string | null
+          client_id?: string | null
+          contact_name?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          decision_note?: string | null
+          description?: string
+          domain?: string | null
+          email?: string | null
+          job_id?: string | null
+          phone?: string | null
+          preferred_date?: string | null
+          preferred_window?: string | null
+          source?: string
+          status?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          { foreignKeyName: "service_requests_client_id_fkey"; columns: ["client_id"]; isOneToOne: false; referencedRelation: "clients"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_requests_job_id_fkey"; columns: ["job_id"]; isOneToOne: false; referencedRelation: "jobs"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_requests_created_by_fkey"; columns: ["created_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "service_requests_decided_by_fkey"; columns: ["decided_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ]
+      }
+      job_reschedules: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          from_date: string | null
+          from_start: string | null
+          id: string
+          job_id: string
+          note: string | null
+          organization_id: string
+          reason: string
+          to_date: string
+          to_end: string | null
+          to_start: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          from_date?: string | null
+          from_start?: string | null
+          id?: string
+          job_id: string
+          note?: string | null
+          organization_id: string
+          reason: string
+          to_date: string
+          to_end?: string | null
+          to_start?: string | null
+        }
+        Update: {
+          note?: string | null
+        }
+        Relationships: []
+      }
       _ddl_probe: {
         Row: {
           id: number | null
@@ -2379,6 +2485,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          request_token: string
           address: string | null
           created_at: string
           cui: string | null
@@ -2407,6 +2514,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          request_token?: string
           address?: string | null
           created_at?: string
           cui?: string | null
@@ -2435,6 +2543,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          request_token?: string
           address?: string | null
           created_at?: string
           cui?: string | null
@@ -3499,6 +3608,14 @@ export type Database = {
           pending_expenses_count: number
           pending_expenses_amount: number
         }[]
+      }
+      submit_service_request: {
+        Args: { p_token: string; p_name: string; p_phone: string; p_email: string; p_address: string; p_description: string; p_domain: string; p_date: string | null; p_window: string; p_ip_hash: string | null }
+        Returns: string
+      }
+      public_request_org: {
+        Args: { p_token: string }
+        Returns: { name: string; enabled_domains: string[]; phone: string | null }[]
       }
       public_job_status: {
         Args: { p_token: string }

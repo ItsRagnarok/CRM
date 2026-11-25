@@ -45,6 +45,7 @@ import {
   Fuel,
   Receipt,
   TrendingUp,
+  CalendarClock,
 } from "lucide-react";
 
 const TABS = [
@@ -256,6 +257,14 @@ export default async function JobDetailPage({
             <LiveJobTimer startedAt={job.work_started_at} />
           )}
           <div className="flex-1" />
+          {isBackOfficeRole(profile.role) && !readOnly && job.status !== "finalizata" && job.status !== "anulata" && (
+            <Link
+              href={`/lucrari/${id}/reprogrameaza`}
+              className="flex items-center gap-1.5 rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"
+            >
+              <CalendarClock className="h-3.5 w-3.5" /> Reprogramează
+            </Link>
+          )}
           <Link
             href={`/lucrari/${id}/editeaza`}
             className="flex items-center gap-1.5 rounded-[9px] border border-[#d0d5dd] px-3.5 py-2 text-[12.5px] font-bold text-[#344054]"

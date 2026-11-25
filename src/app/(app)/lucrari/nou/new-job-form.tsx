@@ -27,6 +27,7 @@ export function NewJobForm({
   defaultTeamId,
   enabledDomains,
   durations = [],
+  fromRequest,
 }: {
   clients: { id: string; name: string; address: string | null }[];
   teams: { id: string; name: string }[];
@@ -37,26 +38,27 @@ export function NewJobForm({
   defaultTeamId?: string;
   enabledDomains: string[];
   durations?: DurationStat[];
+  fromRequest?: { id: string; contactName: string; title: string; description: string; address: string | null };
 }) {
   const [state, formAction, pending] = useActionState(createJob, undefined);
   const [selectedClientId, setSelectedClientId] = useState(defaultClientId ?? "");
   const defaultLocations = locationsByClient[defaultClientId ?? ""] ?? [];
   const [locationChoice, setLocationChoice] = useState(
-    defaultLocations.length > 0 ? defaultLocations[0].id : NEW_LOCATION
+    defaultLocations.length > 0 && !fromRequest?.address ? defaultLocations[0].id : NEW_LOCATION
   );
   const clientLocations = locationsByClient[selectedClientId] ?? [];
   const selectedClient = clients.find((c) => c.id === selectedClientId);
-  const [addressValue, setAddressValue] = useState("");
+  const [addressValue, setAddressValue] = useState(fromRequest?.address ?? "");
 
   const [titleChoice, setTitleChoice] = useState(CUSTOM_TITLE);
-  const [customTitleValue, setCustomTitleValue] = useState("");
+  const [customTitleValue, setCustomTitleValue] = useState(fromRequest?.title ?? "");
   const [jobType, setJobType] = useState("interventie");
   const [priorityValue, setPriorityValue] = useState("normala");
   const [startTimeValue, setStartTimeValue] = useState("");
   const [endTimeValue, setEndTimeValue] = useState("");
   const [checkedMaterialIds, setCheckedMaterialIds] = useState<Set<string>>(new Set());
   const [showFullCatalog, setShowFullCatalog] = useState(false);
-  const [descriptionValue, setDescriptionValue] = useState("");
+  const [descriptionValue, setDescriptionValue] = useState(fromRequest?.description ?? "");
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiState, setAiState] = useState<Awaited<ReturnType<typeof generateJobSuggestion>> | undefined>(undefined);
   const [aiPending, setAiPending] = useState(false);
@@ -314,6 +316,14 @@ export function NewJobForm({
           action={formAction}
           className="flex flex-col gap-4 rounded-[14px] border border-border bg-white p-6"
         >
+          {fromRequest && (
+            <>
+              <input type="hidden" name="requestId" value={fromRequest.id} />
+              <div className="rounded-[10px] bg-electric-soft/60 px-3.5 py-2.5 text-[12.5px] text-foreground">
+                Din cererea lui <b>{fromRequest.contactName}</b>. Titlul, descrierea și adresa sunt completate din cerere; verifică-le și alege echipa și ora.
+              </div>
+            </>
+          )}
           <Field label="Client">
             <select
               name="clientId"

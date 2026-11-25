@@ -49,7 +49,7 @@ export function WarningList({ warnings, compact = false, footer = "Poți salva o
  * Citește formularul din jur (echipă, dată, ore, domeniu, materiale bifate) și arată pe loc
  * ce nu se potrivește. Ascultă orice schimbare din formular, inclusiv câmpurile ascunse.
  */
-export function LiveScheduleWarnings({ jobId }: { jobId?: string }) {
+export function LiveScheduleWarnings({ jobId, names = { date: "scheduledDate", start: "startTime", end: "endTime" } }: { jobId?: string; names?: { date: string; start: string; end: string } }) {
   const ref = useRef<HTMLDivElement>(null);
   const [warnings, setWarnings] = useState<ScheduleWarning[] | null>(null);
   const [busy, setBusy] = useState(false);
@@ -65,9 +65,9 @@ export function LiveScheduleWarnings({ jobId }: { jobId?: string }) {
       const req = {
         jobId: jobId ?? null,
         teamId: String(fd.get("teamId") ?? "") || null,
-        date: String(fd.get("scheduledDate") ?? "") || new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Bucharest" }),
-        start: String(fd.get("startTime") ?? "") || (jobId ? null : nowHm()),
-        end: String(fd.get("endTime") ?? "") || (jobId ? null : "20:00"),
+        date: String(fd.get(names.date) ?? "") || new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Bucharest" }),
+        start: String(fd.get(names.start) ?? "") || (jobId ? null : nowHm()),
+        end: String(fd.get(names.end) ?? "") || (jobId ? null : "20:00"),
         domain: String(fd.get("domain") ?? "") || null,
         materialIds: fd.getAll("requiredMaterialIds").map(String),
       };
@@ -98,7 +98,7 @@ export function LiveScheduleWarnings({ jobId }: { jobId?: string }) {
       form.removeEventListener("change", schedule);
       mo.disconnect();
     };
-  }, [jobId]);
+  }, [jobId, names.date, names.start, names.end]);
 
   return (
     <div ref={ref} aria-live="polite">
