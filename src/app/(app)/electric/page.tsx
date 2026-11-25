@@ -9,6 +9,7 @@ import { daysUntil } from "@/lib/compliance";
 import { EmptyState } from "@/components/empty-state";
 import { JOB_STATUS_LABELS, JOB_STATUS_STYLES } from "@/lib/status";
 import { StatusBadge } from "@/components/status-badge";
+import { fromElectricForm } from "@/lib/forms/electric-measurements";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function ElectricPage() {
   const horizon = new Date(Date.parse(`${today}T00:00:00Z`) + 60 * 86_400_000).toISOString().slice(0, 10);
   const org = organization.id;
 
-  const [{ data: jobs }, { data: meas }, { data: reports }, { data: hidden }, { data: devices }] = await Promise.all([
+  const [{ data: jobs }, { data: meas }, { data: reports }, { data: hidden }, { data: devices }, { data: forms }] = await Promise.all([
     supabase.from("jobs").select("id, display_number, title, status, scheduled_date, clients(name)").eq("organization_id", org).eq("domain", "electric").neq("status", "anulata").order("scheduled_date", { ascending: false }).limit(300),
     supabase.from("electric_measurements").select("job_id, result").eq("organization_id", org),
     supabase.from("electric_reports").select("job_id, signed_on").eq("organization_id", org),
@@ -28,11 +29,17 @@ export default async function ElectricPage() {
     hasModule(organization.enabled_modules, "conformitate")
       ? supabase.from("compliance_items").select("id, expires_on").eq("organization_id", org).eq("kind", "device").lte("expires_on", horizon)
       : Promise.resolve({ data: [] as { id: string; expires_on: string }[] }),
+    // Măsurătorile introduse de tehnician în aplicație (formularul de verificare a tabloului).
+    supabase.from("job_forms").select("id, job_id, data, completed_at").eq("organization_id", org).eq("template", "electric_verificare").not("completed_at", "is", null),
   ]);
 
   const per = new Map<string, { m: number; open: number; unsigned: number; hiddenOpen: number }>();
   const get = (id: string) => per.get(id) ?? { m: 0, open: 0, unsigned: 0, hiddenOpen: 0 };
   for (const x of meas ?? []) { const p = get(x.job_id); p.m++; if (!x.result) p.open++; per.set(x.job_id, p); }
+  for (const f of forms ?? []) {
+    const rows = fromElectricForm(f);
+    const p = get(f.job_id); p.m += rows.length; p.open += rows.filter((r) => !r.result).length; per.set(f.job_id, p);
+  }
   for (const x of reports ?? []) { const p = get(x.job_id); if (!x.signed_on) p.unsigned++; per.set(x.job_id, p); }
   for (const x of hidden ?? []) { const p = get(x.job_id); if (!x.documented) p.hiddenOpen++; per.set(x.job_id, p); }
   const active = (jobs ?? []).filter((j) => j.status !== "finalizata").length;

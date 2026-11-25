@@ -7,11 +7,13 @@ import { hasModule } from "@/lib/modules";
 import { todayInOrgTimeZone } from "@/lib/date";
 import { HiddenForm, MeasurementForm, ReportForm, SignForm } from "../electric-forms";
 import { deleteHidden, deleteMeasurement, deleteReport, toggleHidden } from "../actions";
+import { unifyMeasurements } from "@/lib/forms/electric-measurements";
 
 export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fmt = (d: string | null) => (d ? new Date(`${d}T12:00:00Z`).toLocaleDateString("ro-RO", { timeZone: "UTC", day: "2-digit", month: "2-digit", year: "numeric" }) : "");
 const v = (n: number | null, unit: string) => (n === null ? "—" : `${Number(n).toLocaleString("ro-RO")} ${unit}`);
+const one = <T,>(x: T | T[] | null | undefined): T | null => (Array.isArray(x) ? x[0] ?? null : x ?? null);
 
 export default async function ElectricJobPage({ params }: { params: Promise<{ jobId: string }> }) {
   const { jobId } = await params;
@@ -22,7 +24,7 @@ export default async function ElectricJobPage({ params }: { params: Promise<{ jo
   const org = organization.id;
   const today = todayInOrgTimeZone();
 
-  const [{ data: job }, { data: meas }, { data: reports }, { data: hidden }, { data: assigned }, { data: auths }] = await Promise.all([
+  const [{ data: job }, { data: meas }, { data: reports }, { data: hidden }, { data: assigned }, { data: auths }, { data: forms }] = await Promise.all([
     supabase.from("jobs").select("id, display_number, title, clients(name)").eq("id", jobId).eq("organization_id", org).maybeSingle(),
     supabase.from("electric_measurements").select("*").eq("job_id", jobId).eq("organization_id", org).order("created_at"),
     supabase.from("electric_reports").select("id, title, signed_on, signer_profile_id, profiles(full_name)").eq("job_id", jobId).eq("organization_id", org).order("created_at"),
@@ -31,8 +33,16 @@ export default async function ElectricJobPage({ params }: { params: Promise<{ jo
     hasModule(organization.enabled_modules, "conformitate")
       ? supabase.from("compliance_items").select("profile_id, title, expires_on").eq("organization_id", org).eq("kind", "person").ilike("title", "%ANRE%").gte("expires_on", today)
       : Promise.resolve({ data: [] as { profile_id: string | null; title: string; expires_on: string }[] }),
+    // Formularul „Verificare tablou electric” completat de tehnician în aplicație.
+    supabase.from("job_forms").select("id, data, completed_at, profiles!job_forms_completed_by_fkey(full_name)").eq("job_id", jobId).eq("organization_id", org).eq("template", "electric_verificare"),
   ]);
   if (!job) notFound();
+
+  const all = unifyMeasurements(
+    (forms ?? []).map((f) => ({ id: f.id, data: f.data, completed_at: f.completed_at, by: one(f.profiles)?.full_name ?? null })),
+    meas ?? []
+  );
+  const draftInApp = (forms ?? []).some((f) => !f.completed_at);
 
   const authorized = new Map((auths ?? []).filter((a) => a.profile_id).map((a) => [a.profile_id as string, a]));
   const signers = (assigned ?? []).filter((p) => authorized.has(p.id)).map((p) => ({ id: p.id, name: p.full_name }));
@@ -45,19 +55,25 @@ export default async function ElectricJobPage({ params }: { params: Promise<{ jo
 
       <section className="rounded-2xl border border-border bg-white p-5">
         <h2 className="mb-3 text-[15px] font-bold">Tablouri, circuite și măsurători</h2>
-        {(meas ?? []).length === 0 ? <p className="text-sm text-muted">Nicio măsurătoare încă.</p> : (
+        {draftInApp && <p className="mb-3 rounded-[10px] bg-warning-bg px-3 py-2 text-[12.5px] font-semibold text-warning">Tehnicianul are formularul de verificare început în aplicație, dar încă nu l-a finalizat. Valorile apar aici după ce îl finalizează.</p>}
+        {all.length === 0 ? <p className="text-sm text-muted">Nicio măsurătoare încă. Tehnicianul le poate completa în aplicație (formularul „Verificare tablou electric”) sau le adaugi tu mai jos.</p> : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-[13.5px]">
-              <thead><tr className="border-b border-border text-[11.5px] uppercase tracking-wide text-muted"><th className="py-2 pr-3">Tablou / circuit</th><th className="py-2 pr-3">Izolație</th><th className="py-2 pr-3">Buclă</th><th className="py-2 pr-3">Continuitate</th><th className="py-2 pr-3">Rezultat stabilit</th><th className="py-2" /></tr></thead>
+              <thead><tr className="border-b border-border text-[11.5px] uppercase tracking-wide text-muted"><th className="py-2 pr-3">Tablou / circuit</th><th className="py-2 pr-3">Izolație</th><th className="py-2 pr-3">Buclă</th><th className="py-2 pr-3">Continuitate PE</th><th className="py-2 pr-3">RCD</th><th className="py-2 pr-3">Rezultat stabilit</th><th className="py-2" /></tr></thead>
               <tbody>
-                {(meas ?? []).map((m) => (
+                {all.map((m) => (
                   <tr key={m.id} className="border-b border-[#f2f4f7] last:border-0 align-top">
-                    <td className="py-2.5 pr-3"><b>{m.label}</b><div className="text-xs text-muted">{m.kind === "tablou" ? "Tablou" : "Circuit"}{m.notes ? ` · ${m.notes}` : ""}</div></td>
-                    <td className="py-2.5 pr-3 tabular-nums">{v(m.insulation_mohm, "MΩ")}</td>
-                    <td className="py-2.5 pr-3 tabular-nums">{v(m.loop_ohm, "Ω")}</td>
-                    <td className="py-2.5 pr-3 tabular-nums">{v(m.continuity_ohm, "Ω")}</td>
+                    <td className="py-2.5 pr-3">
+                      <b>{m.label}</b>
+                      <div className="text-xs text-muted">{m.kind === "tablou" ? "Tablou" : "Circuit"}{m.protection ? ` · ${m.protection}` : ""}{m.notes ? ` · ${m.notes}` : ""}</div>
+                      <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[10.5px] font-bold ${m.source === "aplicatie" ? "bg-electric-soft text-electric" : "bg-neutral-bg text-neutral"}`}>{m.source === "aplicatie" ? `Din aplicație${m.by ? ` · ${m.by}` : ""}` : "Introdus la birou"}</span>
+                    </td>
+                    <td className="py-2.5 pr-3 tabular-nums">{v(m.insulationMohm, "MΩ")}</td>
+                    <td className="py-2.5 pr-3 tabular-nums">{v(m.loopOhm, "Ω")}</td>
+                    <td className="py-2.5 pr-3 tabular-nums">{v(m.continuityOhm, "Ω")}</td>
+                    <td className="py-2.5 pr-3 tabular-nums">{v(m.rcdMs, "ms")}</td>
                     <td className="py-2.5 pr-3">{m.result ? <span className={`rounded-full px-2.5 py-1 text-[12px] font-bold ${m.result === "conform" ? "bg-success-bg text-success" : "bg-danger-bg text-danger"}`}>{m.result === "conform" ? "Conform" : "Neconform"}</span> : <span className="rounded-full bg-warning-bg px-2.5 py-1 text-[12px] font-bold text-warning">Nestabilit</span>}</td>
-                    <td className="py-2.5 text-right">{!readOnly && <form action={deleteMeasurement}><input type="hidden" name="id" value={m.id} /><input type="hidden" name="jobId" value={jobId} /><button className="text-[12.5px] font-semibold text-danger">Șterge</button></form>}</td>
+                    <td className="py-2.5 text-right">{m.source === "aplicatie" ? <span className="text-[11.5px] text-muted">se modifică din aplicație</span> : !readOnly && <form action={deleteMeasurement}><input type="hidden" name="id" value={m.id} /><input type="hidden" name="jobId" value={jobId} /><button className="text-[12.5px] font-semibold text-danger">Șterge</button></form>}</td>
                   </tr>
                 ))}
               </tbody>

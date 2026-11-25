@@ -175,6 +175,14 @@ const run = async () => {
   ok("foaie de parcurs: mașinile demo", (await text(ap)).includes("CJ 41 DMO"));
   await go(ap, "/facturare");
   ok("facturare: facturi emise demo", /DEMO \d{4}/.test(await text(ap)));
+  // Măsurătorile din aplicația tehnicianului apar la birou (lucrarea demo #44 are formularul completat)
+  await go(ap, "/electric");
+  const el44 = await ap.evaluate(() => [...document.querySelectorAll('a[href^="/electric/"]')].find((x) => x.innerText.includes("#44"))?.getAttribute("href"));
+  if (el44) {
+    await go(ap, el44);
+    t = await text(ap);
+    ok("electric: măsurătorile din aplicație apar la birou", t.includes("Din aplicație") && t.includes("C1 iluminat parcare"));
+  } else ok("electric: lucrarea demo #44 există", false);
   await go(ap, "/admin");
   ok("admin de firmă NU intră în Super Admin", !ap.url().replace(BASE, "").startsWith("/admin"), ap.url().replace(BASE, ""));
 
