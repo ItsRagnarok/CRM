@@ -3022,6 +3022,12 @@ export type Database = {
           },
         ]
       }
+      site_insights: {
+        Row: { id: string; period: string; created_at: string; created_by: string | null; summary: Json; rules: Json; ai: Json | null; ai_model: string | null; ai_error: string | null; applied: Json }
+        Insert: { id?: string; period: string; created_at?: string; created_by?: string | null; summary?: Json; rules?: Json; ai?: Json | null; ai_model?: string | null; ai_error?: string | null; applied?: Json }
+        Update: { id?: string; period?: string; created_at?: string; created_by?: string | null; summary?: Json; rules?: Json; ai?: Json | null; ai_model?: string | null; ai_error?: string | null; applied?: Json }
+        Relationships: []
+      }
       subscription_requests: {
         Row: {
           id: string
