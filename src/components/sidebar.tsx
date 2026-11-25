@@ -23,6 +23,7 @@ import {
   MessageSquare,
   Inbox,
   X,
+  Gauge,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
@@ -36,6 +37,7 @@ const NAV_SECTIONS: { label: string | null; items: NavItem[] }[] = [
     label: null,
     items: [
       { href: "/dashboard", label: "Panou", icon: LayoutDashboard },
+      { href: "/luni", label: "Luni dimineața", icon: Gauge },
       { href: "/cereri", label: "Cereri noi", icon: Inbox },
       { href: "/lucrari", label: "Lucrări", icon: Briefcase },
       { href: "/calendar", label: "Calendar și echipe", icon: Calendar, also: ["/echipe"] },

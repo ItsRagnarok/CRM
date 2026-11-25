@@ -112,6 +112,7 @@ const OFFICE_PAGES = [
   ["/cheltuieli", "Cheltuieli"],
   ["/rapoarte", "Rapoarte"],
   ["/cereri", "Cereri noi"],
+  ["/luni", "Luni dimineața"],
   ["/mesaje", "Mesaje"],
   ["/notificari", "Notificări"],
   ["/setari", "Informații companie"],

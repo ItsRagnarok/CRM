@@ -128,29 +128,30 @@ end $$;
 revoke all on function public.monday_report(date) from public, anon;
 grant execute on function public.monday_report(date) to authenticated;
 
--- Cifrele alese și pragurile (fără praguri setate, alegerea implicită).
+-- Cifrele alese și pragurile; fără configurație salvată, alegerea și pragurile implicite (ca în src/lib/monday.ts).
 create or replace function public.ef_monday_breaches(r jsonb, cfg jsonb) returns text[]
 language plpgsql immutable set search_path = '' as $$
 declare
-  metrics text[] := coalesce((select array_agg(x) from jsonb_array_elements_text(cfg->'metrics') x), array['restante','marja','nefacturat']);
-  th jsonb := coalesce(cfg->'thresholds', '{}'::jsonb);
+  metrics text[] := coalesce(nullif((select array_agg(x) from jsonb_array_elements_text(case when jsonb_typeof(cfg->'metrics') = 'array' then cfg->'metrics' else '[]'::jsonb end) x), '{}'), array['restante','marja','nefacturat']);
+  th jsonb := case when jsonb_typeof(cfg->'thresholds') = 'object' then cfg->'thresholds'
+                   else '{"restante":10000,"restante60":0,"nefacturat":3,"marja":30,"cereri":0,"saptamana":0}'::jsonb end;
   out text[] := '{}';
   m text;
   billed numeric := (r->'marja'->>'billed')::numeric;
   pct numeric;
 begin
-  foreach m in array metrics loop
+  foreach m in array metrics[1:3] loop
     if th ? m and jsonb_typeof(th->m) = 'number' then
-      if m = 'restante' and (r->'restante'->>'total')::numeric > (th->>m)::numeric then out := out || 'Restanțe';
-      elsif m = 'restante60' and (r->'restante'->>'over60')::numeric > (th->>m)::numeric then out := out || 'Restanțe peste 60 de zile';
-      elsif m = 'nefacturat' and (r->'nefacturat'->>'count')::numeric > (th->>m)::numeric then out := out || 'Lucrări nefacturate';
-      elsif m = 'incasat' and (r->'incasat'->>'last7')::numeric < (th->>m)::numeric then out := out || 'Încasat săptămâna trecută';
-      elsif m = 'facturat' and (r->'facturat'->>'last30')::numeric < (th->>m)::numeric then out := out || 'Facturat în 30 de zile';
+      if m = 'restante' and (r->'restante'->>'total')::numeric > (th->>m)::numeric then out := array_append(out, 'Restanțe');
+      elsif m = 'restante60' and (r->'restante'->>'over60')::numeric > (th->>m)::numeric then out := array_append(out, 'Restanțe peste 60 de zile');
+      elsif m = 'nefacturat' and (r->'nefacturat'->>'count')::numeric > (th->>m)::numeric then out := array_append(out, 'Lucrări nefacturate');
+      elsif m = 'incasat' and (r->'incasat'->>'last7')::numeric < (th->>m)::numeric then out := array_append(out, 'Încasat săptămâna trecută');
+      elsif m = 'facturat' and (r->'facturat'->>'last30')::numeric < (th->>m)::numeric then out := array_append(out, 'Facturat în 30 de zile');
       elsif m = 'marja' and billed > 0 then
         pct := round(100 * (billed - (r->'marja'->>'cost')::numeric) / billed);
-        if pct < (th->>m)::numeric then out := out || 'Marja'; end if;
-      elsif m = 'cereri' and (r->'cereri'->>'old')::numeric > (th->>m)::numeric then out := out || 'Cereri fără răspuns';
-      elsif m = 'saptamana' and (r->'saptamana'->>'no_team')::numeric > (th->>m)::numeric then out := out || 'Lucrări fără echipă';
+        if pct < (th->>m)::numeric then out := array_append(out, 'Marja'); end if;
+      elsif m = 'cereri' and (r->'cereri'->>'old')::numeric > (th->>m)::numeric then out := array_append(out, 'Cereri fără răspuns');
+      elsif m = 'saptamana' and (r->'saptamana'->>'no_team')::numeric > (th->>m)::numeric then out := array_append(out, 'Lucrări fără echipă');
       end if;
     end if;
   end loop;

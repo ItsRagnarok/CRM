@@ -1522,6 +1522,7 @@ export type Database = {
       }
       invoices: {
         Row: {
+          paid_at: string | null
           client_id: string
           created_at: string
           created_by: string | null
@@ -1545,6 +1546,7 @@ export type Database = {
           travel_amount: number
         }
         Insert: {
+          paid_at?: string | null
           client_id: string
           created_at?: string
           created_by?: string | null
@@ -1568,6 +1570,7 @@ export type Database = {
           travel_amount?: number
         }
         Update: {
+          paid_at?: string | null
           client_id?: string
           created_at?: string
           created_by?: string | null
@@ -2485,6 +2488,7 @@ export type Database = {
       }
       organizations: {
         Row: {
+          monday_config: Json
           request_token: string
           address: string | null
           created_at: string
@@ -2514,6 +2518,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          monday_config?: Json
           request_token?: string
           address?: string | null
           created_at?: string
@@ -2543,6 +2548,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          monday_config?: Json
           request_token?: string
           address?: string | null
           created_at?: string
@@ -3594,6 +3600,10 @@ export type Database = {
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }
         Returns: undefined
+      }
+      monday_report: {
+        Args: { p_today: string }
+        Returns: Json
       }
       money_at_risk: {
         Args: { p_today: string }
