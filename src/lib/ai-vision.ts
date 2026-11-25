@@ -17,29 +17,37 @@ export async function readImageJson(image: Blob, prompt: string): Promise<Vision
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const model = process.env.GEMINI_VISION_MODEL || "gemini-3.8-flash";
-    try {
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
-        method: "POST",
-        headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: b64 } }] }],
-          generationConfig: { temperature: 0, responseMimeType: "application/json" },
-        }),
-        signal: AbortSignal.timeout(30_000),
-      });
-      if (res.ok) {
-        const j = await res.json();
-        const text = (j?.candidates?.[0]?.content?.parts ?? []).map((p: { text?: string }) => p.text ?? "").join("");
-        const data = parseModelJson(text);
-        if (data) return { ok: true, data, provider: "gemini", model, ms: Date.now() - started };
-        errors.push("gemini: răspuns fără JSON");
-      } else {
+    // Citirea unui bon nu cere „gândire” lungă: cerem nivelul mic (mult mai rapid). Dacă modelul nu
+    // acceptă setarea, mai încercăm o dată fără ea.
+    for (const thinking of [true, false]) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+          method: "POST",
+          headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: mime, data: b64 } }] }],
+            generationConfig: { temperature: 0, responseMimeType: "application/json", ...(thinking ? { thinkingConfig: { thinkingLevel: "low" } } : {}) },
+          }),
+          signal: AbortSignal.timeout(45_000),
+        });
+        if (res.ok) {
+          const j = await res.json();
+          const text = (j?.candidates?.[0]?.content?.parts ?? []).filter((p: { thought?: boolean }) => !p.thought).map((p: { text?: string }) => p.text ?? "").join("");
+          const data = parseModelJson(text);
+          if (data) return { ok: true, data, provider: "gemini", model, ms: Date.now() - started };
+          errors.push("gemini: răspuns fără JSON");
+          break;
+        }
+        const body = (await res.text().catch(() => "")).slice(0, 300);
+        console.error("readImageJson gemini", res.status, body);
+        if (thinking && res.status === 400 && /thinking/i.test(body)) continue;
         errors.push(`gemini: ${res.status}`);
-        console.error("readImageJson gemini", res.status, (await res.text().catch(() => "")).slice(0, 300));
+        break;
+      } catch (e) {
+        errors.push("gemini: fără răspuns");
+        console.error("readImageJson gemini", e instanceof Error ? e.name : e);
+        break;
       }
-    } catch (e) {
-      errors.push("gemini: fără răspuns");
-      console.error("readImageJson gemini", e);
     }
   }
 
