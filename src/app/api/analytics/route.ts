@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!ua || BOT.test(ua)) return quiet();
 
-  let body: { path?: unknown; referrer?: unknown; utm?: unknown };
+  let body: { path?: unknown; referrer?: unknown; utm?: unknown; type?: unknown; seconds?: unknown };
   try { body = JSON.parse(await request.text()); } catch { return new Response("Invalid", { status: 400 }); }
   const path = typeof body.path === "string" ? body.path : "";
   if (!/^\/[A-Za-z0-9/_.-]{0,198}$/.test(path) || path.startsWith("/admin") || path.startsWith("/api")) return quiet();
@@ -40,6 +40,19 @@ export async function POST(request: NextRequest) {
   const db = await createClient();
   const excluded = ip ? ipHash(ip) : null;
   if (excluded && (await db.rpc("ef_site_ip_excluded", { p_hash: excluded })).data === true) return quiet();
-  await db.rpc("ef_record_site_view", { p_path: path, p_referrer_host: referrerHost, p_utm_source: utm, p_country: request.headers.get("x-vercel-ip-country") ?? "", p_device: device, p_visitor: visitor });
+
+  // „time”: cât a stat pe pagină (trimis la plecare). „lead”: a trimis o cerere de demo / programare.
+  if (body.type === "time") {
+    const seconds = Math.round(Number(body.seconds));
+    if (Number.isFinite(seconds) && seconds > 0) await db.rpc("ef_record_site_time", { p_visitor: visitor, p_path: path, p_seconds: Math.min(seconds, 3600) });
+    return quiet();
+  }
+  // Județul (codul ISO, ex. CJ) și orașul vin de la Vercel, din IP; IP-ul nu se păstrează.
+  let city = "";
+  try { city = decodeURIComponent(request.headers.get("x-vercel-ip-city") ?? ""); } catch { /* oraș cu codare greșită */ }
+  await db.rpc("ef_record_site_view", {
+    p_path: path, p_referrer_host: referrerHost, p_utm_source: utm, p_country: request.headers.get("x-vercel-ip-country") ?? "", p_device: device, p_visitor: visitor,
+    p_region: request.headers.get("x-vercel-ip-country-region") ?? "", p_city: city, p_kind: body.type === "lead" ? "lead" : "view",
+  });
   return quiet();
 }

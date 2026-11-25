@@ -374,6 +374,7 @@ $("bookBtn").onclick = async () => {
   } finally {
     $("bookBtn").disabled = false;
   }
+  if (window.efTrackLead) window.efTrackLead();
   show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)));
   selSlot = null; await loadPublicData(); drawPub();
   $("formCard").classList.add("hidden");

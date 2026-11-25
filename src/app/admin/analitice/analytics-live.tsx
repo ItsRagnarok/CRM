@@ -6,11 +6,30 @@ export type SiteAnalytics = {
   online: number; last30: { t: string; views: number }[];
   visitors: number; views: number; bounce: number | null; prev_visitors: number; prev_views: number; daily: boolean; from: string; to: string;
   series: { t: string; views: number; visitors: number }[];
-  pages: { path: string; visitors: number; views: number }[];
+  pages: { path: string; visitors: number; views: number; avg_seconds?: number | null }[];
   referrers: { name: string; visitors: number }[]; sources: { name: string; visitors: number }[];
   countries: { code: string; visitors: number }[]; devices: { name: string; visitors: number }[];
-  recent: { t: string; path: string; country: string | null; device: string; referrer_host: string | null }[];
+  recent: { t: string; path: string; country: string | null; region?: string | null; city?: string | null; device: string; referrer_host: string | null; kind?: string }[];
+  avg_seconds?: number | null; leads_count?: number;
+  entries?: { path: string; visitors: number }[];
+  channels?: { name: string; visitors: number; leads: number }[];
+  regions?: { country: string | null; region: string; visitors: number }[];
+  cities?: { country: string | null; region: string | null; city: string; visitors: number }[];
+  journeys?: Journey[];
 };
+type Journey = { first_at: string; last_at: string; entry: string; channel: string; country: string | null; region: string | null; city: string | null; device: string; pages: number; seconds: number; trail: string[]; lead: boolean };
+
+// Județele României după codul ISO 3166-2 (Vercel trimite partea de după „RO-”).
+const JUDETE: Record<string, string> = {
+  AB: "Alba", AR: "Arad", AG: "Argeș", BC: "Bacău", BH: "Bihor", BN: "Bistrița-Năsăud", BT: "Botoșani", BV: "Brașov", BR: "Brăila", B: "București",
+  BZ: "Buzău", CS: "Caraș-Severin", CL: "Călărași", CJ: "Cluj", CT: "Constanța", CV: "Covasna", DB: "Dâmbovița", DJ: "Dolj", GL: "Galați", GR: "Giurgiu",
+  GJ: "Gorj", HR: "Harghita", HD: "Hunedoara", IL: "Ialomița", IS: "Iași", IF: "Ilfov", MM: "Maramureș", MH: "Mehedinți", MS: "Mureș", NT: "Neamț",
+  OT: "Olt", PH: "Prahova", SM: "Satu Mare", SJ: "Sălaj", SB: "Sibiu", SV: "Suceava", TR: "Teleorman", TM: "Timiș", TL: "Tulcea", VS: "Vaslui", VL: "Vâlcea", VN: "Vrancea",
+};
+const regionName = (c: string | null | undefined, r: string | null | undefined) => (!r ? "" : c === "RO" ? (JUDETE[r] ?? r) : `${r}, ${c ?? "?"}`);
+const place = (v: { country?: string | null; region?: string | null; city?: string | null }) =>
+  [v.city, v.country === "RO" ? (v.region ? (v.region === "B" ? "" : `jud. ${JUDETE[v.region] ?? v.region}`) : "") : regionName(v.country, v.region), v.country !== "RO" ? country(v.country ?? null) : ""].filter(Boolean).join(", ") || country(v.country ?? null);
+const dur = (s: number | null | undefined) => (!s ? "—" : s < 60 ? `${s} s` : `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, "0")} s`);
 type Period = "24h" | "today" | "yesterday" | "7d" | "30d" | "custom";
 const PERIODS: { id: Period; label: string }[] = [
   { id: "24h", label: "Ultimele 24 de ore" }, { id: "today", label: "Astăzi" }, { id: "yesterday", label: "Ieri" },
@@ -142,7 +161,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">Analitice site</h1>
-          <p className="text-sm text-muted">Vizitele pe electrofield.ro: prima pagină, blog, programări, termeni. Fără cookie-uri, fără adrese IP salvate. Datele se actualizează singure la 10 secunde.</p>
+          <p className="text-sm text-muted">Vizitele pe electrofield.ro: de unde vin (sursă, județ, oraș), ce citesc, cât stau și cine cere programare. Fără cookie-uri, fără adrese IP salvate. Se actualizează singur la 10 secunde.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 text-[13px] font-bold" role="status">
@@ -169,17 +188,18 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
 
       {!data ? <p className="text-muted">Se încarcă analiticele…</p> : (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { label: "Vizitatori", value: nf.format(data.visitors), d: dv },
-              { label: "Afișări de pagină", value: nf.format(data.views), d: dp },
-              { label: "Rată de respingere", value: data.bounce == null ? "—" : `${data.bounce}%`, d: null },
+              { label: "Vizitatori", value: nf.format(data.visitors), d: dv, sub: "față de perioada anterioară" },
+              { label: "Afișări de pagină", value: nf.format(data.views), d: dp, sub: "față de perioada anterioară" },
+              { label: "Timp mediu pe vizită", value: dur(data.avg_seconds), d: null, sub: data.bounce == null ? "cât au stat pe site, în total" : `${data.bounce}% au văzut o singură pagină` },
+              { label: "Cereri de programare", value: nf.format(data.leads_count ?? 0), d: null, sub: "trimise din pagina de programare" },
             ].map((k) => (
               <div key={k.label} className="rounded-2xl border border-border bg-white px-5 py-4">
                 <div className="text-[12.5px] font-semibold text-muted">{k.label}</div>
                 <div className="mt-1 flex items-baseline gap-2"><span className="text-[30px] font-extrabold leading-none tabular-nums">{k.value}</span>
                   {k.d && <span className={`rounded-full px-2 py-0.5 text-[11.5px] font-bold ${k.d.up ? "bg-success-bg text-success" : "bg-danger-bg text-danger"}`}>{k.d.text}</span>}</div>
-                <div className="mt-1 text-[11.5px] text-muted">{k.d ? "față de perioada anterioară" : "vizitatori care au văzut o singură pagină"}</div>
+                <div className="mt-1 text-[11.5px] text-muted">{k.sub}</div>
               </div>
             ))}
           </div>
@@ -190,9 +210,19 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
           </div>
 
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">De unde vin</h2>
+              <p className="mb-3 text-[12px] text-muted">Sursa primei pagini văzute de fiecare vizitator. „Direct” = a scris adresa, a folosit un semn de carte sau linkul nu spune de unde vine.</p>
+              <Bars rows={(data.channels ?? []).map((c) => ({ label: `${c.name}${c.leads ? ` · ${c.leads} ${c.leads === 1 ? "cerere" : "cereri"}` : ""}`, value: c.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">Județe și orașe</h2>
+              <p className="mb-3 text-[12px] text-muted">Aproximativ, după rețeaua de internet a vizitatorului (pe date mobile poate apărea orașul operatorului).</p>
+              <Bars rows={(data.regions ?? []).map((r) => ({ label: regionName(r.country, r.region), value: r.visitors }))} empty="Încă nu avem județe: apar pentru vizitele de acum înainte." />
+              {(data.cities ?? []).length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Orașe</h3><Bars rows={(data.cities ?? []).map((c) => ({ label: place(c), value: c.visitors }))} empty="" /></>}</div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Pagini</h2>
-              <Bars rows={data.pages.map((p) => ({ label: p.path, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
-            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">De unde vin</h2>
+              <Bars rows={data.pages.map((p) => ({ label: `${p.path}${p.avg_seconds ? ` · ${dur(p.avg_seconds)} în medie` : ""}`, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-1 text-[15px] font-bold">Pagina pe care au intrat</h2>
+              <p className="mb-3 text-[12px] text-muted">Prima pagină văzută: arată ce aduce oameni noi (de obicei articolele din blog).</p>
+              <Bars rows={(data.entries ?? []).map((p) => ({ label: p.path, value: p.visitors }))} empty="Nicio vizită în această perioadă." /></div>
+            <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Site-uri care trimit vizitatori</h2>
               <Bars rows={data.referrers.map((r) => ({ label: r.name, value: r.visitors }))} empty="Nicio vizită în această perioadă." />
               {data.sources.length > 0 && <><h3 className="mb-2 mt-4 text-[12.5px] font-bold uppercase tracking-wide text-muted">Campanii (utm_source)</h3><Bars rows={data.sources.map((r) => ({ label: r.name, value: r.visitors }))} empty="" /></>}</div>
             <div className="rounded-2xl border border-border bg-white p-5"><h2 className="mb-3 text-[15px] font-bold">Țări</h2>
@@ -202,13 +232,36 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
           </div>
 
           <div className="rounded-2xl border border-border bg-white p-5">
+            <h2 className="mb-1 text-[15px] font-bold">Drumul vizitatorilor</h2>
+            <p className="mb-3 text-[12px] text-muted">Fiecare rând e un vizitator (în aceeași zi): de unde a venit, ce a citit, în ordine, și cât a stat. Cine a trimis o cerere de programare apare primul. Nu păstrăm nimic care să identifice persoana.</p>
+            {(data.journeys ?? []).length === 0 ? <p className="py-3 text-[13px] text-muted">Nicio vizită în această perioadă.</p> : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[760px] text-left text-[13px]">
+                  <thead><tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted"><th className="py-2 pr-3">Când</th><th className="py-2 pr-3">De unde</th><th className="py-2 pr-3">Sursa</th><th className="py-2 pr-3">Ce a citit</th><th className="py-2 pr-3 text-right">Timp</th></tr></thead>
+                  <tbody>
+                    {(data.journeys ?? []).map((j, i) => (
+                      <tr key={`${j.first_at}-${i}`} className={`border-b border-[#eef0f4] align-top last:border-0 ${j.lead ? "bg-success-bg" : ""}`}>
+                        <td className="whitespace-nowrap py-2.5 pr-3 tabular-nums text-muted">{new Intl.DateTimeFormat("ro-RO", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" }).format(new Date(j.first_at))}</td>
+                        <td className="py-2.5 pr-3">{place(j)}<div className="text-[11.5px] text-muted">{DEVICE[j.device] ?? j.device}</div></td>
+                        <td className="py-2.5 pr-3">{j.channel}{j.lead && <div><span className="mt-1 inline-block rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-white">A cerut programare</span></div>}</td>
+                        <td className="py-2.5 pr-3"><div className="flex flex-wrap items-center gap-1">{j.trail.map((p, k) => <span key={k} className="flex items-center gap-1">{k > 0 && <span className="text-muted" aria-hidden>→</span>}<span className="rounded bg-[#f2f4f7] px-1.5 py-0.5 text-[12px]">{p}</span></span>)}{j.pages > j.trail.length && <span className="text-[12px] text-muted">+{j.pages - j.trail.length}</span>}</div></td>
+                        <td className="whitespace-nowrap py-2.5 pr-3 text-right tabular-nums">{dur(j.seconds)}<div className="text-[11.5px] text-muted">{j.pages} {j.pages === 1 ? "pagină" : "pagini"}</div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border border-border bg-white p-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="text-[15px] font-bold">Live · ultimele 30 de minute</h2><span className="text-[12px] text-muted">{data.last30.reduce((a, m) => a + m.views, 0)} afișări</span></div>
             <Spark values={data.last30.map((m) => m.views)} />
             <ul className="mt-4 divide-y divide-[#eef0f4]" aria-label="Ultimele vizite">
               {data.recent.length === 0 && <li className="py-3 text-[13px] text-muted">Nicio vizită încă. Deschide electrofield.ro într-o fereastră nouă și apare aici în câteva secunde.</li>}
               {data.recent.map((r, i) => (
                 <li key={`${r.t}-${i}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[13px]">
-                  <span className="min-w-0 truncate"><b>{r.path}</b> <span className="text-muted">· {country(r.country)} · {DEVICE[r.device] ?? r.device}{r.referrer_host ? ` · de la ${r.referrer_host}` : ""}</span></span>
+                  <span className="min-w-0 truncate">{r.kind === "lead" && <span className="mr-1.5 rounded-full bg-success px-2 py-0.5 text-[11px] font-bold text-white">Cerere de programare</span>}<b>{r.path}</b> <span className="text-muted">· {place(r)} · {DEVICE[r.device] ?? r.device}{r.referrer_host ? ` · de la ${r.referrer_host}` : ""}</span></span>
                   <span className="shrink-0 text-[12px] text-muted tabular-nums">{ago(r.t, now)}</span>
                 </li>
               ))}

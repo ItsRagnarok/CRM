@@ -62,9 +62,10 @@ export function OfflineBanner() {
   if (online && items.length === 0) return null;
 
   const n = (k: number) => (k === 1 ? "o acțiune" : `${k} acțiuni`);
+  const saved = (k: number) => (k === 1 ? "o acțiune salvată" : `${k} acțiuni salvate`);
   let text: string;
-  if (!online) text = pending.length ? `Ești offline. ${n(pending.length)} salvate pe telefon, pleacă singure când revine semnalul.` : "Ești offline. Poți lucra în continuare: pozele, semnătura și pașii lucrării se salvează pe telefon.";
-  else if (pending.length) text = sending ? `Se trimit ${n(pending.length)} salvate pe telefon…` : `${n(pending.length)} așteaptă să fie trimise.`;
+  if (!online) text = pending.length ? `Ești offline. ${saved(pending.length)} pe telefon, ${pending.length === 1 ? "pleacă singură" : "pleacă singure"} când revine semnalul.` : "Ești offline. Poți lucra în continuare: pozele, semnătura și pașii lucrării se salvează pe telefon.";
+  else if (pending.length) text = sending ? `Se trimite: ${saved(pending.length)} pe telefon…` : pending.length === 1 ? "O acțiune așteaptă să fie trimisă." : `${n(pending.length)} așteaptă să fie trimise.`;
   else text = `${n(failed.length)} nu au putut fi trimise.`;
 
   return (

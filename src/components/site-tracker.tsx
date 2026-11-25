@@ -10,12 +10,30 @@ export function SiteTracker() {
   const pathname = usePathname();
   useEffect(() => {
     if (!PUBLIC_PATHS.has(pathname)) return;
+    const send = (data: Record<string, unknown>) => {
+      try {
+        const body = JSON.stringify(data);
+        if (navigator.sendBeacon) navigator.sendBeacon("/api/analytics", new Blob([body], { type: "text/plain" }));
+        else void fetch("/api/analytics", { method: "POST", body, keepalive: true });
+      } catch { /* analytics must never break the page */ }
+    };
     try {
       if (localStorage.getItem("ef-no-track") || navigator.doNotTrack === "1") return;
-      const body = JSON.stringify({ path: pathname, referrer: document.referrer || "", utm: new URLSearchParams(location.search).get("utm_source") || "" });
-      if (navigator.sendBeacon) navigator.sendBeacon("/api/analytics", new Blob([body], { type: "text/plain" }));
-      else void fetch("/api/analytics", { method: "POST", body, keepalive: true });
-    } catch { /* analytics must never break the page */ }
+    } catch { if (navigator.doNotTrack === "1") return; }
+    send({ path: pathname, referrer: document.referrer || "", utm: new URLSearchParams(location.search).get("utm_source") || "" });
+    // Cât timp a stat pe pagină: doar cât a fost vizibilă, trimis la plecare sau la schimbarea tabului.
+    let visibleMs = 0;
+    let since = document.visibilityState === "visible" ? Date.now() : 0;
+    let sent = 0;
+    const flush = () => {
+      if (since) { visibleMs += Date.now() - since; since = 0; }
+      const s = Math.round(visibleMs / 1000);
+      if (s >= 2 && s > sent) { sent = s; send({ type: "time", path: pathname, seconds: s }); }
+    };
+    const onVis = () => { if (document.visibilityState === "hidden") flush(); else since = Date.now(); };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("pagehide", flush);
+    return () => { flush(); document.removeEventListener("visibilitychange", onVis); window.removeEventListener("pagehide", flush); };
   }, [pathname]);
   return null;
 }

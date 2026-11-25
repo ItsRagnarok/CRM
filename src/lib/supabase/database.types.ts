@@ -3443,7 +3443,11 @@ export type Database = {
         Returns: number
       }
       ef_record_site_view: {
-        Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string }
+        Args: { p_path: string; p_referrer_host: string; p_utm_source: string; p_country: string; p_device: string; p_visitor: string; p_region?: string; p_city?: string; p_kind?: string }
+        Returns: undefined
+      }
+      ef_record_site_time: {
+        Args: { p_visitor: string; p_path: string; p_seconds: number }
         Returns: undefined
       }
       ef_site_exclusion_add: {
