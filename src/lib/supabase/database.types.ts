@@ -1807,7 +1807,9 @@ export type Database = {
           default_tax_percent: number
           due_days: number
           organization_id: string
+          proforma_series: string | null
           provider: string
+          receipt_series: string | null
           secret_id: string | null
           send_email: boolean
           series: string
@@ -1821,7 +1823,9 @@ export type Database = {
           default_tax_percent?: number
           due_days?: number
           organization_id: string
+          proforma_series?: string | null
           provider: string
+          receipt_series?: string | null
           secret_id?: string | null
           send_email?: boolean
           series: string
@@ -1835,7 +1839,9 @@ export type Database = {
           default_tax_percent?: number
           due_days?: number
           organization_id?: string
+          proforma_series?: string | null
           provider?: string
+          receipt_series?: string | null
           secret_id?: string | null
           send_email?: boolean
           series?: string
@@ -1843,80 +1849,242 @@ export type Database = {
           updated_at?: string
           vat_code?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "invoicing_connections_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_lines: {
+        Row: {
+          code: string | null
+          id: string
+          invoice_id: string
+          is_service: boolean
+          line_vat: number | null
+          name: string
+          net_amount: number | null
+          organization_id: string
+          position: number
+          quantity: number
+          unit: string
+          unit_price: number
+          vat_percent: number
+        }
+        Insert: {
+          code?: string | null
+          id?: string
+          invoice_id: string
+          is_service?: boolean
+          line_vat?: number | null
+          name: string
+          net_amount?: number | null
+          organization_id: string
+          position: number
+          quantity: number
+          unit?: string
+          unit_price: number
+          vat_percent?: number
+        }
+        Update: {
+          code?: string | null
+          id?: string
+          invoice_id?: string
+          is_service?: boolean
+          line_vat?: number | null
+          name?: string
+          net_amount?: number | null
+          organization_id?: string
+          position?: number
+          quantity?: number
+          unit?: string
+          unit_price?: number
+          vat_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_lines_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_lines_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          document: string | null
+          id: string
+          invoice_id: string
+          method: string
+          organization_id: string
+          paid_on: string
+          source: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          id?: string
+          invoice_id: string
+          method: string
+          organization_id: string
+          paid_on: string
+          source?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          document?: string | null
+          id?: string
+          invoice_id?: string
+          method?: string
+          organization_id?: string
+          paid_on?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       invoices: {
         Row: {
-          paid_at: string | null
+          cancelled_at: string | null
           client_id: string
+          client_snapshot: Json | null
           created_at: string
           created_by: string | null
+          doc_type: string
           due_date: string | null
           e_invoice_status: string | null
+          emailed_at: string | null
+          gross_amount: number | null
           id: string
           invoice_number: string
           issued_at: string
           job_id: string | null
           labor_amount: number
           materials_amount: number
+          mentions: string | null
           organization_id: string
           other_amount: number
+          paid_amount: number
+          paid_at: string | null
           provider: string | null
           provider_number: string | null
           provider_series: string | null
           provider_synced_at: string | null
+          provider_url: string | null
+          reference_invoice_id: string | null
           simulated: boolean
           status: string
           total_amount: number | null
           travel_amount: number
+          vat_amount: number
         }
         Insert: {
-          paid_at?: string | null
+          cancelled_at?: string | null
           client_id: string
+          client_snapshot?: Json | null
           created_at?: string
           created_by?: string | null
+          doc_type?: string
           due_date?: string | null
           e_invoice_status?: string | null
+          emailed_at?: string | null
+          gross_amount?: number | null
           id?: string
           invoice_number: string
           issued_at?: string
           job_id?: string | null
           labor_amount?: number
           materials_amount?: number
+          mentions?: string | null
           organization_id: string
           other_amount?: number
+          paid_amount?: number
+          paid_at?: string | null
           provider?: string | null
           provider_number?: string | null
           provider_series?: string | null
           provider_synced_at?: string | null
+          provider_url?: string | null
+          reference_invoice_id?: string | null
           simulated?: boolean
           status?: string
           total_amount?: number | null
           travel_amount?: number
+          vat_amount?: number
         }
         Update: {
-          paid_at?: string | null
+          cancelled_at?: string | null
           client_id?: string
+          client_snapshot?: Json | null
           created_at?: string
           created_by?: string | null
+          doc_type?: string
           due_date?: string | null
           e_invoice_status?: string | null
+          emailed_at?: string | null
+          gross_amount?: number | null
           id?: string
           invoice_number?: string
           issued_at?: string
           job_id?: string | null
           labor_amount?: number
           materials_amount?: number
+          mentions?: string | null
           organization_id?: string
           other_amount?: number
+          paid_amount?: number
+          paid_at?: string | null
           provider?: string | null
           provider_number?: string | null
           provider_series?: string | null
           provider_synced_at?: string | null
+          provider_url?: string | null
+          reference_invoice_id?: string | null
           simulated?: boolean
           status?: string
           total_amount?: number | null
           travel_amount?: number
+          vat_amount?: number
         }
         Relationships: [
           {
@@ -1945,6 +2113,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_reference_invoice_id_fkey"
+            columns: ["reference_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
             referencedColumns: ["id"]
           },
         ]
@@ -2825,30 +3000,32 @@ export type Database = {
       }
       organizations: {
         Row: {
-          arrival_window_minutes: number
-          ai_enabled: boolean
-          monday_config: Json
-          request_token: string
           address: string | null
+          ai_enabled: boolean
+          arrival_window_minutes: number
           created_at: string
           cui: string | null
           email: string | null
           enabled_domains: string[]
           enabled_modules: string[]
+          fuel_cost_per_km: number
           gas_inspection_months: number
           gas_revision_months: number
-          pv_atr_days: number
-          pv_cert_days: number
-          fuel_cost_per_km: number
           gps_continuous_tracking_enabled: boolean
           gps_retention_days: number
           hq_lat: number | null
           hq_lng: number | null
           id: string
+          invoice_labor_rate: number | null
+          invoice_material_markup: number
           is_active: boolean
           logo_storage_path: string | null
+          monday_config: Json
           name: string
           phone: string | null
+          pv_atr_days: number
+          pv_cert_days: number
+          request_token: string
           standard_hours_per_day: number
           standard_workdays: number[]
           subscription_plan: Database["public"]["Enums"]["subscription_plan"]
@@ -2857,30 +3034,32 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          arrival_window_minutes?: number
-          ai_enabled?: boolean
-          monday_config?: Json
-          request_token?: string
           address?: string | null
+          ai_enabled?: boolean
+          arrival_window_minutes?: number
           created_at?: string
           cui?: string | null
           email?: string | null
           enabled_domains?: string[]
           enabled_modules?: string[]
+          fuel_cost_per_km?: number
           gas_inspection_months?: number
           gas_revision_months?: number
-          pv_atr_days?: number
-          pv_cert_days?: number
-          fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           hq_lat?: number | null
           hq_lng?: number | null
           id?: string
+          invoice_labor_rate?: number | null
+          invoice_material_markup?: number
           is_active?: boolean
           logo_storage_path?: string | null
+          monday_config?: Json
           name: string
           phone?: string | null
+          pv_atr_days?: number
+          pv_cert_days?: number
+          request_token?: string
           standard_hours_per_day?: number
           standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -2889,30 +3068,32 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          arrival_window_minutes?: number
-          ai_enabled?: boolean
-          monday_config?: Json
-          request_token?: string
           address?: string | null
+          ai_enabled?: boolean
+          arrival_window_minutes?: number
           created_at?: string
           cui?: string | null
           email?: string | null
           enabled_domains?: string[]
           enabled_modules?: string[]
+          fuel_cost_per_km?: number
           gas_inspection_months?: number
           gas_revision_months?: number
-          pv_atr_days?: number
-          pv_cert_days?: number
-          fuel_cost_per_km?: number
           gps_continuous_tracking_enabled?: boolean
           gps_retention_days?: number
           hq_lat?: number | null
           hq_lng?: number | null
           id?: string
+          invoice_labor_rate?: number | null
+          invoice_material_markup?: number
           is_active?: boolean
           logo_storage_path?: string | null
+          monday_config?: Json
           name?: string
           phone?: string | null
+          pv_atr_days?: number
+          pv_cert_days?: number
+          request_token?: string
           standard_hours_per_day?: number
           standard_workdays?: number[]
           subscription_plan?: Database["public"]["Enums"]["subscription_plan"]
@@ -4110,6 +4291,10 @@ export type Database = {
       invoicing_get_secret: {
         Args: Record<PropertyKey, never>
         Returns: string
+      }
+      invoicing_set_series: {
+        Args: { p_proforma: string; p_receipt: string }
+        Returns: undefined
       }
       invoicing_save_connection: {
         Args: { p_provider: string; p_account_email: string; p_vat_code: string; p_series: string; p_tax: number; p_due_days: number; p_send_email: boolean; p_secret?: string }

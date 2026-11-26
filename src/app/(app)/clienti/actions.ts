@@ -173,43 +173,6 @@ export async function deleteContact(formData: FormData) {
   revalidatePath(`/clienti/${clientId}`);
 }
 
-export async function createInvoice(formData: FormData) {
-  const clientId = String(formData.get("clientId") ?? "");
-  const jobId = String(formData.get("jobId") ?? "") || null;
-  const laborAmount = Number(formData.get("laborAmount") ?? 0) || 0;
-  const materialsAmount = Number(formData.get("materialsAmount") ?? 0) || 0;
-  const travelAmount = Number(formData.get("travelAmount") ?? 0) || 0;
-  const otherAmount = Number(formData.get("otherAmount") ?? 0) || 0;
-  const total = laborAmount + materialsAmount + travelAmount + otherAmount;
-  if (!clientId || total <= 0) return;
-
-  const { organization, userId } = await requireSessionContext();
-  const supabase = await createClient();
-
-  // Atomic per-organization counter (count+1 collided with it and failed silently).
-  const { data: nextNumber, error: numberError } = await supabase.rpc("next_invoice_number", {
-    p_organization_id: organization.id,
-  });
-  if (numberError || !nextNumber) return;
-  const invoiceNumber = `FACT-${String(nextNumber).padStart(4, "0")}`;
-
-  // total_amount is a DB-generated column (sum of the four below) — sending
-  // it explicitly is rejected outright, not just ignored.
-  await supabase.from("invoices").insert({
-    organization_id: organization.id,
-    client_id: clientId,
-    job_id: jobId,
-    invoice_number: invoiceNumber,
-    labor_amount: laborAmount,
-    materials_amount: materialsAmount,
-    travel_amount: travelAmount,
-    other_amount: otherAmount,
-    created_by: userId,
-  });
-
-  revalidatePath(`/clienti/${clientId}`);
-}
-
 export async function addClientDocument(formData: FormData) {
   const clientId = String(formData.get("clientId") ?? "");
   const file = formData.get("file") as File | null;

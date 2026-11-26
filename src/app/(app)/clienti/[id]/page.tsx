@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { docStatus } from "../../facturare/status";
 import { notFound } from "next/navigation";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
@@ -10,7 +11,6 @@ import {
   addContact,
   addLocation,
   addClientDocument,
-  createInvoice,
   deleteContact,
   deleteClientDocument,
   deleteLocation,
@@ -88,7 +88,7 @@ export default async function ClientDetailPage({
 
   const [{ data: invoices }, { data: documents }, { data: photos }, { data: consentLog }] = await Promise.all([
     tab === "overview" || tab === "facturi"
-      ? supabase.from("invoices").select("id, invoice_number, total_amount, status, issued_at").eq("client_id", id).order("issued_at", { ascending: false })
+      ? supabase.from("invoices").select("id, invoice_number, gross_amount, paid_amount, status, doc_type, issued_at, due_date").eq("client_id", id).order("issued_at", { ascending: false })
       : Promise.resolve({ data: null }),
     tab === "documente"
       ? supabase.from("documents").select("id, name, doc_type, storage_path, created_at").eq("client_id", id).order("created_at", { ascending: false })
@@ -101,7 +101,7 @@ export default async function ClientDetailPage({
       : Promise.resolve({ data: null }),
   ]);
 
-  const totalValue = (invoices ?? []).reduce((sum, inv) => sum + Number(inv.total_amount ?? 0), 0);
+  const totalValue = (invoices ?? []).filter((inv) => inv.doc_type !== "proforma" && inv.status !== "cancelled").reduce((sum, inv) => sum + Number(inv.gross_amount ?? 0), 0);
   const signedUrls = await signedAttachmentUrls(supabase, [
     ...(documents ?? []).map((d) => d.storage_path),
     ...(photos ?? []).map((p) => p.storage_path),
@@ -370,53 +370,33 @@ export default async function ClientDetailPage({
           <h2 className="mb-3.5 text-[14.5px] font-bold text-foreground">Facturi</h2>
           {invoices && invoices.length > 0 ? (
             <div className="flex flex-col divide-y divide-[#f2f4f7]">
-              {invoices.map((inv) => (
-                <div key={inv.id} className="flex items-center justify-between py-2.5 text-[13px]">
-                  <div>
-                    <div className="font-semibold text-foreground">{inv.invoice_number}</div>
-                    <div className="text-[11.5px] text-muted-2">{new Date(inv.issued_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-[#344054]">{Number(inv.total_amount).toFixed(2)} RON</span>
-                    <StatusBadge
-                      label={inv.status === "paid" ? "Plătită" : inv.status === "overdue" ? "Restantă" : "Neplătită"}
-                      className={
-                        inv.status === "paid"
-                          ? "bg-success-bg text-success"
-                          : inv.status === "overdue"
-                            ? "bg-danger-bg text-danger"
-                            : "bg-warning-bg text-warning"
-                      }
-                    />
-                  </div>
-                </div>
-              ))}
+              {invoices.map((inv) => {
+                const st = docStatus(inv, {}, todayInOrgTimeZone());
+                return (
+                  <Link key={inv.id} href={`/facturare/${inv.id}`} className="flex items-center justify-between py-2.5 text-[13px] hover:bg-[#f9fafb]">
+                    <div>
+                      <div className="font-semibold text-foreground">{inv.invoice_number}{inv.doc_type !== "factura" ? <span className="ml-1.5 text-[11.5px] font-normal text-muted">{inv.doc_type === "proforma" ? "proformă" : "stornare"}</span> : null}</div>
+                      <div className="text-[11.5px] text-muted-2">{new Date(`${inv.issued_at}T12:00:00Z`).toLocaleDateString("ro-RO", { timeZone: "UTC" })}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-bold tabular-nums text-[#344054]">{Number(inv.gross_amount).toFixed(2)} lei</span>
+                      <StatusBadge label={st.label} className={st.cls} />
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           ) : (
             <p className="flex items-center gap-2 text-[13px] text-muted">
               <Receipt className="h-4 w-4" /> Nicio factură emisă încă pentru acest client.
             </p>
           )}
-          <form action={createInvoice} className="mt-4 flex flex-col gap-2 border-t border-[#f2f4f7] pt-4">
-            <input type="hidden" name="clientId" value={client.id} />
-            {jobs.length > 0 && (
-              <select name="jobId" defaultValue="" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric">
-                <option value="">Fără lucrare asociată</option>
-                {jobs.map((j) => (
-                  <option key={j.id} value={j.id}>#{j.display_number} — {j.title}</option>
-                ))}
-              </select>
-            )}
-            <div className="grid grid-cols-4 gap-2">
-              <input name="laborAmount" type="number" step="0.01" min="0" placeholder="Manoperă" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
-              <input name="materialsAmount" type="number" step="0.01" min="0" placeholder="Materiale" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
-              <input name="travelAmount" type="number" step="0.01" min="0" placeholder="Deplasare" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
-              <input name="otherAmount" type="number" step="0.01" min="0" placeholder="Altele" className="rounded-[9px] border border-[#d0d5dd] px-3 py-2 text-[13px] outline-none focus:border-electric" />
-            </div>
-            <button type="submit" className="flex items-center justify-center gap-1.5 self-start rounded-[9px] bg-neutral-bg px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">
-              <Plus className="h-3.5 w-3.5" /> Emite factură
-            </button>
-          </form>
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-[#f2f4f7] pt-4">
+            <Link href={`/facturare/noua?client=${client.id}`} className="flex items-center gap-1.5 rounded-[9px] bg-electric px-3.5 py-2 text-[12.5px] font-extrabold">
+              <Plus className="h-3.5 w-3.5" /> Factură nouă pentru acest client
+            </Link>
+            <Link href={`/facturare/noua?client=${client.id}&tip=proforma`} className="flex items-center gap-1.5 rounded-[9px] border border-border bg-white px-3.5 py-2 text-[12.5px] font-bold text-[#344054]">Proformă</Link>
+          </div>
         </div>
       )}
 

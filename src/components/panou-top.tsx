@@ -32,7 +32,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
   const [jobsToday, billing, invoices, compliance, pv, gas, attentionJobs, purchases, money] = await Promise.all([
     supabase.from("jobs").select("status").eq("organization_id", orgId).eq("scheduled_date", today),
     supabase.from("billing_requests").select("created_at").eq("organization_id", orgId).eq("status", "new").order("created_at").limit(500),
-    supabase.from("invoices").select("total_amount, client_id, due_date, issued_at, status").eq("organization_id", orgId).in("status", ["unpaid", "overdue"]).limit(2000),
+    supabase.from("invoices").select("gross_amount, paid_amount, client_id, due_date, issued_at, status").eq("organization_id", orgId).eq("doc_type", "factura").in("status", ["unpaid", "overdue"]).limit(2000),
     hasCompliance
       ? supabase.from("compliance_items").select("id, kind, title, subject, expires_on").eq("organization_id", orgId).lte("expires_on", horizon).order("expires_on").limit(200)
       : Promise.resolve({ data: [] as { id: string; kind: ComplianceKind; title: string; subject: string; expires_on: string }[] }),
@@ -58,7 +58,7 @@ export async function PanouTop({ organization, today, canAlert }: Props) {
   const toInvoiceCount = moneyRow ? Math.max(Number(moneyRow.unbilled_jobs), toInvoice.length) : toInvoice.length;
   // Overdue receivables
   const open = invoices.data ?? [];
-  const owed = open.reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
+  const owed = open.reduce((a, i) => a + Number(i.gross_amount ?? 0) - Number(i.paid_amount ?? 0), 0);
   const owedClients = new Set(open.map((i) => i.client_id)).size;
   const oldestDue = open.map((i) => i.due_date ?? i.issued_at).filter(Boolean).sort()[0];
   // Expiring

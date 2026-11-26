@@ -6,7 +6,7 @@ import { disconnectInvoicing, saveInvoicingConnection, testInvoicingConnection, 
 const input = "w-full rounded-[10px] border border-[#d0d5dd] px-3 py-2 text-[13.5px] outline-none focus:border-electric";
 const label = "mb-1 block text-[12px] font-semibold text-[#344054]";
 
-type Initial = { provider: "smartbill" | "oblio"; accountEmail: string; vatCode: string; series: string; taxPercent: number; dueDays: number; sendEmail: boolean; simulated: boolean } | null;
+type Initial = { provider: "smartbill" | "oblio"; accountEmail: string; vatCode: string; series: string; proformaSeries: string | null; receiptSeries: string | null; taxPercent: number; dueDays: number; sendEmail: boolean; simulated: boolean } | null;
 
 export function InvoicingForm({ initial, canEdit }: { initial: Initial; canEdit: boolean }) {
   const [provider, setProvider] = useState<"smartbill" | "oblio">(initial?.provider ?? "smartbill");
@@ -40,6 +40,10 @@ export function InvoicingForm({ initial, canEdit }: { initial: Initial; canEdit:
           <p className="mt-1 text-[11.5px] text-muted-2">{isSb ? "SmartBill, la Cloud → Integrări → API." : "Oblio, la Setări → Date cont."} Se stochează criptat și nu se mai afișează.</p></div>
         <div><label className={label} htmlFor="inv-cif">CIF firmă emitentă</label><input id="inv-cif" name="vatCode" required defaultValue={initial?.vatCode ?? ""} disabled={!canEdit} className={input} placeholder="RO12345678" /></div>
         <div><label className={label} htmlFor="inv-series">Serie factură (exact ca în cont)</label><input id="inv-series" name="series" required defaultValue={initial?.series ?? ""} disabled={!canEdit} className={input} placeholder="ex. EF" /></div>
+        <div><label className={label} htmlFor="inv-pf">Serie proformă (opțional)</label><input id="inv-pf" name="proformaSeries" defaultValue={initial?.proformaSeries ?? ""} disabled={!canEdit} className={input} placeholder="ex. EFP" />
+          <p className="mt-1 text-[11.5px] text-muted-2">Ca să emiți și proforme (oferte cu valoare) din platformă.</p></div>
+        <div><label className={label} htmlFor="inv-ch">Serie chitanță (opțional)</label><input id="inv-ch" name="receiptSeries" defaultValue={initial?.receiptSeries ?? ""} disabled={!canEdit} className={input} placeholder="ex. EFC" />
+          <p className="mt-1 text-[11.5px] text-muted-2">Pentru încasările în numerar: se emite chitanță. Fără serie, numerarul se trece ca „altă încasare”.</p></div>
         <div><label className={label} htmlFor="inv-tax">Cotă TVA (%)</label><input id="inv-tax" name="taxPercent" type="number" step="0.01" min="0" max="100" defaultValue={initial?.taxPercent ?? 21} disabled={!canEdit} className={input} />
           <p className="mt-1 text-[11.5px] text-muted-2">Pentru firmă neplătitoare de TVA, pune 0 și verifică prima factură cu furnizorul.</p></div>
         <div><label className={label} htmlFor="inv-due">Termen de plată (zile)</label><input id="inv-due" name="dueDays" type="number" min="0" max="365" defaultValue={initial?.dueDays ?? 15} disabled={!canEdit} className={input} /></div>

@@ -88,13 +88,13 @@ export default async function RapoartePage({ searchParams }: { searchParams: Pro
   const prevStart = period === "an" ? `${yy - 1}-01-01` : (() => { const m0 = startMonth - (period === "trimestru" ? 3 : 1); return m0 >= 1 ? `${yy}-${String(m0).padStart(2, "0")}-01` : `${yy - 1}-${String(m0 + 12).padStart(2, "0")}-01`; })();
   const inPeriod = (d: string) => d >= periodStart && d <= todayStr;
   const inPrev = (d: string) => d >= prevStart && d < periodStart;
-  const { data: periodInvoices } = await supabase.from("invoices").select("job_id, total_amount, status, issued_at, jobs(domain)").eq("organization_id", organization.id).gte("issued_at", prevStart);
+  const { data: periodInvoices } = await supabase.from("invoices").select("job_id, total_amount, status, issued_at, jobs(domain)").eq("organization_id", organization.id).neq("doc_type", "proforma").neq("status", "cancelled").gte("issued_at", prevStart);
   const doneNow = (jobs ?? []).filter((j) => j.status === "finalizata" && inPeriod(j.scheduled_date)).length;
   const donePrev = (jobs ?? []).filter((j) => j.status === "finalizata" && inPrev(j.scheduled_date)).length;
   const invoicedNow = (periodInvoices ?? []).filter((i) => i.issued_at && inPeriod(i.issued_at));
   const invoicedTotal = invoicedNow.reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
-  const { data: openInvoices } = await supabase.from("invoices").select("total_amount").eq("organization_id", organization.id).in("status", ["unpaid", "overdue"]);
-  const owed = (openInvoices ?? []).reduce((a, i) => a + Number(i.total_amount ?? 0), 0);
+  const { data: openInvoices } = await supabase.from("invoices").select("gross_amount, paid_amount").eq("organization_id", organization.id).eq("doc_type", "factura").in("status", ["unpaid", "overdue"]);
+  const owed = (openInvoices ?? []).reduce((a, i) => a + Number(i.gross_amount ?? 0) - Number(i.paid_amount ?? 0), 0);
   const byDomain = new Map<string, number>();
   for (const i of invoicedNow) byDomain.set(i.jobs?.domain ?? "", (byDomain.get(i.jobs?.domain ?? "") ?? 0) + Number(i.total_amount ?? 0));
   const maxDomain = Math.max(1, ...byDomain.values());

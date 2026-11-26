@@ -182,7 +182,7 @@ export default async function JobDetailPage({
       .eq("job_id", id)
       .order("created_at", { ascending: false }),
     supabase.from("warehouses").select("id, name").eq("organization_id", organization.id).order("name"),
-    supabase.from("invoices").select("id, total_amount, status").eq("job_id", id).maybeSingle(),
+    supabase.from("invoices").select("id, total_amount, status").eq("job_id", id).eq("doc_type", "factura").neq("status", "cancelled").order("created_at", { ascending: false }).limit(1).maybeSingle(),
   ]);
 
   const assignees = job.job_assignments.map((a) => a.profiles?.full_name).filter((n): n is string => Boolean(n));

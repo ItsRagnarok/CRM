@@ -13,6 +13,7 @@ import { DomainPicker } from "@/components/domain-picker";
 import { SubscriptionRequests } from "./subscription-requests";
 import { ChecklistTemplatesTab } from "./checklist-templates-tab";
 import { InvoicingForm } from "./invoicing-form";
+import { BillingRatesForm } from "../facturare/billing-rates-form";
 import { loadConnection } from "@/lib/invoicing";
 import { AiTab } from "./ai-tab";
 
@@ -223,6 +224,7 @@ export default async function SetariPage({
             )}
 
             {tab === "integrari" && <InvoicingForm initial={invoicingConnection} canEdit={!readOnly && profile.role === "admin"} />}
+            {tab === "integrari" && <BillingRatesForm laborRate={organization.invoice_labor_rate} markup={Number(organization.invoice_material_markup ?? 0)} canEdit={!readOnly && profile.role === "admin"} />}
 
             {tab === "ai" && <AiTab organizationId={organization.id} enabled={organization.ai_enabled !== false} canEdit={!readOnly && profile.role === "admin"} />}
 

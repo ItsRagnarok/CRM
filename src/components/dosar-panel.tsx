@@ -27,7 +27,7 @@ export async function DosarPanel({
     supabase.from("photos").select("id", head).eq("job_id", job.id),
     supabase.from("signatures").select("id", head).eq("job_id", job.id),
     supabase.from("documents").select("id", head).eq("job_id", job.id),
-    supabase.from("invoices").select("total_amount, status").eq("job_id", job.id),
+    supabase.from("invoices").select("total_amount, status, doc_type").eq("job_id", job.id).neq("doc_type", "proforma").neq("status", "cancelled"),
     supabase.from("expenses").select("amount").eq("job_id", job.id).eq("status", "approved"),
     supabase.from("job_assignments").select("profile_id, profiles(full_name, hourly_rate)").eq("job_id", job.id),
     supabase.from("jobs").select("work_started_at, work_ended_at").eq("id", job.id).maybeSingle(),

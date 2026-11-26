@@ -63,7 +63,7 @@ export default async function LucrariPage({
     clientId ? supabase.from("clients").select("id, name").eq("id", clientId).maybeSingle() : Promise.resolve({ data: null }),
     supabase.from("teams").select("id, name").eq("organization_id", organization.id).order("name"),
     supabase.from("billing_requests").select("job_id").eq("organization_id", organization.id).eq("status", "new"),
-    supabase.from("invoices").select("job_id, total_amount").eq("organization_id", organization.id),
+    supabase.from("invoices").select("job_id, total_amount").eq("organization_id", organization.id).neq("doc_type", "proforma").neq("status", "cancelled"),
   ]);
 
   const toInvoice = new Set((billing ?? []).map((b) => b.job_id).filter((id): id is string => Boolean(id)));

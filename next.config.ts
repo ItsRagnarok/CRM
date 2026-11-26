@@ -37,6 +37,7 @@ const nextConfig: NextConfig = {
   // production while working fine locally. Force them in explicitly.
   outputFileTracingIncludes: {
     "/api/rapoarte-lucrare/[id]": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
+    "/api/facturi/[id]/pdf": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
   },
   // Blog static: /blog arată public/blog/index.html,
   // /blog/un-articol arată public/blog/un-articol.html
