@@ -9,15 +9,17 @@ const config: CapacitorConfig = {
   appName: "ElectroField",
   webDir: "www",
   server: {
-    url: "https://electrofield-alporaro.vercel.app/mobil",
+    // Domeniul propriu (nu subdomeniul vercel.app): JS-ul care primește puntea nativă vine doar de pe el.
+    url: "https://www.electrofield.ro/mobil",
     cleartext: false,
     // Links between the two production hosts stay inside the app; everything else opens in the system browser.
-    allowNavigation: ["electrofield-alporaro.vercel.app", "www.electrofield.ro", "electrofield.ro"],
+    allowNavigation: ["www.electrofield.ro", "electrofield.ro", "electrofield-alporaro.vercel.app"],
   },
   ios: {
     // Field app: the web UI handles its own safe areas, so the WebView fills the screen.
     contentInset: "never",
-    backgroundColor: "#f4f4f6",
+    // Sub ceas/insulă se vede fundalul antetelor (alb), nu o bandă gri.
+    backgroundColor: "#ffffff",
   },
   android: {
     allowMixedContent: false,
