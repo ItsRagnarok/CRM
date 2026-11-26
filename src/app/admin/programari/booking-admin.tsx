@@ -112,7 +112,7 @@ export function BookingAdmin({ settings, days, bookings, past }: { settings: Set
       setDaysAhead((previous) => Math.max(previous, (Date.parse(rotation.end) - Date.parse(today)) / 864e5));
     });
   }
-  const tabClass = (on: boolean) => `rounded-full border px-4 py-2 text-sm font-bold ${on ? "border-foreground bg-foreground text-white" : "border-border bg-white text-foreground"}`;
+  const tabClass = (on: boolean) => `rounded-full border px-4 py-2 text-sm font-bold ${on ? "border-transparent bg-electric text-[#0a0d0a]" : "border-border bg-white text-foreground"}`;
   const groups = groupByDay(bookings);
   return <div className="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
     <div className="flex flex-wrap items-center justify-between gap-3"><h1 className="text-2xl font-extrabold">Programări</h1><a href="/programare" target="_blank" rel="noreferrer" className="text-sm font-semibold text-purple">Vezi pagina publică ↗</a></div>
