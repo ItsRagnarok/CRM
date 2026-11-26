@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireSessionContext } from "@/lib/auth";
+import { requireBackOfficeContext, requireSessionContext } from "@/lib/auth";
 import { syncOpenJobsOfTeam } from "../lucrari/team-sync";
 
 export async function createTeam(
@@ -20,7 +20,7 @@ export async function createTeam(
 
   const { data: team, error } = await supabase
     .from("teams")
-    .insert({ organization_id: organization.id, name })
+    .insert({ organization_id: organization.id, name, description: String(formData.get("description") ?? "").trim().slice(0, 80) || null })
     .select("id")
     .single();
 
@@ -30,6 +30,19 @@ export async function createTeam(
 
   revalidatePath("/echipe");
   redirect(`/echipe/${team.id}`);
+}
+
+export async function updateTeamInfo(formData: FormData) {
+  const teamId = String(formData.get("teamId") ?? "");
+  const name = String(formData.get("name") ?? "").trim().slice(0, 80);
+  const description = String(formData.get("description") ?? "").trim().slice(0, 80) || null;
+  const ctx = await requireBackOfficeContext();
+  if (!ctx || !teamId || !name) return;
+  const supabase = await createClient();
+  await supabase.from("teams").update({ name, description }).eq("id", teamId).eq("organization_id", ctx.organization.id);
+  revalidatePath(`/echipe/${teamId}`);
+  revalidatePath("/echipe");
+  revalidatePath("/calendar");
 }
 
 export async function toggleTeamActive(formData: FormData) {

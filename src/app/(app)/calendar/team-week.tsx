@@ -1,87 +1,103 @@
 import Link from "next/link";
-import { findConflicts, jobHours, type WeekJob } from "@/lib/team-week";
-import { domainLabel } from "@/lib/domains";
+import { Users } from "lucide-react";
+import type { WeekJob } from "@/lib/team-week";
+import { EventCard } from "./event-card";
 
-type Props = {
-  days: { dateStr: string }[];
-  teams: { id: string; name: string; members: string[] }[];
-  jobs: WeekJob[];
-  leaves: { name: string; teamId: string | null; start: string; end: string }[];
-  todayStr: string;
-  hoursAvailable: number;
-};
+export type CalTeam = { id: string; name: string; description: string | null; members: string[] };
+export type CalLeave = { name: string; teamId: string | null; start: string; end: string };
 
 const DOW = ["Lu", "Ma", "Mi", "Jo", "Vi", "Sâ", "Du"];
-const EVENT: Record<string, string> = {
-  gaze: "border-[#84a31f] bg-[rgba(198,255,74,.28)]",
-  electric: "border-[#d97706] bg-[#fff1e0]",
-  fotovoltaic: "border-[#2563eb] bg-[#e0f0ff]",
-};
+const MONTH = ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"];
 
-export function TeamWeek({ days, teams, jobs, leaves, todayStr, hoursAvailable }: Props) {
-  const conflicts = findConflicts(jobs);
-  const live = jobs.filter((j) => j.status !== "anulata");
-  const hours = live.reduce((a, j) => a + jobHours(j), 0);
-  const tomorrow = new Date(Date.parse(`${todayStr}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
-  const busyTomorrow = new Set(live.filter((j) => j.scheduled_date === tomorrow).map((j) => j.team_id));
-  const freeTeams = teams.filter((t) => !busyTomorrow.has(t.id)).length;
-  const loose = live.filter((j) => !j.team_id);
-  const rows = [...teams, ...(loose.length ? [{ id: "", name: "Fără echipă", members: [] as string[] }] : [])];
-  const leaveCount = leaves.length;
-  const k = (l: string, n: string | number, s: string, cls = "border-border") => (
-    <div className={`rounded-2xl border bg-white px-[18px] py-4 ${cls}`}><div className="text-[12.5px] font-semibold text-muted">{l}</div><div className="mt-1 text-[28px] font-extrabold leading-none tabular-nums">{n}</div><div className="mt-1.5 text-[12px] text-muted">{s}</div></div>
+export function DayHead({ dateStr, todayStr }: { dateStr: string; todayStr: string }) {
+  const dt = new Date(`${dateStr}T12:00:00Z`);
+  const today = dateStr === todayStr;
+  return (
+    <div className={`px-4 py-3 ${today ? "ef-cal-today" : ""}`}>
+      <div className="text-[14px] font-extrabold text-foreground">
+        {DOW[(dt.getUTCDay() + 6) % 7]} {dt.getUTCDate()}
+        {today && <span className="ml-1.5 rounded-full bg-[#101828] px-1.5 py-[1px] align-middle text-[10px] font-bold text-white">azi</span>}
+      </div>
+      <div className="text-[12px] text-muted">{MONTH[dt.getUTCMonth()]}</div>
+    </div>
   );
+}
+
+export function TeamLabel({ team }: { team: CalTeam }) {
+  return (
+    <div className="flex gap-3 px-4 py-4">
+      <div className="ef-cal-tile flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+        <Users className="h-[18px] w-[18px]" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[14px] font-extrabold leading-tight text-foreground">{team.name}</div>
+        {team.description && <div className="text-[13px] font-bold leading-tight text-foreground">{team.description}</div>}
+        {team.members.length > 0 && <div className="mt-1 text-[12px] leading-snug text-muted">{team.members.join(", ")}</div>}
+      </div>
+    </div>
+  );
+}
+
+/** Vederea „Echipe”: un rând pe echipă, o coloană pe zi. Răspunde la „cine e unde și cine e liber”. */
+export function TeamWeek({
+  days,
+  teams,
+  jobs,
+  conflicts,
+  leaves,
+  todayStr,
+}: {
+  days: string[];
+  teams: CalTeam[];
+  jobs: WeekJob[];
+  conflicts: Set<string>;
+  leaves: CalLeave[];
+  todayStr: string;
+}) {
+  const loose = jobs.filter((j) => !j.team_id);
+  const rows: CalTeam[] = [...teams, ...(loose.length ? [{ id: "", name: "Fără echipă", description: "Lucrări fără echipă alocată", members: [] }] : [])];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {k("Echipe libere mâine", `${freeTeams} din ${teams.length}`, freeTeams ? "fără nicio lucrare programată" : "toate au lucrări")}
-        {k("Suprapuneri", conflicts.size ? new Set([...conflicts]).size : 0, conflicts.size ? "tehnicieni alocați de două ori în aceeași zi" : "nicio suprapunere", conflicts.size ? "border-[#f5c27a] bg-[#fffaf0]" : "border-border")}
-        {k("Ore planificate săptămâna asta", `${Math.round(hours)} h`, hoursAvailable ? `din ${Math.round(hoursAvailable)} h disponibile` : "orele se iau din ora de început și de sfârșit")}
-        {k("Concedii în perioadă", leaveCount, leaveCount ? leaves.slice(0, 2).map((l) => l.name).join(", ") : "niciun concediu aprobat", leaveCount ? "border-[#f0a3a3] bg-[#fff5f5]" : "border-border")}
-      </div>
-
-      <div className="overflow-x-auto rounded-2xl border border-border bg-white">
-        <div className="grid min-w-[900px]" style={{ gridTemplateColumns: `170px repeat(${days.length}, minmax(0,1fr))` }}>
-          <div className="border-b border-r border-[#eef0f4] bg-[#f6f7fa] px-3 py-2.5 text-[12px] font-extrabold text-[#334155]">Echipă</div>
-          {days.map((d) => {
-            const dt = new Date(`${d.dateStr}T12:00:00Z`);
-            return (
-              <div key={d.dateStr} className={`border-b border-r border-[#eef0f4] px-3 py-2.5 text-[12px] font-extrabold last:border-r-0 ${d.dateStr === todayStr ? "bg-[rgba(198,255,74,.25)] text-[#1f2024]" : "bg-[#f6f7fa] text-[#334155]"}`}>
-                {DOW[(dt.getUTCDay() + 6) % 7]} {dt.getUTCDate()}
-              </div>
-            );
-          })}
-          {rows.length === 0 && <div className="col-span-full px-4 py-10 text-center text-sm text-muted">Nicio echipă activă. Creează echipe din Setări → Echipe & vehicule.</div>}
-          {rows.map((t) => (
-            <div key={t.id || "none"} className="contents">
-              <div className="border-b border-r border-[#eef0f4] bg-[#fafbfc] px-3 py-3">
-                <div className="text-[13px] font-extrabold">{t.name}</div>
-                {t.members.length > 0 && <div className="text-[11px] text-muted">{t.members.join(", ")}</div>}
-              </div>
-              {days.map((d) => {
-                const cell = live.filter((j) => (j.team_id ?? "") === t.id && j.scheduled_date === d.dateStr).sort((a, b) => (a.start_time ?? "").localeCompare(b.start_time ?? ""));
-                const off = leaves.filter((l) => (l.teamId ?? "") === t.id && l.start <= d.dateStr && l.end >= d.dateStr);
-                return (
-                  <div key={d.dateStr} className="min-h-[88px] border-b border-r border-[#eef0f4] p-1.5 last:border-r-0">
-                    {cell.map((j) => (
-                      <Link key={j.id} href={`/lucrari/${j.id}`} prefetch={false}
-                        className={`mb-1.5 block rounded-lg border-l-[3px] px-2 py-1.5 text-[11.5px] leading-snug ${conflicts.has(j.id) ? "border-[#dc2626] bg-[#fde4e4]" : EVENT[j.domain ?? ""] ?? "border-[#94a3b8] bg-[#eceff4]"}`}>
-                        <b className="block text-[12px]">{conflicts.has(j.id) ? "Suprapunere · " : ""}{j.title}</b>
-                        <span className="text-[#475467]">{j.start_time ? `${j.start_time.slice(0, 5)} · ` : ""}{j.clients?.name ?? ""}</span>
-                      </Link>
-                    ))}
-                    {off.map((l) => (
-                      <div key={l.name} className="mb-1.5 rounded-lg border-l-[3px] border-[#94a3b8] bg-[#eceff4] px-2 py-1.5 text-[11.5px]"><b className="block text-[12px]">Concediu</b>{l.name}</div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+    <div className="overflow-x-auto rounded-2xl border border-border bg-white shadow-[0_1px_3px_rgba(16,24,40,.04)]">
+      <div className="grid min-w-[980px]" style={{ gridTemplateColumns: `230px repeat(${days.length}, minmax(0,1fr))` }}>
+        <div className="flex items-center justify-between border-b border-r border-[#eaecf0] px-4 py-3">
+          <span className="text-[14px] font-extrabold text-foreground">Echipă</span>
+          <Link href="/echipe" className="text-[11.5px] font-bold text-electric hover:underline">Gestionează</Link>
         </div>
+        {days.map((d) => (
+          <div key={d} className="border-b border-r border-[#eaecf0] last:border-r-0">
+            <DayHead dateStr={d} todayStr={todayStr} />
+          </div>
+        ))}
+        {rows.length === 0 && (
+          <div className="col-span-full px-4 py-12 text-center text-sm text-muted">
+            Nicio echipă activă. <Link href="/echipe/noua" className="font-bold text-electric">Creează prima echipă</Link>.
+          </div>
+        )}
+        {rows.map((t) => (
+          <div key={t.id || "none"} className="contents">
+            <div className="border-b border-r border-[#eaecf0]">
+              <TeamLabel team={t} />
+            </div>
+            {days.map((d) => {
+              const cell = jobs
+                .filter((j) => (j.team_id ?? "") === t.id && j.scheduled_date === d)
+                .sort((a, b) => (a.start_time ?? "99").localeCompare(b.start_time ?? "99"));
+              const off = leaves.filter((l) => (l.teamId ?? "") === t.id && l.start <= d && l.end >= d);
+              return (
+                <div key={d} className={`flex min-h-[120px] flex-col gap-2 border-b border-r border-[#eaecf0] p-2 last:border-r-0`}>
+                  {cell.map((j) => <EventCard key={j.id} job={j} conflict={conflicts.has(j.id)} />)}
+                  {off.map((l) => (
+                    <div key={l.name} className="ef-ev ef-ev-leave rounded-[10px] px-2.5 py-2 text-[11.5px] text-foreground">
+                      <b className="block text-[12px]">Concediu</b>{l.name}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        ))}
       </div>
-      <p className="text-xs text-muted">Culoare = domeniu: <b>lime</b> gaze, <b>portocaliu</b> electrice, <b>albastru</b> fotovoltaice, gri fără domeniu{" "}({["gaze", "electric", "fotovoltaic"].map(domainLabel).join(", ")}). Roșu = același tehnician alocat de două ori în aceeași zi sau în intervale care se suprapun.</p>
     </div>
   );
 }

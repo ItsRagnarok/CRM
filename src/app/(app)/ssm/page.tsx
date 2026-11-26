@@ -33,7 +33,7 @@ const when = (iso: string) => new Date(iso).toLocaleString("ro-RO", { timeZone: 
 
 export default async function SsmPage({ searchParams }: { searchParams: Promise<{ tab?: string; salvat?: string }> }) {
   const { tab: tabParam, salvat } = await searchParams;
-  const tab = TABS.some((t) => t.id === tabParam) ? tabParam! : "instruire";
+  const requested = TABS.some((t) => t.id === tabParam) ? tabParam! : null;
   const { organization, profile, readOnly } = await requireSessionContext();
   if (!isBackOfficeRole(profile.role)) redirect("/dashboard");
   const supabase = await createClient();
@@ -45,11 +45,13 @@ export default async function SsmPage({ searchParams }: { searchParams: Promise<
     supabase.from("compliance_items").select("profile_id, title, expires_on").eq("organization_id", organization.id).eq("kind", "person"),
     supabase.from("team_members").select("profile_id, teams(name)"),
     supabase.from("ssm_incidents").select("id, kind, injured, description, photo_path, occurred_at, status, measures, job_id, reported_by, profiles!ssm_incidents_reported_by_fkey(full_name), jobs(display_number, title)").eq("organization_id", organization.id).order("occurred_at", { ascending: false }).limit(100),
-    tab === "verificari"
+    requested === "verificari"
       ? supabase.from("ssm_checks").select("id, template, items, all_ok, checked_at, job_id, profiles(full_name), jobs(display_number, title)").eq("organization_id", organization.id).order("checked_at", { ascending: false }).limit(100)
       : Promise.resolve({ data: null }),
   ]);
 
+  // Fără tab ales: dacă există incidente noi (necercetate), pagina se deschide direct pe ele.
+  const tab = requested ?? ((incidents ?? []).some((i) => i.status === "nou") ? "incidente" : "instruire");
   const teamOf = new Map((members ?? []).map((m) => [m.profile_id, m.teams?.name ?? null]));
   const byPerson = new Map<string, NonNullable<typeof trainings>>();
   for (const t of trainings ?? []) byPerson.set(t.profile_id, [...(byPerson.get(t.profile_id) ?? []), t]);

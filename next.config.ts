@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Versiunea construită (commit-ul de pe Vercel): pagina deschisă o compară cu cea de pe server și
+  // se reîncarcă după o actualizare (src/components/version-watcher.tsx).
+  env: {
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.VERCEL_DEPLOYMENT_ID ?? "local",
+  },
   async redirects() {
     return [
       { source: "/blog/index.html", destination: "/blog", permanent: true },

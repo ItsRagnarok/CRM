@@ -1,3 +1,4 @@
+import { VersionWatcher } from "@/components/version-watcher";
 import { redirect } from "next/navigation";
 import { loadNavBadges } from "@/lib/shell-counts";
 import { todayInOrgTimeZone } from "@/lib/date";
@@ -58,6 +59,7 @@ export default async function AppLayout({
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} />
         {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}
+        <VersionWatcher />
       </div>
     </div>
   );

@@ -25,7 +25,7 @@ export default async function NotificationPreferencesPage() {
 
   return (
     <div className="flex flex-col pb-6">
-      <div className="flex items-center gap-1 border-b border-[#eaecf0] bg-white px-4 pb-3 pt-2">
+      <div className="flex items-center gap-1 border-b border-[#eaecf0] bg-white px-4 pb-3 pt-[calc(var(--sat)+8px)]">
         <Link href="/mobil/setari" aria-label="Înapoi" className="-ml-2 flex h-11 w-11 items-center justify-center text-[#344054]">
           <ChevronLeft className="h-[22px] w-[22px]" />
         </Link>
@@ -48,14 +48,14 @@ export default async function NotificationPreferencesPage() {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}.`
-              : "Notificările pe telefon funcționează în aplicația Android, după ce permiți notificările. Într-un browser vezi doar clopoțelul."}
+              : "Notificările pe telefon (și cu aplicația închisă) vin în aplicația ElectroField pentru Android, după ce le permiți. Pe iPhone și în browser le vezi în clopoțelul din aplicație."}
           </div>
         </div>
 
         <TestPushButton />
 
         <div className="mt-1 text-[12px] font-bold uppercase tracking-wide text-muted-2">Ce vrei să primești</div>
-        <div className="overflow-hidden rounded-[14px] border border-[#eaecf0] bg-white">
+        <div className="overflow-hidden rounded-[14px] border border-[#eaecf0] bg-white px-4 [&_.m-sep]:hidden">
           <NotificationsToggle initialEnabled={profile.notifications_enabled} />
         </div>
         <Preferences rows={rows} />

@@ -57,7 +57,7 @@ const MESSAGES: Record<PushResult["status"], (r: PushResult) => { ok: boolean; t
   }),
   no_devices: () => ({
     ok: false,
-    text: "Niciun telefon nu e înregistrat pentru contul tău. Deschide aplicația Android, permite notificările și încearcă din nou.",
+    text: "Niciun telefon nu e înregistrat pentru contul tău. Deschide aplicația ElectroField pe Android, permite notificările și încearcă din nou. Pe iPhone, notificările apar în clopoțel.",
   }),
   not_configured: () => ({
     ok: false,

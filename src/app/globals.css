@@ -166,3 +166,40 @@ html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"
   .ef-app-theme main :is(.p-7, .p-8) { padding: 16px; }
   .ef-app-theme main :is(.px-7, .px-8) { padding-left: 16px; padding-right: 16px; }
 }
+
+/* Calendar și echipe: cardurile de lucrare colorate pe domeniu (fond pal + iconiță în culoarea domeniului),
+   cu variantă pentru tema întunecată. */
+.ef-ev { background: #f2f4f7; --ev-ink: #475467; }
+.ef-ev-gaze { background: #eefad3; --ev-ink: #4d7c0f; }
+.ef-ev-electric { background: #fff0df; --ev-ink: #c2410c; }
+.ef-ev-fotovoltaic { background: #e6f0ff; --ev-ink: #1d4ed8; }
+.ef-ev-conflict { background: #fde8e8; --ev-ink: #dc2626; }
+.ef-ev-leave { background: repeating-linear-gradient(135deg, #f2f4f7 0 6px, #e9ecf1 6px 12px); --ev-ink: #667085; }
+.ef-ev:hover { filter: brightness(0.97); }
+.ef-ev-ink { color: var(--ev-ink); }
+.ef-cal-today { background: rgba(198, 255, 74, 0.22); }
+.ef-cal-tile { background: #f1fbdc; color: #4d7c0f; }
+.ef-cal-tile-red { background: #fdeaea; color: #dc2626; }
+html[data-theme="dark"] .ef-app-theme .ef-ev { background: #242d3c; --ev-ink: #b0baca; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-gaze { background: #263318; --ev-ink: #c6ff4a; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-electric { background: #3a2a18; --ev-ink: #fdba74; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-fotovoltaic { background: #1c2f47; --ev-ink: #93c5fd; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-conflict { background: #3c2323; --ev-ink: #fca5a5; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-leave { background: repeating-linear-gradient(135deg, #242d3c 0 6px, #2b3548 6px 12px); --ev-ink: #b0baca; }
+html[data-theme="dark"] .ef-app-theme .ef-ev:hover { filter: brightness(1.12); }
+html[data-theme="dark"] .ef-app-theme .ef-cal-today { background: rgba(198, 255, 74, 0.1); }
+html[data-theme="dark"] .ef-app-theme .ef-cal-tile { background: #263318; color: #c6ff4a; }
+html[data-theme="dark"] .ef-app-theme .ef-cal-tile-red { background: #3c2323; color: #fca5a5; }
+
+/* Zona sigură (ceas/insulă sus, bara de acasă jos). În aplicația iOS (WebView), env() întoarce uneori 0,
+   iar antetul intra sub ceas și butonul Înapoi nu se putea apăsa. Un script din <head> pune o valoare de
+   rezervă (--sat-fb / --sab-fb) doar acolo; folosim mereu cea mai mare dintre cele două. */
+:root {
+  --sat: max(env(safe-area-inset-top, 0px), var(--sat-fb, 0px));
+  --sab: max(env(safe-area-inset-bottom, 0px), var(--sab-fb, 0px));
+}
+
+/* Pe telefon, orice câmp de text sub 16px face iPhone-ul să mărească singur pagina la atingere. */
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea { font-size: max(16px, 1em) !important; }
+}

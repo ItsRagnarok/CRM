@@ -11,6 +11,7 @@ import {
   removeVehicle,
   setTeamLeader,
   toggleTeamActive,
+  updateTeamInfo,
 } from "../actions";
 import { AddTeamMember } from "./add-team-member";
 import { DriverSelect } from "../driver-select";
@@ -115,6 +116,7 @@ export default async function TeamDetailPage({
                 }
               />
             </div>
+            {team.description && <div className="mt-0.5 text-[13.5px] font-semibold text-[#475467]">{team.description}</div>}
             {team.leader?.full_name && (
               <div className="mt-1.5 flex items-center gap-1.5 text-[13px] text-[#475467]">
                 <Crown className="h-3.5 w-3.5 text-warning" /> Lider: {team.leader.full_name}
@@ -134,6 +136,19 @@ export default async function TeamDetailPage({
           </button>
         </form>
       </div>
+
+      <form action={updateTeamInfo} className="flex flex-wrap items-end gap-3 rounded-[13px] border border-border bg-white p-5">
+        <input type="hidden" name="teamId" value={team.id} />
+        <label className="flex min-w-[180px] flex-1 flex-col gap-1.5 text-[12.5px] font-semibold text-[#344054]">
+          Nume echipă
+          <input name="name" defaultValue={team.name} required maxLength={80} className="rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm font-normal outline-none focus:border-electric" />
+        </label>
+        <label className="flex min-w-[220px] flex-[2] flex-col gap-1.5 text-[12.5px] font-semibold text-[#344054]">
+          Ce face echipa (apare în calendar sub nume)
+          <input name="description" defaultValue={team.description ?? ""} maxLength={80} placeholder="Verificări și revizii" className="rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm font-normal outline-none focus:border-electric" />
+        </label>
+        <button type="submit" className="rounded-[10px] bg-[#101828] px-4 py-2.5 text-[13px] font-bold text-white">Salvează</button>
+      </form>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-[13px] border border-border bg-white">

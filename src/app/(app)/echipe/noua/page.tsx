@@ -36,6 +36,19 @@ export default function NewTeamPage() {
           />
         </div>
 
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-[#344054]">
+            Ce face echipa <span className="font-normal text-muted">(opțional)</span>
+          </label>
+          <input
+            name="description"
+            maxLength={80}
+            placeholder="Verificări și revizii"
+            className="w-full rounded-[10px] border border-[#d0d5dd] px-3.5 py-2.5 text-sm outline-none focus:border-electric"
+          />
+          <p className="mt-1 text-[11.5px] text-muted">Apare în calendar sub numele echipei.</p>
+        </div>
+
         <p className="text-[12.5px] text-muted">
           Adaugi membri și lider imediat după ce echipa e creată.
         </p>
@@ -54,7 +67,7 @@ export default function NewTeamPage() {
           <button
             type="submit"
             disabled={pending}
-            className="rounded-[10px] bg-electric px-5 py-2.5 text-[13.5px] font-bold text-white disabled:opacity-60"
+            className="rounded-[10px] bg-electric px-5 py-2.5 text-[13.5px] font-bold disabled:opacity-60"
           >
             {pending ? "Se creează…" : "Creează echipa"}
           </button>

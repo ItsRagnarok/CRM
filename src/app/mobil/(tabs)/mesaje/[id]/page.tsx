@@ -43,7 +43,7 @@ export default async function MobileConversationPage({ params }: { params: Promi
   return (
     <div className="flex h-full flex-col">
       <AutoMarkReadMobile conversationId={id} />
-      <div className="flex shrink-0 items-center gap-2 border-b border-[#eaecf0] bg-white px-4 py-2">
+      <div className="flex shrink-0 items-center gap-2 border-b border-[#eaecf0] bg-white px-4 pb-2 pt-[calc(var(--sat)+8px)]">
         <Link href="/mobil/mesaje" aria-label="Înapoi" className="-ml-2 flex h-11 w-11 items-center justify-center text-[#344054]">
           <ChevronLeft className="h-[22px] w-[22px]" />
         </Link>

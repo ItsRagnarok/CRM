@@ -46,6 +46,8 @@ export const metadata: Metadata = {
   },
 };
 
+const SAFE_AREA_FALLBACK = `(function(){try{var c=window.Capacitor;var ios=c&&c.getPlatform&&c.getPlatform()==="ios";if(!ios)return;var h=Math.max(screen.height,screen.width);var top=h>=852?59:h>=812?47:20;var bot=h>=812?34:0;var r=document.documentElement.style;r.setProperty("--sat-fb",top+"px");r.setProperty("--sab-fb",bot+"px");document.documentElement.dataset.iosApp="1"}catch(e){}})();`;
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -68,6 +70,8 @@ export default function RootLayout({
     >
       <body className="min-h-full">
         <script dangerouslySetInnerHTML={{ __html: 'try{document.documentElement.dataset.theme=localStorage.getItem("ef-theme")==="dark"?"dark":"light"}catch(e){}' }} />
+        {/* Aplicația iOS: dacă WebView-ul nu raportează zona sigură, o deducem din înălțimea ecranului. */}
+        <script dangerouslySetInnerHTML={{ __html: SAFE_AREA_FALLBACK }} />
         <PreventZoom />
         {children}
         <PublicWebAnalytics />

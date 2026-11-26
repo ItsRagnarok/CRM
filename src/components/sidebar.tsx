@@ -174,10 +174,10 @@ export function Sidebar({
                   key={href}
                   href={href}
                   className={`flex items-center gap-2.5 rounded-[10px] px-3 py-2 text-[13.5px] font-semibold transition-colors ${
-                    isActive ? "bg-[rgba(198,255,74,.14)] text-white" : "text-[#cbcdd4] hover:bg-white/5 hover:text-white"
+                    isActive ? "bg-electric text-[#0a0d0a] shadow-[0_6px_18px_rgba(198,255,74,.18)]" : "text-[#cbcdd4] hover:bg-white/5 hover:text-white"
                   }`}
                 >
-                  <Icon className={`h-[17px] w-[17px] ${isActive ? "text-[#c6ff4a]" : ""}`} strokeWidth={1.9} />
+                  <Icon className="h-[17px] w-[17px]" strokeWidth={isActive ? 2.1 : 1.9} />
                   <span className="flex-1">{label}</span>
                   {count > 0 && (
                     <span className="flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#dc2626] px-1.5 text-[10.5px] font-extrabold text-white">
@@ -193,7 +193,7 @@ export function Sidebar({
 
       <SidebarStreak />
 
-      <div className="relative z-10 mt-auto flex items-center gap-2.5 px-2.5 pt-2">
+      <div className="relative z-10 mt-auto flex items-center gap-2.5 border-t border-white/[.08] px-2.5 pt-2.5">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-electric text-[13px] font-bold text-white">
           {initials || "?"}
         </div>
@@ -219,44 +219,50 @@ export function Sidebar({
 }
 
 /**
- * Dunga verde din colțul de jos al meniului: o curbă care urcă spre dreapta, cu o linie
- * lime luminoasă și o lumină difuză sub ea. Pur decorativă: stă în spatele meniului și al
- * cardului cu numele și nu prinde clicuri.
+ * Dunga verde din colțul de jos al meniului: o lumină lată și difuză, ondulată (coboară, apoi urcă spre
+ * dreapta) și se stinge în întuneric, cu o margine luminoasă moale. Pur decorativă: stă în spatele
+ * meniului, deasupra cardului cu numele, și nu prinde clicuri.
  */
 function SidebarStreak() {
   const id = useId().replace(/:/g, "");
+  const curve = "M-10 112 C 30 138, 80 146, 125 114 S 195 44, 250 56";
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[200px] w-full"
-      viewBox="0 0 240 200"
+      className="pointer-events-none absolute inset-x-0 bottom-[52px] z-0 h-[150px] w-full"
+      viewBox="0 0 240 150"
       preserveAspectRatio="none"
     >
       <defs>
-        <linearGradient id={`${id}-fill`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#c6ff4a" stopOpacity="0.2" />
-          <stop offset="0.5" stopColor="#4d7c0f" stopOpacity="0.1" />
-          <stop offset="1" stopColor="#0f1210" stopOpacity="0" />
+        <linearGradient id={`${id}-f`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#9be22d" stopOpacity="0.75" />
+          <stop offset="0.5" stopColor="#4d7c0f" stopOpacity="0.3" />
+          <stop offset="1" stopColor="#17191a" stopOpacity="0" />
         </linearGradient>
-        <linearGradient id={`${id}-line`} x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={`${id}-h`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#333" />
+          <stop offset="0.3" stopColor="#888" />
+          <stop offset="0.6" stopColor="#fff" />
+          <stop offset="1" stopColor="#bbb" />
+        </linearGradient>
+        <mask id={`${id}-m`}>
+          <rect width="240" height="150" fill={`url(#${id}-h)`} />
+        </mask>
+        <linearGradient id={`${id}-e`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#c6ff4a" stopOpacity="0" />
-          <stop offset="0.35" stopColor="#c6ff4a" stopOpacity="0.55" />
-          <stop offset="0.7" stopColor="#e4ff9e" stopOpacity="0.8" />
+          <stop offset="0.45" stopColor="#d4ff7a" stopOpacity="0.55" />
+          <stop offset="0.75" stopColor="#e6ffa8" stopOpacity="0.8" />
           <stop offset="1" stopColor="#c6ff4a" stopOpacity="0.35" />
         </linearGradient>
-        <filter id={`${id}-glow`} x="-20%" y="-60%" width="140%" height="220%">
-          <feGaussianBlur stdDeviation="7" />
-        </filter>
-        <filter id={`${id}-soft`} x="-10%" y="-10%" width="120%" height="140%">
-          <feGaussianBlur stdDeviation="14" />
-        </filter>
+        <filter id={`${id}-b1`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="12" /></filter>
+        <filter id={`${id}-b2`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3" /></filter>
+        <filter id={`${id}-b3`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="1.1" /></filter>
       </defs>
-      {/* lumina difuză de sub curbă */}
-      <path d="M0 150 C 80 146, 150 120, 240 84 L 240 200 L 0 200 Z" fill={`url(#${id}-fill)`} filter={`url(#${id}-soft)`} />
-      {/* strălucirea liniei */}
-      <path d="M-10 152 C 80 146, 150 120, 250 80" fill="none" stroke="#c6ff4a" strokeOpacity="0.35" strokeWidth="8" filter={`url(#${id}-glow)`} />
-      {/* linia propriu-zisă */}
-      <path d="M-10 152 C 80 146, 150 120, 250 80" fill="none" stroke={`url(#${id}-line)`} strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+      <g mask={`url(#${id}-m)`}>
+        <path d={`${curve} L 250 150 L -10 150 Z`} fill={`url(#${id}-f)`} filter={`url(#${id}-b1)`} />
+        <path d={curve} fill="none" stroke="#b5f23c" strokeOpacity="0.45" strokeWidth="10" filter={`url(#${id}-b2)`} />
+        <path d={curve} fill="none" stroke={`url(#${id}-e)`} strokeWidth="2" filter={`url(#${id}-b3)`} />
+      </g>
     </svg>
   );
 }

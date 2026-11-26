@@ -1,3 +1,4 @@
+import { VersionWatcher } from "@/components/version-watcher";
 import "./mobile.css";
 import { cookies } from "next/headers";
 import { requireSessionContext } from "@/lib/auth";
@@ -31,6 +32,7 @@ export default async function MobilLayout({ children }: { children: React.ReactN
       <LocationTracker enabled={gpsEnabled && !readOnly} />
       {!readOnly && <><PushRegistration /><UsageTracker channel="mobile" /></>}
       {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}>{children}</PreviewBoundary> : children}
+      <VersionWatcher />
     </div>
   );
 }
