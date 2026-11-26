@@ -6,7 +6,9 @@ import { parseUserAgent, cleanScreen, cleanLang } from "@/lib/user-agent";
 
 // Public page-view beacon. No cookies and no stored IP: the visitor id is a daily-rotating hash, so the same person
 // cannot be followed across days. Bots and "Do Not Track" visitors are not counted.
-const BOT = /bot|crawl|spider|slurp|headless|lighthouse|preview|monitor|facebookexternalhit|curl|wget|python|node-fetch/i;
+const BOT = /bot|crawl|spider|slurp|lighthouse|preview|monitor|facebookexternalhit|curl|wget|python|node-fetch/i;
+// Browsere conduse de un program (teste automate, roboți care imită un om): se țin separat, nu în statistici.
+const AUTOMATED = /headless|playwright|puppeteer|selenium|phantomjs|webdriver/i;
 const norm = (host: string) => host.replace(/^www\./, "").toLowerCase();
 
 export async function POST(request: NextRequest) {
@@ -23,10 +25,22 @@ export async function POST(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   if (!ua || BOT.test(ua)) return quiet();
 
-  let body: { path?: unknown; referrer?: unknown; utm?: unknown; type?: unknown; seconds?: unknown; screen?: unknown; lang?: unknown };
+  let body: { path?: unknown; referrer?: unknown; utm?: unknown; type?: unknown; seconds?: unknown; screen?: unknown; lang?: unknown; wd?: unknown };
   try { body = JSON.parse(await request.text()); } catch { return new Response("Invalid", { status: 400 }); }
   const path = typeof body.path === "string" ? body.path : "";
   if (!/^\/[A-Za-z0-9/_.-]{0,198}$/.test(path) || path.startsWith("/admin") || path.startsWith("/api")) return quiet();
+  if (body.wd === true || AUTOMATED.test(ua)) {
+    if (body.type !== "time") {
+      let autoCity = "";
+      try { autoCity = decodeURIComponent(request.headers.get("x-vercel-ip-city") ?? ""); } catch { /* oraș cu codare greșită */ }
+      const db = await createClient();
+      await db.rpc("ef_record_site_automated", {
+        p_path: path, p_country: request.headers.get("x-vercel-ip-country") ?? "", p_city: autoCity,
+        p_device: /ipad|tablet/i.test(ua) ? "tablet" : /mobi|android|iphone/i.test(ua) ? "mobile" : "desktop", p_browser: parseUserAgent(ua, null).browser ?? "",
+      });
+    }
+    return quiet();
+  }
 
   let referrerHost = "";
   if (typeof body.referrer === "string" && body.referrer) {

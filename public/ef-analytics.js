@@ -11,12 +11,13 @@
   var off = false;
   try { off = Boolean(localStorage.getItem("ef-no-track")) || navigator.doNotTrack === "1"; } catch (e) { off = navigator.doNotTrack === "1"; }
   var path = location.pathname.replace(/\/+$/, "") || "/";
-  window.efTrackLead = function () { if (!off) send({ type: "lead", path: path }); };
+  window.efTrackLead = function () { if (!off) send({ type: "lead", path: path, wd: navigator.webdriver === true }); };
   if (off) return;
   var q = new URLSearchParams(location.search);
   var scr = "";
   try { scr = Math.round(screen.width) + "x" + Math.round(screen.height); } catch (e) { /* fără ecran */ }
-  send({ path: path, referrer: document.referrer || "", utm: q.get("utm_source") || "", screen: scr, lang: navigator.language || "" });
+  // wd: browser condus de un program (teste automate); vizita se ține separat, nu în statistici.
+  send({ path: path, referrer: document.referrer || "", utm: q.get("utm_source") || "", screen: scr, lang: navigator.language || "", wd: navigator.webdriver === true });
 
   // Timpul se numără doar cât pagina e vizibilă; se trimite când vizitatorul pleacă sau schimbă tabul.
   var visibleMs = 0, since = document.visibilityState === "visible" ? Date.now() : 0, sent = 0;

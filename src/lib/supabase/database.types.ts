@@ -4398,6 +4398,11 @@ export type Database = {
         Args: { p_hash: string }
         Returns: boolean
       }
+      ef_record_site_automated: {
+        Args: { p_path: string; p_country: string; p_city: string; p_device: string; p_browser: string }
+        Returns: undefined
+      }
+      ef_site_online: { Args: never; Returns: Json }
       ef_site_stats: {
         Args: { p_period?: string; p_from?: string; p_to?: string }
         Returns: Json

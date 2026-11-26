@@ -155,6 +155,63 @@ function Bars({ rows, empty }: { rows: { label: string; value: number }[]; empty
   );
 }
 
+type OnlineVisitor = {
+  id: string; first_at: string; last_at: string; entry: string | null; referrer: string | null; utm: string | null;
+  country: string | null; region: string | null; city: string | null; device: string; os: string | null; browser: string | null;
+  model: string | null; screen: string | null; lang: string | null; pages: number; seconds: number; lead: boolean;
+  steps: { p: string; t: string; s: number | null; k: string }[];
+};
+type OnlineData = { visitors: OnlineVisitor[]; automated_hour: number; automated_day: number; automated_last: string | null };
+
+/** Cine e pe site acum: fiecare vizitator cu de unde e, de unde a venit, pe ce dispozitiv și drumul lui de azi. */
+function OnlinePanel({ onClose }: { onClose: () => void }) {
+  const [data, setData] = useState<OnlineData | null>(null);
+  const [err, setErr] = useState("");
+  useEffect(() => {
+    let alive = true;
+    const load = async () => {
+      try {
+        const res = await fetch("/api/admin/analytics/online", { cache: "no-store" });
+        const json = await res.json();
+        if (!res.ok) throw new Error(typeof json?.error === "string" ? json.error : "Nu am putut încărca vizitatorii online.");
+        if (alive) { setData(json as OnlineData); setErr(""); }
+      } catch (e) { if (alive) setErr(e instanceof Error ? e.message : "Nu am putut încărca vizitatorii online."); }
+    };
+    void load();
+    const id = setInterval(() => { if (document.visibilityState === "visible") void load(); }, 10_000);
+    return () => { alive = false; clearInterval(id); };
+  }, []);
+  const journeys: Journey[] = (data?.visitors ?? []).map((v) => {
+    const views = v.steps.filter((st) => st.k === "view");
+    return {
+      first_at: v.first_at, last_at: v.last_at, entry: v.entry ?? views[0]?.p ?? "/",
+      channel: v.utm ? `Campanie: ${v.utm}` : v.referrer ?? "Direct",
+      country: v.country, region: v.region, city: v.city, device: v.device, os: v.os, browser: v.browser, model: v.model, screen: v.screen,
+      pages: v.pages, seconds: v.seconds, trail: views.map((st) => st.p), steps: views.map((st) => ({ p: st.p, s: st.s, t: st.t })), lead: v.lead,
+    };
+  });
+  return (
+    <section aria-labelledby="online-title" className="rounded-xl border border-border bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="online-title" className="text-[15px] font-bold">Pe site acum{data ? ` · ${data.visitors.length}` : ""}</h2>
+        <button type="button" onClick={onClose} className="rounded-lg border border-border px-3 py-1.5 text-[12.5px] font-bold">Închide</button>
+      </div>
+      <p className="mt-0.5 text-[12.5px] text-muted">Oamenii care au deschis o pagină în ultimele 5 minute, cu tot drumul lor de azi. Se actualizează la 10 secunde.</p>
+      {err && <p role="alert" className="mt-2 rounded-lg bg-danger-bg p-2.5 text-[13px] text-danger">{err}</p>}
+      {!data && !err && <p className="py-3 text-[13px] text-muted">Se încarcă…</p>}
+      {data && (journeys.length === 0
+        ? <p className="py-3 text-[13px] text-muted">Nimeni pe site în ultimele 5 minute.</p>
+        : <ul className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-2">{journeys.map((j, i) => <JourneyCard key={`${data.visitors[i].id}`} j={j} />)}</ul>)}
+      {data && (
+        <p className="mt-3 border-t border-border pt-2.5 text-[12.5px] text-muted">
+          <b className="text-foreground">Vizite automate</b> (teste făcute de noi, roboți care imită un browser): nu se numără nicăieri. În ultima oră: {data.automated_hour}, în 24 de ore: {data.automated_day}{data.automated_last ? `, ultima la ${hhmm(data.automated_last)}` : ""}.
+          {" "}Vizitele tale nu se numără pe browserele unde ai bifat „Nu număra vizitele de pe acest browser” (jos în pagină).
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   const [period, setPeriod] = useState<Period>("24h");
   const [data, setData] = useState<SiteAnalytics | null>(initial);
@@ -164,6 +221,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   const [range, setRange] = useState({ from: "", to: "" });
   const [now, setNow] = useState(() => Date.now());
   const [ignoreMine, setIgnoreMine] = useState(false);
+  const [showOnline, setShowOnline] = useState(false);
   const alive = useRef(true);
 
   const load = useCallback(async (p: Period, r: { from: string; to: string }) => {
@@ -216,10 +274,11 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
           <p className="text-sm text-muted">Vizitele pe electrofield.ro: de unde vin (sursă, județ, oraș), ce citesc, cât stau și cine cere programare. Fără cookie-uri, fără adrese IP salvate. Se actualizează singur la 10 secunde.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 text-[13px] font-bold" role="status">
+          <button type="button" onClick={() => setShowOnline((v) => !v)} aria-expanded={showOnline} aria-controls="online-title" className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3.5 py-1.5 text-[13px] font-bold hover:border-foreground">
             <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-success" /></span>
             {data ? `${data.online} ${data.online === 1 ? "vizitator online" : "vizitatori online"}` : "Se încarcă…"}
-          </span>
+            <span className="font-semibold text-purple">{showOnline ? "ascunde" : "vezi cine"}</span>
+          </button>
           <select aria-label="Perioadă" value={period} onChange={(e) => { const next = e.target.value as Period; setPeriod(next); if (next === "custom") setRange({ from, to }); }} className="rounded-lg border border-border bg-white p-2 text-[13px] font-semibold">
             {PERIODS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
@@ -236,6 +295,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
         </div>
       </div>
 
+      {showOnline && <OnlinePanel onClose={() => setShowOnline(false)} />}
       {error && <p role="alert" className="rounded-lg bg-danger-bg p-3 text-sm text-danger">{error}</p>}
 
       {!data ? <p className="text-muted">Se încarcă analiticele…</p> : (
