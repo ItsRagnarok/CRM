@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * Bara de activitate din colțul de sus: utilizatori activi (bulină care pulsează) și viteza platformei.
- * Deocamdată cifrele sunt simulate după oră (09–18: 700–1.200; altfel 20–250), de aceea se arată doar
- * Super Adminului, în vizualizarea unei companii. Când se leagă de date reale, se poate arăta tuturor.
+ * „real” (firmele): oamenii conectați acum pe toată platforma și timpul măsurat de răspuns al serverului.
+ * „simulat” (doar Super Admin, în vizualizarea unei companii): cifre după oră (09–18: 700–1.200; altfel 20–250).
  */
 function hourInRomania() {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Bucharest", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
@@ -13,15 +13,40 @@ function hourInRomania() {
   const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
   return h + m / 60;
 }
+/**
+ * Ce arată bara la firme. Acum toate companiile sunt de test (create de Super Admin), deci rulează animația.
+ * Înainte ca primul client real să primească un cont, se trece pe "real" (cifre reale, gata în cod).
+ */
+export const ACTIVITY_MODE: "real" | "simulat" = "simulat";
+
 const band = (h: number): [number, number] => (h >= 9 && h < 18 ? [700, 1200] : [20, 250]);
 
-export function ActivityPulse() {
+export function ActivityPulse({ mode = "real" }: { mode?: "real" | "simulat" }) {
   const value = useRef<number | null>(null);
   const [users, setUsers] = useState<number | null>(null);
   const [secs, setSecs] = useState(0.3);
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout>;
+    let alive = true;
+    if (mode === "real") {
+      // Cifre reale: câți oameni sunt conectați acum și cât durează, din browserul tău, răspunsul serverului.
+      const poll = async () => {
+        const t0 = performance.now();
+        try {
+          const res = await fetch("/api/activity", { cache: "no-store" });
+          const ms = performance.now() - t0;
+          if (res.ok && alive) {
+            const j = (await res.json()) as { users?: number };
+            setUsers(Math.max(1, Number(j.users ?? 1)));
+            setSecs(ms / 1000);
+          }
+        } catch { /* fără rețea: păstrăm ultimele valori */ }
+        if (alive) timer = setTimeout(poll, 30_000);
+      };
+      void poll();
+      return () => { alive = false; clearTimeout(timer); };
+    }
     const step = () => {
       const [lo, hi] = band(hourInRomania());
       let v = value.current ?? lo + Math.random() * (hi - lo);
@@ -36,8 +61,8 @@ export function ActivityPulse() {
       timer = setTimeout(step, 2000 + Math.random() * 2000);
     };
     step();
-    return () => clearTimeout(timer);
-  }, []);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [mode]);
 
   if (users === null) return null;
   const level = secs < 0.35 ? 4 : secs < 0.5 ? 3 : 2;

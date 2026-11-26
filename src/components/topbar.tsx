@@ -1,6 +1,6 @@
 "use client";
 
-import { ActivityPulse } from "@/components/activity-pulse";
+import { ActivityPulse, ACTIVITY_MODE } from "@/components/activity-pulse";
 
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
@@ -44,7 +44,7 @@ export function Topbar({
   notifications: NotificationItem[];
   profileId: string;
   readOnly?: boolean;
-  /** Bara de activitate (utilizatori activi + viteză); deocamdată doar în vizualizarea Super Adminului. */
+  /** Bara de activitate (utilizatori activi + viteză): reală pentru firme, simulată în vizualizarea Super Adminului. */
   pulse?: boolean;
 }) {
   const pathname = usePathname();
@@ -135,7 +135,7 @@ export function Topbar({
       )}
 
       <div className="flex-1" />
-      {pulse && <ActivityPulse />}
+      {pulse && <ActivityPulse mode={ACTIVITY_MODE} />}
       <ThemeToggle />
 
       <div className="relative">

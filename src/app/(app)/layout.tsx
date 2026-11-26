@@ -59,7 +59,7 @@ export default async function AppLayout({
       {!readOnly && <UsageTracker channel="web" />}
       <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} badges={navBadges} locked={lockedPaths(organization)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} pulse={readOnly} />
+        <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} pulse />
         {isDemo(organization) && <DemoBanner org={organization} />}
         {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}
         <VersionWatcher />

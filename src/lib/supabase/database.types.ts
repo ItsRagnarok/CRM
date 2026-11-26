@@ -4403,6 +4403,7 @@ export type Database = {
         Returns: undefined
       }
       ef_site_online: { Args: never; Returns: Json }
+      ef_platform_online_count: { Args: never; Returns: number }
       ef_site_stats: {
         Args: { p_period?: string; p_from?: string; p_to?: string }
         Returns: Json
