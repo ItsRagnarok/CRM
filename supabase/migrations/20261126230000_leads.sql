@@ -50,7 +50,7 @@ create policy platform_lead_events_admin on public.platform_lead_events for all 
   using ((select public.ef_is_platform_admin()))
   with check ((select public.ef_is_platform_admin()));
 
-create or replace function public.platform_leads_touch() returns trigger language plpgsql as $$
+create or replace function public.platform_leads_touch() returns trigger language plpgsql set search_path = '' as $$
 begin
   new.updated_at := now();
   return new;
