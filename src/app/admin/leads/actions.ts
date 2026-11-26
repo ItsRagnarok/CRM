@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
+import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_WANTS, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
 import { companyKey, parseLeadsFile, type ImportedLead } from "@/lib/leads-import";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -27,6 +27,8 @@ function fields(fd: FormData) {
     next_follow_up: ISO.test(follow) ? follow : null,
     current_tools: txt(fd, "currentTools", 1000) || null,
     problems: txt(fd, "problems", 2000) || null,
+    wants: LEAD_WANTS.map((w) => w.id).filter((w) => fd.getAll("wants").includes(w)),
+    last_reply: txt(fd, "lastReply", 2000) || null,
     source: LEAD_SOURCES.some((s) => s.id === source) ? source : "altul",
   };
 }

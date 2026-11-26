@@ -3242,6 +3242,7 @@ export type Database = {
           email: string | null
           estimated_value: number | null
           id: string
+          last_reply: string | null
           lost_reason: string | null
           next_follow_up: string | null
           organization_id: string | null
@@ -3251,6 +3252,7 @@ export type Database = {
           stage: string
           team_size: number | null
           updated_at: string
+          wants: string[]
         }
         Insert: {
           booking_id?: string | null
@@ -3264,6 +3266,7 @@ export type Database = {
           email?: string | null
           estimated_value?: number | null
           id?: string
+          last_reply?: string | null
           lost_reason?: string | null
           next_follow_up?: string | null
           organization_id?: string | null
@@ -3273,6 +3276,7 @@ export type Database = {
           stage?: string
           team_size?: number | null
           updated_at?: string
+          wants?: string[]
         }
         Update: {
           booking_id?: string | null
@@ -3286,6 +3290,7 @@ export type Database = {
           email?: string | null
           estimated_value?: number | null
           id?: string
+          last_reply?: string | null
           lost_reason?: string | null
           next_follow_up?: string | null
           organization_id?: string | null
@@ -3295,6 +3300,7 @@ export type Database = {
           stage?: string
           team_size?: number | null
           updated_at?: string
+          wants?: string[]
         }
         Relationships: []
       }

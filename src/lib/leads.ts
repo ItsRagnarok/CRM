@@ -5,7 +5,7 @@
 import { capabilitiesText } from "./platform-capabilities";
 
 export const LEAD_STAGES = [
-  { id: "nou", label: "Nou" },
+  { id: "nou", label: "De contactat" },
   { id: "contactat", label: "Contactat" },
   { id: "discutie", label: "Discuție" },
   { id: "oferta", label: "Ofertă trimisă" },
@@ -40,6 +40,18 @@ export const LEAD_DOMAINS = [
   { id: "electric", label: "Electric" },
   { id: "fotovoltaic", label: "Fotovoltaic" },
 ] as const;
+
+/** Ce a cerut firma în răspunsul ei: se vede pe card, ca să știi din prima ce urmează. */
+export const LEAD_WANTS = [
+  { id: "demo", label: "Vrea demo" },
+  { id: "prezentare", label: "Vrea prezentare" },
+  { id: "apel", label: "Vrea apel" },
+  { id: "costuri", label: "Întreabă de costuri" },
+  { id: "detalii", label: "Vrea detalii" },
+  { id: "mai_tarziu", label: "Mai târziu" },
+  { id: "raspuns_automat", label: "Răspuns automat" },
+] as const;
+export const wantLabel = (id: string) => LEAD_WANTS.find((w) => w.id === id)?.label ?? id;
 
 export const isLeadStage = (s: string): s is LeadStage => LEAD_STAGES.some((x) => x.id === s);
 export const isOpenStage = (s: string) => (OPEN_STAGES as readonly string[]).includes(s);
@@ -91,6 +103,7 @@ export type BriefLead = {
   company_name: string; contact_name: string | null; phone: string | null; email: string | null;
   stage: string; source: string; team_size: number | null; domains: string[]; estimated_value: number | string | null;
   next_follow_up: string | null; current_tools: string | null; problems: string | null; lost_reason: string | null; created_at: string;
+  wants?: string[] | null; last_reply?: string | null;
 };
 export type BriefEvent = { kind: string; body: string; created_at: string };
 
@@ -121,7 +134,9 @@ export function buildBrief(lead: BriefLead, events: BriefEvent[], today: string)
     line("Domenii", lead.domains.length ? lead.domains.map(domainLabel).join(", ") : null),
     line("Valoare estimată pe lună", lead.estimated_value == null ? null : formatLei(Number(lead.estimated_value))),
     line("Ce folosesc acum", lead.current_tools),
-    line("Ce au spus că îi doare", lead.problems),
+    line("Ce au cerut", (lead.wants ?? []).length ? (lead.wants ?? []).map(wantLabel).join(", ") : null),
+    line("Ultimul lor răspuns", lead.last_reply),
+    line("Nevoi și context", lead.problems),
     line("De reluat la", lead.next_follow_up),
     ...(lead.lost_reason ? [`Motiv pierdut: ${lead.lost_reason}`] : []),
     `Intrat în lista mea: ${stamp(lead.created_at)}`,

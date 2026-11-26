@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus } from "lucide-react";
 import {
-  EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
+  EVENT_KINDS, LEAD_DOMAINS, LEAD_WANTS, wantLabel, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
   isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, type BriefLead,
 } from "@/lib/leads";
 import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, updateLead } from "./actions";
@@ -25,6 +25,14 @@ function FollowTag({ lead, today }: { lead: Lead; today: string }) {
   const tone = s === "intarziat" ? "bg-danger-bg text-danger" : s === "azi" ? "bg-warning-bg text-warning" : "bg-neutral-bg text-muted";
   const text = s === "intarziat" ? `Întârziat · ${dayMonth(lead.next_follow_up)}` : s === "azi" ? "Azi" : `Reluare ${dayMonth(lead.next_follow_up)}`;
   return <span className={`rounded-full px-2.5 py-0.5 text-[11.5px] font-bold ${tone}`}>{text}</span>;
+}
+
+function WantChips({ wants, className = "" }: { wants: string[]; className?: string }) {
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`} aria-label="Ce a cerut">
+      {wants.map((w) => <span key={w} className="rounded-full bg-info-bg px-2.5 py-0.5 text-[11.5px] font-bold text-info">{wantLabel(w)}</span>)}
+    </div>
+  );
 }
 
 function LeadForm({ lead, onDone }: { lead?: Lead; onDone: () => void }) {
@@ -55,7 +63,12 @@ function LeadForm({ lead, onDone }: { lead?: Lead; onDone: () => void }) {
       </fieldset>
       <div><label htmlFor={`f-${id}`} className={label}>De reluat la</label><input id={`f-${id}`} name="followUp" type="date" defaultValue={lead?.next_follow_up ?? ""} className={input} /></div>
       <div><label htmlFor={`ct-${id}`} className={label}>Ce folosesc acum (Excel, caiete, altă aplicație)</label><textarea id={`ct-${id}`} name="currentTools" rows={2} maxLength={1000} defaultValue={lead?.current_tools ?? ""} className={input} /></div>
-      <div><label htmlFor={`pr-${id}`} className={label}>Ce au spus că îi doare</label><textarea id={`pr-${id}`} name="problems" rows={3} maxLength={2000} defaultValue={lead?.problems ?? ""} className={input} /></div>
+      <div><label htmlFor={`pr-${id}`} className={label}>Nevoi și context (doar ce au spus sau ce e verificat)</label><textarea id={`pr-${id}`} name="problems" rows={3} maxLength={2000} defaultValue={lead?.problems ?? ""} className={input} /></div>
+      <fieldset className="flex flex-wrap gap-x-4 gap-y-2 text-[13px]">
+        <legend className={label}>Ce a cerut</legend>
+        {LEAD_WANTS.map((w) => <label key={w.id} className="flex items-center gap-2"><input type="checkbox" name="wants" value={w.id} defaultChecked={lead?.wants?.includes(w.id)} /> {w.label}</label>)}
+      </fieldset>
+      <div><label htmlFor={`lr-${id}`} className={label}>Ultimul lor răspuns (cuvânt cu cuvânt)</label><textarea id={`lr-${id}`} name="lastReply" rows={3} maxLength={2000} defaultValue={lead?.last_reply ?? ""} className={input} /></div>
       {state?.error && <p role="alert" className="text-[12.5px] font-semibold text-danger">{state.error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={pending} className={btnPrimary}>{pending ? "Se salvează…" : lead ? "Salvează" : "Adaugă leadul"}</button>
@@ -97,7 +110,7 @@ function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent
   };
 
   return (
-    <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" aria-label={`Lead ${lead.company_name}`}>
+    <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" data-lead-panel aria-label={`Lead ${lead.company_name}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-[19px] font-extrabold">{lead.company_name}</h2>
@@ -122,10 +135,17 @@ function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent
               {open && <input type="date" aria-label="Data reluării" defaultValue={lead.next_follow_up ?? ""} onChange={(e) => run(() => setFollowUp(lead.id, e.target.value))} className="rounded-lg border border-border bg-white px-2 py-1 text-[12.5px]" />}
             </dd>
           </dl>
+          {(lead.wants ?? []).length > 0 && <WantChips wants={lead.wants ?? []} className="mt-3" />}
+          {lead.last_reply && (
+            <blockquote className="mt-3 whitespace-pre-line rounded-[12px] border-l-4 border-border bg-neutral-bg p-3 text-[13px]">
+              <div className="mb-1 text-[11.5px] font-bold uppercase tracking-wide text-muted">Ultimul lor răspuns</div>
+              {lead.last_reply}
+            </blockquote>
+          )}
           {(lead.current_tools || lead.problems) && (
             <div className="mt-3 flex flex-col gap-2 rounded-[12px] bg-neutral-bg p-3 text-[13px]">
               {lead.current_tools && <p><span className="font-bold">Folosesc acum:</span> {lead.current_tools}</p>}
-              {lead.problems && <p className="whitespace-pre-line"><span className="font-bold">Îi doare:</span> {lead.problems}</p>}
+              {lead.problems && <p className="whitespace-pre-line"><span className="font-bold">Nevoi și context:</span> {lead.problems}</p>}
             </div>
           )}
           {lead.stage === "pierdut" && lead.lost_reason && <p className="mt-3 text-[13px] text-muted">Motiv pierdut: {lead.lost_reason}</p>}
@@ -223,6 +243,19 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const rate = winRate(leads);
   const won = leads.filter((l) => l.stage === "castigat").length;
   const lost = leads.filter((l) => l.stage === "pierdut").length;
+  // Click în afara fișei și a cardurilor (sau Escape) închide fișa, ca o deselectare.
+  useEffect(() => {
+    if (!selected) return;
+    const onDown = (e: PointerEvent) => {
+      const el = e.target as Element | null;
+      if (!el || !el.isConnected || el.closest("[data-lead-panel], [data-lead-item]")) return;
+      setSelected(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setSelected(null); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [selected]);
   const current = selected && selected !== "new" ? leads.find((l) => l.id === selected) ?? null : null;
 
   /** Un card de sus duce la lista filtrată exact pe ce numără, și derulează până la ea. */
@@ -239,10 +272,11 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const filterLabel = only === "open" ? "Leaduri deschise" : only === "valoare" ? "Deschise, cu valoare" : only === "closed" ? "Câștigate și pierdute" : due === "azi" ? "De reluat azi sau întârziate" : due === "intarziat" ? "Doar întârziate" : "";
 
   const card = (l: Lead) => (
-    <button key={l.id} type="button" onClick={() => setSelected(l.id)} aria-current={selected === l.id} className={`mb-2 block w-full rounded-[14px] border bg-white p-3 text-left ${selected === l.id ? "border-foreground" : "border-border"}`}>
+    <button key={l.id} type="button" data-lead-item onClick={() => setSelected(l.id)} aria-current={selected === l.id} className={`mb-2 block w-full rounded-[14px] border bg-white p-3 text-left ${selected === l.id ? "border-foreground" : "border-border"}`}>
       <div className="flex items-center gap-2 font-bold"><Building2 className="h-4 w-4 shrink-0 text-muted" /><span className="break-words">{l.company_name}</span></div>
       {l.contact_name && <div className="mt-1 flex items-center gap-2 text-[12.5px] text-muted"><UserRound className="h-3.5 w-3.5 shrink-0" />{l.contact_name}</div>}
       <div className="mt-1 text-[12.5px] text-muted">{sourceLabel(l.source)}</div>
+      {(l.wants ?? []).length > 0 && <WantChips wants={l.wants ?? []} className="mt-2" />}
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><FollowTag lead={l} today={today} /><span className="ml-auto text-[12.5px] font-bold tabular-nums">{l.estimated_value == null ? "" : `${formatLei(Number(l.estimated_value))} / lună`}</span></div>
     </button>
   );
@@ -333,7 +367,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
                 <thead><tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted"><th className="p-3">Firmă</th><th className="p-3">Etapă</th><th className="p-3">Sursă</th><th className="p-3">Valoare / lună</th><th className="p-3">Reluare</th><th className="p-3">Ultimul contact</th></tr></thead>
                 <tbody>
                   {filtered.map((l) => (
-                    <tr key={l.id} tabIndex={0} onClick={() => setSelected(l.id)} onKeyDown={(e) => e.key === "Enter" && setSelected(l.id)} aria-current={selected === l.id} className={`cursor-pointer border-b border-border last:border-0 hover:bg-neutral-bg ${selected === l.id ? "bg-neutral-bg" : ""}`}>
+                    <tr key={l.id} data-lead-item tabIndex={0} onClick={() => setSelected(l.id)} onKeyDown={(e) => e.key === "Enter" && setSelected(l.id)} aria-current={selected === l.id} className={`cursor-pointer border-b border-border last:border-0 hover:bg-neutral-bg ${selected === l.id ? "bg-neutral-bg" : ""}`}>
                       <td className="p-3"><div className="font-bold">{l.company_name}</div><div className="text-muted">{l.contact_name}</div></td>
                       <td className="p-3"><span className="rounded-full bg-neutral-bg px-2.5 py-0.5 text-[12px] font-semibold">{stageLabel(l.stage)}</span></td>
                       <td className="p-3">{sourceLabel(l.source)}</td>
@@ -351,7 +385,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
         </div>
 
         {selected === "new" && (
-          <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" aria-label="Lead nou">
+          <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" data-lead-panel aria-label="Lead nou">
             <h2 className="mb-3 text-[19px] font-extrabold">Lead nou</h2>
             <LeadForm onDone={() => setSelected(null)} />
           </aside>
