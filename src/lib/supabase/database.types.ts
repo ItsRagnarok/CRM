@@ -3018,6 +3018,7 @@ export type Database = {
           id: string
           invoice_labor_rate: number | null
           invoice_material_markup: number
+          invoice_vat_percent: number
           is_active: boolean
           logo_storage_path: string | null
           monday_config: Json
@@ -3052,6 +3053,7 @@ export type Database = {
           id?: string
           invoice_labor_rate?: number | null
           invoice_material_markup?: number
+          invoice_vat_percent?: number
           is_active?: boolean
           logo_storage_path?: string | null
           monday_config?: Json
@@ -3086,6 +3088,7 @@ export type Database = {
           id?: string
           invoice_labor_rate?: number | null
           invoice_material_markup?: number
+          invoice_vat_percent?: number
           is_active?: boolean
           logo_storage_path?: string | null
           monday_config?: Json

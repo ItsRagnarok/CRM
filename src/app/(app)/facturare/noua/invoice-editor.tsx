@@ -51,6 +51,8 @@ export function InvoiceEditor({
   const [clientId, setClientId] = useState(initial.clientId);
   const [client, setClient] = useState<ClientForm>(() => clientOverride ?? fromClient(clients.find((c) => c.id === initial.clientId)));
   const [lines, setLines] = useState<EditorLine[]>(initial.lines.length ? initial.lines : [{ name: "", unit: "buc", quantity: 1, price: 0, vatPercent: defaults.vat, isService: true, code: null }]);
+  // Firmă neplătitoare de TVA (Setări → Integrări): fără coloană TVA, toate rândurile la 0%.
+  const noVat = defaults.vat === 0;
   const [issueDate, setIssueDate] = useState(defaults.today);
   const [dueDate, setDueDate] = useState(addDays(defaults.today, defaults.dueDays));
   const invoiceSeries = catalog.invoiceSeries.length ? catalog.invoiceSeries : [defaults.series];
@@ -172,14 +174,14 @@ export function InvoiceEditor({
             <table className="w-full min-w-[640px] border-collapse text-[13px]">
               <thead>
                 <tr className="text-left text-[11px] font-bold uppercase tracking-wide text-muted">
-                  <th className="pb-2 pr-2">Denumire</th><th className="w-[64px] pb-2 pr-2">UM</th><th className="w-[84px] pb-2 pr-2 text-right">Cant.</th><th className="w-[104px] pb-2 pr-2 text-right">Preț fără TVA</th><th className="w-[84px] pb-2 pr-2">TVA</th><th className="w-[92px] pb-2 text-right">Valoare</th><th className="w-8" />
+                  <th className="pb-2 pr-2">Denumire</th><th className="w-[64px] pb-2 pr-2">UM</th><th className="w-[84px] pb-2 pr-2 text-right">Cant.</th><th className="w-[104px] pb-2 pr-2 text-right">{noVat ? "Preț" : "Preț fără TVA"}</th>{!noVat && <th className="w-[84px] pb-2 pr-2">TVA</th>}<th className="w-[92px] pb-2 text-right">Valoare</th><th className="w-8" />
                 </tr>
               </thead>
               <tbody>
                 {lines.map((l, i) => (
                   <tr key={i} className="align-top">
                     <td className="py-1 pr-2">
-                      <ProductInput value={l.name} onChange={(name) => setLine(i, { name })} onPick={(p) => setLine(i, { name: p.name, unit: p.unit, price: p.price, isService: p.isService, code: p.code, ...(p.vatPercent !== null ? { vatPercent: p.vatPercent } : {}) })} />
+                      <ProductInput value={l.name} onChange={(name) => setLine(i, { name })} onPick={(p) => setLine(i, { name: p.name, unit: p.unit, price: p.price, isService: p.isService, code: p.code, ...(p.vatPercent !== null && !noVat ? { vatPercent: p.vatPercent } : {}) })} />
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         <select value={l.isService ? "s" : "m"} onChange={(e) => setLine(i, { isService: e.target.value === "s" })} className="rounded-[7px] border border-[#e4e7ec] bg-white px-1.5 py-0.5 text-[11.5px] font-semibold text-[#475467]" aria-label="Serviciu sau marfă">
                           <option value="s">Serviciu</option><option value="m">Marfă</option>
@@ -190,11 +192,11 @@ export function InvoiceEditor({
                     <td className="py-1 pr-2"><input value={l.unit} onChange={(e) => setLine(i, { unit: e.target.value })} className={field} aria-label="Unitate de măsură" /></td>
                     <td className="py-1 pr-2"><input type="number" step="0.01" min="0" value={l.quantity} onChange={(e) => setLine(i, { quantity: e.target.value as unknown as number })} className={`${field} text-right tabular-nums`} aria-label="Cantitate" /></td>
                     <td className="py-1 pr-2"><input type="number" step="0.01" min="0" value={l.price} onChange={(e) => setLine(i, { price: e.target.value as unknown as number })} className={`${field} text-right tabular-nums`} aria-label="Preț unitar fără TVA" /></td>
-                    <td className="py-1 pr-2">
+                    {!noVat && <td className="py-1 pr-2">
                       <select value={l.vatPercent} onChange={(e) => setLine(i, { vatPercent: Number(e.target.value) })} className={field} aria-label="Cota TVA">
                         {vatOptions.map(([p]) => <option key={p} value={p}>{p}%</option>)}
                       </select>
-                    </td>
+                    </td>}
                     <td className="py-1 pr-1 pt-3 text-right font-bold tabular-nums">{(Math.round((Number(l.quantity) || 0) * (Number(l.price) || 0) * 100) / 100).toLocaleString("ro-RO", { minimumFractionDigits: 2 })}</td>
                     <td className="py-1 pt-2 text-right">
                       <button type="button" onClick={() => setLines((ls) => ls.filter((_, k) => k !== i))} disabled={lines.length === 1} aria-label="Șterge rândul" className="rounded-[8px] p-1.5 text-muted-2 hover:bg-danger-bg hover:text-danger disabled:opacity-30"><Trash2 className="h-4 w-4" /></button>
@@ -260,8 +262,8 @@ export function InvoiceEditor({
 
         <section className="rounded-[14px] border border-border bg-white p-5">
           <dl className="flex flex-col gap-1.5 text-[13px]">
-            <div className="flex justify-between"><dt className="text-muted">Fără TVA</dt><dd className="font-semibold tabular-nums">{lei(sum.net)}</dd></div>
-            {sum.byRate.map((b) => <div key={b.rate} className="flex justify-between"><dt className="text-muted">TVA {b.rate}%</dt><dd className="font-semibold tabular-nums">{lei(b.vat)}</dd></div>)}
+            {noVat ? <div className="text-[12px] text-muted">Firmă neplătitoare de TVA: fără TVA pe factură.</div> : <div className="flex justify-between"><dt className="text-muted">Fără TVA</dt><dd className="font-semibold tabular-nums">{lei(sum.net)}</dd></div>}
+            {!noVat && sum.byRate.map((b) => <div key={b.rate} className="flex justify-between"><dt className="text-muted">TVA {b.rate}%</dt><dd className="font-semibold tabular-nums">{lei(b.vat)}</dd></div>)}
             <div className="mt-1 flex justify-between border-t border-border pt-2 text-[16px]"><dt className="font-extrabold">Total</dt><dd className="font-extrabold tabular-nums">{lei(sum.gross)}</dd></div>
           </dl>
           <button type="submit" disabled={pending || !clientId || !series} className="mt-4 flex w-full items-center justify-center gap-2 rounded-[11px] bg-electric px-4 py-3 text-[14px] font-extrabold disabled:opacity-50">

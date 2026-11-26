@@ -224,7 +224,7 @@ export default async function SetariPage({
             )}
 
             {tab === "integrari" && <InvoicingForm initial={invoicingConnection} canEdit={!readOnly && profile.role === "admin"} />}
-            {tab === "integrari" && <BillingRatesForm laborRate={organization.invoice_labor_rate} markup={Number(organization.invoice_material_markup ?? 0)} canEdit={!readOnly && profile.role === "admin"} />}
+            {tab === "integrari" && <BillingRatesForm laborRate={organization.invoice_labor_rate} markup={Number(organization.invoice_material_markup ?? 0)} vatPercent={Number(organization.invoice_vat_percent ?? 21)} canEdit={!readOnly && profile.role === "admin"} />}
 
             {tab === "ai" && <AiTab organizationId={organization.id} enabled={organization.ai_enabled !== false} canEdit={!readOnly && profile.role === "admin"} />}
 

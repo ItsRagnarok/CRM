@@ -12,7 +12,6 @@ function read(form: FormData) {
   const accountEmail = String(form.get("accountEmail") ?? "").trim();
   const vatCode = String(form.get("vatCode") ?? "").trim().toUpperCase().replace(/\s+/g, "");
   const series = String(form.get("series") ?? "").trim();
-  const taxPercent = Number(form.get("taxPercent") ?? 21);
   const dueDays = Math.round(Number(form.get("dueDays") ?? 15));
   const secret = String(form.get("secret") ?? "").trim();
   const sendEmail = form.get("sendEmail") === "on";
@@ -22,9 +21,8 @@ function read(form: FormData) {
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(accountEmail)) error = "Introdu e-mailul contului de facturare.";
   else if (!/^(RO)?\d{2,10}$/.test(vatCode)) error = "CIF-ul firmei nu pare valid (ex. RO12345678).";
   else if (!series || series.length > 20) error = "Introdu seria de facturare, exact cum e în cont.";
-  else if (!Number.isFinite(taxPercent) || taxPercent < 0 || taxPercent > 100) error = "Cota TVA nu e validă.";
   else if (!Number.isFinite(dueDays) || dueDays < 0 || dueDays > 365) error = "Termenul de plată trebuie să fie între 0 și 365 de zile.";
-  return { provider: provider as Provider, accountEmail, vatCode, series, proformaSeries, receiptSeries, taxPercent, dueDays, secret, sendEmail, error };
+  return { provider: provider as Provider, accountEmail, vatCode, series, proformaSeries, receiptSeries, dueDays, secret, sendEmail, error };
 }
 
 async function adminOnly() {
@@ -42,7 +40,7 @@ export async function testInvoicingConnection(_prev: InvoicingState | undefined,
   const stored = await loadConnection(supabase, org.id);
   if (!v.secret && !stored) return { error: "Introdu tokenul sau cheia API ca să pot testa." };
   try {
-    const result = await checkConnection(supabase, { provider: v.provider, accountEmail: v.accountEmail, vatCode: v.vatCode, series: v.series, proformaSeries: v.proformaSeries || null, receiptSeries: v.receiptSeries || null, taxPercent: v.taxPercent, dueDays: v.dueDays, sendEmail: v.sendEmail, simulated: false }, v.secret || undefined);
+    const result = await checkConnection(supabase, { provider: v.provider, accountEmail: v.accountEmail, vatCode: v.vatCode, series: v.series, proformaSeries: v.proformaSeries || null, receiptSeries: v.receiptSeries || null, taxPercent: Number(org.invoice_vat_percent ?? 21), dueDays: v.dueDays, sendEmail: v.sendEmail, simulated: false }, v.secret || undefined);
     const cat = "catalog" in result ? result.catalog : null;
     const parts = [
       result.series.length ? `serii de factură: ${result.series.join(", ")}` : "",
@@ -68,7 +66,7 @@ export async function saveInvoicingConnection(_prev: InvoicingState | undefined,
   if (v.error) return { error: v.error };
   const supabase = await createClient();
   const { error } = await supabase.rpc("invoicing_save_connection", {
-    p_provider: v.provider, p_account_email: v.accountEmail, p_vat_code: v.vatCode, p_series: v.series, p_tax: v.taxPercent, p_due_days: v.dueDays, p_send_email: v.sendEmail, ...(v.secret ? { p_secret: v.secret } : {}),
+    p_provider: v.provider, p_account_email: v.accountEmail, p_vat_code: v.vatCode, p_series: v.series, p_tax: Number(org.invoice_vat_percent ?? 21), p_due_days: v.dueDays, p_send_email: v.sendEmail, ...(v.secret ? { p_secret: v.secret } : {}),
   });
   if (error) return { error: error.code === "22023" ? "Introdu tokenul sau cheia API a furnizorului." : "Conexiunea nu a putut fi salvată. Încearcă din nou." };
   await supabase.rpc("invoicing_set_series", { p_proforma: v.proformaSeries, p_receipt: v.receiptSeries });

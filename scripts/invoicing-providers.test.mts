@@ -42,6 +42,12 @@ t("SB issue: număr, serie, link public", r1.number === "0039" && r1.series === 
 t("SB issue: Basic auth + POST /invoice/v2", calls.at(-1).url.endsWith("/invoice/v2") && calls.at(-1).init.method === "POST" && calls.at(-1).init.headers.Authorization === "Basic " + Buffer.from("a@b.ro:tok").toString("base64"));
 await smartbillIssue(conn("smartbill"), "tok", { ...draft, docType: "proforma", series: "EFP" });
 t("SB proforma: POST /estimate/v2", calls.at(-1).url.endsWith("/estimate/v2"));
+// Firmă neplătitoare de TVA: cota 0 primește numele exact din contul SmartBill (/tax), apoi factura.
+mock((url) => url.includes("/tax?") ? { body: { errorText: "", taxes: [{ name: "Normala", percentage: 21 }, { name: "Neplatitor", percentage: 0 }] } } : { body: { errorText: "", number: "0040", series: "EF" } });
+const nv = calls.length;
+await smartbillIssue(conn("smartbill", { taxPercent: 0 }), "tok", { ...draft, lines: draft.lines.map((l: any) => ({ ...l, vatPercent: 0 })) });
+const nvBody = JSON.parse(calls.at(-1).init.body);
+t("SB neplătitor TVA: citește /tax, trimite cota 0 cu numele din cont", calls.length - nv === 2 && calls[nv].url.includes("/tax?") && nvBody.products.every((p: any) => p.taxPercentage === 0 && p.taxName === "Neplatitor"));
 mock(() => ({ body: { errorText: "Seria nu exista", number: "", series: "" } }));
 t("SB issue: errorText devine eroare lizibilă", (await err(() => smartbillIssue(conn("smartbill"), "tok", draft))).includes("Seria nu exista"));
 mock(() => ({ status: 401, body: "" }));
