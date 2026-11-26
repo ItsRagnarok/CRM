@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_WANTS, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
+import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_WANTS, normalizeTags, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
 import { companyKey, parseLeadsFile, type ImportedLead } from "@/lib/leads-import";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -69,6 +69,17 @@ export async function setLeadStage(id: string, stage: string, reason?: string): 
     .eq("id", id);
   if (error) return { error: "Nu am putut muta leadul." };
   await supabase.from("platform_lead_events").insert({ lead_id: id, kind: "etapa", body: stage === "pierdut" ? `Pierdut: ${why}` : `Mutat la ${stageLabel(stage)}`, created_by: userId });
+  revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/** Etichetele unui lead (Important, Urgent sau proprii). Înlocuiește lista întreagă. */
+export async function setLeadTags(id: string, tags: string[]): Promise<Result> {
+  await requireAdminContext();
+  if (!UUID.test(id) || !Array.isArray(tags)) return { error: "Lead necunoscut." };
+  const supabase = await createClient({ ignorePreview: true });
+  const { error } = await supabase.from("platform_leads").update({ tags: normalizeTags(tags) }).eq("id", id);
+  if (error) return { error: "Nu am putut salva etichetele." };
   revalidatePath("/admin/leads");
   return { ok: true };
 }

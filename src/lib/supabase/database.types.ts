@@ -3250,6 +3250,7 @@ export type Database = {
           problems: string | null
           source: string
           stage: string
+          tags: string[]
           team_size: number | null
           updated_at: string
           wants: string[]
@@ -3274,6 +3275,7 @@ export type Database = {
           problems?: string | null
           source?: string
           stage?: string
+          tags?: string[]
           team_size?: number | null
           updated_at?: string
           wants?: string[]
@@ -3298,6 +3300,7 @@ export type Database = {
           problems?: string | null
           source?: string
           stage?: string
+          tags?: string[]
           team_size?: number | null
           updated_at?: string
           wants?: string[]

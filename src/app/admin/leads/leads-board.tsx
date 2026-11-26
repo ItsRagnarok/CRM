@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus, Star, Tag } from "lucide-react";
 import {
-  EVENT_KINDS, LEAD_DOMAINS, LEAD_WANTS, wantLabel, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
+  EVENT_KINDS, LEAD_DOMAINS, LEAD_WANTS, wantLabel, IMPORTANT_TAG, PRESET_TAGS, MAX_TAGS, MAX_TAG_LENGTH, hasTag, toggleTag, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
   isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, type BriefLead,
 } from "@/lib/leads";
-import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, updateLead } from "./actions";
+import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, setLeadTags, updateLead } from "./actions";
 
 type Lead = BriefLead & { id: string; booking_id: string | null; organization_id: string | null };
 type LeadEvent = { id: string; lead_id: string; kind: string; body: string; created_at: string };
@@ -25,6 +25,51 @@ function FollowTag({ lead, today }: { lead: Lead; today: string }) {
   const tone = s === "intarziat" ? "bg-danger-bg text-danger" : s === "azi" ? "bg-warning-bg text-warning" : "bg-neutral-bg text-muted";
   const text = s === "intarziat" ? `Întârziat · ${dayMonth(lead.next_follow_up)}` : s === "azi" ? "Azi" : `Reluare ${dayMonth(lead.next_follow_up)}`;
   return <span className={`rounded-full px-2.5 py-0.5 text-[11.5px] font-bold ${tone}`}>{text}</span>;
+}
+
+function TagChips({ tags, className = "" }: { tags: string[]; className?: string }) {
+  if (!tags.length) return null;
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${className}`} aria-label="Etichete">
+      {tags.map((t) => hasTag([t], IMPORTANT_TAG)
+        ? <span key={t} className="inline-flex items-center gap-1 rounded-full bg-warning-bg px-2.5 py-0.5 text-[11.5px] font-bold text-warning"><Star className="h-3 w-3 fill-current" />{t}</span>
+        : <span key={t} className="rounded-full border border-border px-2.5 py-0.5 text-[11.5px] font-semibold">{t}</span>)}
+    </div>
+  );
+}
+
+/** Etichetele din fișă: cele gata făcute plus cele proprii, cu bifă; se pot adăuga altele. */
+function TagEditor({ tags, allTags, onChange, pending }: { tags: string[]; allTags: string[]; onChange: (next: string[]) => void; pending: boolean }) {
+  const [draft, setDraft] = useState("");
+  const options = [...PRESET_TAGS, ...allTags.filter((t) => !PRESET_TAGS.some((p) => hasTag([p], t))), ...tags.filter((t) => !PRESET_TAGS.some((p) => hasTag([p], t)) && !allTags.some((a) => hasTag([a], t)))];
+  const full = tags.length >= MAX_TAGS;
+  const add = () => {
+    const t = draft.trim();
+    if (!t || full) return;
+    onChange(hasTag(tags, t) ? tags : toggleTag(tags, t));
+    setDraft("");
+  };
+  return (
+    <section className="mt-4" aria-label="Etichete">
+      <h3 className="flex items-center gap-1.5 text-[13.5px] font-extrabold"><Tag className="h-4 w-4" /> Etichete</h3>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {options.map((t) => {
+          const on = hasTag(tags, t);
+          return (
+            <button key={t} type="button" aria-pressed={on} disabled={pending || (!on && full)} onClick={() => onChange(toggleTag(tags, t))}
+              className={`inline-flex min-h-8 items-center gap-1 rounded-full border px-3 text-[12.5px] font-semibold disabled:opacity-50 ${on ? "border-foreground bg-foreground text-background" : "border-border bg-white"}`}>
+              {hasTag([t], IMPORTANT_TAG) && <Star className={`h-3.5 w-3.5 ${on ? "fill-current" : ""}`} />}{on ? "✓ " : ""}{t}
+            </button>
+          );
+        })}
+      </div>
+      <form className="mt-2 flex gap-2" onSubmit={(e) => { e.preventDefault(); add(); }}>
+        <label htmlFor="tag-new" className="sr-only">Etichetă nouă</label>
+        <input id="tag-new" value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={MAX_TAG_LENGTH} disabled={full} placeholder={full ? `Maxim ${MAX_TAGS} etichete` : "Etichetă nouă, ex. „Vrea ofertă”"} className={`${input} flex-1`} />
+        <button type="submit" disabled={pending || full || !draft.trim()} className={btn}>Adaugă</button>
+      </form>
+    </section>
+  );
 }
 
 function WantChips({ wants, className = "" }: { wants: string[]; className?: string }) {
@@ -78,7 +123,7 @@ function LeadForm({ lead, onDone }: { lead?: Lead; onDone: () => void }) {
   );
 }
 
-function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent[]; today: string; onClose: () => void }) {
+function Panel({ lead, events, today, onClose, allTags, onTags, onStage }: { lead: Lead; events: LeadEvent[]; today: string; onClose: () => void; allTags: string[]; onTags: (id: string, tags: string[]) => void; onStage: (id: string, stage: string) => void }) {
   const [pending, start] = useTransition();
   const [editing, setEditing] = useState(false);
   const [losing, setLosing] = useState(false);
@@ -164,6 +209,19 @@ function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent
           <button type="button" onClick={() => setEditing(true)} className={btn}>Editează</button>
         </div>
       )}
+      {!editing && (
+        <div className="mt-3 flex items-center gap-2">
+          <label htmlFor="lead-move" className="text-[12.5px] font-semibold text-muted">Mută la</label>
+          <select id="lead-move" value={lead.stage} disabled={pending} onChange={(e) => {
+            const to = e.target.value;
+            if (to === "pierdut") { setLosing(true); return; }
+            onStage(lead.id, to);
+          }} className={`${input} w-auto`}>
+            {LEAD_STAGES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          </select>
+        </div>
+      )}
+      {!editing && <TagEditor tags={lead.tags ?? []} allTags={allTags} pending={pending} onChange={(next) => onTags(lead.id, next)} />}
       {losing && (
         <form className="mt-2 flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); run(() => setLeadStage(lead.id, "pierdut", reason)); setLosing(false); setReason(""); }}>
           <label htmlFor="lost-reason" className="sr-only">Motivul</label>
@@ -213,7 +271,38 @@ function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent
   );
 }
 
-export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: LeadEvent[]; today: string }) {
+export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[]; events: LeadEvent[]; today: string }) {
+  // Mutările și etichetele apar imediat pe ecran; dacă serverul refuză, se revine și apare mesajul.
+  const [patch, setPatch] = useState<Record<string, Partial<Pick<Lead, "stage" | "tags">>>>({});
+  const [boardMsg, setBoardMsg] = useState<string | null>(null);
+  const [, startSave] = useTransition();
+  useEffect(() => setPatch({}), [serverLeads]);
+  const leads = useMemo(() => serverLeads.map((l) => (patch[l.id] ? { ...l, ...patch[l.id] } : l)), [serverLeads, patch]);
+  const allTags = useMemo(() => {
+    const seen: string[] = [];
+    for (const l of leads) for (const tg of l.tags ?? []) if (!hasTag(seen, tg)) seen.push(tg);
+    return seen.sort((a, b) => a.localeCompare(b, "ro"));
+  }, [leads]);
+  const save = (id: string, change: Partial<Pick<Lead, "stage" | "tags">>, call: () => Promise<{ error?: string; ok?: boolean } | undefined>) => {
+    setBoardMsg(null);
+    setPatch((p) => ({ ...p, [id]: { ...p[id], ...change } }));
+    startSave(async () => {
+      const r = await call();
+      if (r?.error) {
+        setPatch((p) => { const n = { ...p }; delete n[id]; return n; });
+        setBoardMsg(r.error);
+      }
+    });
+  };
+  const moveTo = (id: string, stage: string) => {
+    const l = leads.find((x) => x.id === id);
+    if (!l || l.stage === stage || stage === "pierdut") return;
+    save(id, { stage }, () => setLeadStage(id, stage));
+  };
+  const setTags = (id: string, tags: string[]) => save(id, { tags }, () => setLeadTags(id, tags));
+  const [dragId, setDragId] = useState<string | null>(null);
+  const [dropStage, setDropStage] = useState<string | null>(null);
+  const [tag, setTag] = useState("");
   const [view, setView] = useState<"board" | "list">("board");
   const [q, setQ] = useState("");
   const [source, setSource] = useState("");
@@ -235,7 +324,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
     const text = `${l.company_name} ${l.contact_name ?? ""} ${l.phone ?? ""}`.toLowerCase();
     const f = followUpState(l.next_follow_up, today, l.stage);
     const inOnly = !only || (only === "open" ? isOpenStage(l.stage) : only === "valoare" ? isOpenStage(l.stage) && l.estimated_value != null && Number(l.estimated_value) > 0 : !isOpenStage(l.stage));
-    return inOnly && (!q || text.includes(q.toLowerCase())) && (!source || l.source === source) && (!due || (due === "azi" ? f === "azi" || f === "intarziat" : f === due));
+    return inOnly && (!tag || hasTag(l.tags, tag)) && (!q || text.includes(q.toLowerCase())) && (!source || l.source === source) && (!due || (due === "azi" ? f === "azi" || f === "intarziat" : f === due));
   });
   const open = leads.filter((l) => isOpenStage(l.stage));
   const pipeline = pipelineValue(leads);
@@ -271,15 +360,33 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   );
   const filterLabel = only === "open" ? "Leaduri deschise" : only === "valoare" ? "Deschise, cu valoare" : only === "closed" ? "Câștigate și pierdute" : due === "azi" ? "De reluat azi sau întârziate" : due === "intarziat" ? "Doar întârziate" : "";
 
-  const card = (l: Lead) => (
-    <button key={l.id} type="button" data-lead-item onClick={() => setSelected(l.id)} aria-current={selected === l.id} className={`mb-2 block w-full rounded-[14px] border bg-white p-3 text-left ${selected === l.id ? "border-foreground" : "border-border"}`}>
-      <div className="flex items-center gap-2 font-bold"><Building2 className="h-4 w-4 shrink-0 text-muted" /><span className="break-words">{l.company_name}</span></div>
+  const card = (l: Lead) => {
+    const important = hasTag(l.tags, IMPORTANT_TAG);
+    const otherTags = (l.tags ?? []).filter((x) => !hasTag([x], IMPORTANT_TAG));
+    return (
+    <div key={l.id} role="button" tabIndex={0} data-lead-item draggable={isOpenStage(l.stage)}
+      onDragStart={(e) => { e.dataTransfer.setData("text/plain", l.id); e.dataTransfer.effectAllowed = "move"; setDragId(l.id); }}
+      onDragEnd={() => { setDragId(null); setDropStage(null); }}
+      onClick={() => setSelected(l.id)}
+      onKeyDown={(e) => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSelected(l.id); } }}
+      aria-current={selected === l.id} aria-label={`${l.company_name}${important ? ", important" : ""}`}
+      className={`mb-2 block w-full cursor-pointer rounded-[14px] border bg-white p-3 text-left ${selected === l.id ? "border-foreground" : important ? "border-warning" : "border-border"} ${dragId === l.id ? "opacity-50" : ""}`}>
+      <div className="flex items-start gap-2 font-bold">
+        <Building2 className="mt-0.5 h-4 w-4 shrink-0 text-muted" /><span className="min-w-0 flex-1 break-words">{l.company_name}</span>
+        <button type="button" aria-pressed={important} aria-label={important ? "Scoate eticheta Important" : "Marchează Important"} title={important ? "Scoate Important" : "Marchează Important"}
+          onClick={(e) => { e.stopPropagation(); setTags(l.id, toggleTag(l.tags, IMPORTANT_TAG)); }}
+          className={`-m-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg hover:bg-neutral-bg ${important ? "text-warning" : "text-muted"}`}>
+          <Star className={`h-4 w-4 ${important ? "fill-current" : ""}`} />
+        </button>
+      </div>
       {l.contact_name && <div className="mt-1 flex items-center gap-2 text-[12.5px] text-muted"><UserRound className="h-3.5 w-3.5 shrink-0" />{l.contact_name}</div>}
       <div className="mt-1 text-[12.5px] text-muted">{sourceLabel(l.source)}</div>
       {(l.wants ?? []).length > 0 && <WantChips wants={l.wants ?? []} className="mt-2" />}
+      <TagChips tags={otherTags} className="mt-2" />
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2"><FollowTag lead={l} today={today} /><span className="ml-auto text-[12.5px] font-bold tabular-nums">{l.estimated_value == null ? "" : `${formatLei(Number(l.estimated_value))} / lună`}</span></div>
-    </button>
-  );
+    </div>
+    );
+  };
 
   return (
     <div className="mx-auto max-w-[1500px] p-4 sm:p-7">
@@ -307,6 +414,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
           <button type="button" onClick={() => setSelected("new")} className={`${btnPrimary} inline-flex items-center gap-1.5`}><Plus className="h-4 w-4" /> Lead nou</button>
         </div>
       </div>
+      {boardMsg && <p role="alert" className="mt-2 text-[12.5px] font-semibold text-danger">{boardMsg}</p>}
       {importMsg && <p role="status" className="mt-2 text-[12.5px] font-semibold text-muted">{importMsg}</p>}
 
       <section className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" aria-label="Sumar">
@@ -331,6 +439,12 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
         <select id="lead-source" value={source} onChange={(e) => setSource(e.target.value)} className={`${input} w-auto`}><option value="">Toate sursele</option>{LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select>
         <label className="sr-only" htmlFor="lead-due">Reluare</label>
         <select id="lead-due" value={due} onChange={(e) => setDue(e.target.value)} className={`${input} w-auto`}><option value="">Orice reluare</option><option value="azi">Azi sau întârziate</option><option value="intarziat">Doar întârziate</option></select>
+        {allTags.length > 0 && (
+          <>
+            <label className="sr-only" htmlFor="lead-tag">Etichetă</label>
+            <select id="lead-tag" value={tag} onChange={(e) => setTag(e.target.value)} className={`${input} w-auto`}><option value="">Toate etichetele</option>{allTags.map((x) => <option key={x} value={x}>{x}</option>)}</select>
+          </>
+        )}
         {filterLabel && (
           <button type="button" onClick={() => { setOnly(""); setDue(""); }} className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12.5px] font-bold text-background" aria-label={`Scoate filtrul ${filterLabel}`}>
             {filterLabel} · {filtered.length} <X className="h-3.5 w-3.5" />
@@ -348,9 +462,14 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
           ) : view === "board" ? (
             <div className="grid auto-cols-[84%] grid-flow-col snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:auto-cols-[minmax(230px,1fr)] sm:snap-none">
               {LEAD_STAGES.filter((s) => isOpenStage(s.id)).map((s) => {
-                const col = filtered.filter((l) => l.stage === s.id);
+                const col = filtered.filter((l) => l.stage === s.id).sort((a, b) => Number(hasTag(b.tags, IMPORTANT_TAG)) - Number(hasTag(a.tags, IMPORTANT_TAG)));
+                const over = dropStage === s.id && !!dragId;
                 return (
-                  <section key={s.id} className="min-w-0 snap-start rounded-[18px] border border-border bg-neutral-bg p-2.5" aria-label={s.label}>
+                  <section key={s.id} aria-label={s.label}
+                    onDragOver={(e) => { if (!dragId) return; e.preventDefault(); e.dataTransfer.dropEffect = "move"; if (dropStage !== s.id) setDropStage(s.id); }}
+                    onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setDropStage((d) => (d === s.id ? null : d)); }}
+                    onDrop={(e) => { e.preventDefault(); const id = e.dataTransfer.getData("text/plain") || dragId; setDragId(null); setDropStage(null); if (id) moveTo(id, s.id); }}
+                    className={`min-w-0 snap-start rounded-[18px] border bg-neutral-bg p-2.5 transition-colors ${over ? "border-foreground ring-2 ring-foreground/20" : "border-border"}`}>
                     <h2 className="px-1.5 pb-2 pt-1 text-[14px] font-extrabold">{s.label}<div className="text-[12px] font-medium text-muted tabular-nums">{col.length} · {formatLei(col.reduce((a, l) => a + (Number(l.estimated_value) || 0), 0))} / lună</div></h2>
                     {col.length ? col.map(card) : <p className="px-1.5 py-2 text-[12.5px] text-muted">Niciun lead</p>}
                   </section>
@@ -368,7 +487,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
                 <tbody>
                   {filtered.map((l) => (
                     <tr key={l.id} data-lead-item tabIndex={0} onClick={() => setSelected(l.id)} onKeyDown={(e) => e.key === "Enter" && setSelected(l.id)} aria-current={selected === l.id} className={`cursor-pointer border-b border-border last:border-0 hover:bg-neutral-bg ${selected === l.id ? "bg-neutral-bg" : ""}`}>
-                      <td className="p-3"><div className="font-bold">{l.company_name}</div><div className="text-muted">{l.contact_name}</div></td>
+                      <td className="p-3"><div className="flex items-center gap-1.5 font-bold">{hasTag(l.tags, IMPORTANT_TAG) && <Star className="h-3.5 w-3.5 shrink-0 fill-current text-warning" aria-label="Important" />}{l.company_name}</div><div className="text-muted">{l.contact_name}</div><TagChips tags={(l.tags ?? []).filter((x) => !hasTag([x], IMPORTANT_TAG))} className="mt-1" /></td>
                       <td className="p-3"><span className="rounded-full bg-neutral-bg px-2.5 py-0.5 text-[12px] font-semibold">{stageLabel(l.stage)}</span></td>
                       <td className="p-3">{sourceLabel(l.source)}</td>
                       <td className="p-3 font-bold tabular-nums">{l.estimated_value == null ? "—" : formatLei(Number(l.estimated_value))}</td>
@@ -390,7 +509,7 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
             <LeadForm onDone={() => setSelected(null)} />
           </aside>
         )}
-        {current && <Panel key={current.id} lead={current} events={byLead.get(current.id) ?? []} today={today} onClose={() => setSelected(null)} />}
+        {current && <Panel key={current.id} lead={current} events={byLead.get(current.id) ?? []} today={today} onClose={() => setSelected(null)} allTags={allTags} onTags={setTags} onStage={moveTo} />}
       </div>
     </div>
   );

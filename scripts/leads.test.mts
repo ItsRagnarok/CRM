@@ -60,3 +60,13 @@ test("briefului pentru Claude: date, istoric și ce nu știm", () => {
   const empty = buildBrief({ company_name: "X", contact_name: null, phone: null, email: null, stage: "nou", source: "site", team_size: null, domains: [], estimated_value: null, next_follow_up: null, current_tools: null, problems: null, lost_reason: null, created_at: "2026-11-26T08:00:00Z" }, [], "2026-11-26");
   assert.match(empty, /nimic notat încă/);
 });
+
+test("etichete: curățare, dubluri, limită, bifă", async () => {
+  const { normalizeTags, toggleTag, hasTag } = await import("../src/lib/leads");
+  assert.deepEqual(normalizeTags(["  Important ", "important", "", "Urgent", 5, "a".repeat(40)]), ["Important", "Urgent", "a".repeat(24)]);
+  assert.equal(normalizeTags(Array.from({ length: 12 }, (_, i) => `t${i}`)).length, 8);
+  assert.deepEqual(toggleTag(["Important"], "IMPORTANT"), []);
+  assert.deepEqual(toggleTag([], "Cald"), ["Cald"]);
+  assert.equal(hasTag(["De urmărit"], "de urmărit"), true);
+  assert.equal(hasTag(null, "x"), false);
+});

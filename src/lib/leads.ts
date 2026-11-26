@@ -51,6 +51,37 @@ export const LEAD_WANTS = [
   { id: "mai_tarziu", label: "Mai târziu" },
   { id: "raspuns_automat", label: "Răspuns automat" },
 ] as const;
+/** Etichetele gata de bifat; poți adăuga și altele proprii. */
+export const IMPORTANT_TAG = "Important";
+export const PRESET_TAGS = [IMPORTANT_TAG, "Urgent", "Cald", "Rece", "De urmărit"] as const;
+export const MAX_TAGS = 8;
+export const MAX_TAG_LENGTH = 24;
+
+/** Curăță etichetele: spații, lungime, dubluri (fără diferență de litere mari), cel mult 8. */
+export function normalizeTags(tags: readonly unknown[]): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of tags) {
+    if (typeof raw !== "string") continue;
+    const tag = raw.replace(/\s+/g, " ").trim().slice(0, MAX_TAG_LENGTH).trim();
+    const key = tag.toLocaleLowerCase("ro-RO");
+    if (!tag || seen.has(key)) continue;
+    seen.add(key);
+    out.push(tag);
+    if (out.length === MAX_TAGS) break;
+  }
+  return out;
+}
+
+export const hasTag = (tags: readonly string[] | null | undefined, tag: string) =>
+  (tags ?? []).some((t) => t.toLocaleLowerCase("ro-RO") === tag.toLocaleLowerCase("ro-RO"));
+
+/** Bifează sau debifează o etichetă (aceeași etichetă scrisă altfel contează ca una). */
+export function toggleTag(tags: readonly string[] | null | undefined, tag: string): string[] {
+  const list = tags ?? [];
+  return hasTag(list, tag) ? list.filter((t) => t.toLocaleLowerCase("ro-RO") !== tag.toLocaleLowerCase("ro-RO")) : normalizeTags([...list, tag]);
+}
+
 export const wantLabel = (id: string) => LEAD_WANTS.find((w) => w.id === id)?.label ?? id;
 
 export const isLeadStage = (s: string): s is LeadStage => LEAD_STAGES.some((x) => x.id === s);
@@ -103,7 +134,7 @@ export type BriefLead = {
   company_name: string; contact_name: string | null; phone: string | null; email: string | null;
   stage: string; source: string; team_size: number | null; domains: string[]; estimated_value: number | string | null;
   next_follow_up: string | null; current_tools: string | null; problems: string | null; lost_reason: string | null; created_at: string;
-  wants?: string[] | null; last_reply?: string | null;
+  wants?: string[] | null; last_reply?: string | null; tags?: string[] | null;
 };
 export type BriefEvent = { kind: string; body: string; created_at: string };
 
@@ -134,6 +165,7 @@ export function buildBrief(lead: BriefLead, events: BriefEvent[], today: string)
     line("Domenii", lead.domains.length ? lead.domains.map(domainLabel).join(", ") : null),
     line("Valoare estimată pe lună", lead.estimated_value == null ? null : formatLei(Number(lead.estimated_value))),
     line("Ce folosesc acum", lead.current_tools),
+    line("Etichete", (lead.tags ?? []).length ? (lead.tags ?? []).join(", ") : null),
     line("Ce au cerut", (lead.wants ?? []).length ? (lead.wants ?? []).map(wantLabel).join(", ") : null),
     line("Ultimul lor răspuns", lead.last_reply),
     line("Nevoi și context", lead.problems),
