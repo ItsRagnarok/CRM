@@ -1,0 +1,78 @@
+@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+@page :first { margin: 0; }
+:root { --ink:#101410; --mut:#5b6359; --line:#e3e7df; --lime:#9be22d; --lime-d:#4d7c0f; --bg2:#f5f8f1; --dark:#0a0d0a; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { margin:0; font-family: Inter, "Inter Display", system-ui, sans-serif; color:var(--ink); font-size:10pt; line-height:1.5; font-feature-settings:"cv11","ss01"; }
+h1,h2,h3,h4 { text-wrap: balance; margin:0; }
+p { margin: 0 0 2.2mm; }
+b { font-weight:650; }
+
+/* copertă */
+.cover { height:297mm; width:210mm; background:var(--dark); color:#eef3e8; padding:26mm 22mm; position:relative; overflow:hidden; page-break-after:always; display:flex; flex-direction:column; }
+.cover .brand { display:flex; align-items:center; gap:4mm; font-size:15pt; font-weight:800; letter-spacing:-.01em; }
+.cover .logo { width:12mm; height:12mm; border-radius:3.5mm; background:var(--lime); color:var(--dark); display:flex; align-items:center; justify-content:center; font-size:16pt; }
+.cover .streak { position:absolute; left:-30mm; right:-30mm; top:120mm; height:90mm; background: radial-gradient(60% 40% at 40% 60%, rgba(155,226,45,.55), rgba(77,124,15,.18) 55%, transparent 75%); filter: blur(8mm); transform: rotate(-12deg); }
+.cover h1 { margin-top:62mm; font-size:44pt; line-height:1.02; font-weight:800; letter-spacing:-.03em; position:relative; }
+.cover .lead { position:relative; margin-top:8mm; font-size:13pt; line-height:1.45; max-width:140mm; color:#cfd8c6; }
+.cover .parts { position:relative; margin-top:auto; display:grid; grid-template-columns:repeat(3,1fr); gap:5mm; }
+.cover .parts div { border-top:1.2pt solid var(--lime); padding-top:3mm; }
+.cover .parts b { display:block; font-size:12pt; color:#fff; }
+.cover .parts span { font-size:9.5pt; color:#a9b4a0; }
+.cover .ed { position:relative; margin-top:12mm; font-size:9.5pt; color:#8d9885; letter-spacing:.04em; }
+
+/* cuprins */
+.toc { page-break-after:always; }
+.toc h2 { font-size:24pt; font-weight:800; letter-spacing:-.02em; margin-bottom:6mm; }
+.toc ol { list-style:none; padding:0; margin:0; columns:2; column-gap:10mm; }
+.toc li { break-inside:avoid; }
+.toc a { color:inherit; text-decoration:none; display:flex; gap:3mm; padding:1.1mm 0; border-bottom:.5pt solid var(--line); }
+.toc .l1 a { font-weight:700; font-size:10.5pt; margin-top:3mm; border-bottom-color:var(--ink); }
+.toc .l2 a { font-size:9.2pt; color:#2b3229; }
+.toc .tn { width:9mm; flex:none; color:var(--lime-d); font-variant-numeric:tabular-nums; font-weight:600; }
+.small { font-size:8.5pt; color:var(--mut); margin-top:6mm; }
+
+/* capitole */
+.chapter { page-break-before:always; }
+.chapter .cn { font-size:56pt; font-weight:800; color:var(--lime); line-height:1; letter-spacing:-.04em; -webkit-text-stroke: .6pt var(--lime-d); }
+.chapter h2 { font-size:26pt; font-weight:800; letter-spacing:-.025em; margin:2mm 0 5mm; }
+.intro { font-size:11.5pt; line-height:1.55; color:#232a21; max-width:160mm; }
+.h3c { font-size:13pt; font-weight:750; margin:7mm 0 3mm; padding-top:3mm; border-top:1pt solid var(--ink); }
+.princ { display:grid; grid-template-columns:1fr 1fr; gap:3.5mm 6mm; }
+.pr { break-inside:avoid; border-left:2pt solid var(--lime); padding-left:3.5mm; }
+.pr h4 { font-size:10pt; font-weight:700; margin-bottom:1mm; }
+.pr p { font-size:9pt; color:#3a4238; margin:0; }
+.flux { display:grid; grid-template-columns:repeat(3,1fr); gap:2.5mm; margin-top:2mm; break-inside:avoid; }
+.step { background:var(--bg2); border:.5pt solid var(--line); border-radius:2.5mm; padding:2.5mm 3mm; font-size:9pt; font-weight:600; display:flex; gap:2.5mm; align-items:center; }
+.step span { flex:none; width:6mm; height:6mm; border-radius:50%; background:var(--dark); color:var(--lime); font-size:8pt; display:flex; align-items:center; justify-content:center; font-variant-numeric:tabular-nums; }
+table.t { width:100%; border-collapse:collapse; font-size:9.3pt; }
+table.t td { padding:2.2mm 2mm; border-bottom:.5pt solid var(--line); vertical-align:top; }
+table.t td:first-child { width:42mm; }
+table.t tr { break-inside:avoid; }
+ol.big li { margin-bottom:2mm; font-size:10.5pt; }
+.end { margin-top:10mm; border-top:.5pt solid var(--line); padding-top:3mm; }
+
+/* secțiuni */
+.sec { margin-top:9mm; padding-top:4mm; border-top:1pt solid var(--ink); }
+.chapter + .sec { margin-top:6mm; }
+.sec .num { font-size:9pt; font-weight:700; color:var(--lime-d); letter-spacing:.06em; font-variant-numeric:tabular-nums; }
+.sec h3 { font-size:16pt; font-weight:800; letter-spacing:-.02em; margin:.5mm 0 2mm; break-after:avoid; }
+.meta { display:flex; flex-wrap:wrap; gap:1mm 6mm; font-size:8.6pt; color:var(--mut); margin-bottom:3mm; break-after:avoid; }
+.meta b { color:var(--ink); text-transform:uppercase; font-size:7.4pt; letter-spacing:.08em; margin-right:1.2mm; }
+.sec h4 { font-size:8pt; text-transform:uppercase; letter-spacing:.09em; color:var(--lime-d); font-weight:700; margin:3mm 0 1.2mm; break-after:avoid; }
+.sec ol { margin:0 0 2mm; padding-left:5mm; }
+.sec ol li { margin-bottom:.8mm; }
+.dece { background:var(--bg2); border-left:2.2pt solid var(--lime); border-radius:0 2mm 2mm 0; padding:2mm 4mm 1mm; margin:3mm 0; break-inside:avoid; }
+.dece h4 { margin-top:1mm; }
+.nota { font-size:8.8pt; color:#6b4b00; background:#fff7e0; border-radius:2mm; padding:2mm 3.5mm; break-inside:avoid; }
+figure { margin:3mm 0 3mm; break-inside:avoid; }
+figure.wide img { width:100%; border:.5pt solid #cfd5ca; border-radius:2mm; display:block; }
+figcaption { font-size:7.8pt; color:var(--mut); margin-top:1.2mm; }
+.phone-row { display:flex; gap:7mm; align-items:flex-start; }
+.phones { flex:none; display:flex; gap:3.5mm; }
+.phones figure { margin:0; width:44mm; }
+.phones figure img { width:44mm; border:.5pt solid #cfd5ca; border-radius:4mm; display:block; }
+.ptext { flex:1; min-width:0; }
+.keep { break-inside:avoid; }
+.phones.two { gap:6mm; margin-bottom:2mm; }
+.phones.two figure, .phones.two img { width:50mm; }
