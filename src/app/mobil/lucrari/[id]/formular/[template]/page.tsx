@@ -3,6 +3,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { FORM_TEMPLATES, type JobFormId } from "@/lib/forms/templates";
 import { FormRunner } from "./form-runner";
+import { aiOn } from "@/lib/demo";
 
 export default async function JobFormPage({ params }: { params: Promise<{ id: string; template: string }> }) {
   const { id, template: templateId } = await params;
@@ -22,7 +23,7 @@ export default async function JobFormPage({ params }: { params: Promise<{ id: st
       template={template}
       initialData={(saved?.data ?? {}) as Record<string, unknown>}
       alreadyCompleted={Boolean(saved?.completed_at)}
-      aiEnabled={organization.ai_enabled !== false}
+      aiEnabled={aiOn(organization)}
     />
   );
 }

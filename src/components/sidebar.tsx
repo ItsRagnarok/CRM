@@ -24,6 +24,7 @@ import { HardHat,
   Inbox,
   X,
   Gauge,
+  Lock,
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 
@@ -89,12 +90,15 @@ export function Sidebar({
   unreadMessages = 0,
   modules = [],
   badges = {},
+  locked = [],
 }: {
   fullName: string;
   roleLabel: string;
   unreadMessages?: number;
   modules?: string[];
   badges?: Record<string, number>;
+  /** Cont demo: rutele blocate (rămân în meniu, cu lacăt). */
+  locked?: string[];
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -169,6 +173,7 @@ export function Sidebar({
             {section.items.filter((item) => !item.module || modules.includes(item.module)).map(({ href, label, icon: Icon, also }) => {
               const isActive = [href, ...(also ?? [])].some((h) => pathname === h || pathname.startsWith(h + "/"));
               const count = href === "/mesaje" ? unreadMessages : (badges[href] ?? 0);
+              const isLocked = locked.includes(href);
               return (
                 <Link
                   key={href}
@@ -179,7 +184,7 @@ export function Sidebar({
                 >
                   <Icon className="h-[17px] w-[17px]" strokeWidth={isActive ? 2.1 : 1.9} />
                   <span className="flex-1">{label}</span>
-                  {count > 0 && (
+                  {isLocked ? <Lock className={`h-3.5 w-3.5 ${isActive ? "" : "text-[#6f727c]"}`} aria-label="se configurează pe firma ta" /> : count > 0 && (
                     <span className="flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-[#dc2626] px-1.5 text-[10.5px] font-extrabold text-white">
                       {count > 99 ? "99+" : count}
                     </span>

@@ -11,6 +11,7 @@ import {
 } from "@/lib/invoicing";
 import { anafLookup, normalizeCui, type AnafCompany } from "@/lib/invoicing/anaf";
 import { totals } from "@/lib/invoicing/calc";
+import { demoLocked } from "@/lib/demo";
 
 export type ActionState = { error?: string; ok?: string };
 
@@ -23,6 +24,7 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 async function office() {
   const ctx = await requireBackOfficeContext();
   if (!ctx) throw new InvoicingError("Doar administratorul sau managerul se ocupă de facturare.");
+  if (demoLocked(ctx.organization, "facturare")) throw new InvoicingError("Facturarea se configurează pe firma ta: programează o discuție.");
   return ctx;
 }
 

@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 import { avatarColor, initials } from "@/lib/avatar-color";
 import { MenuRow } from "@/components/mobile/ui";
 import { APP_VERSION } from "@/lib/app-version";
+import { DemoChip } from "@/components/demo/demo-banner";
+import { isDemo } from "@/lib/demo";
 
 export default async function MobileMenuPage() {
   const { profile, organization } = await requireSessionContext();
@@ -25,6 +27,7 @@ export default async function MobileMenuPage() {
             <ChevronRight className="m-chev" />
           </Link>
 
+          {isDemo(organization) && <div style={{ textAlign: "center" }}><DemoChip org={organization} /></div>}
           <div className="m-list">
             <MenuRow href="/mobil/materiale" icon={Package} title="Materiale și mașină" />
             <MenuRow href="/mobil/scule" icon={Wrench} title="Sculele mele" />

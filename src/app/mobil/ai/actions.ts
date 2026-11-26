@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { readImageJson } from "@/lib/ai-vision";
 import { PLATE_PROMPT, RECEIPT_PROMPT, countCorrections, normalizePlate, normalizeReceipt, type Plate, type Receipt } from "@/lib/ai-extract";
 import { todayInOrgTimeZone } from "@/lib/date";
+import { aiOn } from "@/lib/demo";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type Feature = "bon" | "placuta" | "eticheta";
@@ -12,7 +13,7 @@ type Feature = "bon" | "placuta" | "eticheta";
 async function run(fd: FormData, feature: Feature, prompt: string) {
   const { organization, userId, readOnly } = await requireSessionContext();
   if (readOnly) return { error: "Modul de vizualizare nu trimite poze la AI." } as const;
-  if (organization.ai_enabled === false) return { error: "AI-ul e oprit pentru firmă (Setări → AI)." } as const;
+  if (!aiOn(organization)) return { error: "AI-ul e oprit pentru firmă (Setări → AI)." } as const;
   const file = fd.get("image");
   if (!(file instanceof File) || file.size === 0) return { error: "Nu am primit nicio poză." } as const;
   if (file.size > 4 * 1024 * 1024) return { error: "Poza e prea mare. Fă-o din nou." } as const;

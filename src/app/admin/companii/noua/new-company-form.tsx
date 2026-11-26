@@ -6,6 +6,7 @@ import { ModulePicker } from "@/components/module-picker";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createCompany } from "@/app/admin/actions";
+import { DemoFields } from "@/app/admin/demo-fields";
 
 export function NewCompanyForm() {
   const [state, formAction, pending] = useActionState(createCompany, undefined);
@@ -63,6 +64,7 @@ export function NewCompanyForm() {
         </Field>
         <DomainPicker />
         <ModulePicker followDomains />
+        <DemoFields />
         <Field label="Parolă temporară">
           <input
             name="ownerPassword"

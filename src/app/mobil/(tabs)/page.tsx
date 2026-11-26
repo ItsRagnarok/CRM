@@ -14,6 +14,8 @@ import { DepartureAlert } from "./departure-alert";
 import { ArrivalAlert } from "./arrival-alert";
 import { StartJobButton } from "./start-job-button";
 import { MobileBell } from "./mobile-bell";
+import { DemoChip } from "@/components/demo/demo-banner";
+import { isDemo } from "@/lib/demo";
 
 function greeting() {
   const hour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Bucharest", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
@@ -119,6 +121,7 @@ export default async function MobileHomePage({ searchParams }: { searchParams: P
       </header>
 
       <div className="m-bd" style={{ overflow: "visible" }}>
+        {isDemo(organization) && <div><DemoChip org={organization} /></div>}
         {(callRequests ?? []).map((req) => (
           <div key={req.id} className="m-note ac">
             <IconTile icon={PhoneCall} />

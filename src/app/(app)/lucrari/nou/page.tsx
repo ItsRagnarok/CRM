@@ -2,6 +2,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { NewJobForm } from "./new-job-form";
 import { loadDurationStats } from "@/lib/job-durations-server";
+import { aiOn } from "@/lib/demo";
 
 export default async function NewJobPage({
   searchParams,
@@ -68,7 +69,7 @@ export default async function NewJobPage({
       enabledDomains={organization.enabled_domains}
       durations={durations}
       fromRequest={fromRequest}
-      aiEnabled={organization.ai_enabled !== false}
+      aiEnabled={aiOn(organization)}
     />
   );
 }

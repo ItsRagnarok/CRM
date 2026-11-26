@@ -15,6 +15,7 @@ async function logText(orgId: string, userId: string, feature: "descriere" | "di
   }
 }
 import { JOB_TYPE_LABELS, JOB_PRIORITY_LABELS } from "@/lib/status";
+import { aiOn } from "@/lib/demo";
 
 export type TranscribeState = { error?: string; text?: string };
 
@@ -24,7 +25,7 @@ export type TranscribeState = { error?: string; text?: string };
 // language auto-detect is noticeably less accurate on short clips.
 export async function transcribeAudio(formData: FormData): Promise<TranscribeState> {
   const { organization, userId } = await requireSessionContext();
-  if (organization.ai_enabled === false) return { error: AI_OFF };
+  if (!aiOn(organization)) return { error: AI_OFF };
   const started = Date.now();
 
   const apiKey = process.env.GROQ_API_KEY;
@@ -98,7 +99,7 @@ export async function generateJobSuggestion(
   formData: FormData
 ): Promise<AiJobSuggestionState> {
   const { organization, userId } = await requireSessionContext();
-  if (organization.ai_enabled === false) return { error: AI_OFF };
+  if (!aiOn(organization)) return { error: AI_OFF };
   const started = Date.now();
 
   const apiKey = process.env.GROQ_API_KEY;

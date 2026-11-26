@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { InvoicingError, checkConnection, loadConnection, type Provider } from "@/lib/invoicing";
+import { demoLocked } from "@/lib/demo";
 
 export type InvoicingState = { error?: string; ok?: string };
 
@@ -27,7 +28,7 @@ function read(form: FormData) {
 
 async function adminOnly() {
   const { organization, profile, readOnly } = await requireSessionContext();
-  if (readOnly || profile.role !== "admin") return null;
+  if (readOnly || profile.role !== "admin" || demoLocked(organization, "setari")) return null;
   return organization;
 }
 

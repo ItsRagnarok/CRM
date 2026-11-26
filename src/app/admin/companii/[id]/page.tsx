@@ -8,6 +8,8 @@ import { CompanyDetailForm } from "./company-detail-form";
 import { CompanyConfigForm } from "./company-config-form";
 import { parseDomains } from "@/lib/domains";
 import { startCompanyPreview } from "@/app/admin/preview-actions";
+import { DemoConfigForm } from "./demo-config-form";
+import { demoFeature, demoDaysLeft, demoExpired } from "@/lib/demo";
 
 const CLIENT_STATUS_LABELS: Record<string, string> = {
   active: "Activ",
@@ -35,6 +37,12 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
   if (!company) notFound();
   const { data: configRows } = await supabase.rpc("platform_admin_get_company_config", { org_id: id });
   const config = configRows?.[0];
+  const [{ data: demoRows }, { data: demoEvents }] = await Promise.all([
+    supabase.rpc("platform_admin_get_demo", { org_id: id }),
+    supabase.rpc("platform_admin_demo_events", { org_id: id }),
+  ]);
+  const demo = demoRows?.[0];
+  const isDemoAccount = demo?.account_type === "demo";
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -51,6 +59,11 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         >
           {company.is_active ? "Activă" : "Suspendată"}
         </span>
+        {isDemoAccount && demo && (
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${demoExpired(demo) ? "bg-danger-bg text-danger" : "bg-[#101828] text-[#c6ff4a]"}`}>
+            {demoExpired(demo) ? "Demo încheiat" : demo.demo_expires_at ? `Cont demo · ${demoDaysLeft(demo)} zile` : "Cont demo"}
+          </span>
+        )}
         {company.terms_accepted_at ? (
           <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
             Termeni acceptați {new Date(company.terms_accepted_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
@@ -69,6 +82,24 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
         {company.user_count} utilizatori · {company.job_count} lucrări · creată{" "}
         {new Date(company.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
       </div>
+
+      <DemoConfigForm orgId={id} demo={isDemoAccount} unlocked={demo?.demo_unlocked ?? []} expires={demo?.demo_expires_at ?? null} />
+      {isDemoAccount && (
+        <div className="mt-4 rounded-[14px] border border-[#e7e3f5] bg-white p-5">
+          <h2 className="text-[15px] font-bold text-[#17151f]">Ce a încercat în demo</h2>
+          <p className="mt-0.5 text-[12.5px] text-[#5c5670]">Modulele blocate pe care le-a deschis: un subiect bun pentru discuție.</p>
+          {(demoEvents ?? []).length ? (
+            <ul className="mt-3 divide-y divide-[#f2f0f9]">
+              {(demoEvents ?? []).map((e) => (
+                <li key={`${e.feature}-${e.area}`} className="flex items-center justify-between py-2 text-[13.5px]">
+                  <span className="font-semibold text-[#17151f]">{demoFeature(e.feature)?.label ?? e.feature} <span className="text-[12px] font-normal text-[#9b93b5]">· {e.area === "mobil" ? "telefon" : "platformă"}</span></span>
+                  <span className="text-[12.5px] text-[#5c5670]">{e.opens}× · ultima dată {new Date(e.last_at).toLocaleString("ro-RO", { dateStyle: "short", timeStyle: "short", timeZone: "Europe/Bucharest" })}</span>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="mt-3 text-[13px] text-[#9b93b5]">Încă n-a deschis niciun modul blocat.</p>}
+        </div>
+      )}
 
       <CompanyConfigForm orgId={id} domains={parseDomains(config?.enabled_domains ?? [])} modules={config?.enabled_modules ?? []} />
 
