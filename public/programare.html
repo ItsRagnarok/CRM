@@ -91,6 +91,7 @@ details summary{cursor:pointer;font-weight:600}
 .dmc.on{border-color:var(--accent);background:rgba(198,255,74,.09)}
 .dmc b{font-size:1.05rem}.dmc span{color:var(--muted);font-size:.85rem;line-height:1.4}
 .dmc em{font-style:normal;font-weight:700;color:var(--accent);font-size:.8rem;margin-top:auto}
+.mt{border:0;margin:0 0 6px;padding:0}.mt legend{font-weight:700;margin:4px 0 10px;padding:0}.mt .dmc{min-height:0}
 .q{margin:0 0 16px}.q h3{margin:0 0 8px;font-size:.98rem}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chips .chip{min-width:0}
@@ -153,6 +154,13 @@ details summary{cursor:pointer;font-weight:600}
   <div class="card"><h2 id="slotH">Ora</h2><div class="slots" id="slots"></div></div>
   <div class="card hidden" id="formCard">
     <h2 id="formH">Datele tale</h2>
+    <fieldset class="mt" aria-describedby="mtHint"><legend>Cum vrei să discutăm?</legend>
+      <div class="dm3" id="mtCards">
+        <button type="button" class="dmc" data-v="apel" aria-pressed="false"><b>Apel telefonic</b><span>Cam 15 minute. Te sunăm noi la ora aleasă, pe numărul de mai jos.</span><em>Alege</em></button>
+        <button type="button" class="dmc" data-v="meet" aria-pressed="false"><b>Google Meet</b><span>30 de minute, cu platforma pe ecran. Linkul îl primești pe e-mail.</span><em>Alege</em></button>
+      </div>
+      <p class="hint" id="mtHint">Pentru o primă idee e suficient un apel. Dacă vrei să vezi cum arată platforma pe firma ta, alege Meet.</p>
+    </fieldset>
     <label for="f_name">Nume și firmă</label><input id="f_name" autocomplete="name">
     <label for="f_phone">Telefon</label><input id="f_phone" type="tel" autocomplete="tel">
     <label for="f_email">E-mail pentru confirmare</label><input id="f_email" type="email" autocomplete="email" maxlength="254" required>
@@ -310,7 +318,11 @@ function drawPub(){
 }
 
 /* ---------- pași: domenii → firma ta → data și ora ---------- */
-const wiz = {dom:[], team:"", tools:[], pain:[]};
+const wiz = {dom:[], team:"", tools:[], pain:[], mt:""};
+document.querySelectorAll("#mtCards .dmc").forEach(c => c.onclick = () => {
+  document.querySelectorAll("#mtCards .dmc").forEach(o => { const on = o === c; o.classList.toggle("on", on); o.setAttribute("aria-pressed", on); o.querySelector("em").textContent = on ? "Ales" : "Alege"; });
+  wiz.mt = c.dataset.v;
+});
 const setStep = n => {
   ["step1","step2","step3"].forEach((id,i) => $(id).classList.toggle("hidden", i+1 !== n));
   [...$("prog").children].forEach((el,i) => el.classList.toggle("on", i < n));
@@ -352,6 +364,7 @@ const composeNote = () => [
 ].filter(Boolean).join("\n");
 $("bookBtn").onclick = async () => {
   const name = $("f_name").value.trim(), phone = $("f_phone").value.trim();
+  if (!wiz.mt) return show($("pubMsg"),"err","Alege cum vrei să discutăm: apel telefonic sau Google Meet.");
   if (!name || !phone) return show($("pubMsg"),"err","Completează numele și telefonul.");
   const email = $("f_email").value.trim();
   if (!email || !$("f_email").checkValidity()) return show($("pubMsg"),"err","Introdu o adresă de e-mail validă pentru confirmare.");
@@ -360,7 +373,7 @@ $("bookBtn").onclick = async () => {
   try {
     const response = await fetch("/api/programari", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:composeNote()})
+      body:JSON.stringify({slot_start:when.toISOString(), name, phone, email, note:composeNote(), meeting_type:wiz.mt})
     });
     if (response.status === 409){
       show($("pubMsg"),"err","Ora nu mai este disponibilă. Alege altă oră.");
@@ -375,7 +388,7 @@ $("bookBtn").onclick = async () => {
     $("bookBtn").disabled = false;
   }
   if (window.efTrackLead) window.efTrackLead();
-  show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)));
+  show($("pubMsg"),"ok", fill(T().ok, fmtDate(bookingDate(when)), fmtTime(when)) + (wiz.mt === "meet" ? " Linkul de Google Meet îl primești pe e-mail." : " Te sunăm la ora aleasă."));
   selSlot = null; await loadPublicData(); drawPub();
   $("formCard").classList.add("hidden");
 };

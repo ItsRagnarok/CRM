@@ -34,13 +34,19 @@ export async function sendBookingEmail(to: string, subject: string, text: string
   }
 }
 
+/** „Apel telefonic (15 min)” sau „Google Meet (30 min)”, după ce a ales clientul. */
+export const meetingLabel = (type: string | null | undefined) =>
+  type === "apel" ? "Apel telefonic (15 min)" : type === "meet" ? "Google Meet cu prezentare (30 min)" : null;
+
 export async function notifyBooking(booking: Booking) {
   const when = new Date(booking.slot_start);
   const slot = `${dateFormat.format(when)}, ${timeFormat.format(when)}`;
   // The booking form stores the wizard answers in the note: "Domenii: Electrice, Gaze" comes first.
   const domains = booking.note?.match(/^Domenii: (.+)$/m)?.[1];
-  await sendBookingEmail(bookingMailbox, `Programare nouă ElectroField · ${slot}${domains ? ` · ${domains}` : ""}`, [
+  const kind = meetingLabel(booking.meeting_type);
+  await sendBookingEmail(bookingMailbox, `Programare nouă ElectroField · ${slot}${kind ? ` · ${kind}` : ""}${domains ? ` · ${domains}` : ""}`, [
     `Programare: ${slot} (ora României)`,
+    kind && `Discuție: ${kind}`,
     `Nume: ${booking.name}`,
     `Telefon: ${booking.phone}`,
     booking.email && `Email: ${booking.email}`,

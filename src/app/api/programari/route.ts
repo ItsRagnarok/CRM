@@ -23,9 +23,11 @@ export async function POST(request: NextRequest) {
   const phone = value("phone");
   const email = value("email");
   const note = value("note");
+  const meetingType = value("meeting_type");
   const when = new Date(value("slot_start"));
   if (!name || name.length > 120 || !phone || phone.length > 40 ||
-      !validBookingEmail(email) || note.length > 2_000 || !Number.isFinite(when.getTime())) {
+      !validBookingEmail(email) || note.length > 2_000 || !Number.isFinite(when.getTime()) ||
+      (meetingType !== "apel" && meetingType !== "meet")) {
     return new Response(null, { status: 400 });
   }
 
@@ -35,7 +37,7 @@ export async function POST(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     { auth: { persistSession: false, autoRefreshToken: false } },
   );
-  const booking = { slot_start: when.toISOString(), name, phone, email, note: note || null };
+  const booking = { slot_start: when.toISOString(), name, phone, email, note: note || null, meeting_type: meetingType };
   const { error } = await db.from("bookings").insert(booking);
   if (error) {
     return new Response(null, { status: error.code === "23505" || error.code === "23514" ? 409 : 500 });

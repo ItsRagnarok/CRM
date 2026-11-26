@@ -276,6 +276,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          meeting_type: string | null
           name: string
           note: string | null
           phone: string
@@ -285,6 +286,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          meeting_type?: string | null
           name: string
           note?: string | null
           phone: string
@@ -343,6 +345,7 @@ export type Database = {
           id: string
           is_active: boolean
           job_type: Database["public"]["Enums"]["job_type"] | null
+          meeting_type?: string | null
           name: string
           organization_id: string
         }

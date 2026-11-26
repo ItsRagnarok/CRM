@@ -130,7 +130,7 @@ export function BookingAdmin({ settings, days, bookings, past }: { settings: Set
           {list.map((b) => <article key={b.id} className="flex flex-wrap gap-4 rounded-xl border border-border bg-white p-4">
             <div className="w-14 shrink-0 text-xl font-extrabold tabular-nums sm:w-16 sm:text-2xl">{clock(b.slot_start)}</div>
             <div className="min-w-0 flex-1 space-y-1 text-sm">
-              <p className="text-base font-bold">{b.name}</p>
+              <p className="flex flex-wrap items-center gap-2 text-base font-bold">{b.name}{b.meeting_type && <span className={`rounded-md px-2 py-0.5 text-xs font-semibold ${b.meeting_type === "meet" ? "bg-[#e6f0ff] text-[#1d4ed8]" : "bg-[#ecfdf3] text-[#067647]"}`}>{b.meeting_type === "meet" ? "Google Meet · 30 min" : "Apel telefonic · 15 min"}</span>}</p>
               <p className="flex flex-wrap gap-x-4 gap-y-1"><a href={`tel:${b.phone}`} className="font-semibold text-purple">{b.phone}</a>{b.email && <a href={`mailto:${b.email}`} className="text-purple">{b.email}</a>}</p>
               {b.note && <p className="whitespace-pre-line rounded-lg bg-neutral-bg p-2.5 text-foreground">{b.note}</p>}
               {b.created_at && <p className="text-xs text-muted">Rezervată {new Date(b.created_at).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>}
@@ -145,7 +145,7 @@ export function BookingAdmin({ settings, days, bookings, past }: { settings: Set
         </section>)}
         {!!past.length && <details className={card}>
           <summary className="cursor-pointer text-base font-bold">Programări trecute (ultimele 90 de zile) · {past.length}</summary>
-          <ul className="divide-y divide-border text-sm">{past.map((b) => <li key={b.id} className="flex flex-wrap gap-x-4 gap-y-1 py-2.5"><span className="w-40 tabular-nums text-muted">{new Date(b.slot_start).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span><span className="font-semibold">{b.name}</span><a href={`tel:${b.phone}`} className="text-purple">{b.phone}</a>{b.email && <span className="text-muted">{b.email}</span>}{b.note && <span className="basis-full whitespace-pre-line text-muted">{b.note}</span>}</li>)}</ul>
+          <ul className="divide-y divide-border text-sm">{past.map((b) => <li key={b.id} className="flex flex-wrap gap-x-4 gap-y-1 py-2.5"><span className="w-40 tabular-nums text-muted">{new Date(b.slot_start).toLocaleString("ro-RO", { timeZone: "Europe/Bucharest", day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}</span><span className="font-semibold">{b.name}</span>{b.meeting_type && <span className="text-muted">{b.meeting_type === "meet" ? "Google Meet" : "Apel"}</span>}<a href={`tel:${b.phone}`} className="text-purple">{b.phone}</a>{b.email && <span className="text-muted">{b.email}</span>}{b.note && <span className="basis-full whitespace-pre-line text-muted">{b.note}</span>}</li>)}</ul>
         </details>}
       </>}
 
