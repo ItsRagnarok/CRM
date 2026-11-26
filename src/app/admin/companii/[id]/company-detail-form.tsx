@@ -41,8 +41,8 @@ export function CompanyDetailForm({ company }: { company: Company }) {
 
   return (
     <>
-    <form action={handleSubmit} className="flex flex-col gap-4 rounded-[14px] border border-[#e7e3f5] bg-white p-6">
-      <div className="grid grid-cols-2 gap-4">
+    <form action={handleSubmit} className="flex flex-col gap-4 rounded-[14px] border border-[#e7e3f5] bg-white p-4 sm:p-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Numele firmei">
           <input
             name="companyName"

@@ -15,7 +15,7 @@ export default async function AdminHomePage() {
   const recent = (companies ?? []).slice(0, 5);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-16">
+    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-16">
       <span className="inline-flex items-center gap-2 rounded-full bg-purple-soft px-3 py-1 text-[12.5px] font-semibold text-purple">
         Panou Super Admin ElectroField
       </span>

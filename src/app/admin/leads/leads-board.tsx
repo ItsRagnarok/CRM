@@ -97,13 +97,13 @@ function Panel({ lead, events, today, onClose }: { lead: Lead; events: LeadEvent
   };
 
   return (
-    <aside className="min-w-0 rounded-[18px] border border-border bg-white p-5 xl:sticky xl:top-4 xl:self-start" aria-label={`Lead ${lead.company_name}`}>
+    <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" aria-label={`Lead ${lead.company_name}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-[19px] font-extrabold">{lead.company_name}</h2>
           <p className="text-[13px] text-muted">{stageLabel(lead.stage)} · {sourceLabel(lead.source)}</p>
         </div>
-        <button type="button" onClick={onClose} aria-label="Închide fișa" className="rounded-lg p-1.5 text-muted hover:bg-neutral-bg"><X className="h-4 w-4" /></button>
+        <button type="button" onClick={onClose} aria-label="Închide fișa" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-muted hover:bg-neutral-bg xl:h-8 xl:w-8"><X className="h-5 w-5" /></button>
       </div>
       {open && <div className="mt-3 flex gap-1" aria-hidden="true">{OPEN_STAGES.map((s, i) => <i key={s} className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-foreground" : "bg-border"}`} />)}</div>}
 
@@ -222,9 +222,9 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const current = selected && selected !== "new" ? leads.find((l) => l.id === selected) ?? null : null;
 
   const kpi = (icon: React.ReactNode, title: string, value: string, sub: string) => (
-    <div className="flex items-center gap-3.5 rounded-[16px] border border-border bg-white p-4">
-      <span className="text-muted">{icon}</span>
-      <div className="min-w-0"><div className="text-[12.5px] text-muted">{title}</div><div className="text-[24px] font-extrabold leading-tight tabular-nums">{value}</div><div className="text-[12px] text-muted">{sub}</div></div>
+    <div className="flex items-start gap-3 rounded-[16px] border border-border bg-white p-3.5 sm:items-center sm:gap-3.5 sm:p-4">
+      <span className="hidden text-muted sm:block">{icon}</span>
+      <div className="min-w-0"><div className="text-[12.5px] text-muted">{title}</div><div className="text-[22px] font-extrabold leading-tight tabular-nums sm:text-[24px]">{value}</div><div className="text-[12px] text-muted">{sub}</div></div>
     </div>
   );
 
@@ -238,33 +238,33 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   );
 
   return (
-    <div className="mx-auto max-w-[1500px] p-5 sm:p-7">
+    <div className="mx-auto max-w-[1500px] p-4 sm:p-7">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[26px] font-extrabold">Leads</h1>
           <p className="mt-1 max-w-[70ch] text-[13.5px] text-muted">Firmele de instalatori care ar putea folosi Electrofield: de unde au venit, ce ți-au spus și când le reiei. Când un lead semnează, devine companie.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button type="button" disabled={importing} onClick={() => startImport(async () => { const r = await importBookings(); setImportMsg(r.error ?? (r.added ? `${r.added} programări aduse.` : "Nimic nou de adus.")); })} className={btn}>Importă din Programări</button>
           <button type="button" onClick={() => setSelected("new")} className={`${btnPrimary} inline-flex items-center gap-1.5`}><Plus className="h-4 w-4" /> Lead nou</button>
         </div>
       </div>
       {importMsg && <p role="status" className="mt-2 text-[12.5px] font-semibold text-muted">{importMsg}</p>}
 
-      <section className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Sumar">
+      <section className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" aria-label="Sumar">
         {kpi(<UserRound className="h-5 w-5" />, "Leaduri deschise", String(open.length), `din ${leads.length} în total`)}
         {kpi(<Layers className="h-5 w-5" />, "Valoare în pipeline", formatLei(pipeline.total), `abonamente lunare, ${pipeline.counted} cu valoare`)}
         {kpi(<CalendarClock className="h-5 w-5" />, "De reluat azi sau întârziate", String(dueCount), "apar și în meniu")}
         {kpi(<Target className="h-5 w-5" />, "Rată de câștig", rate === null ? "—" : `${rate}%`, `${won} câștigate, ${lost} pierdute`)}
       </section>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2.5">
+      <div className="mt-5 flex flex-wrap items-center gap-2.5 [&_select]:min-h-10 [&_input]:min-h-10">
         <div className="flex rounded-[10px] border border-border bg-white p-0.5" role="group" aria-label="Mod de afișare">
           {([["board", "Pe etape"], ["list", "Listă"]] as const).map(([id, text]) => (
             <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)} className={`rounded-[8px] px-3.5 py-1.5 text-[13px] font-bold ${view === id ? "bg-electric text-[#0a0d0a]" : "text-muted"}`}>{text}</button>
           ))}
         </div>
-        <div className="relative min-w-[200px] flex-1 sm:max-w-sm">
+        <div className="relative min-w-[160px] flex-1 basis-full sm:basis-auto sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
           <label htmlFor="lead-search" className="sr-only">Caută</label>
           <input id="lead-search" type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Caută firmă, persoană sau telefon" className={`${input} pl-9`} />
@@ -283,11 +283,11 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
               <p className="mt-1 text-[13px] text-muted">Adaugă primul lead sau adu cererile din Programări.</p>
             </div>
           ) : view === "board" ? (
-            <div className="grid auto-cols-[minmax(230px,1fr)] grid-flow-col gap-3 overflow-x-auto pb-2">
+            <div className="grid auto-cols-[84%] grid-flow-col snap-x snap-mandatory gap-3 overflow-x-auto pb-2 sm:auto-cols-[minmax(230px,1fr)] sm:snap-none">
               {LEAD_STAGES.filter((s) => isOpenStage(s.id)).map((s) => {
                 const col = filtered.filter((l) => l.stage === s.id);
                 return (
-                  <section key={s.id} className="min-w-0 rounded-[18px] border border-border bg-neutral-bg p-2.5" aria-label={s.label}>
+                  <section key={s.id} className="min-w-0 snap-start rounded-[18px] border border-border bg-neutral-bg p-2.5" aria-label={s.label}>
                     <h2 className="px-1.5 pb-2 pt-1 text-[14px] font-extrabold">{s.label}<div className="text-[12px] font-medium text-muted tabular-nums">{col.length} · {formatLei(col.reduce((a, l) => a + (Number(l.estimated_value) || 0), 0))} / lună</div></h2>
                     {col.length ? col.map(card) : <p className="px-1.5 py-2 text-[12.5px] text-muted">Niciun lead</p>}
                   </section>
@@ -295,7 +295,11 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
               })}
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-[16px] border border-border bg-white">
+            <>
+            <ul className="flex flex-col md:hidden">
+              {filtered.map((l) => <li key={l.id}>{card(l)}<div className="-mt-1 mb-2 px-1 text-[12px] text-muted">{stageLabel(l.stage)}</div></li>)}
+            </ul>
+            <div className="hidden overflow-x-auto rounded-[16px] border border-border bg-white md:block">
               <table className="w-full min-w-[760px] text-[13px]">
                 <thead><tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted"><th className="p-3">Firmă</th><th className="p-3">Etapă</th><th className="p-3">Sursă</th><th className="p-3">Valoare / lună</th><th className="p-3">Reluare</th><th className="p-3">Ultimul contact</th></tr></thead>
                 <tbody>
@@ -312,12 +316,13 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
                 </tbody>
               </table>
             </div>
+            </>
           )}
           {leads.length > 0 && filtered.length === 0 && <p className="mt-3 text-[13px] text-muted">Niciun lead nu se potrivește filtrelor.</p>}
         </div>
 
         {selected === "new" && (
-          <aside className="min-w-0 rounded-[18px] border border-border bg-white p-5 xl:sticky xl:top-4 xl:self-start" aria-label="Lead nou">
+          <aside className="min-w-0 fixed inset-0 z-50 overflow-y-auto bg-white p-4 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] xl:static xl:z-auto xl:overflow-visible xl:rounded-[18px] xl:border xl:border-border xl:p-5 xl:sticky xl:top-4 xl:self-start" aria-label="Lead nou">
             <h2 className="mb-3 text-[19px] font-extrabold">Lead nou</h2>
             <LeadForm onDone={() => setSelected(null)} />
           </aside>

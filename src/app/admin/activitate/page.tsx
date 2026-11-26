@@ -33,7 +33,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
     const summary = summaries.get(key) ?? { organizationId: row.organization_id, day: row.day, channel: row.channel, seconds: 0, visits: 0, users: new Set<string>() };
     summary.seconds += row.active_seconds; summary.visits += row.sessions; summary.users.add(row.profile_id); summaries.set(key, summary);
   }
-  return <div className="mx-auto max-w-6xl space-y-5 p-6">
+  return <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
     <h1 className="text-2xl font-extrabold">Activitatea companiilor</h1>
     <p className="text-sm text-muted">Timp activ estimat, cu pagina vizibilă și interacțiune în ultimul minut. Separat pentru interfața web și cea mobilă. Datele se colectează de la activarea funcției.</p>
     <form className="flex flex-wrap gap-3">

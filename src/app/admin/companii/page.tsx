@@ -19,11 +19,11 @@ export default async function AdminCompaniesPage({
     : (companies ?? []);
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-10">
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-[22px] font-extrabold text-[#17151f]">Companii</h1>
         <div className="flex-1" />
-        <form className="flex max-w-[280px] flex-1 items-center gap-2 rounded-[10px] border border-[#e7e3f5] bg-white px-3.5 py-2.5">
+        <form className="flex min-w-[180px] max-w-[280px] flex-1 items-center gap-2 rounded-[10px] border border-[#e7e3f5] bg-white px-3.5 py-2.5">
           <Search className="h-3.5 w-3.5 text-[#9b93b5]" />
           <input
             type="text"
@@ -41,7 +41,7 @@ export default async function AdminCompaniesPage({
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-4">
         <StatCard label="Companii totale" value={companies?.length ?? 0} />
         <StatCard
           label="Active"
@@ -55,9 +55,9 @@ export default async function AdminCompaniesPage({
         />
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-[14px] border border-[#e7e3f5] bg-white">
+      <div className="mt-6 overflow-x-auto rounded-[14px] border border-[#e7e3f5] bg-white">
         {filtered.length > 0 ? (
-          <table className="w-full border-collapse">
+          <table className="w-full min-w-[760px] border-collapse">
             <thead>
               <tr className="bg-[#faf9fd] text-left text-[11px] font-bold uppercase tracking-wide text-[#9b93b5]">
                 <th className="px-5 py-3">Companie</th>
