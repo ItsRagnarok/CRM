@@ -7,7 +7,7 @@ import {
   EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
   isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, type BriefLead,
 } from "@/lib/leads";
-import { addLead, addLeadEvent, deleteLead, importBookings, setFollowUp, setLeadStage, updateLead } from "./actions";
+import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, updateLead } from "./actions";
 
 type Lead = BriefLead & { id: string; booking_id: string | null; organization_id: string | null };
 type LeadEvent = { id: string; lead_id: string; kind: string; body: string; created_at: string };
@@ -246,6 +246,20 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button type="button" disabled={importing} onClick={() => startImport(async () => { const r = await importBookings(); setImportMsg(r.error ?? (r.added ? `${r.added} programări aduse.` : "Nimic nou de adus.")); })} className={btn}>Importă din Programări</button>
+          <label className={`${btn} cursor-pointer ${importing ? "pointer-events-none opacity-50" : ""}`} title="Fișier JSON cu leaduri și istoricul lor (format electrofield-leads)">
+            Importă din fișier
+            <input type="file" accept=".json,application/json" className="sr-only" disabled={importing} onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              startImport(async () => {
+                const r = await importLeadsFile(await file.text());
+                if (r.error) { setImportMsg(r.error); return; }
+                const parts = [`${r.added ?? 0} leaduri noi`, r.updated ? `${r.updated} completate` : "", `${r.events ?? 0} mesaje în istoric`].filter(Boolean).join(", ");
+                setImportMsg(`Import gata: ${parts}.${r.warnings?.length ? ` Atenție: ${r.warnings.join(" ")}` : ""}`);
+              });
+            }} />
+          </label>
           <button type="button" onClick={() => setSelected("new")} className={`${btnPrimary} inline-flex items-center gap-1.5`}><Plus className="h-4 w-4" /> Lead nou</button>
         </div>
       </div>
