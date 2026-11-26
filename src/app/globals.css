@@ -34,9 +34,9 @@
 
   /* Admin (ElectroField platform owner) — distinct from the tenant navy/electric
      identity, so nobody mistakes one for the other at a glance. */
-  --color-graphite: #17151f;
-  --color-graphite-active: #242032;
-  --color-graphite-border: #2b273a;
+  --color-graphite: #0a0a0a;
+  --color-graphite-active: #1f1f1f;
+  --color-graphite-border: #262626;
   --color-purple: #7c5cfc;
   --color-purple-soft: #f1edff;
 }
