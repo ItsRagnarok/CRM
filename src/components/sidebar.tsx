@@ -225,12 +225,12 @@ export function Sidebar({
  */
 function SidebarStreak() {
   const id = useId().replace(/:/g, "");
-  const curve = "M-10 112 C 30 138, 80 146, 125 114 S 195 44, 250 56";
+  const curve = "M-10 172 C 30 198, 80 206, 125 174 S 195 104, 250 116";
   return (
     <svg
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-[52px] z-0 h-[150px] w-full"
-      viewBox="0 0 240 150"
+      className="pointer-events-none absolute inset-x-0 bottom-[52px] z-0 h-[210px] w-full"
+      viewBox="0 0 240 210"
       preserveAspectRatio="none"
     >
       <defs>
@@ -245,8 +245,8 @@ function SidebarStreak() {
           <stop offset="0.6" stopColor="#fff" />
           <stop offset="1" stopColor="#bbb" />
         </linearGradient>
-        <mask id={`${id}-m`}>
-          <rect width="240" height="150" fill={`url(#${id}-h)`} />
+        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x="-40" y="0" width="320" height="210">
+          <rect width="240" height="210" fill={`url(#${id}-h)`} />
         </mask>
         <linearGradient id={`${id}-e`} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#c6ff4a" stopOpacity="0" />
@@ -254,12 +254,12 @@ function SidebarStreak() {
           <stop offset="0.75" stopColor="#e6ffa8" stopOpacity="0.8" />
           <stop offset="1" stopColor="#c6ff4a" stopOpacity="0.35" />
         </linearGradient>
-        <filter id={`${id}-b1`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="12" /></filter>
-        <filter id={`${id}-b2`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="3" /></filter>
-        <filter id={`${id}-b3`} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="1.1" /></filter>
+        <filter id={`${id}-b1`} filterUnits="userSpaceOnUse" x="-40" y="0" width="320" height="210"><feGaussianBlur stdDeviation="12" /></filter>
+        <filter id={`${id}-b2`} filterUnits="userSpaceOnUse" x="-40" y="0" width="320" height="210"><feGaussianBlur stdDeviation="3" /></filter>
+        <filter id={`${id}-b3`} filterUnits="userSpaceOnUse" x="-40" y="0" width="320" height="210"><feGaussianBlur stdDeviation="1.1" /></filter>
       </defs>
       <g mask={`url(#${id}-m)`}>
-        <path d={`${curve} L 250 150 L -10 150 Z`} fill={`url(#${id}-f)`} filter={`url(#${id}-b1)`} />
+        <path d={`${curve} L 250 210 L -10 210 Z`} fill={`url(#${id}-f)`} filter={`url(#${id}-b1)`} />
         <path d={curve} fill="none" stroke="#b5f23c" strokeOpacity="0.45" strokeWidth="10" filter={`url(#${id}-b2)`} />
         <path d={curve} fill="none" stroke={`url(#${id}-e)`} strokeWidth="2" filter={`url(#${id}-b3)`} />
       </g>
