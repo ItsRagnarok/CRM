@@ -82,20 +82,21 @@ export default async function AdminCompaniesPage({
                       {c.name}
                     </Link>
                     {demoById.has(c.id) && (
-                      <span className={`ml-2 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${demoExpired(demoById.get(c.id)!) ? "bg-danger-bg text-danger" : "bg-[#101828] text-[#c6ff4a]"}`}>
+                      <span className={`ml-2 inline-flex whitespace-nowrap rounded-full px-2 py-0.5 text-[10.5px] font-bold ${demoExpired(demoById.get(c.id)!) ? "bg-danger-bg text-danger" : "bg-[#101828] text-[#c6ff4a]"}`}>
                         {demoExpired(demoById.get(c.id)!) ? "Demo încheiat" : "Demo"}
                       </span>
                     )}
                     {c.cui && <div className="text-[11.5px] text-[#9b93b5]">{c.cui}</div>}
                   </td>
-                  <td className="px-5 py-3.5 text-[13px] font-semibold text-[#5c5670]">
-                    ElectroField · 599 lei/lună
+                  <td className="px-5 py-3.5 text-[13px] text-[#5c5670]">
+                    <div className="whitespace-nowrap font-semibold">ElectroField</div>
+                    <div className="whitespace-nowrap text-[12px] text-[#9b93b5]">599 lei/lună</div>
                   </td>
                   <td className="px-5 py-3.5 text-[13px] text-[#5c5670]">{c.user_count}</td>
                   <td className="px-5 py-3.5 text-[13px] text-[#5c5670]">{c.job_count}</td>
                   <td className="px-5 py-3.5">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                      className={`inline-flex whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ${
                         c.is_active ? "bg-success-bg text-success" : "bg-danger-bg text-danger"
                       }`}
                     >
@@ -104,20 +105,22 @@ export default async function AdminCompaniesPage({
                   </td>
                   <td className="px-5 py-3.5">
                     {c.terms_accepted_at ? (
-                      <span className="rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">
-                        Acceptați {new Date(c.terms_accepted_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
-                      </span>
+                      <>
+                        <span className="inline-flex whitespace-nowrap rounded-full bg-success-bg px-2.5 py-1 text-[11px] font-bold text-success">Acceptați</span>
+                        <div className="mt-1 whitespace-nowrap text-[12px] text-[#9b93b5]">{new Date(c.terms_accepted_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}</div>
+                      </>
                     ) : c.terms_declined_at ? (
-                      <span className="rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">
-                        Refuzați {new Date(c.terms_declined_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
-                      </span>
+                      <>
+                        <span className="inline-flex whitespace-nowrap rounded-full bg-danger-bg px-2.5 py-1 text-[11px] font-bold text-danger">Refuzați</span>
+                        <div className="mt-1 whitespace-nowrap text-[12px] text-[#9b93b5]">{new Date(c.terms_declined_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}</div>
+                      </>
                     ) : (
-                      <span className="rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
+                      <span className="inline-flex whitespace-nowrap rounded-full bg-[#f2f0f9] px-2.5 py-1 text-[11px] font-bold text-[#5c5670]">
                         În așteptare
                       </span>
                     )}
                   </td>
-                  <td className="px-5 py-3.5 text-[12.5px] text-[#9b93b5]">
+                  <td className="whitespace-nowrap px-5 py-3.5 text-[12.5px] text-[#9b93b5]">
                     {new Date(c.created_at).toLocaleDateString("ro-RO", { timeZone: "Europe/Bucharest" })}
                   </td>
                 </tr>
