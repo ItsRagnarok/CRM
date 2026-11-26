@@ -126,10 +126,9 @@ export async function sendPushToProfiles(
     const accessToken = await getAccessToken();
     if (!accessToken) return { status: "not_configured", delivered: 0, devices: 0 };
 
-    const { data: tokens } = await supabase
-      .from("device_push_tokens")
-      .select("token")
-      .in("profile_id", profileIds);
+    // Through a database function: each person can only read their own device rows,
+    // but notifying a colleague needs theirs (same company only).
+    const { data: tokens } = await supabase.rpc("ef_push_tokens_for", { p_profile_ids: profileIds });
     if (!tokens || tokens.length === 0) return { status: "no_devices", delivered: 0, devices: 0 };
 
     const results = await Promise.all(
@@ -137,7 +136,7 @@ export async function sendPushToProfiles(
     );
     const staleTokens = results.filter((r) => r.stale).map((r) => r.token);
     if (staleTokens.length > 0) {
-      await supabase.from("device_push_tokens").delete().in("token", staleTokens);
+      await supabase.rpc("ef_delete_push_tokens", { p_tokens: staleTokens });
     }
     const delivered = results.filter((r) => r.ok).length;
     return { status: delivered > 0 ? "sent" : "failed", delivered, devices: tokens.length };

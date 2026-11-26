@@ -458,7 +458,9 @@ export async function decidePurchaseRequest(formData: FormData) {
   const storeName = String(formData.get("storeName") ?? "").trim() || null;
   if (!requestId || (decision !== "approved" && decision !== "denied")) return;
 
-  const { organization, userId } = await requireSessionContext();
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
+  const { organization, userId } = ctx;
   const supabase = await createClient();
 
   const { data: request } = await supabase
@@ -470,6 +472,7 @@ export async function decidePurchaseRequest(formData: FormData) {
       store_name: decision === "approved" ? storeName : null,
     })
     .eq("id", requestId)
+    .eq("organization_id", organization.id)
     .select("job_id, requested_by, quantity, custom_name, materials(name)")
     .maybeSingle();
 

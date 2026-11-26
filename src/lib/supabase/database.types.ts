@@ -4404,6 +4404,9 @@ export type Database = {
       }
       ef_site_online: { Args: never; Returns: Json }
       ef_platform_online_count: { Args: never; Returns: number }
+      ef_register_push_token: { Args: { p_token: string; p_platform?: string }; Returns: undefined }
+      ef_push_tokens_for: { Args: { p_profile_ids: string[] }; Returns: { token: string }[] }
+      ef_delete_push_tokens: { Args: { p_tokens: string[] }; Returns: undefined }
       ef_site_stats: {
         Args: { p_period?: string; p_from?: string; p_to?: string }
         Returns: Json

@@ -12,7 +12,9 @@ export async function addTimeOff(formData: FormData) {
   const reason = String(formData.get("reason") ?? "").trim() || null;
   if (!profileId || !type || !startDate || !endDate) return;
 
-  const { organization, userId } = await requireSessionContext();
+  const ctx = await requireBackOfficeContext();
+  if (!ctx) return;
+  const { organization, userId } = ctx;
   const supabase = await createClient();
 
   // An admin/manager recording a leave directly is the approval itself —
