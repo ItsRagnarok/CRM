@@ -19,7 +19,7 @@ export default async function NewInvoicePage({ searchParams }: { searchParams: P
   const supabase = await createClient();
   const connection = await loadConnection(supabase, organization.id);
   const caps = capabilities(connection);
-  const vatDefault = connection?.taxPercent ?? 21;
+  const vatDefault = Number(organization.invoice_vat_percent ?? connection?.taxPercent ?? 21);
   const jobId = sp.job && UUID.test(sp.job) ? sp.job : null;
   const fromId = sp.from && UUID.test(sp.from) ? sp.from : null;
 

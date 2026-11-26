@@ -31,7 +31,7 @@ function clientBody(d: Draft) {
   };
 }
 
-export function smartbillBody(c: Connection, d: Draft) {
+export function smartbillBody(c: Connection, d: Draft, taxNames?: Map<number, string>) {
   const payment = d.docType === "factura" && d.collect && d.collect.amount > 0 ? smartbillPayType(d.collect.method, c.receiptSeries) : null;
   return {
     companyVatCode: c.vatCode,
@@ -43,11 +43,11 @@ export function smartbillBody(c: Connection, d: Draft) {
     ...(d.mentions ? { mentions: d.mentions } : {}),
     ...(d.sendEmail && d.client.email ? { sendEmail: true, email: { to: d.client.email } } : {}),
     products: d.lines.map((l) => {
-      const taxName = TAX_NAMES[l.vatPercent];
+      const taxName = taxNames?.get(l.vatPercent) ?? TAX_NAMES[l.vatPercent];
       return {
         name: l.name, ...(l.code ? { code: l.code } : {}), measuringUnitName: l.unit, currency: "RON", quantity: l.quantity, price: l.price,
         isTaxIncluded: false, taxPercentage: l.vatPercent, isService: l.isService,
-        // Cota 0 cere un nume de cotă specific contului: lipsă, se afișează mesajul API-ului.
+        // Cota 0 (neplătitor, scutit) are un nume specific contului: îl luăm din /tax; lipsă, se afișează mesajul API-ului.
         ...(taxName ? { taxName } : {}),
       };
     }),
@@ -108,7 +108,16 @@ export async function smartbillCheck(c: Connection, token: string) {
 }
 
 export async function smartbillIssue(c: Connection, token: string, d: Draft): Promise<Issued> {
-  const json = await call(d.docType === "proforma" ? "/estimate/v2" : "/invoice/v2", c.accountEmail, token, { method: "POST", body: smartbillBody(c, d) });
+  let taxNames: Map<number, string> | undefined;
+  if (d.lines.some((l) => !TAX_NAMES[l.vatPercent])) {
+    // Cote fără nume standard (de ex. 0% la firmă neplătitoare de TVA): numele exact din contul SmartBill.
+    const taxes = await call(`/tax?${q({ cif: c.vatCode })}`, c.accountEmail, token);
+    taxNames = new Map();
+    for (const t of (Array.isArray(taxes.taxes) ? taxes.taxes : []) as { name?: string; percentage?: number }[]) {
+      if (t.name && typeof t.percentage === "number" && !taxNames.has(Number(t.percentage))) taxNames.set(Number(t.percentage), t.name);
+    }
+  }
+  const json = await call(d.docType === "proforma" ? "/estimate/v2" : "/invoice/v2", c.accountEmail, token, { method: "POST", body: smartbillBody(c, d, taxNames) });
   const number = json.number != null ? String(json.number) : "";
   if (!number) throw new InvoicingError("SmartBill nu a returnat numărul documentului. Verifică direct în cont înainte de a reîncerca.");
   const view = typeof json.documentViewUrl === "string" && json.documentViewUrl ? json.documentViewUrl : null;

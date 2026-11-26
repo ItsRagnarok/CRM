@@ -103,7 +103,9 @@ export async function issueAction(_prev: ActionState | undefined, fd: FormData):
     }).eq("id", p.clientId).eq("organization_id", orgId);
 
     const connection = await loadConnection(supabase, orgId);
-    const lines: Line[] = p.lines.map((l) => ({ name: l.name.trim(), unit: (l.unit || "buc").trim().slice(0, 20), quantity: l.quantity, price: l.price, vatPercent: l.vatPercent, isService: l.isService, code: l.code || null }));
+    // Firmă neplătitoare de TVA: toate rândurile la 0%, oricum ar fi venit din formular sau din proformă.
+    const noVat = Number(ctx.organization.invoice_vat_percent ?? 21) === 0;
+    const lines: Line[] = p.lines.map((l) => ({ name: l.name.trim(), unit: (l.unit || "buc").trim().slice(0, 20), quantity: l.quantity, price: l.price, vatPercent: noVat ? 0 : l.vatPercent, isService: l.isService, code: l.code || null }));
     const sum = totals(lines);
     const collect = p.docType === "factura" && p.collect ? { method: p.collect.method, amount: r2(Math.min(p.collect.amount, sum.gross)), date: p.issueDate, document: p.collect.document?.trim() || null } : null;
     const clientData = {
@@ -364,10 +366,15 @@ export async function saveBillingRates(_prev: ActionState | undefined, fd: FormD
   const markup = Number(String(fd.get("markup") ?? "0").replace(",", "."));
   if (rate && !(Number(rate) >= 0)) return { error: "Tariful orar nu e valid." };
   if (!(markup >= 0 && markup <= 500)) return { error: "Adaosul trebuie să fie între 0 și 500%." };
+  const vatPayer = fd.get("vatPayer") === "on";
+  const vat = vatPayer ? Number(String(fd.get("vatPercent") ?? "21").replace(",", ".")) : 0;
+  if (vatPayer && !(vat > 0 && vat <= 100)) return { error: "Cota TVA trebuie să fie între 1 și 100%. Dacă firma nu e plătitoare de TVA, debifează căsuța." };
   const supabase = await createClient();
-  const { error } = await supabase.from("organizations").update({ invoice_labor_rate: rate ? r2(Number(rate)) : null, invoice_material_markup: r2(markup) }).eq("id", ctx.organization.id);
-  if (error) return { error: "Tarifele nu s-au salvat." };
+  const { error } = await supabase.from("organizations").update({ invoice_labor_rate: rate ? r2(Number(rate)) : null, invoice_material_markup: r2(markup), invoice_vat_percent: r2(vat) }).eq("id", ctx.organization.id);
+  if (error) return { error: "Setările nu s-au salvat." };
+  // Conexiunea SmartBill/Oblio păstrează aceeași cotă implicită.
+  await supabase.from("invoicing_connections").update({ default_tax_percent: r2(vat) }).eq("organization_id", ctx.organization.id);
   revalidatePath("/facturare");
   revalidatePath("/setari");
-  return { ok: "Tarife salvate." };
+  return { ok: vatPayer ? `Salvat. Cota TVA implicită: ${r2(vat)}%.` : "Salvat. Facturile se emit fără TVA." };
 }

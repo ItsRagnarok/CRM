@@ -44,9 +44,8 @@ export function InvoicingForm({ initial, canEdit }: { initial: Initial; canEdit:
           <p className="mt-1 text-[11.5px] text-muted-2">Ca să emiți și proforme (oferte cu valoare) din platformă.</p></div>
         <div><label className={label} htmlFor="inv-ch">Serie chitanță (opțional)</label><input id="inv-ch" name="receiptSeries" defaultValue={initial?.receiptSeries ?? ""} disabled={!canEdit} className={input} placeholder="ex. EFC" />
           <p className="mt-1 text-[11.5px] text-muted-2">Pentru încasările în numerar: se emite chitanță. Fără serie, numerarul se trece ca „altă încasare”.</p></div>
-        <div><label className={label} htmlFor="inv-tax">Cotă TVA (%)</label><input id="inv-tax" name="taxPercent" type="number" step="0.01" min="0" max="100" defaultValue={initial?.taxPercent ?? 21} disabled={!canEdit} className={input} />
-          <p className="mt-1 text-[11.5px] text-muted-2">Pentru firmă neplătitoare de TVA, pune 0 și verifică prima factură cu furnizorul.</p></div>
         <div><label className={label} htmlFor="inv-due">Termen de plată (zile)</label><input id="inv-due" name="dueDays" type="number" min="0" max="365" defaultValue={initial?.dueDays ?? 15} disabled={!canEdit} className={input} /></div>
+        <p className="self-end pb-2 text-[11.5px] text-muted-2">Dacă firma e plătitoare de TVA și cota implicită se setează mai jos, în „TVA și prețuri pentru facturare”.</p>
         <label className="flex items-center gap-2 text-[13px] font-semibold sm:col-span-2"><input type="checkbox" name="sendEmail" defaultChecked={initial?.sendEmail ?? false} disabled={!canEdit} className="h-4 w-4" /> Trimite factura pe e-mail clientului (dacă are adresă)</label>
         {canEdit && (
           <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
