@@ -41,7 +41,7 @@ export default async function AdminUserDetailPage({
   const position = positionRows?.[0];
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
       <Link
         href={`/admin/companii/${id}`}
         className="mb-4 flex w-fit items-center gap-1.5 text-[13px] font-semibold text-[#9b93b5]"

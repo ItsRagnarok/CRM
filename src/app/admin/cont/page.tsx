@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminAccountPage() {
   const { email, fullName } = await requireAdminContext();
   return (
-    <div className="mx-auto w-full max-w-[720px] space-y-6 p-6">
+    <div className="mx-auto w-full max-w-[720px] space-y-6 p-4 sm:p-6">
       <div>
         <h1 className="text-[22px] font-extrabold text-foreground">Contul meu de Super Admin</h1>
         <p className="mt-1 text-sm text-muted">{fullName} · {email}</p>

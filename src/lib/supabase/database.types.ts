@@ -3194,6 +3194,110 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_lead_events: {
+        Row: {
+          body: string
+          created_at: string
+          created_by: string | null
+          id: string
+          kind: string
+          lead_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind: string
+          lead_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          kind?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_lead_events_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "platform_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_leads: {
+        Row: {
+          booking_id: string | null
+          closed_at: string | null
+          company_name: string
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          current_tools: string | null
+          domains: string[]
+          email: string | null
+          estimated_value: number | null
+          id: string
+          lost_reason: string | null
+          next_follow_up: string | null
+          organization_id: string | null
+          phone: string | null
+          problems: string | null
+          source: string
+          stage: string
+          team_size: number | null
+          updated_at: string
+        }
+        Insert: {
+          booking_id?: string | null
+          closed_at?: string | null
+          company_name: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_tools?: string | null
+          domains?: string[]
+          email?: string | null
+          estimated_value?: number | null
+          id?: string
+          lost_reason?: string | null
+          next_follow_up?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          problems?: string | null
+          source?: string
+          stage?: string
+          team_size?: number | null
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string | null
+          closed_at?: string | null
+          company_name?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_tools?: string | null
+          domains?: string[]
+          email?: string | null
+          estimated_value?: number | null
+          id?: string
+          lost_reason?: string | null
+          next_follow_up?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          problems?: string | null
+          source?: string
+          stage?: string
+          team_size?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       platform_usage_daily: {
         Row: {
           active_seconds: number

@@ -45,7 +45,7 @@ export default async function AdminCompanyDetailPage({ params }: { params: Promi
   const isDemoAccount = demo?.account_type === "demo";
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-10">
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
       <Link href="/admin/companii" className="mb-4 flex w-fit items-center gap-1.5 text-[13px] font-semibold text-[#9b93b5]">
         <ArrowLeft className="h-3.5 w-3.5" /> Înapoi la Companii
       </Link>

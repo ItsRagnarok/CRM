@@ -32,7 +32,7 @@ export default async function AdminSubscriptionRequestsPage() {
   const openCount = requests?.filter((r) => !r.resolved_at).length ?? 0;
 
   return (
-    <div className="mx-auto max-w-5xl space-y-4 p-6">
+    <div className="mx-auto max-w-5xl space-y-4 p-4 sm:p-6">
       <h1 className="text-xl font-extrabold">Solicitări abonamente</h1>
       {openCount > 0 && (
         <p role="status" className="rounded-lg bg-[#c6ff4a] px-3 py-2 text-sm font-bold text-[#0a0d0a]">

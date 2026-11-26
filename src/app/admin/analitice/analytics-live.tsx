@@ -209,7 +209,7 @@ export function AnalyticsLive({ initial }: { initial: SiteAnalytics | null }) {
   const total = data?.devices.reduce((a, d) => a + d.visitors, 0) ?? 0;
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5 p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold">Analitice site</h1>
