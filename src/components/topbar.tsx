@@ -121,7 +121,7 @@ export function Topbar({
       >
         <Menu className="h-5 w-5" strokeWidth={1.9} />
       </button>
-      <Link href="/dashboard" className="text-[15px] font-bold tracking-tight text-foreground md:hidden">
+      <Link href="/dashboard" className={`text-[15px] font-bold tracking-tight text-foreground md:hidden ${pulse ? "hidden" : ""}`}>
         Electro<span className="text-electric">Field</span>
       </Link>
       {showSearch && (

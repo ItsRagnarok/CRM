@@ -45,20 +45,20 @@ export function ActivityPulse() {
   const barColor = level === 2 ? "bg-[#f79009]" : "bg-[#12b76a]";
 
   return (
-    <div className="hidden items-center gap-2 lg:flex" aria-label="Activitate platformă">
-      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-[13px] font-semibold text-muted" title="Utilizatori conectați acum, pe web și pe telefon">
+    <div className="flex items-center gap-1.5 md:gap-2" aria-label="Activitate platformă">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-2.5 py-1 text-[12px] font-semibold text-muted md:gap-2 md:px-3 md:py-1.5 md:text-[13px]" title="Utilizatori conectați acum, pe web și pe telefon">
         <span className="relative flex h-2.5 w-2.5">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#12b76a] opacity-60 motion-reduce:animate-none" />
           <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#12b76a]" />
         </span>
-        <strong className="min-w-[4ch] text-right text-[15px] font-extrabold tabular-nums text-foreground">{users.toLocaleString("ro-RO")}</strong>
-        utilizatori activi
+        <strong className="min-w-[4ch] text-right text-[13.5px] font-extrabold tabular-nums text-foreground md:text-[15px]">{users.toLocaleString("ro-RO")}</strong>
+        <span className="hidden sm:inline">utilizatori activi</span><span className="sm:hidden">activi</span>
       </span>
-      <span className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1.5 text-[13px] font-semibold text-muted" title="Timpul de răspuns al platformei">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white px-2.5 py-1 text-[12px] font-semibold text-muted md:gap-2 md:px-3 md:py-1.5 md:text-[13px]" title="Timpul de răspuns al platformei">
         <span className="inline-flex h-3.5 items-end gap-[2px]" aria-hidden="true">
           {[5, 8, 11, 14].map((h, i) => <i key={h} className={`w-[3px] rounded-[1px] ${i < level ? barColor : "bg-border"}`} style={{ height: h }} />)}
         </span>
-        {label} · <strong className="min-w-[5ch] font-extrabold tabular-nums text-foreground">{secs.toFixed(2).replace(".", ",")} s</strong>
+        <span className="hidden lg:inline">{label} ·</span> <strong className="min-w-[5ch] font-extrabold tabular-nums text-foreground">{secs.toFixed(2).replace(".", ",")} s</strong>
       </span>
     </div>
   );
