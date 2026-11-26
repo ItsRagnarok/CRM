@@ -23,6 +23,7 @@ export const LEAD_SOURCES = [
   { id: "recomandare", label: "Recomandare" },
   { id: "telefon", label: "Telefon" },
   { id: "targ", label: "Târg" },
+  { id: "outbound", label: "E-mail rece" },
   { id: "altul", label: "Altă sursă" },
 ] as const;
 
