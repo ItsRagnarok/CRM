@@ -33,22 +33,22 @@ html[data-theme="dark"] .m-root {
   --m-acs: rgba(198, 255, 74, 0.16);
   --m-aci: #c6ff4a;
   --m-onac: #16210a;
-  --m-ink: #e8edf5;
-  --m-mu: #a3afc2;
-  --m-ln: #2b3445;
-  --m-bg: #0f141c;
-  --m-card: #182030;
-  --m-chip: #243044;
-  --m-chip-ink: #cfd8e6;
-  --m-input-ln: #34405a;
+  --m-ink: #f5f5f5;
+  --m-mu: #a3a3a3;
+  --m-ln: #262626;
+  --m-bg: #0a0a0a;
+  --m-card: #141414;
+  --m-chip: #222222;
+  --m-chip-ink: #d4d4d4;
+  --m-input-ln: #333333;
   --m-ok-bg: #153a28;
   --m-ok: #86e0a4;
   --m-wr-bg: #3d2f14;
   --m-wr: #f6c76a;
   --m-bad-bg: #44222a;
   --m-bad: #ff9c9c;
-  --m-dark: #e8edf5;
-  --m-ondark: #0f141c;
+  --m-dark: #f5f5f5;
+  --m-ondark: #0a0a0a;
 }
 
 /* Modul „Soare": contrast mare pentru lumina zilei. */
@@ -269,7 +269,7 @@ input.m-in[type="date"]::-webkit-date-and-time-value { text-align: left; }
 html[data-theme="dark"] .m-login-bg {
   background:
     radial-gradient(520px 300px at 12% 4%, rgba(198, 255, 74, 0.1), transparent 70%),
-    linear-gradient(180deg, #182030 0%, #121926 55%, #0b0f17 100%);
+    linear-gradient(180deg, #141414 0%, #0f0f0f 55%, #0a0a0a 100%);
 }
 .m-login-tile {
   display: inline-flex; align-items: center; background: #0b100e; color: #f4f7f4;

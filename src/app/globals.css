@@ -90,13 +90,13 @@ body:has(> [data-mail-viewport="true"]) {
 /* Only authenticated application surfaces adopt the selected theme. Marketing keeps its own palette. */
 html[data-theme="dark"] .ef-app-theme {
   color-scheme: dark;
-  --background: #10141c;
-  --foreground: #e8edf5;
-  --color-border: #30394a;
-  --color-muted: #b0baca;
-  --color-muted-2: #9ba8bd;
-  --color-neutral: #c4cedd;
-  --color-neutral-bg: #242d3c;
+  --background: #0a0a0a;
+  --foreground: #f5f5f5;
+  --color-border: #262626;
+  --color-muted: #a3a3a3;
+  --color-muted-2: #8f8f8f;
+  --color-neutral: #d4d4d4;
+  --color-neutral-bg: #1c1c1c;
   --color-electric: #c6ff4a;
   --color-electric-soft: #2a3a12;
   --color-accent-ink: #c6ff4a;
@@ -109,21 +109,22 @@ html[data-theme="dark"] .ef-app-theme {
   --color-warning-bg: #3c3019;
   --color-danger: #ffabab;
   --color-danger-bg: #45242a;
-  --color-info: #9ec5ff;
-  --color-info-bg: #203653;
+  --color-info: #d4d4d4;
+  --color-info-bg: #262626;
   background-color: var(--background);
   color: var(--foreground);
 }
-html[data-theme="dark"] .ef-app-theme :is(.bg-white, [class~="bg-[#fcfcfd]"], [class~="bg-[#fafafb]"], [class~="bg-[#faf9fd]"]) { background-color: #1a2130; }
-html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#f4f3f9]"], [class~="bg-[#f6f7fa]"], [class~="bg-[#f9fafb]"], [class~="bg-[#f2f4f7]"], [class~="bg-[#eef0f3]"], [class~="bg-[#f2f0f9]"], [class~="bg-[#f0f5ff]"]) { background-color: #242d3c; }
-html[data-theme="dark"] .ef-app-theme :is([class~="text-[#101828]"], [class~="text-[#17151f]"], [class~="text-[#1c1c22]"], [class~="text-[#0b1530]"], [class~="text-[#344054]"]) { color: #e8edf5; }
-html[data-theme="dark"] .ef-app-theme :is([class~="text-[#475467]"], [class~="text-[#5c5670]"], [class~="text-[#667085]"], [class~="text-[#6f727c]"], [class~="text-[#9b93b5]"], [class~="text-[#98a2b3]"], [class~="text-[#9da0a8]"]) { color: #b0baca; }
-html[data-theme="dark"] .ef-app-theme :is([class~="border-[#d0d5dd]"], [class~="border-[#e7e3f5]"], [class~="border-[#eaecf0]"], [class~="border-[#f2f4f7]"], [class~="border-[#f2f0f9]"]) { border-color: #30394a; }
-html[data-theme="dark"] .ef-app-theme :is([class~="divide-[#f2f4f7]"], [class~="divide-[#f2f0f9]"]) > :not(:last-child) { border-color: #30394a; }
-html[data-theme="dark"] .ef-app-theme :is([class~="hover:bg-[#f9fafb]"], [class~="hover:bg-[#faf9fd]"]):hover { background-color: #2b3548; }
-html[data-theme="dark"] .ef-app-theme :is(input, select, textarea) { color: #e8edf5; background-color: #151c28; }
-html[data-theme="dark"] .ef-app-theme :is(.bg-purple, .bg-electric, .bg-success, .bg-warning, .bg-danger, .bg-info) { color: #10141c; }
-html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#eceee9]"], [class~="bg-[#eceff4]"], [class~="bg-[#f3f4f6]"], [class~="bg-[#fafbfc]"], [class~="bg-[#f5f3ff]"]) { background-color: #202838; }
+html[data-theme="dark"] .ef-app-theme :is(.bg-white, [class~="bg-[#fcfcfd]"], [class~="bg-[#fafafb]"], [class~="bg-[#faf9fd]"]) { background-color: #141414; }
+html[data-theme="dark"] .ef-app-theme[class~="bg-[#f4f3f9]"] { background-color: var(--background); }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#f4f3f9]"], [class~="bg-[#f6f7fa]"], [class~="bg-[#f9fafb]"], [class~="bg-[#f2f4f7]"], [class~="bg-[#eef0f3]"], [class~="bg-[#f2f0f9]"], [class~="bg-[#f0f5ff]"]) { background-color: #1c1c1c; }
+html[data-theme="dark"] .ef-app-theme :is([class~="text-[#101828]"], [class~="text-[#17151f]"], [class~="text-[#1c1c22]"], [class~="text-[#0b1530]"], [class~="text-[#344054]"]) { color: #f5f5f5; }
+html[data-theme="dark"] .ef-app-theme :is([class~="text-[#475467]"], [class~="text-[#5c5670]"], [class~="text-[#667085]"], [class~="text-[#6f727c]"], [class~="text-[#9b93b5]"], [class~="text-[#98a2b3]"], [class~="text-[#9da0a8]"]) { color: #a3a3a3; }
+html[data-theme="dark"] .ef-app-theme :is([class~="border-[#d0d5dd]"], [class~="border-[#e7e3f5]"], [class~="border-[#eaecf0]"], [class~="border-[#f2f4f7]"], [class~="border-[#f2f0f9]"]) { border-color: #262626; }
+html[data-theme="dark"] .ef-app-theme :is([class~="divide-[#f2f4f7]"], [class~="divide-[#f2f0f9]"]) > :not(:last-child) { border-color: #262626; }
+html[data-theme="dark"] .ef-app-theme :is([class~="hover:bg-[#f9fafb]"], [class~="hover:bg-[#faf9fd]"]):hover { background-color: #222222; }
+html[data-theme="dark"] .ef-app-theme :is(input, select, textarea) { color: #f5f5f5; background-color: #101010; }
+html[data-theme="dark"] .ef-app-theme :is(.bg-purple, .bg-electric, .bg-success, .bg-warning, .bg-danger, .bg-info) { color: #0a0a0a; }
+html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#eceee9]"], [class~="bg-[#eceff4]"], [class~="bg-[#f3f4f6]"], [class~="bg-[#fafbfc]"], [class~="bg-[#f5f3ff]"]) { background-color: #181818; }
 html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fff5f5]"], [class~="bg-[#fde4e4]"]) { background-color: #3c2323; }
 html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fffaeb]"], [class~="bg-[#fffaf0]"], [class~="bg-[#fef0c7]"], [class~="bg-[#fff1e0]"]) { background-color: #3c3019; }
 html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#ecfdf3]"]) { background-color: #1d3427; }
@@ -147,7 +148,7 @@ html[data-theme="dark"] .ef-app-theme :is([class~="bg-[#fef3f2]"], [class~="bg-[
 .leaflet-top.leaflet-left .leaflet-control-layers { margin-top: 48px; }
 
 /* Tema întunecată: cardurile de domenii/module (selectate) foloseau variante Tailwind `has-[:checked]:` care nu erau acoperite și rămâneau deschise, cu text deschis pe ele. */
-html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"]:has(:checked) { background-color: #242d3c; border-color: var(--color-purple, #8b7cf6); }
+html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"]:has(:checked) { background-color: #1c1c1c; border-color: var(--color-purple, #8b7cf6); }
 
 /* Mail în Super Admin pe telefon: fără blocarea pe înălțimea ecranului, ca lista de mesaje să aibă loc și pagina să se poată derula. */
 @media (max-width: 850px) {
@@ -180,12 +181,12 @@ html[data-theme="dark"] .ef-app-theme label[class~="has-[:checked]:bg-[#f9fafb]"
 .ef-cal-today { background: rgba(198, 255, 74, 0.22); }
 .ef-cal-tile { background: #f1fbdc; color: #4d7c0f; }
 .ef-cal-tile-red { background: #fdeaea; color: #dc2626; }
-html[data-theme="dark"] .ef-app-theme .ef-ev { background: #242d3c; --ev-ink: #b0baca; }
+html[data-theme="dark"] .ef-app-theme .ef-ev { background: #1c1c1c; --ev-ink: #a3a3a3; }
 html[data-theme="dark"] .ef-app-theme .ef-ev-gaze { background: #263318; --ev-ink: #c6ff4a; }
 html[data-theme="dark"] .ef-app-theme .ef-ev-electric { background: #3a2a18; --ev-ink: #fdba74; }
 html[data-theme="dark"] .ef-app-theme .ef-ev-fotovoltaic { background: #1c2f47; --ev-ink: #93c5fd; }
 html[data-theme="dark"] .ef-app-theme .ef-ev-conflict { background: #3c2323; --ev-ink: #fca5a5; }
-html[data-theme="dark"] .ef-app-theme .ef-ev-leave { background: repeating-linear-gradient(135deg, #242d3c 0 6px, #2b3548 6px 12px); --ev-ink: #b0baca; }
+html[data-theme="dark"] .ef-app-theme .ef-ev-leave { background: repeating-linear-gradient(135deg, #1c1c1c 0 6px, #222222 6px 12px); --ev-ink: #a3a3a3; }
 html[data-theme="dark"] .ef-app-theme .ef-ev:hover { filter: brightness(1.12); }
 html[data-theme="dark"] .ef-app-theme .ef-cal-today { background: rgba(198, 255, 74, 0.1); }
 html[data-theme="dark"] .ef-app-theme .ef-cal-tile { background: #263318; color: #c6ff4a; }
