@@ -7,6 +7,7 @@ const NAV = [
   { href: "/admin", label: "Prezentare generală" },
   { href: "/admin/companii", label: "Companii" },
   { href: "/admin/programari", label: "Programări" },
+  { href: "/admin/leads", label: "Leads" },
   { href: "/admin/analitice", label: "Analitice" },
   { href: "/admin/activitate", label: "Activitate" },
   { href: "/admin/mail", label: "Mail" },
@@ -14,7 +15,7 @@ const NAV = [
   { href: "/admin/cont", label: "Cont" },
 ];
 
-export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0 }: { fullName: string; upcomingBookings?: number; openRequests?: number }) {
+export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0, dueLeads = 0 }: { fullName: string; upcomingBookings?: number; openRequests?: number; dueLeads?: number }) {
   return (
     <header className="flex min-h-16 shrink-0 flex-wrap items-center justify-between gap-3 border-b border-graphite-border bg-graphite px-5 py-3">
       <div className="flex flex-wrap items-center gap-4">
@@ -34,6 +35,9 @@ export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0 }
               {item.label}
               {item.href === "/admin/programari" && upcomingBookings > 0 && (
                 <span className="ml-1.5 rounded-full bg-purple px-1.5 py-0.5 text-[10.5px] font-bold text-white">{upcomingBookings}</span>
+              )}
+              {item.href === "/admin/leads" && dueLeads > 0 && (
+                <span className="ml-1.5 rounded-full bg-[#c6ff4a] px-1.5 py-0.5 text-[10.5px] font-bold text-[#0a0d0a]" title={`${dueLeads} leaduri de reluat azi sau întârziate`}>{dueLeads}</span>
               )}
               {item.href === "/admin/solicitari" && openRequests > 0 && (
                 <span className="ml-1.5 rounded-full bg-[#c6ff4a] px-1.5 py-0.5 text-[10.5px] font-bold text-[#0a0d0a]" title={`${openRequests} solicitări neprocesate`}>{openRequests}</span>
