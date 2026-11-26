@@ -8,6 +8,7 @@ import { PROVIDER_LABEL, capabilities, loadConnection } from "@/lib/invoicing";
 import { lei } from "@/lib/invoicing/calc";
 import { resolveBillingRequest } from "./actions";
 import { SyncButton } from "./sync-button";
+import { DisconnectInvoicingButton } from "../setari/disconnect-invoicing-button";
 import { docStatus } from "./status";
 
 const FILTERS = [
@@ -97,6 +98,7 @@ export default async function FacturarePage({ searchParams }: { searchParams: Pr
         </div>
         <div className="flex flex-wrap items-start gap-2">
           {caps.mode === "real" && providerLabel && <SyncButton label={providerLabel} />}
+          {caps.mode !== "intern" && providerLabel && ctx.profile.role === "admin" && <DisconnectInvoicingButton label={providerLabel} variant="button" />}
           {canProforma && <Link href="/facturare/noua?tip=proforma" className="flex h-10 items-center gap-2 rounded-[11px] border border-border bg-white px-3.5 text-[13px] font-bold"><FileText className="h-4 w-4" /> Proformă nouă</Link>}
           <Link href="/facturare/noua" className="flex h-10 items-center gap-2 rounded-[11px] bg-electric px-4 text-[13.5px] font-extrabold shadow-[0_6px_16px_rgba(132,204,22,.28)]"><FilePlus2 className="h-4 w-4" /> Factură nouă</Link>
         </div>

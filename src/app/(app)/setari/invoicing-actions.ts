@@ -76,11 +76,14 @@ export async function saveInvoicingConnection(_prev: InvoicingState | undefined,
   return { ok: "Conexiune salvată. Facturile se emit acum direct în contul tău." };
 }
 
-export async function disconnectInvoicing(): Promise<void> {
+/** Deconectează furnizorul: șterge conexiunea și cheia din Vault. Facturile emise rămân în platformă, ca istoric. */
+export async function disconnectInvoicing(): Promise<InvoicingState> {
   const org = await adminOnly();
-  if (!org) return;
+  if (!org) return { error: "Doar administratorul poate deconecta facturarea." };
   const supabase = await createClient();
-  await supabase.rpc("invoicing_disconnect");
+  const { error } = await supabase.rpc("invoicing_disconnect");
+  if (error) return { error: "Deconectarea nu a reușit. Încearcă din nou." };
   revalidatePath("/setari");
   revalidatePath("/facturare");
+  return { ok: "Deconectat. Facturile emise rămân aici; cele noi se fac intern până conectezi din nou un furnizor." };
 }

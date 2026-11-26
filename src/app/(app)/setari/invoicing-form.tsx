@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { disconnectInvoicing, saveInvoicingConnection, testInvoicingConnection, type InvoicingState } from "./invoicing-actions";
+import { saveInvoicingConnection, testInvoicingConnection, type InvoicingState } from "./invoicing-actions";
+import { DisconnectInvoicingButton } from "./disconnect-invoicing-button";
 
 const input = "w-full rounded-[10px] border border-[#d0d5dd] px-3 py-2 text-[13.5px] outline-none focus:border-electric";
 const label = "mb-1 block text-[12px] font-semibold text-[#344054]";
@@ -51,7 +52,7 @@ export function InvoicingForm({ initial, canEdit }: { initial: Initial; canEdit:
           <div className="flex flex-wrap items-center gap-2 sm:col-span-2">
             <button type="submit" formAction={test} disabled={busy} className="rounded-[10px] border border-[#d0d5dd] bg-white px-4 py-2.5 text-[13.5px] font-bold disabled:opacity-60">{testing ? "Se testează…" : "Testează conexiunea"}</button>
             <button type="submit" formAction={save} disabled={busy} className="rounded-[10px] bg-electric px-5 py-2.5 text-[13.5px] font-bold disabled:opacity-60">{saving ? "Se salvează…" : "Salvează"}</button>
-            {initial && <button type="submit" formAction={disconnectInvoicing} formNoValidate className="px-3 py-2.5 text-[13px] font-semibold text-danger">Deconectează</button>}
+            {initial && <DisconnectInvoicingButton label={initial.provider === "oblio" ? "Oblio" : "SmartBill"} />}
           </div>
         )}
       </form>
