@@ -15,7 +15,7 @@
  * Funcție pură (fără baza de date), testată în scripts/leads-import.test.mjs.
  */
 const STAGES = ["nou", "contactat", "discutie", "oferta", "negociere", "castigat", "pierdut"];
-const SOURCES = ["site", "programari", "facebook", "recomandare", "telefon", "targ", "altul"];
+const SOURCES = ["site", "programari", "facebook", "recomandare", "telefon", "targ", "outbound", "altul"];
 const DOMAINS = ["gaze", "electric", "fotovoltaic"];
 const KINDS = ["nota", "apel", "whatsapp", "email", "discutie"];
 
