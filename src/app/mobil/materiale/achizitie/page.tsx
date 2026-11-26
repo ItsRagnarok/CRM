@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todayInOrgTimeZone } from "@/lib/date";
 import { ScreenHeader } from "@/components/mobile/ui";
 import { PurchaseForm } from "./purchase-form";
+import { aiOn } from "@/lib/demo";
 
 /** „Am cumpărat de la magazin”: bonul, ce ai luat și pentru ce lucrare, într-un singur ecran. */
 export default async function UrgentPurchasePage() {
@@ -26,7 +27,7 @@ export default async function UrgentPurchasePage() {
         jobs={jobs.map((j) => ({ id: j.id, label: `#${j.display_number} · ${j.clients?.name ?? "Client"} · ${j.title}` }))}
         defaultJobId={current?.id ?? ""}
         materials={(materials ?? []).map((m) => ({ id: m.id, name: m.name, unit: m.unit }))}
-        aiEnabled={organization.ai_enabled !== false}
+        aiEnabled={aiOn(organization)}
       />
     </div>
   );

@@ -3,6 +3,7 @@ import { Building2, Plus, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext } from "@/lib/auth";
 import { EmptyState } from "@/components/empty-state";
+import { demoExpired } from "@/lib/demo";
 
 export default async function AdminCompaniesPage({
   searchParams,
@@ -13,7 +14,11 @@ export default async function AdminCompaniesPage({
   const { q } = await searchParams;
   const supabase = await createClient();
 
-  const { data: companies } = await supabase.rpc("platform_admin_list_companies_v2");
+  const [{ data: companies }, { data: demoRows }] = await Promise.all([
+    supabase.rpc("platform_admin_list_companies_v2"),
+    supabase.rpc("platform_admin_get_demo", {}),
+  ]);
+  const demoById = new Map((demoRows ?? []).filter((d) => d.account_type === "demo").map((d) => [d.id, d]));
   const filtered = q
     ? (companies ?? []).filter((c) => c.name.toLowerCase().includes(q.toLowerCase()))
     : (companies ?? []);
@@ -76,6 +81,11 @@ export default async function AdminCompaniesPage({
                     <Link href={`/admin/companii/${c.id}`} className="text-[13.5px] font-bold text-[#17151f] hover:text-purple">
                       {c.name}
                     </Link>
+                    {demoById.has(c.id) && (
+                      <span className={`ml-2 rounded-full px-2 py-0.5 text-[10.5px] font-bold ${demoExpired(demoById.get(c.id)!) ? "bg-danger-bg text-danger" : "bg-[#101828] text-[#c6ff4a]"}`}>
+                        {demoExpired(demoById.get(c.id)!) ? "Demo încheiat" : "Demo"}
+                      </span>
+                    )}
                     {c.cui && <div className="text-[11.5px] text-[#9b93b5]">{c.cui}</div>}
                   </td>
                   <td className="px-5 py-3.5 text-[13px] font-semibold text-[#5c5670]">

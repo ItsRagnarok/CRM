@@ -1,5 +1,7 @@
 "use client";
 
+import { ActivityPulse, ACTIVITY_MODE } from "@/components/activity-pulse";
+
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -37,10 +39,13 @@ export function Topbar({
   notifications,
   profileId,
   readOnly,
+  pulse = false,
 }: {
   notifications: NotificationItem[];
   profileId: string;
   readOnly?: boolean;
+  /** Bara de activitate (utilizatori activi + viteză): reală pentru firme, simulată în vizualizarea Super Adminului. */
+  pulse?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -116,7 +121,7 @@ export function Topbar({
       >
         <Menu className="h-5 w-5" strokeWidth={1.9} />
       </button>
-      <Link href="/dashboard" className="text-[15px] font-bold tracking-tight text-foreground md:hidden">
+      <Link href="/dashboard" className={`text-[15px] font-bold tracking-tight text-foreground md:hidden ${pulse ? "hidden" : ""}`}>
         Electro<span className="text-electric">Field</span>
       </Link>
       {showSearch && (
@@ -130,6 +135,7 @@ export function Topbar({
       )}
 
       <div className="flex-1" />
+      {pulse && <ActivityPulse mode={ACTIVITY_MODE} />}
       <ThemeToggle />
 
       <div className="relative">

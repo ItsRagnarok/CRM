@@ -2,6 +2,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ScreenHeader } from "@/components/mobile/ui";
 import { ScanFlow } from "./scan-flow";
+import { aiOn } from "@/lib/demo";
 
 export default async function ScanPage({ searchParams }: { searchParams: Promise<{ job?: string; tip?: string }> }) {
   const sp = await searchParams;
@@ -21,7 +22,7 @@ export default async function ScanPage({ searchParams }: { searchParams: Promise
   return (
     <div className="flex h-full flex-col">
       <ScreenHeader title="Scanează" subtitle="Bon, factură, etichetă sau document" />
-      <ScanFlow jobs={jobs} defaultJobId={sp.job && jobs.some((j) => j.id === sp.job) ? sp.job : ""} defaultType={["bon", "factura", "eticheta", "document"].includes(sp.tip ?? "") ? (sp.tip as "bon") : "bon"} aiEnabled={organization.ai_enabled !== false} />
+      <ScanFlow jobs={jobs} defaultJobId={sp.job && jobs.some((j) => j.id === sp.job) ? sp.job : ""} defaultType={["bon", "factura", "eticheta", "document"].includes(sp.tip ?? "") ? (sp.tip as "bon") : "bon"} aiEnabled={aiOn(organization)} />
     </div>
   );
 }

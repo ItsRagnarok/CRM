@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState, useTransition } from "react";
+import { useActionState, useMemo, useRef, useState, useTransition } from "react";
 import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus } from "lucide-react";
 import {
   EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
   isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, type BriefLead,
 } from "@/lib/leads";
-import { addLead, addLeadEvent, deleteLead, importBookings, setFollowUp, setLeadStage, updateLead } from "./actions";
+import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, updateLead } from "./actions";
 
 type Lead = BriefLead & { id: string; booking_id: string | null; organization_id: string | null };
 type LeadEvent = { id: string; lead_id: string; kind: string; body: string; created_at: string };
@@ -198,6 +198,9 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const [q, setQ] = useState("");
   const [source, setSource] = useState("");
   const [due, setDue] = useState("");
+  // Filtrul ales din cardurile de sus: deschise, cu valoare, închise (câștigate sau pierdute).
+  const [only, setOnly] = useState<"" | "open" | "valoare" | "closed">("");
+  const listRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<string | "new" | null>(null);
   const [importMsg, setImportMsg] = useState<string | null>(null);
   const [importing, startImport] = useTransition();
@@ -211,7 +214,8 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const filtered = leads.filter((l) => {
     const text = `${l.company_name} ${l.contact_name ?? ""} ${l.phone ?? ""}`.toLowerCase();
     const f = followUpState(l.next_follow_up, today, l.stage);
-    return (!q || text.includes(q.toLowerCase())) && (!source || l.source === source) && (!due || (due === "azi" ? f === "azi" || f === "intarziat" : f === due));
+    const inOnly = !only || (only === "open" ? isOpenStage(l.stage) : only === "valoare" ? isOpenStage(l.stage) && l.estimated_value != null && Number(l.estimated_value) > 0 : !isOpenStage(l.stage));
+    return inOnly && (!q || text.includes(q.toLowerCase())) && (!source || l.source === source) && (!due || (due === "azi" ? f === "azi" || f === "intarziat" : f === due));
   });
   const open = leads.filter((l) => isOpenStage(l.stage));
   const pipeline = pipelineValue(leads);
@@ -221,12 +225,18 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
   const lost = leads.filter((l) => l.stage === "pierdut").length;
   const current = selected && selected !== "new" ? leads.find((l) => l.id === selected) ?? null : null;
 
-  const kpi = (icon: React.ReactNode, title: string, value: string, sub: string) => (
-    <div className="flex items-start gap-3 rounded-[16px] border border-border bg-white p-3.5 sm:items-center sm:gap-3.5 sm:p-4">
+  /** Un card de sus duce la lista filtrată exact pe ce numără, și derulează până la ea. */
+  const show = (next: { only?: typeof only; due?: string }) => {
+    setQ(""); setSource(""); setOnly(next.only ?? ""); setDue(next.due ?? ""); setView("list");
+    requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  };
+  const kpi = (icon: React.ReactNode, title: string, value: string, sub: string, go: () => void, active: boolean) => (
+    <button type="button" onClick={go} aria-pressed={active} className={`flex items-start gap-3 rounded-[16px] border bg-white p-3.5 text-left transition-colors hover:border-foreground sm:items-center sm:gap-3.5 sm:p-4 ${active ? "border-foreground ring-1 ring-foreground" : "border-border"}`}>
       <span className="hidden text-muted sm:block">{icon}</span>
-      <div className="min-w-0"><div className="text-[12.5px] text-muted">{title}</div><div className="text-[22px] font-extrabold leading-tight tabular-nums sm:text-[24px]">{value}</div><div className="text-[12px] text-muted">{sub}</div></div>
-    </div>
+      <div className="min-w-0"><div className="text-[12.5px] text-muted">{title}</div><div className="text-[22px] font-extrabold leading-tight tabular-nums sm:text-[24px]">{value}</div><div className="text-[12px] text-muted">{sub} · <span className="font-semibold text-foreground">vezi</span></div></div>
+    </button>
   );
+  const filterLabel = only === "open" ? "Leaduri deschise" : only === "valoare" ? "Deschise, cu valoare" : only === "closed" ? "Câștigate și pierdute" : due === "azi" ? "De reluat azi sau întârziate" : due === "intarziat" ? "Doar întârziate" : "";
 
   const card = (l: Lead) => (
     <button key={l.id} type="button" onClick={() => setSelected(l.id)} aria-current={selected === l.id} className={`mb-2 block w-full rounded-[14px] border bg-white p-3 text-left ${selected === l.id ? "border-foreground" : "border-border"}`}>
@@ -246,19 +256,33 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
         </div>
         <div className="flex w-full flex-wrap gap-2 sm:w-auto">
           <button type="button" disabled={importing} onClick={() => startImport(async () => { const r = await importBookings(); setImportMsg(r.error ?? (r.added ? `${r.added} programări aduse.` : "Nimic nou de adus.")); })} className={btn}>Importă din Programări</button>
+          <label className={`${btn} cursor-pointer ${importing ? "pointer-events-none opacity-50" : ""}`} title="Fișier JSON cu leaduri și istoricul lor (format electrofield-leads)">
+            Importă din fișier
+            <input type="file" accept=".json,application/json" className="sr-only" disabled={importing} onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (!file) return;
+              startImport(async () => {
+                const r = await importLeadsFile(await file.text());
+                if (r.error) { setImportMsg(r.error); return; }
+                const parts = [`${r.added ?? 0} leaduri noi`, r.updated ? `${r.updated} completate` : "", `${r.events ?? 0} mesaje în istoric`].filter(Boolean).join(", ");
+                setImportMsg(`Import gata: ${parts}.${r.warnings?.length ? ` Atenție: ${r.warnings.join(" ")}` : ""}`);
+              });
+            }} />
+          </label>
           <button type="button" onClick={() => setSelected("new")} className={`${btnPrimary} inline-flex items-center gap-1.5`}><Plus className="h-4 w-4" /> Lead nou</button>
         </div>
       </div>
       {importMsg && <p role="status" className="mt-2 text-[12.5px] font-semibold text-muted">{importMsg}</p>}
 
       <section className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" aria-label="Sumar">
-        {kpi(<UserRound className="h-5 w-5" />, "Leaduri deschise", String(open.length), `din ${leads.length} în total`)}
-        {kpi(<Layers className="h-5 w-5" />, "Valoare în pipeline", formatLei(pipeline.total), `abonamente lunare, ${pipeline.counted} cu valoare`)}
-        {kpi(<CalendarClock className="h-5 w-5" />, "De reluat azi sau întârziate", String(dueCount), "apar și în meniu")}
-        {kpi(<Target className="h-5 w-5" />, "Rată de câștig", rate === null ? "—" : `${rate}%`, `${won} câștigate, ${lost} pierdute`)}
+        {kpi(<UserRound className="h-5 w-5" />, "Leaduri deschise", String(open.length), `din ${leads.length} în total`, () => show({ only: "open" }), only === "open")}
+        {kpi(<Layers className="h-5 w-5" />, "Valoare în pipeline", formatLei(pipeline.total), `abonamente lunare, ${pipeline.counted} cu valoare`, () => show({ only: "valoare" }), only === "valoare")}
+        {kpi(<CalendarClock className="h-5 w-5" />, "De reluat azi sau întârziate", String(dueCount), "apar și în meniu", () => show({ due: "azi" }), due === "azi" && !only)}
+        {kpi(<Target className="h-5 w-5" />, "Rată de câștig", rate === null ? "—" : `${rate}%`, `${won} câștigate, ${lost} pierdute`, () => show({ only: "closed" }), only === "closed")}
       </section>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2.5 [&_select]:min-h-10 [&_input]:min-h-10">
+      <div ref={listRef} className="mt-5 flex scroll-mt-4 flex-wrap items-center gap-2.5 [&_select]:min-h-10 [&_input]:min-h-10">
         <div className="flex rounded-[10px] border border-border bg-white p-0.5" role="group" aria-label="Mod de afișare">
           {([["board", "Pe etape"], ["list", "Listă"]] as const).map(([id, text]) => (
             <button key={id} type="button" aria-pressed={view === id} onClick={() => setView(id)} className={`rounded-[8px] px-3.5 py-1.5 text-[13px] font-bold ${view === id ? "bg-electric text-[#0a0d0a]" : "text-muted"}`}>{text}</button>
@@ -273,6 +297,11 @@ export function LeadsBoard({ leads, events, today }: { leads: Lead[]; events: Le
         <select id="lead-source" value={source} onChange={(e) => setSource(e.target.value)} className={`${input} w-auto`}><option value="">Toate sursele</option>{LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select>
         <label className="sr-only" htmlFor="lead-due">Reluare</label>
         <select id="lead-due" value={due} onChange={(e) => setDue(e.target.value)} className={`${input} w-auto`}><option value="">Orice reluare</option><option value="azi">Azi sau întârziate</option><option value="intarziat">Doar întârziate</option></select>
+        {filterLabel && (
+          <button type="button" onClick={() => { setOnly(""); setDue(""); }} className="inline-flex items-center gap-1.5 rounded-full bg-foreground px-3 py-1.5 text-[12.5px] font-bold text-background" aria-label={`Scoate filtrul ${filterLabel}`}>
+            {filterLabel} · {filtered.length} <X className="h-3.5 w-3.5" />
+          </button>
+        )}
       </div>
 
       <div className={`mt-4 grid grid-cols-1 gap-4 ${selected ? "xl:grid-cols-[minmax(0,1fr)_380px]" : ""}`}>

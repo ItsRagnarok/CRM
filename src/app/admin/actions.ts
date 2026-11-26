@@ -6,6 +6,15 @@ import { createClient } from "@/lib/supabase/server";
 import { requireAdminContext } from "@/lib/auth";
 import { parseDomains } from "@/lib/domains";
 import { parseModules } from "@/lib/modules";
+import { parseDemoFeatures } from "@/lib/demo";
+
+/** Câmpurile contului demo din formular: comutatorul, funcțiile deblocate, data de final (sfârșitul zilei, ora României). */
+function readDemo(formData: FormData) {
+  const demo = formData.get("demo") === "on";
+  const date = String(formData.get("demoExpires") ?? "").trim();
+  const expires = demo && /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(`${date}T23:59:59+02:00`).toISOString() : null;
+  return { demo, unlocked: demo ? parseDemoFeatures(formData.getAll("unlocked")) : [], expires };
+}
 
 export async function signOutAdmin() {
   const supabase = await createClient();
@@ -47,6 +56,8 @@ export async function createCompany(
   if (newOrgId) {
     await supabase.rpc("platform_admin_set_company_domains", { org_id: newOrgId as string, domains });
     await supabase.rpc("platform_admin_set_company_modules", { org_id: newOrgId as string, modules: parseModules(formData.getAll("modules")) });
+    const d = readDemo(formData);
+    if (d.demo) await supabase.rpc("platform_admin_set_demo", { org_id: newOrgId as string, p_demo: true, p_unlocked: d.unlocked, p_expires: d.expires });
   }
 
   revalidatePath("/admin/companii");
@@ -107,4 +118,25 @@ export async function updateCompanyConfig(orgId: string, formData: FormData) {
   if (a.error || b.error) return { error: "Nu am putut salva domeniile și modulele." };
   revalidatePath(`/admin/companii/${orgId}`);
   return { error: undefined, saved: true };
+}
+
+/** Pagina companiei: pornește, schimbă sau oprește contul demo. */
+export async function updateDemo(orgId: string, formData: FormData) {
+  await requireAdminContext();
+  const d = readDemo(formData);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("platform_admin_set_demo", { org_id: orgId, p_demo: d.demo, p_unlocked: d.unlocked, p_expires: d.expires });
+  if (error) return { error: "Nu am putut salva contul demo." };
+  revalidatePath(`/admin/companii/${orgId}`);
+  revalidatePath("/admin/companii");
+  return { error: undefined, saved: d.demo ? "Cont demo salvat." : "Contul e acum client: totul e deblocat." };
+}
+
+/** Demo → client: toate funcțiile se deblochează, banda „Cont demo” dispare. Datele rămân. */
+export async function convertDemoToClient(orgId: string) {
+  await requireAdminContext();
+  const supabase = await createClient();
+  await supabase.rpc("platform_admin_set_demo", { org_id: orgId, p_demo: false, p_unlocked: [], p_expires: null });
+  revalidatePath(`/admin/companii/${orgId}`);
+  revalidatePath("/admin/companii");
 }

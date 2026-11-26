@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
+import { companyKey, parseLeadsFile, type ImportedLead } from "@/lib/leads-import";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -132,4 +133,54 @@ export async function importBookings(): Promise<{ error?: string; added?: number
   if (insertError) return { error: "Nu am putut importa programările." };
   revalidatePath("/admin/leads");
   return { added: rows.length };
+}
+
+/**
+ * Importă leaduri dintr-un fișier JSON (formatul din src/lib/leads-import.ts).
+ * Firma deja existentă (același nume) nu se dublează: i se completează doar câmpurile goale,
+ * iar din istoric se adaugă doar mesajele care nu sunt deja acolo.
+ */
+export async function importLeadsFile(text: string): Promise<{ error?: string; added?: number; updated?: number; events?: number; warnings?: string[] }> {
+  const { userId } = await requireAdminContext();
+  if (typeof text !== "string" || text.length > 2_000_000) return { error: "Fișierul e prea mare (maxim 2 MB)." };
+  const { leads, errors } = parseLeadsFile(text);
+  if (!leads.length) return { error: errors[0] ?? "Nu am găsit niciun lead în fișier." };
+  const supabase = await createClient({ ignorePreview: true });
+  const { data: existing, error: readError } = await supabase.from("platform_leads").select("id, company_name, contact_name, phone, email, team_size, estimated_value, next_follow_up, current_tools, problems").limit(5000);
+  if (readError) return { error: "Nu am putut citi leadurile existente." };
+  const byKey = new Map((existing ?? []).map((l) => [companyKey(l.company_name), l]));
+  let added = 0, updated = 0, events = 0;
+  for (const l of leads) {
+    const { events: evs, ...row } = l;
+    let leadId: string;
+    const found = byKey.get(companyKey(l.company_name));
+    if (found) {
+      leadId = found.id;
+      const fill: Partial<Pick<ImportedLead, "contact_name" | "phone" | "email" | "team_size" | "estimated_value" | "next_follow_up" | "current_tools" | "problems">> = {};
+      for (const k of ["contact_name", "phone", "email", "team_size", "estimated_value", "next_follow_up", "current_tools", "problems"] as const) {
+        if ((found[k] === null || found[k] === "") && row[k] !== null) Object.assign(fill, { [k]: row[k] });
+      }
+      if (Object.keys(fill).length) {
+        await supabase.from("platform_leads").update(fill).eq("id", leadId);
+        updated++;
+      }
+    } else {
+      const { data: ins, error } = await supabase.from("platform_leads").insert({ ...row, created_by: userId, ...(evs.length ? { created_at: evs.map((e) => e.created_at).sort()[0] } : {}) }).select("id").single();
+      if (error || !ins) { errors.push(`${l.company_name}: nu s-a putut salva.`); continue; }
+      leadId = ins.id;
+      added++;
+    }
+    if (evs.length) {
+      const { data: had } = await supabase.from("platform_lead_events").select("kind, body").eq("lead_id", leadId);
+      const seen = new Set((had ?? []).map((e) => `${e.kind}|${e.body}`));
+      const fresh = evs.filter((e) => !seen.has(`${e.kind}|${e.body}`)).map((e) => ({ ...e, lead_id: leadId, created_by: userId }));
+      if (fresh.length) {
+        const { error } = await supabase.from("platform_lead_events").insert(fresh);
+        if (error) errors.push(`${l.company_name}: istoricul nu s-a putut salva.`);
+        else events += fresh.length;
+      }
+    }
+  }
+  revalidatePath("/admin/leads");
+  return { added, updated, events, warnings: errors.slice(0, 20) };
 }

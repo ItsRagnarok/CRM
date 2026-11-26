@@ -998,6 +998,12 @@ export type Database = {
           },
         ]
       }
+      demo_events: {
+        Row: { id: string; organization_id: string; profile_id: string | null; feature: string; area: string; created_at: string }
+        Insert: { id?: string; organization_id: string; profile_id?: string | null; feature: string; area: string; created_at?: string }
+        Update: { id?: string; organization_id?: string; profile_id?: string | null; feature?: string; area?: string; created_at?: string }
+        Relationships: []
+      }
       ai_log: {
         Row: {
           id: string
@@ -3002,6 +3008,9 @@ export type Database = {
         Row: {
           address: string | null
           ai_enabled: boolean
+          account_type: string
+          demo_unlocked: string[]
+          demo_expires_at: string | null
           arrival_window_minutes: number
           created_at: string
           cui: string | null
@@ -3037,6 +3046,9 @@ export type Database = {
         Insert: {
           address?: string | null
           ai_enabled?: boolean
+          account_type?: string
+          demo_unlocked?: string[]
+          demo_expires_at?: string | null
           arrival_window_minutes?: number
           created_at?: string
           cui?: string | null
@@ -3072,6 +3084,9 @@ export type Database = {
         Update: {
           address?: string | null
           ai_enabled?: boolean
+          account_type?: string
+          demo_unlocked?: string[]
+          demo_expires_at?: string | null
           arrival_window_minutes?: number
           created_at?: string
           cui?: string | null
@@ -4383,6 +4398,12 @@ export type Database = {
         Args: { p_hash: string }
         Returns: boolean
       }
+      ef_record_site_automated: {
+        Args: { p_path: string; p_country: string; p_city: string; p_device: string; p_browser: string }
+        Returns: undefined
+      }
+      ef_site_online: { Args: never; Returns: Json }
+      ef_platform_online_count: { Args: never; Returns: number }
       ef_site_stats: {
         Args: { p_period?: string; p_from?: string; p_to?: string }
         Returns: Json
@@ -4492,6 +4513,18 @@ export type Database = {
           job_number: number; title: string; status: string
           scheduled_date: string | null; start_time: string | null; work_started_at: string | null; work_ended_at: string | null
         }[]
+      }
+      platform_admin_set_demo: {
+        Args: { org_id: string; p_demo: boolean; p_unlocked: string[]; p_expires: string | null }
+        Returns: undefined
+      }
+      platform_admin_get_demo: {
+        Args: { org_id?: string | null }
+        Returns: { id: string; account_type: string; demo_unlocked: string[]; demo_expires_at: string | null }[]
+      }
+      platform_admin_demo_events: {
+        Args: { org_id: string }
+        Returns: { feature: string; area: string; opens: number; last_at: string }[]
       }
       platform_admin_set_company_modules: {
         Args: { org_id: string; modules: string[] }

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { todayInOrgTimeZone } from "@/lib/date";
 import { ScreenHeader } from "@/components/mobile/ui";
 import { ExpenseForm } from "./expense-form";
+import { aiOn } from "@/lib/demo";
 
 export default async function NewExpensePage({ searchParams }: { searchParams: Promise<{ job?: string }> }) {
   const { job: preselected } = await searchParams;
@@ -22,7 +23,7 @@ export default async function NewExpensePage({ searchParams }: { searchParams: P
   return (
     <div className="flex h-full flex-col">
       <ScreenHeader title="Cheltuială nouă" subtitle="Se trimite la birou pentru aprobare" back="/mobil/cheltuieli" />
-      <ExpenseForm jobs={jobs} defaultJobId={preselected && jobs.some((j) => j.id === preselected) ? preselected : jobs[0]?.id ?? ""} today={todayInOrgTimeZone()} aiEnabled={organization.ai_enabled !== false} />
+      <ExpenseForm jobs={jobs} defaultJobId={preselected && jobs.some((j) => j.id === preselected) ? preselected : jobs[0]?.id ?? ""} today={todayInOrgTimeZone()} aiEnabled={aiOn(organization)} />
     </div>
   );
 }

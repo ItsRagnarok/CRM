@@ -8,6 +8,8 @@ import { Sidebar } from "@/components/sidebar";
 import { Topbar } from "@/components/topbar";
 import { PreviewBoundary } from "@/components/preview-boundary";
 import { UsageTracker } from "@/components/usage-tracker";
+import { DemoBanner } from "@/components/demo/demo-banner";
+import { isDemo, lockedPaths } from "@/lib/demo";
 
 // Every page in this group reads the signed-in user's session; never serve a
 // cached/prerendered response for someone else's data.
@@ -55,9 +57,10 @@ export default async function AppLayout({
   return (
     <div className="ef-app-theme flex h-dvh overflow-hidden bg-background">
       {!readOnly && <UsageTracker channel="web" />}
-      <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} badges={navBadges} />
+      <Sidebar fullName={profile.full_name} roleLabel={ROLE_LABELS[profile.role]} unreadMessages={unreadConversationsCount} modules={organization.enabled_modules ?? []} badges={navBadges} locked={lockedPaths(organization)} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} />
+        <Topbar notifications={notifications ?? []} profileId={profile.id} readOnly={readOnly} pulse />
+        {isDemo(organization) && <DemoBanner org={organization} />}
         {readOnly ? <PreviewBoundary company={organization.name} fullName={profile.full_name}><main className="isolate flex-1 overflow-auto">{children}</main></PreviewBoundary> : <main className="isolate flex-1 overflow-auto">{children}</main>}
         <VersionWatcher />
       </div>
