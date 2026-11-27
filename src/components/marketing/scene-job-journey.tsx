@@ -1,39 +1,19 @@
-"use client";
-
-import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import s from "./marketing.module.css";
 
+// Drumul unei lucrări, pe pași reali din platformă. Fără animație legată de derulare: pe telefon pașii
+// stau unul sub altul, pe calculator pe un rând.
 const STEPS = [
-  "Programare",
-  "Tehnician alocat",
-  "Plecare",
-  "Navigație",
-  "Sosire",
-  "Execuție",
-  "Finalizare",
+  { h: "Programare", p: "Biroul pune lucrarea în calendar, cu clientul, adresa și echipa." },
+  { h: "Tehnician alocat", p: "Echipa o vede pe telefon, cu ce are de luat din depozit." },
+  { h: "Plecare", p: "Plecarea se pontează; clientul primește „echipa e pe drum”." },
+  { h: "Navigație", p: "Adresa se deschide direct în aplicația de hartă." },
+  { h: "Sosire", p: "Sosirea se pontează cu locația, ca dovadă." },
+  { h: "Execuție", p: "Poze înainte și după, checklist, măsurători." },
+  { h: "Finalizare", p: "Semnătura clientului, documentele și factura din ore și materiale." },
 ];
 
 export function SceneJobJourney() {
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [fill, setFill] = useState(0);
-
-  useEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    const onScroll = () => {
-      const rect = el.getBoundingClientRect();
-      const total = rect.height - window.innerHeight;
-      const p = total > 0 ? -rect.top / total : 0;
-      setFill(Math.min(1, Math.max(0, p)));
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const activeIdx = Math.floor(fill * STEPS.length);
-
   return (
     <section id="cum-functioneaza" className={`${s.section} ${s.journeySection}`}>
       <div className={s.journeyBg}>
@@ -50,26 +30,17 @@ export function SceneJobJourney() {
           </h2>
           <p>Fiecare etapă a unei lucrări, urmărită automat, fără hârtii și fără telefoane.</p>
         </div>
-      </div>
-
-      <div className={s.journeyStage} ref={stageRef}>
-        <div className={s.journeyStickyViewport}>
-          <div className={s.wrap}>
-            <div className={s.journeyTrack}>
-              <div className={s.journeyLine}>
-                <div className={s.journeyLineFill} style={{ width: `${fill * 100}%` }} />
+        <ol className={s.journeyList}>
+          {STEPS.map((step, i) => (
+            <li key={step.h} className={s.journeyItem}>
+              <span className={s.journeyNum}>{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <h3 className={s.journeyH}>{step.h}</h3>
+                <p className={s.journeyP}>{step.p}</p>
               </div>
-              <div className={s.journeyGrid}>
-                {STEPS.map((step, i) => (
-                  <div key={step} className={`${s.journeyStep} ${i <= activeIdx ? s.on : ""}`}>
-                    <div className={s.journeyDot}>{String(i + 1).padStart(2, "0")}</div>
-                    <div className={s.journeyLabel}>{step}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );

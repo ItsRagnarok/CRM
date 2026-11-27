@@ -495,3 +495,20 @@
 .seoFaq summary { cursor: pointer; font-weight: 600; color: var(--fg); font-size: 16.5px; }
 .seoFaq p { margin: 10px 0 0; color: var(--fg-dim); line-height: 1.65; }
 @media (min-width: 1100px) { .seo .wrap { padding-left: 96px; } }
+
+/* Drumul unei lucrări: listă simplă. Telefon: pașii unul sub altul, cu linie verticală. Calculator: un rând. */
+.journeyList { list-style: none; margin: 48px 0 0; padding: 0; position: relative; display: grid; gap: 22px; }
+.journeyList::before { content: ""; position: absolute; left: 21px; top: 8px; bottom: 8px; width: 2px; background: linear-gradient(180deg, var(--lime), var(--cyan)); opacity: .55; }
+.journeyItem { position: relative; display: grid; grid-template-columns: 44px 1fr; gap: 16px; align-items: start; }
+.journeyNum { position: relative; z-index: 1; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-2); border: 1px solid var(--lime); color: var(--lime); font-family: var(--font-mono); font-size: 12px; font-weight: 700; }
+.journeyH { margin: 9px 0 4px; font-size: 16px; font-weight: 700; color: var(--fg); }
+.journeyP { margin: 0; font-size: 14.5px; line-height: 1.55; color: var(--fg-dim); max-width: 46ch; }
+@media (min-width: 1040px) {
+  .journeyList { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 18px; }
+  .journeyList::before { left: 22px; right: 22px; top: 21px; bottom: auto; width: auto; height: 2px; background: linear-gradient(90deg, var(--lime), var(--cyan)); }
+  .journeyItem { grid-template-columns: 1fr; gap: 12px; }
+  .journeyH { margin-top: 0; }
+  .journeyP { font-size: 13.5px; }
+}
+.journeySection { padding-bottom: 96px; }
+.journeyItem { align-content: start; }
