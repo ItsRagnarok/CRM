@@ -32,27 +32,9 @@ export async function DemoGate({ feature, area, children }: { feature: string; a
 
 function LockedWeb({ feature, label, why, expired, canRequest }: { feature: string; label: string; why: string; expired: boolean; canRequest: boolean }) {
   return (
-    <div className="relative min-h-full overflow-hidden p-5 md:p-7">
-      {/* Ecranul „real”, estompat, în spate: rânduri și carduri, ca să se vadă că modulul există. */}
-      <div aria-hidden="true" className="pointer-events-none select-none opacity-60 blur-[3px]">
-        <div className="h-7 w-64 rounded-lg bg-[#e4e7ec]" />
-        <div className="mt-2 h-4 w-96 max-w-full rounded bg-[#eef0f3]" />
-        <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => <div key={i} className="h-24 rounded-2xl border border-border bg-white" />)}
-        </div>
-        <div className="mt-5 rounded-2xl border border-border bg-white p-4">
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-center gap-4 border-b border-[#f2f4f7] py-3 last:border-0">
-              <div className="h-9 w-9 rounded-xl bg-[#eef0f3]" />
-              <div className="h-3.5 flex-1 rounded bg-[#eef0f3]" />
-              <div className="h-3.5 w-24 rounded bg-[#eef0f3]" />
-              <div className="h-6 w-20 rounded-full bg-[#e8f8c8]" />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="absolute inset-0 flex items-start justify-center px-4 pt-[10vh]">
-        <section className="w-full max-w-[520px] rounded-[18px] border border-border bg-white p-6 shadow-[0_24px_60px_rgba(16,24,40,.16)]" aria-labelledby="demo-lock-title">
+    <div className="flex min-h-full items-start justify-center px-4 pb-10 pt-[10vh]">
+      <div className="w-full max-w-[520px]">
+        <section className="w-full max-w-[520px] rounded-xl border border-border bg-white p-6" aria-labelledby="demo-lock-title">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#101828] text-electric"><Lock className="h-5 w-5" /></div>
           <h1 id="demo-lock-title" className="mt-4 text-[21px] font-extrabold leading-tight tracking-tight">
             {expired ? "Perioada demo s-a încheiat" : `${label} se configurează pe firma ta`}
