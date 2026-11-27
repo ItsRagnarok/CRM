@@ -1,6 +1,7 @@
 import { StaticLink } from "@/components/static-link";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { LEGAL_SHORT } from "@/lib/contact";
 import s from "./marketing.module.css";
 
 export function MarketingFooter() {
@@ -29,7 +30,7 @@ export function MarketingFooter() {
           <Link href="/confidentialitate">Confidențialitate</Link>
           <Link href="/login">Conectează-te</Link>
         </div>
-        <div className={s.footCopy}>© {new Date().getFullYear()} ElectroField</div>
+        <div className={s.footCopy}>© {new Date().getFullYear()} ElectroField · {LEGAL_SHORT}</div>
       </div>
     </footer>
   );

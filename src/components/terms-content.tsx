@@ -1,3 +1,4 @@
+import { LegalIdentity } from "@/components/legal-identity";
 import Link from "next/link";
 // Single source of truth for the Terms & Conditions text, used both by the
 // public /termeni page and by the mandatory /accepta-termeni acceptance
@@ -5,6 +6,10 @@ import Link from "next/link";
 export function TermsContent() {
   return (
     <div className="flex flex-col gap-6 text-[14px] leading-relaxed text-[#344054]">
+      <section>
+        <h2 className="text-[16px] font-bold text-foreground">Furnizorul serviciului</h2>
+        <LegalIdentity />
+      </section>
       <section>
         <h2 className="text-[16px] font-bold text-foreground">1. Obiectul serviciului</h2>
         <p className="mt-1.5">

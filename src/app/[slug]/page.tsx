@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MARKETING_PAGES, marketingPage } from "@/lib/marketing-pages";
 import { publicPageMetadata, SITE_URL } from "@/lib/seo";
+import { LEGAL_SHORT } from "@/lib/contact";
 import s from "./site-page.module.css";
 
 // Paginile publice pe meserie și funcționalitate. Doar slug-urile din listă există; restul dau 404.
@@ -128,7 +129,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ slug
         <div className={s.wrap}>
           <Link href="/">Acasă</Link><StaticLink href="/blog">Blog</StaticLink><StaticLink href="/programare">Programează un demo</StaticLink>
           <Link href="/termeni">Termeni</Link><Link href="/confidentialitate">Confidențialitate</Link>
-          <p>© 2026 ElectroField · contact@electrofield.ro · 0750 425 670</p>
+          <p>© 2026 ElectroField · {LEGAL_SHORT} · contact@electrofield.ro · 0750 425 670</p>
         </div>
       </footer>
     </div>

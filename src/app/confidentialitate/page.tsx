@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { publicPageMetadata } from "@/lib/seo";
+import { LegalIdentity } from "@/components/legal-identity";
 
 export const metadata = publicPageMetadata("Politica de confidențialitate — ElectroField", "Află cum sunt prelucrate datele personale în platforma ElectroField și cum poți contacta echipa pentru întrebări despre confidențialitate.", "/confidentialitate");
 
@@ -25,6 +26,11 @@ export default function PrivacyPolicyPage() {
             <b>operatorul de date</b> pentru informațiile introduse în platformă — ElectroField acționează ca{" "}
             <b>persoană împuternicită</b> (procesator), stocând și procesând datele în numele companiei respective.
           </p>
+          <p className="mt-1.5">
+            Pentru datele lăsate direct pe site-ul www.electrofield.ro (programări, formulare de contact, statistici de
+            vizitare), operatorul este furnizorul ElectroField.
+          </p>
+          <LegalIdentity />
         </section>
 
         <section>
