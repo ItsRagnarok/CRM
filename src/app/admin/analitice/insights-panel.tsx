@@ -91,7 +91,7 @@ export function InsightsPanel({ history: initial }: { history: InsightRow[] }) {
   const ai = Array.isArray(current?.ai) ? (current!.ai as Recommendation[]) : [];
   const rules = Array.isArray(current?.rules) ? (current!.rules as Recommendation[]) : [];
   const recs = [...ai, ...rules];
-  const s = (current?.summary ?? {}) as { visitors?: number; leads?: number; conversion?: number | null; programareVisitors?: number; aiSummary?: string | null };
+  const s = (current?.summary ?? {}) as { visitors?: number; leads?: number; conversion?: number | null; programareVisitors?: number; aiSummary?: string | null; aiRejected?: { title: string; reason: string }[] };
 
   function toggle(recId: string, on: boolean) {
     if (!current) return;
@@ -140,6 +140,14 @@ export function InsightsPanel({ history: initial }: { history: InsightRow[] }) {
             {recs.length > 0 && <span className="flex items-center gap-1"><ListChecks className="h-3.5 w-3.5" /> {applied.size}/{recs.length} aplicate</span>}
           </div>
           {s.aiSummary && <p className="rounded-xl bg-[#f6f4ff] p-3 text-[13.5px] text-foreground">{s.aiSummary}</p>}
+          {Array.isArray(s.aiRejected) && s.aiRejected.length > 0 && (
+            <details className="rounded-xl border border-border p-3 text-[12.5px] text-muted">
+              <summary className="cursor-pointer font-semibold">{s.aiRejected.length === 1 ? "1 recomandare AI aruncată" : `${s.aiRejected.length} recomandări AI aruncate`}: nu se bazau pe datele tale sau cereau ceva ce nu ai</summary>
+              <ul className="mt-2 flex list-disc flex-col gap-1 pl-5">
+                {s.aiRejected.map((r, i) => <li key={i}><span className="font-semibold text-foreground">{r.title}</span>: {r.reason}</li>)}
+              </ul>
+            </details>
+          )}
           {current.ai_error && <p className="text-[12px] text-muted">AI: {current.ai_error}</p>}
           {recs.length === 0 ? (
             <p className="text-[13px] text-muted">Nimic de semnalat în această perioadă.</p>
