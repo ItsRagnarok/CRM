@@ -1,3 +1,4 @@
+import { StaticLink } from "@/components/static-link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import Link from "next/link";
@@ -73,9 +74,9 @@ export default async function MarketingPage({ params }: { params: Promise<{ slug
           <Link className={`${s.l} ${s.h}`} href="/firme-instalatii-electrice">Electrice</Link>
           <Link className={`${s.l} ${s.h}`} href="/firme-gaze-verificari-revizii">Gaze</Link>
           <Link className={`${s.l} ${s.h}`} href="/firme-fotovoltaice">Fotovoltaice</Link>
-          <Link className={s.l} href="/blog">Blog</Link>
+          <StaticLink className={s.l} href="/blog">Blog</StaticLink>
           <Link className={`${s.btn} ${s.ghost} ${s.h}`} href="/login">Conectează-te</Link>
-          <Link className={s.btn} href="/programare">Programează un demo</Link>
+          <StaticLink className={s.btn} href="/programare">Programează un demo</StaticLink>
         </div>
       </header>
 
@@ -96,7 +97,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ slug
         <div className={s.cta}>
           <h2>Vezi platforma pe firma ta</h2>
           <p>O discuție de 15 minute la telefon sau 30 de minute pe Google Meet, cu platforma pe ecran, pe lucrările și echipele tale.</p>
-          <Link className={s.btn} href="/programare">Programează un demo</Link>
+          <StaticLink className={s.btn} href="/programare">Programează un demo</StaticLink>
         </div>
 
         <section className={s.faq}>
@@ -110,7 +111,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ slug
           <section>
             <h2>Ghiduri legate</h2>
             <ul className={s.related}>
-              {related.map((r) => <li key={r.slug}><Link href={`/blog/${r.slug}`}>{r.title}</Link></li>)}
+              {related.map((r) => <li key={r.slug}><StaticLink href={`/blog/${r.slug}`}>{r.title}</StaticLink></li>)}
             </ul>
           </section>
         )}
@@ -125,7 +126,7 @@ export default async function MarketingPage({ params }: { params: Promise<{ slug
 
       <footer className={s.foot}>
         <div className={s.wrap}>
-          <Link href="/">Acasă</Link><Link href="/blog">Blog</Link><Link href="/programare">Programează un demo</Link>
+          <Link href="/">Acasă</Link><StaticLink href="/blog">Blog</StaticLink><StaticLink href="/programare">Programează un demo</StaticLink>
           <Link href="/termeni">Termeni</Link><Link href="/confidentialitate">Confidențialitate</Link>
           <p>© 2026 ElectroField · contact@electrofield.ro · 0750 425 670</p>
         </div>

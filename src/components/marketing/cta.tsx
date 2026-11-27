@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { StaticLink } from "@/components/static-link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/contact";
@@ -17,12 +17,12 @@ export function CtaSection() {
         </h2>
         <p>ElectroField — platforma pentru firmele care lucrează în teren.</p>
         <div className={s.heroCtas} style={{ justifyContent: "center" }}>
-          <Link href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
+          <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
             Programează un demo <ArrowRight size={17} />
-          </Link>
-          <Link href="/blog" className={`${s.btn} ${s.btnOutline}`}>
+          </StaticLink>
+          <StaticLink href="/blog" className={`${s.btn} ${s.btnOutline}`}>
             Citește ghidurile
-          </Link>
+          </StaticLink>
         </div>
         <p className={s.ctaMail}>
           Preferi email sau WhatsApp?{" "}

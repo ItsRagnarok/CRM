@@ -1,3 +1,4 @@
+import { StaticLink } from "@/components/static-link";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import s from "./marketing.module.css";
@@ -21,8 +22,8 @@ export function MarketingFooter() {
           <Link href="/foaie-de-parcurs-electronica">Foaie de parcurs</Link>
           <Link href="/stoc-materiale-pe-masini">Stoc pe mașini</Link>
           <Link href="/facturare-smartbill-oblio">Facturare SmartBill și Oblio</Link>
-          <Link href="/blog">Ghiduri pentru firme de instalații</Link>
-          <Link href="/programare">Programează o discuție</Link>
+          <StaticLink href="/blog">Ghiduri pentru firme de instalații</StaticLink>
+          <StaticLink href="/programare">Programează o discuție</StaticLink>
           <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer">WhatsApp 0750 425 670</a>
           <Link href="/termeni">Termeni și condiții</Link>
           <Link href="/confidentialitate">Confidențialitate</Link>

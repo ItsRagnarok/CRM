@@ -1,3 +1,4 @@
+import { StaticLink } from "@/components/static-link";
 import Link from "next/link";
 import { HOME_FAQ } from "./home-faq";
 import s from "./marketing.module.css";
@@ -53,8 +54,8 @@ export function HomeSeo() {
 
         <h2 className={s.disp}>Ghiduri pentru firmele de instalații</h2>
         <ul className={s.seoGuides}>
-          {GUIDES.map((g) => <li key={g.href}><Link href={g.href}>{g.h}</Link></li>)}
-          <li><Link href="/blog">Toate ghidurile →</Link></li>
+          {GUIDES.map((g) => <li key={g.href}><StaticLink href={g.href}>{g.h}</StaticLink></li>)}
+          <li><StaticLink href="/blog">Toate ghidurile →</StaticLink></li>
         </ul>
 
         <h2 className={s.disp}>Întrebări frecvente</h2>

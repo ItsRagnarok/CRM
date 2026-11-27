@@ -1,5 +1,6 @@
 "use client";
 
+import { StaticLink } from "@/components/static-link";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -40,9 +41,9 @@ export function MarketingNav() {
         <Link href="/login" className={s.btnGhostNav}>
           Conectează-te
         </Link>
-        <Link href="/programare" className={s.btnLime}>
+        <StaticLink href="/programare" className={s.btnLime}>
           Programează un demo
-        </Link>
+        </StaticLink>
       </div>
     </nav>
   );

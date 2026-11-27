@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { StaticLink } from "@/components/static-link";
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { ArrowRight, PlayCircle } from "lucide-react";
@@ -70,9 +70,9 @@ export function Hero() {
             Tehnicienii văd lucrările alocate și trimit actualizări și rapoarte din aplicația mobilă dedicată.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
-            <Link href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
+            <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
               Programează un demo <ArrowRight size={17} />
-            </Link>
+            </StaticLink>
             <a href="#cum-functioneaza" className={`${s.btn} ${s.btnOutline}`}>
               <PlayCircle size={17} />
               Vezi cum funcționează
