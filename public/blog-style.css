@@ -1,6 +1,8 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Syne:wght@700;800&display=swap");
+/* Fonturi găzduite pe site (fără cereri la Google Fonts): Inter pentru text, Unbounded pentru titluri, ca pe pagina principală. */
+@font-face{font-family:Inter;src:url(/fonts/inter-variable.woff2) format("woff2");font-weight:100 900;font-display:swap}
+@font-face{font-family:Unbounded;src:url(/fonts/unbounded-variable.woff2) format("woff2");font-weight:200 900;font-display:swap}
 /* Tema ElectroField (prezentare) — culorile și fonturile se schimbă doar aici */
-:root{--bg:#0a0b0d;--panel:#111317;--line:rgba(255,255,255,.09);--tx:#fff;--body:#c9ccd3;--mut:#9aa0ab;--ac:#c8ff3c;--disp:Syne,Inter,system-ui,sans-serif}
+:root{--bg:#0a0b0d;--panel:#111317;--line:rgba(255,255,255,.09);--tx:#fff;--body:#c9ccd3;--mut:#9aa0ab;--ac:#c8ff3c;--disp:Unbounded,Inter,system-ui,sans-serif}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--body);font:17px/1.7 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
 a{color:var(--ac)}
@@ -44,3 +46,10 @@ footer a{color:var(--mut);margin-right:18px}
 .crumbs a:first-child::before{content:"←";font-size:15px}
 .crumbs a:first-child::after{content:"Înapoi la resurse";font-size:14px;font-weight:500}
 .crumbs a:first-child:hover{border-color:var(--ac);color:var(--ac)}
+
+/* „Citește și”: legături către articole apropiate și pagina de produs a domeniului */
+.related{margin:48px 0 8px}
+.related ul{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.related a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--tx);text-decoration:none;font-weight:500}
+.related a:hover{border-color:var(--ac)}
+img.cover{height:auto}
