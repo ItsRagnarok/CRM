@@ -512,3 +512,23 @@
 }
 .journeySection { padding-bottom: 96px; }
 .journeyItem { align-content: start; }
+
+/* Secțiuni cu capturi reale din platformă (în locul hărții și diagramei desenate). */
+.shotRow { display: grid; gap: 40px; align-items: center; }
+@media (min-width: 1040px) { .shotRow { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 56px; } }
+.shotCopy h2 { font-size: clamp(30px, 4.4vw, 52px); margin: 18px 0 18px; color: var(--fg); }
+.shotCopy p { color: var(--fg-dim); font-size: 17px; line-height: 1.65; max-width: 48ch; margin: 0; }
+.shotList { list-style: none; padding: 0; margin: 22px 0 0; display: grid; gap: 10px; }
+.shotList li { position: relative; padding-left: 22px; color: var(--fg-dim); font-size: 15.5px; line-height: 1.55; }
+.shotList li::before { content: ""; position: absolute; left: 0; top: 9px; width: 8px; height: 8px; border-radius: 2px; background: var(--lime); }
+.shotFrame { margin: 0; min-width: 0; }
+.shotFrame img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--line-bright); }
+.shotFrame figcaption { margin-top: 10px; font-size: 12.5px; color: var(--fg-mute); }
+.shotWide { margin-top: 48px; }
+.modGrid { list-style: none; padding: 0; margin: 40px 0 0; display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.modCard { display: flex; flex-direction: column; gap: 8px; height: 100%; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--bg-2); color: var(--fg); text-decoration: none; transition: border-color .2s ease; }
+.modCard:hover { border-color: var(--lime); }
+.modCard svg { color: var(--lime); }
+.modCard h3 { margin: 4px 0 0; font-size: 16px; font-weight: 700; }
+.modCard p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-dim); }
+div.modCard:hover { border-color: var(--line); }
