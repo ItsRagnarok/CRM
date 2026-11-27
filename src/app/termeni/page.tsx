@@ -16,7 +16,7 @@ export default function TermsPage() {
       <h1 className="text-[24px] font-extrabold">Termeni și condiții</h1>
       <p className="mt-1 text-[13px] text-muted-2">
         Ultima actualizare:{" "}
-        {new Date().toLocaleDateString("ro-RO", { year: "numeric", month: "long", day: "numeric" })}
+        8 noiembrie 2026
       </p>
 
       <div className="mt-8">

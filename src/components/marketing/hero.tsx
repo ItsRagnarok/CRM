@@ -12,9 +12,11 @@ export function Hero() {
   const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // Titlul (h1) nu se animă: e vizibil din prima, ca Google și cititorul să-l vadă imediat (LCP).
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        [".mk-reveal-1", ".mk-reveal-2", ".mk-reveal-3"],
+        [".mk-reveal-1", ".mk-reveal-3"],
         { opacity: 0, y: 26 },
         { opacity: 1, y: 0, duration: 1, ease: "power3.out", stagger: 0.12, delay: 0.15 }
       );

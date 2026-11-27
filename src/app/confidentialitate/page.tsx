@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
       </Link>
 
       <h1 className="text-[24px] font-extrabold">Politica de confidențialitate</h1>
-      <p className="mt-1 text-[13px] text-muted-2">Ultima actualizare: {new Date().toLocaleDateString("ro-RO", { year: "numeric", month: "long", day: "numeric" })}</p>
+      <p className="mt-1 text-[13px] text-muted-2">Ultima actualizare: 9 noiembrie 2026</p>
 
       <div className="mt-8 flex flex-col gap-6 text-[14px] leading-relaxed text-[#344054]">
         <section>
