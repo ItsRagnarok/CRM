@@ -186,3 +186,106 @@ export function compactForAi(s: StatsInput, period: InsightPeriod) {
     })),
   };
 }
+
+// ---------------------------------------------------------------------------
+// Filtrul pentru recomandările AI: păstrează doar ce se poate face cu ce ai și ce se sprijină pe cifre reale.
+// Rulează în cod, după răspunsul AI, oricât de bine ar respecta AI-ul regulile.
+
+const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+/** Lucruri pe care site-ul nu le are sau care cer date pe care nu le ai. Fiecare are motivul arătat patronului. */
+const IMPOSSIBLE: { re: RegExp; reason: string }[] = [
+  { re: /google analytics|\bga4?\b|search console|tag manager|\bgtm\b/, reason: "cere Google Analytics / Search Console, pe care site-ul nu le folosește" },
+  { re: /hotjar|microsoft clarity|heatmap|harta termica|hart[ai] de caldura|inregistrari? de sesiune/, reason: "cere un instrument de hărți termice sau înregistrări, care nu e instalat" },
+  { re: /pixel|remarketing|retargeting|lookalike|audient[ae] personalizat/, reason: "cere pixeli sau remarketing, care nu există pe site" },
+  { re: /newsletter|lista de e-?mail|abonati|abonatilor|mailchimp/, reason: "cere o listă de e-mail sau un newsletter, pe care nu le ai" },
+  { re: /\ba\/b\b|test(e|are)? a\/?b|split test/, reason: "cere teste A/B, fără instrument și cu prea puțin trafic" },
+  { re: /pop-?up|exit[- ]intent/, reason: "cere un pop-up, care nu există pe site" },
+  { re: /export\w*[^.]{0,40}(\bip|e-?mail|adres|list[aei])/, reason: "cere exportul unor date despre vizitatori, care nu există" },
+  { re: /(adres\w* de e-?mail|e-?mail\w*|telefo\w*|\bip-?uri\w*|date\w* de contact)[^.]{0,30}(vizitator|celor \d+|cei \d+)/, reason: "presupune că ai datele de contact ale vizitatorilor; sunt anonimi" },
+  { re: /(e-?mail|follow-?up|sun[aăi]|contacteaz\w*|scrie-le|mesaj\w*)[^.]{0,60}(\bcelor \d+|\bcei \d+)?[^.]{0,20}vizitator/, reason: "propune contactarea vizitatorilor anonimi; doar cei care cer programare își lasă datele" },
+];
+
+type DataNumbers = { all: Set<string>; counts: Set<string>; seconds: Set<string>; percents: Set<string> };
+const COUNT_KEYS = /^(vizitatori|afisari|cereri|visitors|views|leads|programareVisitors|prevVisitors|pagini)$/;
+const SECOND_KEYS = /^(secunde|secunde_medii|avgSeconds|seconds)$/;
+const PERCENT_KEYS = /^(conversion|bounce|mobileShare)$/;
+
+/** Cifrele din datele trimise la AI, separate pe fel: număr de oameni, secunde, procente, și toate la un loc. */
+function dataNumbers(data: unknown): DataNumbers {
+  const out: DataNumbers = { all: new Set(), counts: new Set(), seconds: new Set(), percents: new Set() };
+  const add = (n: string, key: string) => {
+    out.all.add(n);
+    if (COUNT_KEYS.test(key)) out.counts.add(n);
+    if (SECOND_KEYS.test(key)) out.seconds.add(n);
+    if (PERCENT_KEYS.test(key)) out.percents.add(n);
+  };
+  const walk = (v: unknown, key: string) => {
+    if (typeof v === "number" && Number.isFinite(v)) add(String(Math.round(v * 100) / 100), key);
+    else if (typeof v === "string") {
+      for (const m of v.matchAll(/(\d+(?:[.,]\d+)?)(s\b)?/g)) {
+        const n = m[1].replace(",", ".");
+        out.all.add(n);
+        if (m[2]) out.seconds.add(n); // „Pagina (45s)” din trasee
+      }
+    } else if (Array.isArray(v)) v.forEach((x) => walk(x, key));
+    else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) walk(x, k);
+  };
+  walk(data, "");
+  return out;
+}
+
+/** Felul cifrei după cuvântul de după ea: oameni / secunde / procent / altceva. */
+function kindOf(after: string): "counts" | "seconds" | "percents" | "all" {
+  const a = norm(after).trimStart();
+  if (/^%/.test(a)) return "percents";
+  if (/^(de\s+)?(secunde|sec\b|s\b|minut)/.test(a)) return "seconds";
+  if (/^(de\s+)?(vizitator|oameni|persoane|utilizator|afisar|cereri|programari|vizite|sesiuni|intrari)/.test(a)) return "counts";
+  return "all";
+}
+
+/** Căile de pagini care apar în date: doar acolo poate duce butonul „Deschide pagina”. */
+function dataPaths(data: unknown): Set<string> {
+  const out = new Set<string>(["/", "/programare", "/blog"]);
+  const walk = (v: unknown) => {
+    if (typeof v === "string" && /^\/[A-Za-z0-9/_.-]*$/.test(v)) out.add(v);
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === "object") Object.values(v).forEach(walk);
+  };
+  walk(data);
+  return out;
+}
+
+export type RejectedRecommendation = { title: string; reason: string };
+
+/**
+ * Păstrează doar recomandările AI care:
+ * - nu cer ceva ce nu ai (date de contact ale vizitatorilor, Google Analytics, pop-up-uri, newsletter...);
+ * - citează în „de ce” cel puțin o cifră din date și nicio cifră inventată (procentele calculate sunt permise);
+ * - duc, dacă au link, doar spre o pagină care apare în date.
+ * Cele aruncate se întorc cu motivul, ca patronul să vadă ce s-a filtrat.
+ */
+export function groundAiRecommendations(recs: Recommendation[], data: unknown): { kept: Recommendation[]; rejected: RejectedRecommendation[] } {
+  const nums = dataNumbers(data);
+  const paths = dataPaths(data);
+  const kept: Recommendation[] = [];
+  const rejected: RejectedRecommendation[] = [];
+  for (const r of recs) {
+    const sentences = norm([r.title, r.why, ...r.steps].join(". ")).split(/(?<=[.!?;])\s+|\n+/);
+    const bad = IMPOSSIBLE.find((b) => sentences.some((s) => !/campani|utm_source|link\w* marcat|\blead/.test(s) && b.re.test(s)));
+    if (bad) { rejected.push({ title: r.title, reason: bad.reason }); continue; }
+    const cited = [...r.why.matchAll(/(\d+(?:[.,]\d+)?)/g)].map((m) => {
+      const n = m[1].replace(",", ".");
+      const kind = kindOf(r.why.slice((m.index ?? 0) + m[0].length, (m.index ?? 0) + m[0].length + 20));
+      // Un procent poate fi calculat din două cifre din date; restul trebuie să existe, de același fel.
+      const ok = kind === "percents" ? true : kind === "all" ? nums.all.has(n) : nums[kind].has(n);
+      return { n, ok, inData: nums.all.has(n) };
+    });
+    const grounded = cited.filter((c) => c.ok && c.inData);
+    const invented = cited.filter((c) => !c.ok);
+    if (invented.length) { rejected.push({ title: r.title, reason: `citează cifre care nu apar în date (${invented.map((c) => c.n).join(", ")})` }); continue; }
+    if (!grounded.length) { rejected.push({ title: r.title, reason: "nu citează nicio cifră din datele site-ului" }); continue; }
+    kept.push(r.link && !paths.has(r.link.href) ? { ...r, link: undefined } : r);
+  }
+  return { kept, rejected };
+}

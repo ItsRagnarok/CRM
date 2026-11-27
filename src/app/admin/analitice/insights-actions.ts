@@ -27,7 +27,7 @@ export async function runSiteAnalysis(period: InsightPeriod): Promise<{ row?: In
     .insert({
       period,
       created_by: ctx.userId,
-      summary: { ...summary, aiSummary: "summary" in ai ? ai.summary : null },
+      summary: { ...summary, aiSummary: "summary" in ai ? ai.summary : null, aiRejected: "rejected" in ai ? ai.rejected : [] },
       rules,
       ai: "recommendations" in ai ? ai.recommendations : null,
       ai_model: "model" in ai ? ai.model : null,
