@@ -7,24 +7,26 @@ import { SITE_URL, SITE_DESCRIPTION } from "@/lib/seo";
 import "./globals.css";
 
 const inter = localFont({
-  src: "./fonts/inter-variable.ttf",
+  src: "./fonts/inter-variable.woff2",
   variable: "--font-inter",
   weight: "100 900",
   display: "swap",
 });
 
 const unbounded = localFont({
-  src: "./fonts/unbounded-variable.ttf",
+  src: "./fonts/unbounded-variable.woff2",
   variable: "--font-unbounded",
   weight: "200 900",
   display: "swap",
 });
 
 const jetbrainsMono = localFont({
-  src: "./fonts/jetbrains-mono-variable.ttf",
+  src: "./fonts/jetbrains-mono-variable.woff2",
   variable: "--font-mono",
   weight: "100 800",
   display: "swap",
+  // Fontul monospațiat apare doar în aplicație: nu se preîncarcă pe site-ul public.
+  preload: false,
 });
 
 export const metadata: Metadata = {
@@ -51,8 +53,7 @@ const SAFE_AREA_FALLBACK = `(function(){try{var c=window.Capacitor;var ios=c&&c.
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  // Pe site-ul public zoomul rămâne permis (accesibilitate); aplicația îl blochează în layout-urile ei.
   viewportFit: "cover",
   themeColor: "#1c1c22",
 };

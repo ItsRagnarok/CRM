@@ -1,3 +1,7 @@
+import type { Viewport } from "next";
+
+// Aplicația nu se mărește la atingere dublă sau ciupire (pe site-ul public zoomul rămâne permis).
+export const viewport: Viewport = { width: "device-width", initialScale: 1, maximumScale: 1, userScalable: false, viewportFit: "cover", themeColor: "#1c1c22" };
 import { VersionWatcher } from "@/components/version-watcher";
 import "./mobile.css";
 import { cookies } from "next/headers";

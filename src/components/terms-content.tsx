@@ -1,3 +1,4 @@
+import Link from "next/link";
 // Single source of truth for the Terms & Conditions text, used both by the
 // public /termeni page and by the mandatory /accepta-termeni acceptance
 // screen — so the two can never drift out of sync with each other.
@@ -32,9 +33,9 @@ export function TermsContent() {
           Organizația rămâne proprietara tuturor datelor introduse (clienți, lucrări, fotografii, facturi, date de
           pontaj). ElectroField prelucrează aceste date exclusiv pentru a furniza serviciul și nu le folosește în
           alte scopuri. Prelucrarea datelor cu caracter personal este descrisă în{" "}
-          <a href="/confidentialitate" className="font-semibold text-electric">
+          <Link href="/confidentialitate" className="font-semibold text-electric">
             Politica de confidențialitate
-          </a>
+          </Link>
           .
         </p>
       </section>

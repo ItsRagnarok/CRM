@@ -1,17 +1,24 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { MarketingLanding } from "@/components/marketing/marketing-landing";
 import { publicPageMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
+import { HOME_FAQ } from "@/components/marketing/home-faq";
 
 export const metadata = publicPageMetadata(
-  "ElectroField | Software pentru firme de instalații",
-  SITE_DESCRIPTION,
+  "Program pentru firme de instalații electrice, gaze și PV",
+  "ElectroField: lucrări, echipe, pontaj, foaie de parcurs, stoc pe mașini, documente ANRE și facturare SmartBill/Oblio pentru firme de instalații electrice, gaze și fotovoltaice.",
   "/",
 );
 
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "ElectroField",
+      inLanguage: "ro-RO",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
     {
       "@type": "Organization",
       "@id": `${SITE_URL}/#organization`,
@@ -24,6 +31,7 @@ const structuredData = {
     },
     {
       "@type": "SoftwareApplication",
+      "@id": `${SITE_URL}/#software`,
       name: "ElectroField",
       url: SITE_URL,
       description: SITE_DESCRIPTION,
@@ -31,43 +39,22 @@ const structuredData = {
       operatingSystem: "Web, Android",
       inLanguage: "ro-RO",
       publisher: { "@id": `${SITE_URL}/#organization` },
-      featureList: ["Dispecerat web", "Aplicație mobilă pentru tehnicieni", "Gestionare lucrări", "Programări", "Pontaj", "Materiale", "Rapoarte"],
+      featureList: ["Programarea lucrărilor pe echipe", "Aplicație mobilă pentru tehnicieni (Android, iPhone)", "Pontaj din teren", "Foaie de parcurs", "Stoc pe mașini și registru de scule", "Buletine PRAM și de izolație", "Scadențar verificări și revizii gaze", "Dosar fotovoltaic pe etape", "Facturare prin SmartBill și Oblio"],
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: HOME_FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
     },
   ],
 };
 
-export default async function RootPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return (
-      <>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
-        <MarketingLanding />
-      </>
-    );
-  }
-
-  const { data: platformAdmin } = await supabase
-    .from("platform_admins")
-    .select("id")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (platformAdmin) redirect("/admin");
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  // Field roles land on the mobile-optimized flow by default; office roles
-  // (admin/manager) get the desktop dashboard. Either can still navigate to
-  // the other manually — this only picks the default landing page.
-  const fieldRoles = ["technician", "team_leader"];
-  redirect(profile && fieldRoles.includes(profile.role) ? "/mobil" : "/dashboard");
+// Pagina principală e statică (servită din cache, rapidă pentru Google). Cine e logat e trimis din
+// middleware la /start, care alege panoul potrivit rolului.
+export default function RootPage() {
+  return (
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+      <MarketingLanding />
+    </>
+  );
 }

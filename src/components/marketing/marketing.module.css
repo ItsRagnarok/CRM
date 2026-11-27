@@ -472,3 +472,26 @@
 .footCopy { font-size: 11.5px; color: var(--fg-mute); font-family: var(--font-mono); }
 
 .reveal { opacity: 0; transform: translateY(30px); }
+
+/* Pagina principală: text vizibil pentru cine e platforma, legături interne și întrebări frecvente (SEO). */
+.seo { padding: 96px 0 72px; border-top: 1px solid var(--line); background: var(--bg-2); }
+.seo h2 { font-size: clamp(24px, 3.4vw, 38px); margin: 56px 0 18px; color: var(--fg); max-width: 26ch; }
+.seo h2:first-child { margin-top: 0; }
+.seoLead { max-width: 68ch; color: var(--fg-dim); font-size: 17px; line-height: 1.7; margin: 0 0 28px; }
+.seoGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.seoCard { display: flex; flex-direction: column; gap: 10px; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--bg-3); text-decoration: none; color: var(--fg); transition: border-color .2s ease; }
+.seoCard:hover { border-color: var(--lime); }
+.seoCard h3 { margin: 0; font-size: 19px; font-weight: 700; }
+.seoCard p { margin: 0; color: var(--fg-dim); font-size: 15px; line-height: 1.6; }
+.seoCard span { margin-top: auto; color: var(--lime); font-size: 14px; font-weight: 600; }
+.seoPills, .seoGuides { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+.seoPills a { display: inline-block; padding: 10px 18px; border: 1px solid var(--line-bright); border-radius: 100px; color: var(--fg); text-decoration: none; font-weight: 600; font-size: 15px; }
+.seoPills a:hover { border-color: var(--lime); color: var(--lime); }
+.seoGuides { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; }
+.seoGuides a { display: block; padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; color: var(--fg-dim); text-decoration: none; font-size: 15px; }
+.seoGuides a:hover { border-color: var(--lime); color: var(--fg); }
+.seoFaq { max-width: 820px; }
+.seoFaq details { border-top: 1px solid var(--line); padding: 16px 0; }
+.seoFaq summary { cursor: pointer; font-weight: 600; color: var(--fg); font-size: 16.5px; }
+.seoFaq p { margin: 10px 0 0; color: var(--fg-dim); line-height: 1.65; }
+@media (min-width: 1100px) { .seo .wrap { padding-left: 96px; } }

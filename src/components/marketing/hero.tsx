@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { ArrowRight, PlayCircle } from "lucide-react";
@@ -67,9 +68,9 @@ export function Hero() {
             Tehnicienii văd lucrările alocate și trimit actualizări și rapoarte din aplicația mobilă dedicată.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
-            <a href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
+            <Link href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
               Programează un demo <ArrowRight size={17} />
-            </a>
+            </Link>
             <a href="#cum-functioneaza" className={`${s.btn} ${s.btnOutline}`}>
               <PlayCircle size={17} />
               Vezi cum funcționează

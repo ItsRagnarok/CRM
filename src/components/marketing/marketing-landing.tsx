@@ -8,6 +8,7 @@ import { ScenePhoneDashboard } from "./scene-phone-dashboard";
 import { SceneJobJourney } from "./scene-job-journey";
 import { SceneModules } from "./scene-modules";
 import { CtaSection } from "./cta";
+import { HomeSeo } from "./home-seo";
 import { MarketingFooter } from "./footer";
 import s from "./marketing.module.css";
 
@@ -21,6 +22,7 @@ export function MarketingLanding() {
       <ScenePhoneDashboard />
       <SceneJobJourney />
       <SceneModules />
+      <HomeSeo />
       <CtaSection />
       <MarketingFooter />
     </div>

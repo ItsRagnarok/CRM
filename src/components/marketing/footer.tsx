@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Logo } from "@/components/logo";
 import s from "./marketing.module.css";
 
@@ -12,12 +13,20 @@ export function MarketingFooter() {
           <a href="#platforma">Platformă</a>
           <a href="#functionalitati">Funcționalități</a>
           <a href="#cum-functioneaza">Cum funcționează</a>
-          <a href="/blog">Ghiduri pentru firme de instalații</a>
-          <a href="/programare">Programează o discuție</a>
+          <Link href="/firme-instalatii-electrice">Firme de instalații electrice</Link>
+          <Link href="/firme-gaze-verificari-revizii">Verificări și revizii gaze</Link>
+          <Link href="/firme-fotovoltaice">Firme fotovoltaice</Link>
+          <Link href="/aplicatie-tehnician">Aplicația tehnicianului</Link>
+          <Link href="/pontaj-tehnicieni">Pontaj tehnicieni</Link>
+          <Link href="/foaie-de-parcurs-electronica">Foaie de parcurs</Link>
+          <Link href="/stoc-materiale-pe-masini">Stoc pe mașini</Link>
+          <Link href="/facturare-smartbill-oblio">Facturare SmartBill și Oblio</Link>
+          <Link href="/blog">Ghiduri pentru firme de instalații</Link>
+          <Link href="/programare">Programează o discuție</Link>
           <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer">WhatsApp 0750 425 670</a>
-          <a href="/termeni">Termeni și condiții</a>
-          <a href="/confidentialitate">Confidențialitate</a>
-          <a href="/login">Conectează-te</a>
+          <Link href="/termeni">Termeni și condiții</Link>
+          <Link href="/confidentialitate">Confidențialitate</Link>
+          <Link href="/login">Conectează-te</Link>
         </div>
         <div className={s.footCopy}>© {new Date().getFullYear()} ElectroField</div>
       </div>

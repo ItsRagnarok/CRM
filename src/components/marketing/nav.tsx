@@ -9,7 +9,7 @@ const LINKS = [
   { href: "#acasa", label: "Acasă" },
   { href: "#platforma", label: "Platformă" },
   { href: "#functionalitati", label: "Funcționalități" },
-  { href: "#cum-functioneaza", label: "Cum funcționează" },
+  { href: "#pentru-cine", label: "Pentru cine" },
   { href: "/blog", label: "Blog" },
   { href: "#contact", label: "Contact" },
 ];

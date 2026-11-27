@@ -1,7 +1,7 @@
-
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parsePreview, PREVIEW_COOKIE } from "@/lib/preview";
+import { MARKETING_SLUGS } from "@/lib/marketing-pages";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare", "/mobil-login", "/status", "/solicitare"];
 export async function middleware(request: NextRequest) {
@@ -12,7 +12,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next({ request });
   }
   // Public site assets do not need a session lookup.
-  if (["/robots.txt", "/sitemap.xml", "/sitemap-blog.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html", "/api/version"].includes(request.nextUrl.pathname)) {
+  if (["/robots.txt", "/sitemap.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html", "/api/version"].includes(request.nextUrl.pathname)) {
     return NextResponse.next({ request });
   }
   let response = NextResponse.next({ request });
@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
   const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
   const { pathname } = request.nextUrl;
-  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path));
+  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path)) || MARKETING_SLUGS.includes(pathname.slice(1));
 
   // A redirect built from scratch would drop the refreshed session cookies that
   // getUser() just set. The rotated refresh token would be lost and the next
@@ -61,8 +61,8 @@ export async function middleware(request: NextRequest) {
     return redirectWithSession(new URL(inApp ? "/mobil-login" : "/login", request.url));
   }
 
-  if (user && (pathname === "/login" || pathname === "/signup" || pathname === "/mobil-login")) {
-    return redirectWithSession(new URL("/", request.url));
+  if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/mobil-login")) {
+    return redirectWithSession(new URL("/start", request.url));
   }
 
   return response;
