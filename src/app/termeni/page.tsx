@@ -4,7 +4,7 @@ import { TermsContent } from "@/components/terms-content";
 
 import { publicPageMetadata } from "@/lib/seo";
 
-export const metadata = publicPageMetadata("Termeni și condiții — ElectroField", "Termenii și condițiile de utilizare a platformei ElectroField pentru gestionarea lucrărilor și echipelor de teren.", "/termeni");
+export const metadata = publicPageMetadata("Termeni și condiții — ElectroField", "Termenii de utilizare ElectroField pentru firme de instalații: contul organizației, datele introduse, disponibilitatea serviciului și încetarea contului.", "/termeni");
 
 export default function TermsPage() {
   return (
