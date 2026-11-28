@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireAdminContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_WANTS, normalizeTags, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
+import { addWorkingDays, EVENT_KINDS, LEAD_DOMAINS, LEAD_SOURCES, LEAD_WANTS, normalizeTags, isLeadStage, isOpenStage, stageLabel } from "@/lib/leads";
 import { companyKey, parseLeadsFile, type ImportedLead } from "@/lib/leads-import";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -93,6 +93,32 @@ export async function addLeadEvent(id: string, kind: string, body: string): Prom
   const { error } = await supabase.from("platform_lead_events").insert({ lead_id: id, kind, body: text, created_by: userId });
   if (error) return { error: "Nu am putut salva notița." };
   revalidatePath("/admin/leads");
+  return { ok: true };
+}
+
+/**
+ * Butoanele rapide din Leads: „Am trimis e-mail”, „A răspuns”, „Nu e interesat”.
+ * Notează în istoric, mută etapa și pune singur următoarea revenire, ca să nu mai ții minte tu.
+ */
+export async function logOutreach(id: string, what: "trimis" | "raspuns" | "fara_interes", note?: string): Promise<Result> {
+  const { userId } = await requireAdminContext();
+  if (!UUID.test(id) || !["trimis", "raspuns", "fara_interes"].includes(what)) return { error: "Cerere greșită." };
+  const supabase = await createClient({ ignorePreview: true });
+  const { data: lead, error: readError } = await supabase.from("platform_leads").select("stage").eq("id", id).single();
+  if (readError || !lead) return { error: "Lead necunoscut." };
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Bucharest" });
+  const text = (note ?? "").trim().slice(0, 1800);
+  if (what === "fara_interes") return setLeadStage(id, "pierdut", text || "Nu e interesat");
+  const update: { stage?: string; next_follow_up: string } = what === "trimis"
+    ? { next_follow_up: addWorkingDays(today, 3), ...(lead.stage === "nou" ? { stage: "contactat" } : {}) }
+    : { next_follow_up: today, ...(["nou", "contactat"].includes(lead.stage) ? { stage: "discutie" } : {}) };
+  const { error } = await supabase.from("platform_leads").update(update).eq("id", id);
+  if (error) return { error: "Nu am putut salva." };
+  const body = what === "trimis" ? `Trimis: ${text || "e-mail"}` : `Primit: ${text || "a răspuns"}`;
+  await supabase.from("platform_lead_events").insert({ lead_id: id, kind: "email", body, created_by: userId });
+  if (update.stage) await supabase.from("platform_lead_events").insert({ lead_id: id, kind: "etapa", body: `Mutat la ${stageLabel(update.stage)}`, created_by: userId });
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
   return { ok: true };
 }
 

@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus, Star, Tag } from "lucide-react";
+import { Building2, CalendarClock, ClipboardCopy, Search, Target, Layers, UserRound, X, Plus, Star, Tag, Send, MessageSquareReply, Ban } from "lucide-react";
 import {
   EVENT_KINDS, LEAD_DOMAINS, LEAD_WANTS, wantLabel, IMPORTANT_TAG, PRESET_TAGS, MAX_TAGS, MAX_TAG_LENGTH, hasTag, toggleTag, LEAD_SOURCES, LEAD_STAGES, OPEN_STAGES, buildBrief, dayMonth, domainLabel, followUpState, formatLei,
-  isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, type BriefLead,
+  isOpenStage, kindLabel, nextStage, pipelineValue, sourceLabel, stageLabel, winRate, touches, outreachState, type BriefLead, type OutreachState,
 } from "@/lib/leads";
-import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, setFollowUp, setLeadStage, setLeadTags, updateLead } from "./actions";
+import { addLead, addLeadEvent, deleteLead, importBookings, importLeadsFile, logOutreach, setFollowUp, setLeadStage, setLeadTags, updateLead } from "./actions";
 
 type Lead = BriefLead & { id: string; booking_id: string | null; organization_id: string | null };
 type LeadEvent = { id: string; lead_id: string; kind: string; body: string; created_at: string };
@@ -76,6 +76,41 @@ function WantChips({ wants, className = "" }: { wants: string[]; className?: str
   return (
     <div className={`flex flex-wrap gap-1.5 ${className}`} aria-label="Ce a cerut">
       {wants.map((w) => <span key={w} className="rounded-full bg-info-bg px-2.5 py-0.5 text-[11.5px] font-bold text-info">{wantLabel(w)}</span>)}
+    </div>
+  );
+}
+
+const OUTREACH_LABEL: Record<OutreachState, string> = { necontactat: "Necontactat", fara_raspuns: "Fără răspuns", a_raspuns: "A răspuns", inchis: "Închis" };
+const OUTREACH_TONE: Record<OutreachState, string> = { necontactat: "bg-info-bg text-info", fara_raspuns: "bg-neutral-bg text-muted", a_raspuns: "bg-success-bg text-success", inchis: "bg-neutral-bg text-muted" };
+
+/** Cele trei lucruri care se întâmplă cel mai des cu un lead: i-ai scris, ți-a răspuns, nu vrea. Câte un buton. */
+function QuickActions({ lead, compact = false }: { lead: Lead; compact?: boolean }) {
+  const [pending, start] = useTransition();
+  const [mode, setMode] = useState<"" | "trimis" | "raspuns">("");
+  const [note, setNote] = useState("");
+  const [msg, setMsg] = useState<{ text: string; tone: "ok" | "err" } | null>(null);
+  const go = (what: "trimis" | "raspuns" | "fara_interes", text?: string) => start(async () => {
+    const r = await logOutreach(lead.id, what, text);
+    setMsg(r?.error ? { text: r.error, tone: "err" } : { text: what === "trimis" ? "Notat. Revii peste 3 zile lucrătoare." : what === "raspuns" ? "Notat la „Discuție”, de revenit azi." : "Mutat la Pierdut.", tone: "ok" });
+    if (!r?.error) { setMode(""); setNote(""); }
+  });
+  if (!isOpenStage(lead.stage)) return null;
+  return (
+    <div className={compact ? "" : "mt-4 rounded-[14px] border border-border p-3"} onClick={(e) => e.stopPropagation()}>
+      {!compact && <h3 className="mb-2 text-[13.5px] font-extrabold">Ce s-a întâmplat?</h3>}
+      <div className="flex flex-wrap gap-1.5">
+        <button type="button" disabled={pending} onClick={() => (compact ? go("trimis") : setMode(mode === "trimis" ? "" : "trimis"))} className={`${btn} inline-flex items-center gap-1.5 ${compact ? "px-2.5 py-1.5 text-[12px]" : ""}`}><Send className="h-3.5 w-3.5" /> Am trimis e-mail</button>
+        {!compact && <button type="button" disabled={pending} onClick={() => setMode(mode === "raspuns" ? "" : "raspuns")} className={`${btn} inline-flex items-center gap-1.5`}><MessageSquareReply className="h-3.5 w-3.5" /> A răspuns</button>}
+        {!compact && <button type="button" disabled={pending} onClick={() => go("fara_interes")} className={`${btn} inline-flex items-center gap-1.5`}><Ban className="h-3.5 w-3.5" /> Nu e interesat</button>}
+      </div>
+      {mode && (
+        <form className="mt-2 flex flex-col gap-2" onSubmit={(e) => { e.preventDefault(); go(mode, note); }}>
+          <label htmlFor={`qa-${lead.id}`} className="text-[12px] font-semibold text-muted">{mode === "trimis" ? "Subiectul sau o notă (opțional)" : "Ce a răspuns (cuvânt cu cuvânt, opțional)"}</label>
+          <textarea id={`qa-${lead.id}`} value={note} onChange={(e) => setNote(e.target.value)} rows={mode === "raspuns" ? 3 : 1} maxLength={1800} className={input} />
+          <button type="submit" disabled={pending} className={`${btnPrimary} self-start`}>{pending ? "Se salvează…" : "Notează"}</button>
+        </form>
+      )}
+      {msg && <p role={msg.tone === "err" ? "alert" : "status"} className={`mt-1.5 text-[12px] font-semibold ${msg.tone === "err" ? "text-danger" : "text-success"}`}>{msg.text}</p>}
     </div>
   );
 }
@@ -197,6 +232,7 @@ function Panel({ lead, events, today, onClose, allTags, onTags, onStage }: { lea
         </>
       )}
 
+      {!editing && <QuickActions lead={lead} />}
       {!editing && (
         <div className="mt-4 flex flex-wrap gap-2">
           {next && <button type="button" disabled={pending} onClick={() => run(() => setLeadStage(lead.id, next))} className={btnPrimary}>Mută la „{stageLabel(next)}”</button>}
@@ -307,6 +343,7 @@ export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[
   const [q, setQ] = useState("");
   const [source, setSource] = useState("");
   const [due, setDue] = useState("");
+  const [contact, setContact] = useState<"" | OutreachState>("");
   // Filtrul ales din cardurile de sus: deschise, cu valoare, închise (câștigate sau pierdute).
   const [only, setOnly] = useState<"" | "open" | "valoare" | "closed">("");
   const listRef = useRef<HTMLDivElement>(null);
@@ -320,7 +357,14 @@ export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[
     return m;
   }, [events]);
 
+  const touchesOf = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof touches>>();
+    for (const l of leads) m.set(l.id, touches(byLead.get(l.id) ?? []));
+    return m;
+  }, [leads, byLead]);
+  const stateOf = (l: Lead) => outreachState(l.stage, touchesOf.get(l.id) ?? { sent: 0, replies: 0, last: null });
   const filtered = leads.filter((l) => {
+    if (contact && stateOf(l) !== contact) return false;
     const text = `${l.company_name} ${l.contact_name ?? ""} ${l.phone ?? ""}`.toLowerCase();
     const f = followUpState(l.next_follow_up, today, l.stage);
     const inOnly = !only || (only === "open" ? isOpenStage(l.stage) : only === "valoare" ? isOpenStage(l.stage) && l.estimated_value != null && Number(l.estimated_value) > 0 : !isOpenStage(l.stage));
@@ -417,6 +461,37 @@ export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[
       {boardMsg && <p role="alert" className="mt-2 text-[12.5px] font-semibold text-danger">{boardMsg}</p>}
       {importMsg && <p role="status" className="mt-2 text-[12.5px] font-semibold text-muted">{importMsg}</p>}
 
+      {(() => {
+        const notYet = leads.filter((l) => stateOf(l) === "necontactat");
+        const dueNow = leads.filter((l) => { const f = followUpState(l.next_follow_up, today, l.stage); return (f === "azi" || f === "intarziat") && stateOf(l) !== "necontactat"; });
+        const answered = leads.filter((l) => stateOf(l) === "a_raspuns" && isOpenStage(l.stage));
+        const col = (title: string, hint: string, list: Lead[], state: OutreachState | "", withSend: boolean) => (
+          <div className="min-w-0 rounded-[16px] border border-border bg-white p-3.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-[14px] font-extrabold">{title} <span className="tabular-nums text-muted">{list.length}</span></h3>
+              {list.length > 0 && <button type="button" onClick={() => { setQ(""); setSource(""); setOnly(""); setDue(state ? "" : "azi"); setContact(state); setView("list"); requestAnimationFrame(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })); }} className="text-[12px] font-bold underline">Vezi toate</button>}
+            </div>
+            <p className="text-[12px] text-muted">{hint}</p>
+            <ul className="mt-2 flex flex-col gap-1.5">
+              {list.slice(0, 6).map((l) => (
+                <li key={l.id} data-lead-item className="flex items-center justify-between gap-2 rounded-[10px] bg-neutral-bg px-2.5 py-1.5 text-[13px]">
+                  <button type="button" onClick={() => setSelected(l.id)} className="min-w-0 truncate text-left font-semibold hover:underline">{l.company_name}</button>
+                  {withSend ? <QuickActions lead={l} compact /> : <FollowTag lead={l} today={today} />}
+                </li>
+              ))}
+              {list.length === 0 && <li className="text-[12.5px] text-muted">Nimic aici.</li>}
+            </ul>
+          </div>
+        );
+        return (
+          <section className="mt-5 grid gap-2.5 md:grid-cols-3" aria-label="De făcut azi">
+            {col("De scris primul mesaj", "Leaduri noi cărora nu le-a scris nimeni.", notYet, "necontactat", true)}
+            {col("De revenit azi", "I-ai scris și a venit ziua revenirii.", dueNow, "", false)}
+            {col("Au răspuns", "Conversații deschise: răspunde sau programează discuția.", answered, "a_raspuns", false)}
+          </section>
+        );
+      })()}
+
       <section className="mt-5 grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4" aria-label="Sumar">
         {kpi(<UserRound className="h-5 w-5" />, "Leaduri deschise", String(open.length), `din ${leads.length} în total`, () => show({ only: "open" }), only === "open")}
         {kpi(<Layers className="h-5 w-5" />, "Valoare în pipeline", formatLei(pipeline.total), `abonamente lunare, ${pipeline.counted} cu valoare`, () => show({ only: "valoare" }), only === "valoare")}
@@ -437,6 +512,10 @@ export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[
         </div>
         <label className="sr-only" htmlFor="lead-source">Sursă</label>
         <select id="lead-source" value={source} onChange={(e) => setSource(e.target.value)} className={`${input} w-auto`}><option value="">Toate sursele</option>{LEAD_SOURCES.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}</select>
+        <label className="sr-only" htmlFor="lead-contact">Contact</label>
+        <select id="lead-contact" value={contact} onChange={(e) => setContact(e.target.value as "" | OutreachState)} className={`${input} w-auto`}>
+          <option value="">Orice stare de contact</option><option value="necontactat">Necontactați</option><option value="fara_raspuns">Fără răspuns</option><option value="a_raspuns">Au răspuns</option>
+        </select>
         <label className="sr-only" htmlFor="lead-due">Reluare</label>
         <select id="lead-due" value={due} onChange={(e) => setDue(e.target.value)} className={`${input} w-auto`}><option value="">Orice reluare</option><option value="azi">Azi sau întârziate</option><option value="intarziat">Doar întârziate</option></select>
         {allTags.length > 0 && (
@@ -483,16 +562,17 @@ export function LeadsBoard({ leads: serverLeads, events, today }: { leads: Lead[
             </ul>
             <div className="hidden overflow-x-auto rounded-[16px] border border-border bg-white md:block">
               <table className="w-full min-w-[760px] text-[13px]">
-                <thead><tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted"><th className="p-3">Firmă</th><th className="p-3">Etapă</th><th className="p-3">Sursă</th><th className="p-3">Valoare / lună</th><th className="p-3">Reluare</th><th className="p-3">Ultimul contact</th></tr></thead>
+                <thead><tr className="border-b border-border text-left text-[11.5px] uppercase tracking-wide text-muted"><th className="p-3">Firmă</th><th className="p-3">E-mail</th><th className="p-3">Etapă</th><th className="p-3">Contact</th><th className="p-3">Mesaje</th><th className="p-3">Reluare</th><th className="p-3">Ultimul contact</th></tr></thead>
                 <tbody>
                   {filtered.map((l) => (
                     <tr key={l.id} data-lead-item tabIndex={0} onClick={() => setSelected(l.id)} onKeyDown={(e) => e.key === "Enter" && setSelected(l.id)} aria-current={selected === l.id} className={`cursor-pointer border-b border-border last:border-0 hover:bg-neutral-bg ${selected === l.id ? "bg-neutral-bg" : ""}`}>
                       <td className="p-3"><div className="flex items-center gap-1.5 font-bold">{hasTag(l.tags, IMPORTANT_TAG) && <Star className="h-3.5 w-3.5 shrink-0 fill-current text-warning" aria-label="Important" />}{l.company_name}</div><div className="text-muted">{l.contact_name}</div><TagChips tags={(l.tags ?? []).filter((x) => !hasTag([x], IMPORTANT_TAG))} className="mt-1" /></td>
+                      <td className="max-w-[220px] break-all p-3 text-muted">{l.email ?? "—"}</td>
                       <td className="p-3"><span className="rounded-full bg-neutral-bg px-2.5 py-0.5 text-[12px] font-semibold">{stageLabel(l.stage)}</span></td>
-                      <td className="p-3">{sourceLabel(l.source)}</td>
-                      <td className="p-3 font-bold tabular-nums">{l.estimated_value == null ? "—" : formatLei(Number(l.estimated_value))}</td>
+                      <td className="p-3"><span className={`rounded-full px-2.5 py-0.5 text-[12px] font-semibold ${OUTREACH_TONE[stateOf(l)]}`}>{OUTREACH_LABEL[stateOf(l)]}</span></td>
+                      <td className="p-3 tabular-nums">{(() => { const t = touchesOf.get(l.id); return t ? `${t.sent} trimise · ${t.replies} primite` : "—"; })()}</td>
                       <td className="p-3"><FollowTag lead={l} today={today} /></td>
-                      <td className="p-3 text-muted">{byLead.get(l.id)?.[0] ? when(byLead.get(l.id)![0].created_at) : "—"}</td>
+                      <td className="p-3 text-muted">{touchesOf.get(l.id)?.last ? when(touchesOf.get(l.id)!.last!) : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

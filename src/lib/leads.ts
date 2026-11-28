@@ -188,3 +188,36 @@ export function buildBrief(lead: BriefLead, events: BriefEvent[], today: string)
     "6. Ce să NU promit, ținând cont de ce nu e gata sau netestat.",
   ].join("\n");
 }
+
+/** „2026-11-28” + n zile lucrătoare (fără sâmbătă și duminică) → „AAAA-LL-ZZ”. */
+export function addWorkingDays(iso: string, n: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  let left = n;
+  while (left > 0) {
+    d.setUTCDate(d.getUTCDate() + 1);
+    const wd = d.getUTCDay();
+    if (wd !== 0 && wd !== 6) left--;
+  }
+  return d.toISOString().slice(0, 10);
+}
+
+export type Touches = { sent: number; replies: number; last: string | null };
+/** Câte e-mailuri/mesaje au plecat („Trimis: …”), câte răspunsuri au venit („Primit: …”) și când a fost ultimul contact. */
+export function touches(events: { kind: string; body: string; created_at: string }[]): Touches {
+  let sent = 0, replies = 0, last: string | null = null;
+  for (const e of events) {
+    if (e.kind === "etapa" || e.kind === "nota") continue;
+    if (/^Primit:/i.test(e.body)) replies++;
+    else sent++;
+    if (!last || e.created_at > last) last = e.created_at;
+  }
+  return { sent, replies, last };
+}
+
+export type OutreachState = "necontactat" | "fara_raspuns" | "a_raspuns" | "inchis";
+/** Unde e conversația: nimeni nu i-a scris, i-am scris și tace, sau a răspuns. */
+export function outreachState(stage: string, t: Touches): OutreachState {
+  if (!isOpenStage(stage)) return "inchis";
+  if (t.replies > 0 || ["discutie", "oferta", "negociere"].includes(stage)) return "a_raspuns";
+  return t.sent > 0 || stage === "contactat" ? "fara_raspuns" : "necontactat";
+}

@@ -70,3 +70,23 @@ test("etichete: curățare, dubluri, limită, bifă", async () => {
   assert.equal(hasTag(["De urmărit"], "de urmărit"), true);
   assert.equal(hasTag(null, "x"), false);
 });
+
+import { addWorkingDays, touches, outreachState } from "../src/lib/leads";
+
+test("zile lucrătoare: vineri + 3 = miercuri", () => {
+  assert.equal(addWorkingDays("2026-11-27", 3), "2026-12-02");
+  assert.equal(addWorkingDays("2026-11-30", 1), "2026-12-01");
+});
+
+test("atingeri și starea conversației", () => {
+  const t = touches([
+    { kind: "email", body: "Trimis: Bună", created_at: "2026-11-25T08:00:00Z" },
+    { kind: "nota", body: "notă", created_at: "2026-11-26T08:00:00Z" },
+    { kind: "email", body: "Primit: Mulțumim", created_at: "2026-11-27T08:00:00Z" },
+  ]);
+  assert.deepEqual(t, { sent: 1, replies: 1, last: "2026-11-27T08:00:00Z" });
+  assert.equal(outreachState("contactat", t), "a_raspuns");
+  assert.equal(outreachState("nou", { sent: 0, replies: 0, last: null }), "necontactat");
+  assert.equal(outreachState("contactat", { sent: 2, replies: 0, last: null }), "fara_raspuns");
+  assert.equal(outreachState("pierdut", t), "inchis");
+});
