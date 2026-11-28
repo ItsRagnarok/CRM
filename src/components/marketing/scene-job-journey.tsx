@@ -2,15 +2,16 @@ import Image from "next/image";
 import s from "./marketing.module.css";
 
 // Drumul unei lucrări, pe pași reali din platformă: pe telefon pașii stau unul sub altul, pe calculator
-// pe un rând; apar pe rând la derulare.
+// pe un rând; apar pe rând la derulare. Mesajul „am plecat” îl trimite tehnicianul (SMS sau WhatsApp,
+// cu o atingere), nu serverul.
 const STEPS = [
   { h: "Programare", p: "Biroul pune lucrarea în calendar, cu clientul, adresa și echipa." },
   { h: "Tehnician alocat", p: "Echipa o vede pe telefon, cu ce are de luat din depozit." },
-  { h: "Plecare", p: "Plecarea se pontează; clientul primește „echipa e pe drum”." },
+  { h: "Plecare", p: "Plecarea se pontează, iar tehnicianul îi trimite clientului, cu o atingere, mesajul că a plecat și linkul de status." },
   { h: "Navigație", p: "Adresa se deschide direct în aplicația de hartă." },
-  { h: "Sosire", p: "Sosirea se pontează cu locația, ca dovadă." },
+  { h: "Sosire", p: "Sosirea se pontează cu locația, dacă telefonul o dă, ca dovadă." },
   { h: "Execuție", p: "Poze înainte și după, checklist, măsurători." },
-  { h: "Finalizare", p: "Semnătura clientului, documentele și factura din ore și materiale." },
+  { h: "Finalizare", p: "Semnătura clientului, raportul lucrării și factura pregătită din ore și materiale." },
 ];
 
 export function SceneJobJourney() {
@@ -21,14 +22,14 @@ export function SceneJobJourney() {
       </div>
       <div className={s.journeyBgScrim} />
       <div className={s.wrap}>
-        <div className={s.eyebrow}>O lucrare, de la A la Z</div>
+        <div className={s.eyebrow}>Gestionarea lucrărilor, de la A la Z</div>
         <div className={s.secHead} data-reveal>
           <h2 className={s.disp}>
             De la prima programare
             <br />
             până la <span className={s.lime}>ultima factură.</span>
           </h2>
-          <p>Fiecare etapă a unei lucrări, urmărită automat, fără hârtii și fără telefoane.</p>
+          <p>Fiecare etapă a lucrării rămâne înregistrată în platformă, fără hârtii și cu mai puține telefoane între birou și echipă.</p>
         </div>
         <ol className={s.journeyList}>
           {STEPS.map((step, i) => (

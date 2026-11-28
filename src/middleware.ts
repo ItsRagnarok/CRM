@@ -1,19 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { parsePreview, PREVIEW_COOKIE } from "@/lib/preview";
-import { MARKETING_SLUGS } from "@/lib/marketing-pages";
+import { classifyPath, isSessionlessPath, loginPathFor, PUBLIC_POST_PATHS, SIGNED_IN_ENTRY_PATHS } from "@/lib/route-access";
 
-const PUBLIC_PATHS = ["/login", "/signup", "/auth", "/downloads", "/confidentialitate", "/termeni", "/blog", "/sitemap", "/robots.txt", "/programare", "/mobil-login", "/status", "/solicitare"];
 export async function middleware(request: NextRequest) {
-  if (parsePreview(request.cookies.get(PREVIEW_COOKIE)?.value) && !["GET", "HEAD"].includes(request.method) && request.nextUrl.pathname !== "/api/admin/preview-exit") {
+  const { pathname } = request.nextUrl;
+  if (parsePreview(request.cookies.get(PREVIEW_COOKIE)?.value) && !["GET", "HEAD"].includes(request.method) && pathname !== "/api/admin/preview-exit") {
     return NextResponse.json({ error: "Modul de vizualizare nu permite modificări." }, { status: 403 });
   }
-  if (request.method === "POST" && ["/api/programari", "/api/analytics"].includes(request.nextUrl.pathname)) {
+  if (request.method === "POST" && PUBLIC_POST_PATHS.includes(pathname)) {
     return NextResponse.next({ request });
   }
-  // Public site assets do not need a session lookup (incl. the IndexNow key file).
-  if (request.nextUrl.pathname === "/d40280e4de21e42ba69e38e8aaa74cdc.txt" || request.nextUrl.pathname.startsWith("/pdfjs/")) return NextResponse.next({ request });
-  if (["/robots.txt", "/sitemap.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html", "/api/version"].includes(request.nextUrl.pathname)) {
+  // Public site assets do not need a session lookup (incl. the IndexNow key file and /llms.txt).
+  if (isSessionlessPath(pathname)) {
     return NextResponse.next({ request });
   }
   let response = NextResponse.next({ request });
@@ -45,9 +44,6 @@ export async function middleware(request: NextRequest) {
   const { data: claimsData } = await supabase.auth.getClaims();
   const user = claimsData?.claims?.sub ? claimsData.claims : null;
 
-  const { pathname } = request.nextUrl;
-  const isPublicPath = pathname === "/" || PUBLIC_PATHS.some((path) => pathname.startsWith(path)) || MARKETING_SLUGS.includes(pathname.slice(1));
-
   // A redirect built from scratch would drop the refreshed session cookies that
   // getUser() just set. The rotated refresh token would be lost and the next
   // request would present the old, already-used one, which logs the user out.
@@ -57,18 +53,28 @@ export async function middleware(request: NextRequest) {
     return redirect;
   };
 
-  if (!user && !isPublicPath) {
-    const inApp = pathname === "/mobil" || pathname.startsWith("/mobil/");
-    return redirectWithSession(new URL(inApp ? "/mobil-login" : "/login", request.url));
+  // Without a session only the app's own routes send the visitor to log in (src/lib/route-access.ts).
+  // Public pages and unknown addresses fall through: Next serves the real page or a 404 (noindex),
+  // never a redirect to /login for a URL that does not exist.
+  if (!user && classifyPath(pathname) === "private") {
+    return redirectWithSession(new URL(loginPathFor(pathname), request.url));
   }
 
-  if (user && (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/mobil-login")) {
+  if (user && SIGNED_IN_ENTRY_PATHS.includes(pathname)) {
     return redirectWithSession(new URL("/start", request.url));
   }
 
   return response;
 }
 
+// Imaginile și fonturile sar peste middleware doar acolo unde stau cu adevărat fișierele publice:
+// în rădăcină (/icon-192.png, /logo-mark.png) și în public/og, public/blog, public/marketing,
+// public/fonts. Orice altă adresă cu sufix de imagine (de exemplu /lucrari/abc.png sau
+// /api/x.png) trece prin verificarea de sesiune, ca rutele private să aibă tot middleware-ul ca
+// prim filtru. Adresele cu „%” (căi codate) nu sunt scutite. Dacă adaugi un folder nou cu imagini
+// în public/, adaugă-l și aici, altfel imaginile lui trec degeaba prin middleware.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|(?:og|blog|marketing|fonts)/[^%]*\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$|[^/%]+\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$).*)",
+  ],
 };

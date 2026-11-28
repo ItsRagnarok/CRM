@@ -20,7 +20,14 @@ const eslintConfig = [
       // proiectul nativ Android/iOS: fișiere generate de Gradle/Xcode
       "android-app/**",
       "node_modules/**",
+      // pdf.js, cod terț minificat, copiat ca atare pentru vizualizatorul de PDF din aplicație
+      "public/pdfjs/**",
     ],
+  },
+  {
+    // Scripturi Node (CommonJS) care generează ghidurile PDF din docs/ghid.
+    files: ["docs/ghid/**/*.js"],
+    rules: { "@typescript-eslint/no-require-imports": "off" },
   },
 ];
 

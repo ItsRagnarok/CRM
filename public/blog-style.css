@@ -53,3 +53,17 @@ footer a{color:var(--mut);margin-right:18px}
 .related a{display:block;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:var(--tx);text-decoration:none;font-weight:500}
 .related a:hover{border-color:var(--ac)}
 img.cover{height:auto}
+
+/* Semnătura articolului (sub H1): autor + date. Structura de urmat în articole noi:
+   <h1>…</h1>
+   <p class="byline">Echipa ElectroField · Publicat <time datetime="AAAA-LL-ZZ">D luna AAAA</time> · Actualizat <time datetime="AAAA-LL-ZZ">D luna AAAA</time></p>
+   „Actualizat” apare doar dacă dateModified din JSON-LD e mai nou decât datePublished. */
+.byline{color:var(--mut);font-size:14px;margin:0 0 20px}
+.byline time{color:var(--mut)}
+
+/* Accesibilitate: ținte de atingere de minimum 24x24 px (Lighthouse target-size) */
+.nav .l{display:inline-flex;align-items:center;min-height:44px;padding:0 6px}
+.logo{min-height:44px}
+footer .wrap>a{display:inline-flex;align-items:center;min-height:44px}
+.crumbs a:first-child{min-height:36px}
+.btn{min-height:44px;line-height:20px}

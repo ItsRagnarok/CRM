@@ -57,7 +57,7 @@ export function Hero() {
       <div className={`${s.wrap} ${s.heroGrid}`}>
         <div>
           <h1 className={`${s.heroKicker} mk-reveal-1`}>
-            <span className={s.dot} />
+            <span className={s.dot} aria-hidden="true" />
             Software de management pentru electricieni și echipe de teren
           </h1>
           <p className={`${s.heroTitle} ${s.disp} mk-reveal-2`}>
@@ -66,15 +66,16 @@ export function Hero() {
             <span className={s.lime}>Direct în teren.</span>
           </p>
           <p className={`${s.heroSub} mk-reveal-3`}>
-            ElectroField e programul prin care firmele de instalații electrice, gaze și fotovoltaice își programează lucrările,
-            își urmăresc echipele mobile și facturează. Tehnicienii lucrează din aplicația de pe telefon: poze, pontaj, semnătura clientului.
+            ElectroField este un software de management pentru firmele de instalații electrice, gaze și fotovoltaice care lucrează cu echipe mobile.
+            Biroul programează lucrările din browser, tehnicienii le fac din telefon, cu poze, măsurători și semnătura clientului,
+            iar pontajul, materialele și factura prin SmartBill sau Oblio pornesc din aceleași date.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
             <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
-              Programează un demo <ArrowRight size={17} />
+              Programează o discuție <ArrowRight size={17} aria-hidden="true" />
             </StaticLink>
             <a href="#cum-functioneaza" className={`${s.btn} ${s.btnOutline}`}>
-              <PlayCircle size={17} />
+              <PlayCircle size={17} aria-hidden="true" />
               Vezi cum funcționează
             </a>
           </div>
