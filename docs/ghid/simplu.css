@@ -1,0 +1,21 @@
+/* Ghidurile simple: completează ghid.css. */
+.toc ol.simple { columns: 2; }
+.toc ol.simple a { font-size: 10pt; }
+.howto { margin-top: 8mm; }
+.sec { page-break-before: auto; }
+.sec h3 { font-size: 17pt; }
+.unde { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2mm; margin: 0 0 2.5mm; font-size: 9.6pt; font-weight: 600; }
+.unde span { flex: none; font-size: 7.4pt; text-transform: uppercase; letter-spacing: .09em; color: var(--dark); background: var(--lime); border-radius: 1.5mm; padding: .6mm 2mm; }
+.ce { font-size: 11pt; line-height: 1.5; color: #1d241b; margin-bottom: 3mm; }
+.cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 6mm; margin-top: 1mm; break-inside: avoid; }
+.cols ol, .cols ul { margin: 0; padding-left: 5mm; font-size: 9.8pt; }
+.cols li { margin-bottom: 1.2mm; }
+.scurt { background: var(--bg2); border: .5pt solid var(--line); border-radius: 2.5mm; padding: 1mm 4mm 3mm; }
+.scurt ul { list-style: none; padding-left: 0; }
+.scurt li { position: relative; padding-left: 5mm; }
+.scurt li::before { content: "→"; position: absolute; left: 0; color: var(--lime-d); font-weight: 800; }
+.sfat { margin-top: 3mm; font-size: 9pt; color: #6b4b00; background: #fff7e0; border-radius: 2mm; padding: 2mm 3.5mm; break-inside: avoid; }
+.phones { display: flex; gap: 6mm; margin: 2mm 0 3mm; }
+.phones figure { margin: 0; width: 52mm; }
+.phones figure img { width: 52mm; border: .5pt solid #cfd5ca; border-radius: 4.5mm; display: block; }
+.chapter h2 { margin-top: 0; }
