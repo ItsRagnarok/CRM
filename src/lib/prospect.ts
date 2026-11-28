@@ -64,7 +64,7 @@ export function parseAnafTva(item: unknown): AnafCompany | null {
     cui, name,
     address: nz(g.adresa),
     county: titleCase(nz(sed.sdenumire_Judet)),
-    city: titleCase(nz(sed.sdenumire_Localitate)),
+    city: cleanCity(titleCase(nz(sed.sdenumire_Localitate))),
     phone: nz(g.telefon),
     caen: nz(g.cod_CAEN),
     regDate: nz(g.data_inregistrare),
@@ -91,6 +91,14 @@ export function parseAnafBilant(json: unknown): AnafFinancials | null {
     profit: profit == null && loss == null ? null : profit ? profit : loss ? -loss : 0,
     caen: j.caen != null && String(j.caen) !== "0" ? String(j.caen).padStart(4, "0") : null,
   };
+}
+
+/** „Mun. Brașov” → „Brașov”, „Sector 5 Mun. București” → „București, Sector 5”. */
+function cleanCity(s: string | null): string | null {
+  if (!s) return null;
+  const sector = s.match(/^Sector (\d) Mun\. Bucure[șş]ti$/i);
+  if (sector) return `București, Sector ${sector[1]}`;
+  return s.replace(/^(Mun\.|Municipiul|Orș\.|Oraș|Orașul)\s+/i, "").trim();
 }
 
 function titleCase(s: string | null): string | null {

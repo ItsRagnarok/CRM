@@ -4,7 +4,7 @@
  *
  *   anaf <cui...>               date ANAF: stare, CAEN, județ, angajați, cifră de afaceri (gratuit, ~1 cerere/s)
  *   site <domeniu|url> [cui]    citește site-ul: e-mailuri, telefoane, CUI, servicii; verifică MX
- *   find-site "<nume>" <cui>    ghicește site-ul după nume și îl acceptă doar dacă pe el apare CUI-ul
+ *   find-site "<nume>" <cui> [tel] [loc]  ghicește site-ul după nume; îl acceptă doar dacă e al firmei (câmpul match)
  *   enrich <cui...>             anaf + find-site + site, câte un JSON pe firmă
  *   cuis                        CUI-urile valide din textul de pe stdin (rezultate de căutare, linkuri termene.ro)
  *   screen <campanie.json> <cui...>  ANAF + filtrele dure ale campaniei; scoate doar firmele noi care trec
@@ -136,19 +136,29 @@ export async function site(input: string, cui?: string, maxPages = 8): Promise<S
   return res;
 }
 
-export async function findSite(name: string, cui: string): Promise<SiteResult | null> {
-  for (const d of domainGuesses(name)) {
+/**
+ * Ghicește site-ul după nume (vimed.ro, termo-gaz.ro …) și îl acceptă doar dacă e al firmei:
+ * CUI-ul pe site, sau numele plus telefonul ori localitatea din ANAF („sigur”); doar numele = „probabil”.
+ */
+const isRomanianSite = (s: SiteResult) => /\.ro$/.test(hostKey(s.url ?? "")) ||
+  (s.text.match(/\b(și|pentru|lucrări|instalații|despre noi|contactează)\b/gi)?.length ?? 0) >= 3;
+
+export async function findSite(firm: { cui: string; name: string; phone: string | null; city: string | null }): Promise<SiteResult | null> {
+  let maybe: SiteResult | null = null;
+  for (const d of domainGuesses(firm.name)) {
     const home = await get(`https://${d}/`, 8000) ?? await get(`https://www.${d}/`, 8000);
     if (!home || home.status >= 400 || home.html.length < 200) continue;
-    // Pagina de start, apoi contact: CUI-ul trebuie să apară pe site, altfel e altă firmă cu nume asemănător.
-    let text = htmlToText(home.html);
-    if (!extractCuis(text).includes(cui)) {
-      const contact = usefulLinks(home.html, home.url, 3).filter((l) => /contact|despre|about|firma/i.test(l))[0];
-      if (contact) { const c = await get(contact, 8000); if (c) text += htmlToText(c.html); }
-    }
-    if (extractCuis(text).includes(cui)) return site(home.url, cui);
+    if (isDirectoryHost(hostKey(home.url))) continue;
+    const s = await site(home.url, firm.cui, 4);
+    if (!s.reachable) continue;
+    s.match = siteMatch(s, firm);
+    if (s.match === "sigur") { const full = await site(s.url!, firm.cui); return full.reachable ? { ...full, match: "sigur" } : s; }
+    // Doar numele nu ajunge pentru un domeniu ghicit (dorna.com, instal.com sunt altceva): cerem un site românesc.
+    if (s.match === "probabil" && !maybe && isRomanianSite(s)) maybe = s;
   }
-  return null;
+  if (!maybe) return null;
+  const full = await site(maybe.url!, firm.cui);
+  return full.reachable ? { ...full, match: "probabil" } : maybe;
 }
 
 async function enrich(cuis: string[], knownSites: Record<string, string> = {}) {
@@ -158,7 +168,7 @@ async function enrich(cuis: string[], knownSites: Record<string, string> = {}) {
     const f = facts[cui];
     let s: SiteResult | null = null;
     if (knownSites[cui]) s = await site(knownSites[cui], cui);
-    else if (f.general) s = await findSite(f.general.name, cui);
+    else if (f.general) s = await findSite(f.general);
     out.push({ cui, ...f, site: s });
   }
   return out;
@@ -299,7 +309,11 @@ async function main() {
     return void process.stdout.write(`update public.prospect_runs r set status = x.status, summary = x.summary, stats = x.stats, queries = x.queries, finished_at = now()
   from jsonb_to_record(${lit(body)}::jsonb) as x(status text, summary text, stats jsonb, queries text[]) where r.id = '${args[0]}' returning r.id;\n`);
   }
-  if (cmd === "find-site") return print(await findSite(args[0], args[1]));
+  if (cmd === "find-site") {
+    // find-site "<nume>" <cui> [telefon] [localitate]; fără telefon și localitate le ia din ANAF.
+    const g = args[2] || args[3] ? null : (await anafGeneral([args[1]]))[args[1]];
+    return print(await findSite({ cui: args[1], name: args[0], phone: args[2] || g?.phone || null, city: args[3] || g?.city || null }));
+  }
   if (cmd === "enrich") {
     // `enrich 123 456=firma.ro`: după „=” poate veni site-ul deja cunoscut.
     const known: Record<string, string> = {};

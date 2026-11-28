@@ -61,6 +61,7 @@ test("ANAF: date generale și bilanț", () => {
     adresa_sediu_social: { sdenumire_Judet: "CLUJ", sdenumire_Localitate: "Mun. Cluj-Napoca" }, stare_inactiv: { statusInactivi: false, dataRadiere: "" } });
   assert.equal(c.active, true);
   assert.equal(c.county, "Cluj");
+  assert.equal(c.city, "Cluj-Napoca");
   assert.equal(c.caen, "4322");
   assert.equal(parseAnafTva({ date_generale: { cui: 1, denumire: "Y", stare_inregistrare: "RADIERE din data 2" } }).active, false);
   const b = parseAnafBilant({ an: 2024, caen: 4322, i: [{ indicator: "I13", val_indicator: 5000000 }, { indicator: "I18", val_indicator: 0 }, { indicator: "I19", val_indicator: 1200 }, { indicator: "I20", val_indicator: 23 }] });
