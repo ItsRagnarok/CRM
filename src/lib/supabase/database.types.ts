@@ -3232,6 +3232,288 @@ export type Database = {
           },
         ]
       }
+      prospect_campaigns: {
+        Row: {
+          agent_notes: string | null
+          caen_codes: string[]
+          counties: string[]
+          created_at: string
+          created_by: string | null
+          customer_problem: string | null
+          daily_target: number
+          domain: string
+          example_clients: string[]
+          id: string
+          keywords: string[]
+          max_employees: number | null
+          min_employees: number | null
+          min_turnover: number | null
+          name: string
+          negative_criteria: string[]
+          offer: string | null
+          positive_criteria: string[]
+          status: string
+          target_roles: string | null
+          targeting: string | null
+          updated_at: string
+        }
+        Insert: {
+          agent_notes?: string | null
+          caen_codes?: string[]
+          counties?: string[]
+          created_at?: string
+          created_by?: string | null
+          customer_problem?: string | null
+          daily_target?: number
+          domain?: string
+          example_clients?: string[]
+          id?: string
+          keywords?: string[]
+          max_employees?: number | null
+          min_employees?: number | null
+          min_turnover?: number | null
+          name: string
+          negative_criteria?: string[]
+          offer?: string | null
+          positive_criteria?: string[]
+          status?: string
+          target_roles?: string | null
+          targeting?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agent_notes?: string | null
+          caen_codes?: string[]
+          counties?: string[]
+          created_at?: string
+          created_by?: string | null
+          customer_problem?: string | null
+          daily_target?: number
+          domain?: string
+          example_clients?: string[]
+          id?: string
+          keywords?: string[]
+          max_employees?: number | null
+          min_employees?: number | null
+          min_turnover?: number | null
+          name?: string
+          negative_criteria?: string[]
+          offer?: string | null
+          positive_criteria?: string[]
+          status?: string
+          target_roles?: string | null
+          targeting?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+        ]
+      }
+      prospect_companies: {
+        Row: {
+          address: string | null
+          caen: string | null
+          campaign_id: string
+          city: string | null
+          county: string | null
+          cui: string | null
+          description: string | null
+          emails: Json
+          employees: number | null
+          fin_year: number | null
+          fit_reason: string | null
+          fit_score: number | null
+          found_at: string
+          host: string | null
+          id: string
+          lead_id: string | null
+          mx: boolean | null
+          name: string
+          phone: string | null
+          profit: number | null
+          reg_date: string | null
+          reject_reason: string | null
+          reviewed_at: string | null
+          run_id: string | null
+          signals: string[]
+          source: string
+          source_detail: string | null
+          status: string
+          turnover: number | null
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          caen?: string | null
+          campaign_id: string
+          city?: string | null
+          county?: string | null
+          cui?: string | null
+          description?: string | null
+          emails?: Json
+          employees?: number | null
+          fin_year?: number | null
+          fit_reason?: string | null
+          fit_score?: number | null
+          found_at?: string
+          host?: string | null
+          id?: string
+          lead_id?: string | null
+          mx?: boolean | null
+          name: string
+          phone?: string | null
+          profit?: number | null
+          reg_date?: string | null
+          reject_reason?: string | null
+          reviewed_at?: string | null
+          run_id?: string | null
+          signals?: string[]
+          source?: string
+          source_detail?: string | null
+          status?: string
+          turnover?: number | null
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          caen?: string | null
+          campaign_id?: string
+          city?: string | null
+          county?: string | null
+          cui?: string | null
+          description?: string | null
+          emails?: Json
+          employees?: number | null
+          fin_year?: number | null
+          fit_reason?: string | null
+          fit_score?: number | null
+          found_at?: string
+          host?: string | null
+          id?: string
+          lead_id?: string | null
+          mx?: boolean | null
+          name?: string
+          phone?: string | null
+          profit?: number | null
+          reg_date?: string | null
+          reject_reason?: string | null
+          reviewed_at?: string | null
+          run_id?: string | null
+          signals?: string[]
+          source?: string
+          source_detail?: string | null
+          status?: string
+          turnover?: number | null
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_companies_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_companies_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "platform_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_companies_run_fk"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_people: {
+        Row: {
+          company_id: string
+          created_at: string
+          email: string | null
+          email_status: string
+          id: string
+          linkedin: string | null
+          name: string
+          role: string | null
+          source_url: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string
+          email?: string | null
+          email_status?: string
+          id?: string
+          linkedin?: string | null
+          name: string
+          role?: string | null
+          source_url?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string
+          email?: string | null
+          email_status?: string
+          id?: string
+          linkedin?: string | null
+          name?: string
+          role?: string | null
+          source_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_people_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_runs: {
+        Row: {
+          campaign_id: string
+          finished_at: string | null
+          id: string
+          queries: string[]
+          started_at: string
+          stats: Json
+          status: string
+          summary: string | null
+        }
+        Insert: {
+          campaign_id: string
+          finished_at?: string | null
+          id?: string
+          queries?: string[]
+          started_at?: string
+          stats?: Json
+          status?: string
+          summary?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          finished_at?: string | null
+          id?: string
+          queries?: string[]
+          started_at?: string
+          stats?: Json
+          status?: string
+          summary?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_runs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       platform_leads: {
         Row: {
           booking_id: string | null
