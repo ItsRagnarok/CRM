@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     "/api/rapoarte-lucrare/[id]": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
     "/api/facturi/[id]/pdf": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
+    "/status/[token]/raport": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
   },
   // Blog static: /blog arată public/blog/index.html,
   // /blog/un-articol arată public/blog/un-articol.html

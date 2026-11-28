@@ -4467,6 +4467,10 @@ export type Database = {
         Args: { p_token: string }
         Returns: Json
       }
+      public_job_report: {
+        Args: { p_token: string }
+        Returns: Json
+      }
       ensure_job_status_link: {
         Args: { p_job: string }
         Returns: string

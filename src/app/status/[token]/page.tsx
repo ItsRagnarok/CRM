@@ -155,9 +155,10 @@ export default async function StatusPage({ params }: { params: Promise<{ token: 
         </div>
       )}
 
-      {done && (docs.length > 0 || s.signature) && (
+      {done && (
         <div className={card}>
           <p className="font-bold">Documentele lucrării</p>
+          <a href={`/status/${token}/raport`} target="_blank" rel="noreferrer" className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3.5 py-2.5 text-[14px] font-semibold text-[#c6ff4a]"><span className="min-w-0 truncate">Raport de intervenție (PDF)</span><span className="shrink-0 text-[12.5px] text-[#b7c2ba]">Deschide ↗</span></a>
           {docs.length > 0 && (
             <ul className="mt-2 flex flex-col gap-2">
               {docs.map((d) => (

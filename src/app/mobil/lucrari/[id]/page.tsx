@@ -374,6 +374,7 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             {(signatures.count ?? 0) === 0 && (
               <Link href={`/mobil/lucrari/${id}/semnatura`} className="m-btn sm" style={{ marginTop: 12 }}><PenLine className="m-i" /> Adaugă semnătura</Link>
             )}
+            <Link href={`/mobil/lucrari/${id}/raport`} className="m-bt2 sm" style={{ marginTop: 10 }}><FileText className="m-i" /> Raportul lucrării · trimite clientului</Link>
           </div>
         )}
       </div>

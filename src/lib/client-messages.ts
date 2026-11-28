@@ -29,6 +29,11 @@ export function onTheWayMessage(p: { company: string; techName: string | null; l
   return `Bună ziua! ${who} Am plecat spre dumneavoastră.${eta} Aici vedeți stadiul lucrării: ${p.link}`;
 }
 
+/** Mesajul cu raportul de intervenție (PDF), trimis clientului după închiderea lucrării. */
+export function reportMessage(p: { company: string; number: number; title: string; link: string }) {
+  return `Bună ziua! Vă trimitem raportul de intervenție pentru lucrarea #${p.number} (${p.title}), de la ${p.company}: ${p.link}`;
+}
+
 /** Numărul pentru wa.me (doar cifre, cu prefixul României dacă începe cu 0). */
 export function waPhone(phone: string | null | undefined) {
   const d = (phone ?? "").replace(/\D/g, "");

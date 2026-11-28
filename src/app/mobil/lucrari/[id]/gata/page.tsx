@@ -38,7 +38,7 @@ export default async function MobileJobDonePage({ params }: { params: Promise<{ 
             </>
           ) : null}
         </div>
-        <a href={`/api/rapoarte-lucrare/${id}`} target="_blank" rel="noreferrer" className="m-bt2"><FileText className="m-i" /> Raport lucrare (PDF)</a>
+        <Link href={`/mobil/lucrari/${id}/raport?from=gata`} className="m-bt2"><FileText className="m-i" /> Raportul lucrării · trimite clientului</Link>
       </div>
       <div className="m-ft">
         <Link href="/mobil" className="m-btn"><Home className="m-i" /> Înapoi acasă</Link>
