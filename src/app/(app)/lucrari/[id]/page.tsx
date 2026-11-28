@@ -940,12 +940,23 @@ function ReportCard({ jobId, full }: { jobId: string; full?: boolean }) {
           <div className="text-[11.5px] text-muted-2">Generat automat pe baza datelor completate</div>
         </div>
       </div>
-      <Link
-        href={`/api/rapoarte-lucrare/${jobId}`}
-        className="mt-3 flex items-center justify-center rounded-[10px] bg-electric py-3 text-[13.5px] font-bold text-white"
-      >
-        Descarcă PDF
-      </Link>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        {/* Se deschide în vizualizatorul browserului, cu zoom și printare. */}
+        <a
+          href={`/api/rapoarte-lucrare/${jobId}?inline=1`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center rounded-[10px] bg-electric py-3 text-[13.5px] font-bold text-[#0a0d0a]"
+        >
+          Vezi PDF
+        </a>
+        <a
+          href={`/api/rapoarte-lucrare/${jobId}`}
+          className="flex items-center justify-center rounded-[10px] border border-border bg-white py-3 text-[13.5px] font-bold text-foreground"
+        >
+          Descarcă PDF
+        </a>
+      </div>
       {full && (
         <p className="mt-3 text-[12px] text-muted">
           Raportul se deschide într-o pagină nouă, gata de printat sau salvat ca PDF (Ctrl/Cmd+P → „Salvează ca PDF”).

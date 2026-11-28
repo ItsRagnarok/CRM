@@ -5,7 +5,7 @@ import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PdfViewer } from "./pdf-viewer";
 
-/** PDF-ul raportului, văzut în aplicație, cu „Înapoi” la ecranul raportului. */
+/** PDF-ul raportului, văzut în aplicație, cu zoom și „Înapoi” la ecranul raportului. */
 export default async function MobileReportPdfPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ from?: string }> }) {
   const { id } = await params;
   const { from } = await searchParams;
@@ -26,9 +26,7 @@ export default async function MobileReportPdfPage({ params, searchParams }: { pa
         </div>
         <span style={{ width: 44 }} aria-hidden="true" />
       </header>
-      <div className="m-bd" style={{ background: "var(--m-bg, #f4f5f7)" }}>
-        <PdfViewer url={`/api/rapoarte-lucrare/${id}?inline=1`} />
-      </div>
+      <PdfViewer url={`/api/rapoarte-lucrare/${id}?inline=1`} />
       <div className="m-ft">
         <Link href={back} className="m-btn">Înapoi la raport · trimite clientului</Link>
       </div>
