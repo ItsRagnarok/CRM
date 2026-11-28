@@ -18,6 +18,7 @@ import { NotifyClient } from "./notify-client";
 import { onTheWayMessage } from "@/lib/client-messages";
 import { SITE_URL } from "@/lib/seo";
 import { templateFor } from "@/lib/ssm";
+import { JobDocuments } from "./documente/job-documents";
 
 type Step = "pregatire" | "drum" | "loc" | "inchidere";
 const STEPS: { id: Step; label: string; icon: typeof Clock }[] = [
@@ -374,9 +375,9 @@ export default async function MobileJobPage({ params }: { params: Promise<{ id: 
             {(signatures.count ?? 0) === 0 && (
               <Link href={`/mobil/lucrari/${id}/semnatura`} className="m-btn sm" style={{ marginTop: 12 }}><PenLine className="m-i" /> Adaugă semnătura</Link>
             )}
-            <Link href={`/mobil/lucrari/${id}/raport`} className="m-bt2 sm" style={{ marginTop: 10 }}><FileText className="m-i" /> Raportul lucrării · trimite clientului</Link>
           </div>
         )}
+        {isDone && <JobDocuments jobId={id} />}
       </div>
 
       {!isDone && (
