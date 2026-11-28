@@ -162,7 +162,12 @@ export function extractEmails(html: string): string[] {
   return [...out];
 }
 
-export const emailKind = (email: string): "generic" | "personal" => (GENERIC_LOCAL.test(email.split("@")[0]) ? "generic" : "personal");
+/** „office@”, „instal.office@” sau numele firmei („crito@crito.ro”) = adresa firmei; altfel e a unui om. */
+export const emailKind = (email: string): "generic" | "personal" => {
+  const [local, domain = ""] = email.toLowerCase().split("@");
+  const stem = domain.split(".")[0].replace(/[^a-z0-9]/g, "");
+  return GENERIC_LOCAL.test(local) || (stem.length >= 3 && local.replace(/[^a-z0-9]/g, "") === stem) ? "generic" : "personal";
+};
 export const emailDomain = (email: string) => email.split("@")[1]?.toLowerCase() ?? "";
 
 /** Telefoane românești (fix și mobil), aduse la forma 07xx xxx xxx / 02xx xxx xxx. */

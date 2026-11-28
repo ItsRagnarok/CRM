@@ -82,6 +82,7 @@ test("adrese de firmă cu prefix sau sufix", () => {
   assert.equal(emailKind("instal.office@rap-group.ro"), "generic");
   assert.equal(emailKind("depozit.cluj@conexinstal.ro"), "generic");
   assert.equal(emailKind("zoltan.kertesz@conexinstal.ro"), "personal");
+  assert.equal(emailKind("crito@crito.ro"), "generic");
 });
 
 test("CUI-uri din rezultate de căutare", async () => {
