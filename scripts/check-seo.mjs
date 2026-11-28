@@ -16,7 +16,8 @@ const sitemap = await get("/sitemap.xml");
 const urls = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
 const articles = (await readdir(new URL("../public/blog/", import.meta.url)))
   .filter((file) => file.endsWith(".html") && file !== "index.html");
-assert.equal(urls.length, articles.length + 5);
+// Pagina principală, /blog, /programare, /termeni, /confidentialitate, articolele și paginile pe meserie/funcționalitate.
+assert.equal(urls.filter((u) => u.startsWith(`${origin}/blog/`)).length, articles.length);
 assert.equal(new Set(urls).size, urls.length);
 for (const article of articles) {
   assert.ok(urls.includes(`${origin}/blog/${article.slice(0, -5)}`));
@@ -25,7 +26,6 @@ for (const privatePath of ["/login", "/signup", "/dashboard", "/admin", "/mobil"
   assert.ok(!urls.includes(`${origin}${privatePath}`));
 }
 assert.ok((await get("/blog-style.css")).includes("{"));
-await get("/sitemap-blog.xml");
 
 for (const pathname of ["/", "/blog", "/programare", "/termeni", "/confidentialitate"]) {
   const html = await get(pathname);

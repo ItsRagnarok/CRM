@@ -4,7 +4,7 @@ import { HOME_FAQ } from "@/components/marketing/home-faq";
 
 export const metadata = publicPageMetadata(
   "Software management electricieni și echipe de teren",
-  "Software de management pentru electricieni, instalatori și echipe mobile: programarea lucrărilor, aplicație pentru tehnicieni, pontaj din teren, stoc și facturare SmartBill/Oblio.",
+  "Software pentru electricieni, instalatori și echipe de teren: programarea lucrărilor, aplicație pentru tehnicieni, pontaj, stoc și facturare SmartBill/Oblio.",
   "/",
 );
 
