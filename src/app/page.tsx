@@ -17,7 +17,7 @@ import {
 
 // Pagina principală deține interogarea „software de management pentru electricieni și echipe de teren / echipe
 // mobile”, brandul și „program pentru firme de instalații”. Titlu ≤ 60 de caractere, descriere 140–155.
-const TITLE = "Software management pentru electricieni și echipe de teren";
+const TITLE = "Software de management pentru electricieni și echipe mobile";
 const DESCRIPTION =
   "Software de management pentru electricieni, instalatori și echipe mobile: lucrări pe echipe, aplicația tehnicianului, pontaj, stoc pe mașini și facturare.";
 /** Data ultimei modificări reale a textului paginii principale (AAAA-LL-ZZ). */

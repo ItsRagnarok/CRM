@@ -43,6 +43,8 @@ const GUIDES = [
   { href: "/blog/verificare-revizie-instalatie-gaze-cand-si-ce-pregatesti", h: "Verificare și revizie gaze: când se face, ce pregătești" },
   { href: "/blog/fisa-evidenta-verificare-revizie-gaze-scadentar", h: "Fișa de evidență gaze și scadențarul pe bloc" },
   { href: "/blog/proces-verbal-punere-in-functiune-fotovoltaic-model", h: "Proces-verbal de punere în funcțiune fotovoltaic" },
+  { href: "/blog/model-proces-verbal-raport-lucrare", h: "Model de proces-verbal de recepție și predare-primire" },
+  { href: "/blog/dosar-prosumator-etape-termene-atr", h: "Dosarul de prosumator: pași, acte și termene ATR" },
   { href: "/blog/evidenta-orelor-tehnicieni-teren-pontaj", h: "Pontajul tehnicienilor din teren" },
   { href: "/blog/calculator-tarif-ora-electrician-instalator", h: "Calculator: tariful minim pe oră" },
   { href: "/blog/e-factura-b2b-2026-ce-schimba-pentru-firme-de-electrice-fotovoltaice", h: "e-Factura B2B pentru firmele de instalații" },
@@ -88,7 +90,7 @@ export function HomeSeo() {
   return (
     <section id="ghiduri" className={s.seo} aria-labelledby="functii-title">
       <div className={s.wrap}>
-        <h2 id="functii-title" className={s.disp}>Ce face software-ul pentru echipele de teren</h2>
+        <h2 id="functii-title" className={s.disp}>Funcțiile platformei, pe pagini separate</h2>
         <p className={s.seoLead}>
           Programezi lucrările pe echipe și zile, tehnicianul le face din telefon, iar orele, materialele, pozele și documentele
           rămân pe lucrare. Fiecare parte a platformei are pagina ei, cu ce face și ce nu face.

@@ -25,7 +25,7 @@ const page: MarketingPage = {
         "Cheltuielile, cererile de concediu, mesajele cu biroul și orele lui din săptămână.",
       ],
       p: [
-        "Programarea, calendarul și harta stau la birou, în browser: vezi pagina despre [software de management pentru echipe de teren](/software-management-echipe-teren).",
+        "Programarea, calendarul și harta stau la birou, în browser: vezi [ce face un program FSM la birou și cum îl alegi](/software-management-echipe-teren).",
       ],
     },
     {
@@ -98,7 +98,7 @@ const page: MarketingPage = {
       id: "telefoane",
       answer: "Pe Android, tehnicianul instalează aplicația Android (APK, descărcată de pe site, din pagina de conectare), pe Android 7 sau mai nou. Pe iPhone lucrează din browser și poate pune pagina pe ecranul principal. Contul e același pe orice telefon, iar biroul lucrează în browser, pe calculator.",
       list: [
-        "Notificările push (lucrări noi, mutări de program, mesaje, răspunsuri la cereri) merg doar în aplicația Android. Pe iPhone, noutățile apar la clopoțel, în aplicație.",
+        "Notificările push (lucrări noi, mutări de program, mesaje, răspunsuri la cereri) merg doar în aplicația Android. Pe iPhone, noutățile apar la clopoțel, când deschizi platforma în browser.",
         "La prima instalare, Android îți cere să permiți instalarea aplicațiilor din afara magazinului de aplicații.",
         "Urmărirea continuă pe hartă cere setarea firmei și acordul angajatului; cu ecranul blocat, merge doar din aplicația Android.",
       ],

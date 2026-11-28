@@ -29,7 +29,7 @@ const PRIVATE = [
   "/cont-suspendat", "/api/activity", "/api/admin/analytics", "/api/admin/preview-exit", "/api/programari",
   "/api/analytics", "/api/facturi/1/pdf", "/api/rapoarte-lucrare/1", "/api/usage", "/api/inexistent",
   // Forme ocolite: litere mari, codare, bare duble, segment de grup.
-  "/LUCRARI", "/Dashboard/x", "/%6Cucrari", "/lucrari%2F1", "//lucrari", "/(app)/lucrari", "/mobil\\lucrari",
+  "/LUCRARI", "/Dashboard/x", "/%6Cucrari", "/lucrari%2F1", "//lucrari", "/(app)/lucrari", "/mobil\\lucrari", "/x%2F..%2Flucrari", "/blog%2F..%2Flucrari", "/lucrari%2F..%2Fblog",
 ];
 const NOT_FOUND = [
   "/pagina-inexistenta", "/wp-admin", "/wp-login.php", "/.env", "/lucrarix", "/blogfoo", "/blog-x", "/mobilfoo",
@@ -81,14 +81,25 @@ test("articolele din public/blog sunt publice", () => {
 
 // --- (b) arborele de rute din src/app ---
 
+const PAGE_FILE = /^page\.(tsx|ts|jsx|js|mdx)$/;
 const ROUTE_FILE = /^(page|route)\.(tsx|ts|jsx|js|mdx)$/;
+// Fișierele de metadate sunt și ele rute (servite la <folder>/opengraph-image, <folder>/sitemap.xml
+// etc.), statice sau generate, cu variantele numerotate (icon1.png). Aceleași nume și extensii ca în
+// node_modules/next/dist/lib/metadata/is-metadata-route.js. robots, manifest și favicon contează
+// doar în rădăcina src/app, unde segmentele sunt goale și testele de mai jos le sar oricum.
+const METADATA_FILE = new RegExp(
+  "^(?:sitemap\\.(?:xml|tsx|ts|jsx|js)" +
+  "|icon\\d?\\.(?:ico|jpg|jpeg|png|svg|tsx|ts|jsx|js)" +
+  "|apple-icon\\d?\\.(?:jpg|jpeg|png|tsx|ts|jsx|js)" +
+  "|(?:opengraph|twitter)-image\\d?\\.(?:jpg|jpeg|png|gif|tsx|ts|jsx|js))$",
+);
 const isGroup = (name: string) => /^\(.*\)$/.test(name) || name.startsWith("@");
 const isDynamic = (name: string) => /^\[.*\]$/.test(name);
 const isPrivateFolder = (name: string) => name.startsWith("_");
 
 type Route = { file: string; segments: string[] };
 
-/** Toate fișierele page/route din src/app, cu segmentele URL (grupurile și sloturile nu apar în URL). */
+/** Toate fișierele page/route și de metadate din src/app, cu segmentele URL (grupurile și sloturile nu apar în URL). */
 function routes(dir = APP, segments: string[] = []): Route[] {
   const out: Route[] = [];
   for (const name of readdirSync(dir)) {
@@ -96,7 +107,7 @@ function routes(dir = APP, segments: string[] = []): Route[] {
     if (statSync(full).isDirectory()) {
       if (isPrivateFolder(name) || name === "node_modules") continue;
       out.push(...routes(full, isGroup(name) ? segments : [...segments, name]));
-    } else if (ROUTE_FILE.test(name)) {
+    } else if (ROUTE_FILE.test(name) || METADATA_FILE.test(name)) {
       out.push({ file: path.relative(ROOT, full), segments });
     }
   }
@@ -137,7 +148,7 @@ test("fiecare folder de rută de pe primul nivel e clasificat public sau privat"
         continue;
       }
       if (list.some((r) => r.segments.length !== 1)) problems.push("src/app/[slug]: nu trebuie să aibă subrute");
-      const page = list.find((r) => r.segments.length === 1);
+      const page = list.find((r) => r.segments.length === 1 && PAGE_FILE.test(path.basename(r.file)));
       const source = page ? readFileSync(path.join(ROOT, page.file), "utf8") : "";
       if (!/export const dynamicParams = false/.test(source)) problems.push("src/app/[slug]: lipsește dynamicParams = false (doar slug-urile din MARKETING_PAGES există, restul dau 404)");
       continue;

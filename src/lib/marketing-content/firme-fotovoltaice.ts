@@ -132,7 +132,7 @@ const page: MarketingPage = {
           rows: [
             ["Valorile de punere în funcțiune", "Formularul completat de montator", "Pe pagina lucrării, cu autorul și ora"],
             ["Pozele", "Pozele etichetate din telefon", "Pe lucrare, grupate după etichetă"],
-            ["Raportul lucrării", "Orele, cheltuielile, numărul de poze, semnătura clientului", "PDF"],
+            ["Raportul lucrării", "Checklistul, cheltuielile, numărul de poze, semnătura clientului", "PDF"],
             ["Pagina de status", "Etapele, cine vine, pozele înainte și după, documentele bifate „Pentru client”", "Link, fără cont pentru client"],
             ["Factura", "Orele înmulțite cu tariful tău, materialele cu adaosul tău", "Emisă prin contul tău SmartBill sau Oblio"],
           ],

@@ -29,10 +29,10 @@ Pe scurt (română): ElectroField este o platformă pentru firmele de instalați
 - Photovoltaic: project file with stages (contract and advance, installation, ATR and approvals, commissioning, AFM and warranty), operator deadline clocks, commissioning (PIF) form on the phone with per-string values.
 - Compliance (Conformitate): authorizations and ID cards, vehicles (ITP, RCA), devices with calibration, alerts at 60, 30 and 7 days.
 - Stock: warehouses, materials, import of a standard material catalog, stock per vehicle with a target list and minimum, restock requests, printable order list, tool register with handover and calibration.
-- Electronic trip log (foaie de parcurs): monthly per vehicle, from the team's finished jobs (date, address, purpose, km, estimated fuel cost). The fiscal format is to be confirmed with the accountant.
+- Electronic trip log (foaie de parcurs): monthly per vehicle, from the team's finished jobs (date, address, purpose). Kilometres are not calculated by the platform; the fiscal format is to be confirmed with the accountant.
 - Invoicing: invoices and proformas from finished jobs (hours × firm rate, materials), ANAF CUI lookup, collections, cancel/storno, PDF. Through SmartBill (the invoice is issued in SmartBill) or Oblio (including sending to e-Factura/SPV), or as internal records only.
 - Client link without login: job status, arrival window, who is coming, before/after photos, documents.
-- Reports: job report PDF (hours, expenses, photos, signature), profit per job after invoicing, a Monday-morning owner screen (overdue invoices, margin by job type and team).
+- Reports: job report PDF (checklist, expenses, photo count, client signature), profit per job after invoicing, a Monday-morning owner screen (overdue invoices, margin by job type and team).
 - AI assistance, always confirmed by a person: receipt to expense, data plate to make/model/serial number. The firm can switch it off.
 - Push notifications: in the Android app only.
 
@@ -47,7 +47,7 @@ Pe scurt (română): ElectroField este o platformă pentru firmele de instalați
 ## Pages (Romanian)
 
 - [Prima pagină](https://www.electrofield.ro/): ce face platforma, de la birou la teren
-- [Software de management pentru echipe de teren](https://www.electrofield.ro/software-management-echipe-teren): lucrări, echipe, pontaj, stoc și facturare într-un singur loc
+- [Software de management pentru echipe de teren](https://www.electrofield.ro/software-management-echipe-teren): ce este un software FSM, prin ce diferă de CRM, ERP sau pontaj și cum îl alegi (8 criterii)
 - [Program pentru firme de instalații electrice](https://www.electrofield.ro/firme-instalatii-electrice): măsurători pe circuit, lucrări ascunse, autorizații ANRE
 - [Program pentru verificări și revizii gaze](https://www.electrofield.ro/firme-gaze-verificari-revizii): scadențar pe bloc și apartament, fișe pe telefon, registru anual
 - [Program pentru firme de montaj fotovoltaic](https://www.electrofield.ro/firme-fotovoltaice): dosarul proiectului pe etape, termene la operator, formular PIF
@@ -59,6 +59,17 @@ Pe scurt (română): ElectroField este o platformă pentru firmele de instalați
 - [Despre ElectroField](https://www.electrofield.ro/despre): cine furnizează platforma și datele de identificare
 - [Blog](https://www.electrofield.ro/blog): ghiduri pentru firme de instalații (autorizații, verificări gaze, PRAM, fotovoltaic, pontaj, facturare)
 - [Programează un demo](https://www.electrofield.ro/programare): o discuție la telefon sau pe Google Meet
+
+## Guides (Romanian)
+
+- [Model foaie de parcurs](https://www.electrofield.ro/blog/model-foaie-de-parcurs): ce cer normele Codului fiscal, model Excel și Word, exemplu completat
+- [Autorizație ANRE electrician](https://www.electrofield.ro/blog/autorizatie-anre-electrician): gradele I–IV, studii și vechime, acte, examen și viza la 5 ani
+- [Priza de pământ: valori admise și măsurare](https://www.electrofield.ro/blog/priza-de-pamant-valori-masurare): valorile din normativul I7-2011, cum se măsoară și ce faci dacă iese prea mare
+- [Verificare PRAM](https://www.electrofield.ro/blog/verificare-pram-rezistenta-priza-de-pamant-periodicitate): ce măsurători cere I7-2011, la ce interval și cine emite buletinul, cu model Word și Excel
+- [Verificarea și revizia instalației de gaze](https://www.electrofield.ro/blog/verificare-revizie-instalatie-gaze-cand-si-ce-pregatesti): termenele din Ordinul ANRE 179/2015, cine le face și ce primește clientul
+- [Fișa de evidență gaze și scadențar pe bloc](https://www.electrofield.ro/blog/fisa-evidenta-verificare-revizie-gaze-scadentar): ce conține fișa și un scadențar pe bloc, scară și apartament
+- [Dosar prosumator: etape și termene ATR](https://www.electrofield.ro/blog/dosar-prosumator-etape-termene-atr): actele pentru ATR sau notificare și termenele operatorului de distribuție
+- [Proces-verbal de punere în funcțiune fotovoltaic](https://www.electrofield.ro/blog/proces-verbal-punere-in-functiune-fotovoltaic-model): model de PV și fișă de măsurători pe string (Voc, Isc, rezistență de izolație)
 
 ## Optional
 

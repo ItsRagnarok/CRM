@@ -102,7 +102,7 @@ const page: MarketingPage = {
           head: ["Document", "Din ce date", "În ce formă"],
           rows: [
             ["Proces-verbal de lucrări ascunse", "Pozele „Ascuns” și lista lucrărilor ascunse", "Pagină de tipărit sau de salvat PDF, semnată pe hârtie"],
-            ["Raportul lucrării", "Orele pontate, cheltuielile, numărul de poze, semnătura clientului", "PDF"],
+            ["Raportul lucrării", "Checklistul, cheltuielile, numărul de poze, semnătura clientului", "PDF"],
             ["Buletin de verificare", "Denumirea, semnatarul autorizat, data semnării", "Înregistrare pe lucrare, fără document tipărit cu valorile"],
             ["Pagina de status pentru client", "Etapele lucrării, cine vine, pozele înainte și după, documentele", "Link, fără cont pentru client"],
             ["Factura", "Orele înmulțite cu tariful tău, materialele cu adaosul tău", "Emisă prin contul tău SmartBill sau Oblio"],

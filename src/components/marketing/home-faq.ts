@@ -28,7 +28,7 @@ export const HOME_FAQ: { q: string; a: string }[] = [
   },
   {
     q: "Ce documente scot pentru lucrările electrice, de gaze și fotovoltaice?",
-    a: "La gaze, fișa de evidență se completează și se semnează pe telefon, apoi o tipărești. La electrice, măsurătorile pe circuite se trec în telefon, iar procesul-verbal de lucrări ascunse, cu poze, îl tipărești sau îl salvezi PDF. La fotovoltaic, fișa de punere în funcțiune ține valorile pe fiecare string. Orice lucrare are raport PDF, cu orele și semnătura clientului. Buletinul PRAM nu se generează încă din valori. Forma fiecărui document o confirmi cu responsabilul tehnic.",
+    a: "La gaze, fișa de evidență se completează și se semnează pe telefon, apoi o tipărești. La electrice, măsurătorile pe circuite se trec în telefon, iar procesul-verbal de lucrări ascunse, cu poze, îl tipărești sau îl salvezi PDF. La fotovoltaic, fișa de punere în funcțiune ține valorile pe fiecare string. Orice lucrare are raport PDF, cu checklistul, cheltuielile, numărul de poze și semnătura clientului. Buletinul PRAM nu se generează încă din valori. Forma fiecărui document o confirmi cu responsabilul tehnic.",
   },
   {
     q: "Pot aduce datele din Excel?",

@@ -4,7 +4,7 @@ import type { MarketingPage } from "../marketing-pages";
 // Compară doar tipuri de soluții, fără nume de produse. Afirmațiile despre ElectroField urmează fișa de produs verificată.
 const page: MarketingPage = {
   slug: "software-management-echipe-teren",
-  title: "Software de management pentru echipe de teren: cum alegi",
+  title: "Software de management pentru echipe de teren: cum îl alegi",
   description: "Ce este un software de management pentru echipe de teren (FSM), ce face, prin ce diferă de Excel, pontaj sau ERP și cum îl alegi, după 8 criterii clare.",
   kicker: "Ghid · field service management",
   h1: "Software de management pentru echipe de teren: ce face și cum îl alegi",
@@ -54,11 +54,11 @@ const page: MarketingPage = {
           head: ["Ce introduce echipa", "Ce obții"],
           rows: [
             ["Plecare, sosire, început și final pe lucrare", "Pontajul pe om și pe lucrare, cu export CSV, și costul manoperei"],
-            ["Ore, cheltuieli, observații, semnătura clientului", "Raportul lucrării în PDF"],
+            ["Checklist, cheltuieli, poze, semnătura clientului", "Raportul lucrării în PDF (cu numărul de poze, nu pozele)"],
             ["Pozele marcate „lucrări ascunse” și lista lor", "Procesul-verbal de lucrări ascunse, de tipărit sau de salvat ca PDF"],
             ["Fișa de gaze, cu semnături", "Fișa tipăribilă, termenele de după fișă și registrul anual al fișelor, în CSV"],
             ["Măsurători pe circuite: izolație, impedanța buclei, continuitatea PE, diferențial", "Tabelul de măsurători; buletinul se înregistrează semnat doar de cine are autorizație ANRE valabilă"],
-            ["Lucrările terminate ale echipei care folosește mașina", "[Foaia de parcurs electronică](/foaie-de-parcurs-electronica) a mașinii, pe lună: zi, adresă, scop, kilometrii înregistrați pe lucrare"],
+            ["Lucrările terminate ale echipei care folosește mașina", "[Foaia de parcurs electronică](/foaie-de-parcurs-electronica) a mașinii, pe lună: zi, adresă, scop"],
             ["Ore, materiale, cheltuieli", "Factura și, după facturare, costul și profitul lucrării"],
           ],
         },
@@ -69,7 +69,7 @@ const page: MarketingPage = {
       id: "excel-whatsapp",
       answer: "Când informația despre lucrări nu mai încape în capul unui singur om. Cu 2–3 tehnicieni, un tabel și un grup de mesaje pot ține. Cu mai multe echipe apar lucrări uitate la facturare, ore estimate din memorie, poze rămase în telefoanele oamenilor și materiale cumpărate de două ori.",
       p: [
-        "Excelul nu știe ce se întâmplă în teren: nu primește poze, nu cere semnătura clientului și nu te anunță când o lucrare întârzie. Dacă nu știi sigur unde ești, fă [testul Excel, WhatsApp sau aplicație pentru echipe de teren](/blog/excel-sau-aplicatie-gestionare-lucrari).",
+        "Excelul nu știe ce se întâmplă în teren: nu primește poze, nu cere semnătura clientului și nu îți arată în ce stadiu e fiecare lucrare. Dacă nu știi sigur unde ești, fă [testul Excel, WhatsApp sau aplicație pentru echipe de teren](/blog/excel-sau-aplicatie-gestionare-lucrari).",
       ],
       blocks: [
         { type: "callout", title: "Exemplu de calcul, cu cifre ipotetice", text: "Dacă biroul pierde zilnic 30 de minute cu telefoane de tipul „unde ești?” și „ai terminat?”, la 21 de zile lucrătoare se adună 10 ore și jumătate pe lună. Pune în loc cifrele firmei tale." },
@@ -115,7 +115,7 @@ const page: MarketingPage = {
             ["Datele tale", "Ce poți exporta și în ce format? Cine are acces?", "Ceri lista exporturilor și citești termenii și politica de confidențialitate."],
           ],
         },
-        { type: "p", text: "Pentru întrebările de pus înainte să semnezi, vezi și [ghidul de alegere a unui program de management pentru firme de instalații](/blog/program-management-firma-instalatii)." },
+        { type: "p", text: "Pentru întrebările de pus înainte să semnezi, vezi și [ghidul despre cum testezi un program de management pe lucrări reale](/blog/program-management-firma-instalatii)." },
       ],
     },
     {
@@ -176,10 +176,10 @@ const page: MarketingPage = {
   ],
   faq: [
     { q: "Ce înseamnă field service management (FSM)?", a: "Field service management (FSM) înseamnă organizarea lucrărilor făcute la client: programarea echipelor, sarcinile din telefon, pontajul, materialele, documentele și facturarea. În română îi spunem software de management pentru echipe de teren." },
-    { q: "Merge aplicația fără semnal?", a: "În parte. Pozele, semnătura, sosirea, începutul și finalul lucrării, formularele, fișele și vizitele de gaze și incidentele SSM se salvează pe telefon și pleacă singure când revine semnalul. Plecarea, consumul de materiale, cheltuielile și cererile de concediu cer semnal." },
-    { q: "Pe ce telefoane merge aplicația pentru tehnicieni?", a: "Pe Android merge aplicația Android (APK, descărcată de pe site). Pe iPhone lucrezi din browser și poți adăuga aplicația pe ecranul principal. Notificările push merg doar în aplicația Android; pe iPhone le vezi când deschizi aplicația." },
-    { q: "Pot vedea pe hartă unde sunt echipele?", a: "Da. Harta arată lucrările active, echipele și depozitele. Poziția live apare doar dacă firma activează urmărirea continuă și angajatul își dă acordul; cu ecranul blocat, merge doar în aplicația Android. Altfel, locația se salvează la sosire." },
-    { q: "Se leagă de SmartBill sau Oblio?", a: "Da. Factura se completează din lucrare și se emite prin contul tău SmartBill sau Oblio, cu datele clientului luate de la ANAF după CUI. Trimiterea în SPV (e-Factura) din platformă se face prin Oblio; cu SmartBill, o faci din contul SmartBill." },
+    { q: "Cât durează să pornești cu un software pentru echipe de teren?", a: "Depinde de câte echipe, mașini și lucrări ai și de cât de ordonate sunt datele de azi. Cu ElectroField, după discuția de prezentare te ajutăm la prima configurare: echipele, mașinile, depozitele și domeniile firmei. Apoi tehnicienii instalează aplicația Android sau deschid pagina în browser, pe iPhone, și primesc primele lucrări." },
+    { q: "Ce date trebuie să am pregătite înainte?", a: "Lista angajaților și a echipelor, mașinile cu datele de ITP și RCA, depozitele și autorizațiile ANRE ale oamenilor. Clienții și materialele proprii se adaugă în platformă, nu dintr-un fișier; materialele pornesc de la catalogul standard. Apartamentele de gaze se pot importa. Pentru facturi îți trebuie contul de SmartBill sau Oblio." },
+    { q: "Ce export primesc dacă renunț?", a: "Pontajul și registrul anual al fișelor de gaze le exporți singur, oricând, în CSV. Exportul sau ștergerea tuturor celorlalte date le ceri, cum scrie în [termenii și condițiile ElectroField](/termeni). Întreabă același lucru la orice furnizor înainte să semnezi: ce primești, în ce format și în cât timp." },
+    { q: "FSM sau ERP: de care am nevoie?", a: "Un ERP ține contabilitatea, gestiunea și salarizarea firmei. Un software pentru echipe de teren ține lucrarea: programarea, munca din teren, dovezile și ce e de facturat. Multe firme de instalații au nevoie de amândouă: ElectroField nu înlocuiește contabilitatea, ci emite factura prin SmartBill sau Oblio, din datele lucrării." },
     { q: "Face devize sau oferte?", a: "Nu. ElectroField pornește de la lucrarea stabilită: programare, execuție, documente și factură. Oferta o scrii separat, iar în dosarul fotovoltaic notezi data la care ai trimis-o." },
     { q: "E potrivit pentru o firmă cu 3 tehnicieni?", a: "Da, platforma e gândită pentru firme de la 2–3 tehnicieni la câteva zeci. La 2–3 oameni, Excelul și WhatsApp-ul pot încă ajunge; trecerea merită când pierzi lucrări la facturare, ore sau dovezi. Fă întâi [testul Excel, WhatsApp sau aplicație](/blog/excel-sau-aplicatie-gestionare-lucrari)." },
   ],

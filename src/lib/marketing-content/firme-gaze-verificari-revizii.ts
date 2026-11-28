@@ -28,7 +28,7 @@ const page: MarketingPage = {
     {
       h: "Cum calculează scadențarul verificările și reviziile?",
       id: "scadentar",
-      answer: "Următoarea verificare pornește de la data ultimei verificări, iar următoarea revizie de la data ultimei revizii, la intervalele setate de firmă: implicit 24 și 120 de luni. Când tehnicianul încheie o fișă de revizie, se mută și data verificării, pentru că revizia ține locul verificării din acel an (art. 3² din procedură).",
+      answer: "Următoarea verificare pornește de la data ultimei verificări, iar următoarea revizie de la data ultimei revizii, la intervalele setate de firmă: implicit 24 și 120 de luni. Când tehnicianul încheie o fișă de revizie, platforma mută și data verificării. Procedura prevede asta dacă revizia e făcută în anul în care era scadentă verificarea (art. 3² alin. 1–2).",
       blocks: [
         {
           type: "table",
@@ -36,14 +36,14 @@ const page: MarketingPage = {
           head: ["Fișa încheiată", "Următoarea verificare", "Următoarea revizie"],
           rows: [
             ["Verificare periodică sau la cerere", "De la data fișei", "Neschimbată"],
-            ["Revizie periodică", "De la data reviziei", "De la data reviziei"],
-            ["Revizie la cerere, după un eveniment sau după o întrerupere de peste 6 luni", "De la data reviziei", "De la data reviziei: ține locul reviziei periodice"],
+            ["Revizie periodică", "De la data reviziei, dacă revizia e făcută în anul în care era scadentă verificarea (art. 3² alin. 1–2)", "De la data reviziei"],
+            ["Revizie la cerere, după un eveniment sau după o întrerupere de peste 6 luni", "De la data reviziei, dacă revizia e făcută în anul în care era scadentă verificarea (art. 3² alin. 1–2)", "De la data reviziei: ține locul reviziei periodice (art. 3² alin. 3–4)"],
           ],
         },
         {
           type: "callout",
           title: "Exemplu de calcul (date inventate)",
-          text: "Ultima verificare pe 10.03.2025, apoi o revizie la cerere pe 05.06.2026. Formula „ultima verificare + 2 ani” dintr-un Excel ar da 10.03.2027. După art. 3², următoarea verificare e scadentă cel târziu pe 05.06.2028, iar următoarea revizie cel târziu pe 05.06.2036.",
+          text: "Ultima verificare pe 10.03.2025, deci următoarea e scadentă pe 10.03.2027. În același an, pe 05.02.2027, se face o revizie la cerere, care ține locul verificării din 2027. Formula „ultima verificare + 2 ani” dintr-un Excel ar rămâne la 10.03.2027. După art. 3², următoarea verificare e scadentă cel târziu pe 05.02.2029, iar următoarea revizie cel târziu pe 05.02.2037. Dacă revizia cade în alt an decât verificarea scadentă, confirmă termenul cu operatorul de distribuție și cu responsabilul tehnic.",
         },
       ],
     },
@@ -157,7 +157,7 @@ const page: MarketingPage = {
   ],
   faq: [
     { q: "Pot importa lista de apartamente dintr-un Excel?", a: "Da. Lipești coloanele scară, apartament, nume, telefon, ultima verificare și ultima revizie, până la 2.000 de apartamente o dată. Dacă un rând are o dată invalidă sau un apartament dublat, importul nu se face și vezi rândul cu problema." },
-    { q: "Cum se calculează scadența după o revizie?", a: "Revizia ține locul verificării din anul respectiv, iar următoarea verificare e scadentă la cel mult 2 ani de la revizie (art. 3² din procedură). Platforma mută data verificării când se încheie fișa de revizie. Intervalele, implicit 24 și 120 de luni, le schimbă administratorul." },
+    { q: "Cum se calculează scadența după o revizie?", a: "Dacă revizia e făcută în anul în care era scadentă verificarea, ține locul ei, iar următoarea verificare e scadentă la cel mult 2 ani de la revizie (art. 3² alin. 1–2). Platforma mută data verificării când se încheie fișa de revizie; dacă revizia a căzut în alt an, confirmă termenul cu operatorul de distribuție. Intervalele, implicit 24 și 120 de luni, le schimbă administratorul." },
     { q: "Ce fac când locatarul nu e acasă sau refuză accesul?", a: "Tehnicianul notează „absent”, „refuz” sau „reprogramat”, cu motivul, iar apartamentul rămâne în scadențar până îl reprogramezi. Ce faci mai departe stabilești cu responsabilul tehnic; [ghidul despre fișa de evidență](/blog/fisa-evidenta-verificare-revizie-gaze-scadentar) descrie situațiile din teren." },
     { q: "Merge fișa fără semnal, în subsol?", a: "Da. Fișa, vizitele de pe bloc, pozele, semnătura, sosirea și finalul lucrării se salvează pe telefon și pleacă singure când revine semnalul. Plecarea, consumul de materiale și cheltuielile cer semnal. Deschide lista blocului cât ai semnal." },
     { q: "ElectroField înregistrează fișele la operatorul de distribuție?", a: "Nu. Le înregistrezi tu, la ghișeu sau electronic, cum cere operatorul. Treci apoi în platformă numărul și data, iar termenul de 2 zile lucrătoare pentru exemplarul clientului pornește de la acea dată." },

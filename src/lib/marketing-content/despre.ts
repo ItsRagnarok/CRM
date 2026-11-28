@@ -73,7 +73,7 @@ const page: MarketingPage = {
     {
       h: "În ce stadiu este ElectroField?",
       id: "stadiu",
-      answer: "ElectroField este o platformă nouă, din 2026. Funcțiile descrise pe site există în platformă, dar nu avem încă firme-client pe care să le putem cita. De aceea nu vei găsi aici recenzii, logo-uri de clienți sau cifre de economii: le publicăm doar când vin de la firme reale, cu acordul lor.",
+      answer: "ElectroField este o platformă nouă, din 2026. Funcțiile descrise pe site există în platformă; legăturile cu SmartBill și Oblio nu au fost încă folosite de o firmă reală. Nu avem încă clienți pe care să-i putem cita. De aceea nu vei găsi recenzii, logo-uri de clienți sau cifre de economii: le publicăm doar de la firme reale, cu acordul lor.",
       p: [
         "Descriem ce face platforma acum; ce e în lucru spunem ca atare. Schimbările importante le anunțăm celor care o folosesc, cum scrie în [termenii de utilizare](/termeni).",
       ],
@@ -112,7 +112,7 @@ const page: MarketingPage = {
       answer: "Firma care folosește ElectroField rămâne proprietara datelor și este operatorul lor; ElectroField le prelucrează în numele ei, doar ca să furnizeze serviciul. Fiecare firmă vede doar datele ei, iar pozele, documentele și semnăturile se deschid prin legături temporare. Detaliile sunt în [politica de confidențialitate](/confidentialitate).",
       list: [
         "GPS continuu: doar dacă firma îl activează și angajatul își dă acordul, pe care îl retrage din aplicație. Firma alege câte zile se păstrează pozițiile. Vezi [ghidul despre urmărirea GPS și GDPR](/blog/urmarire-gps-echipe-teren-gdpr).",
-        "AI (citirea bonului sau a plăcuței unui aparat, dictarea): pornește doar când cineva apasă butonul. Pozele pleacă atunci la Google Gemini sau, de rezervă, la Groq, iar textul la Groq; rezultatul îl confirmă un om. Firma îl poate opri.",
+        "AI (citirea bonului sau a plăcuței unui aparat, dictarea): pornește doar când cineva apasă butonul. Pozele pleacă atunci, în același timp, la Google Gemini și la Groq, iar înregistrarea dictată la Groq; se păstrează primul răspuns, pe care îl confirmă un om. Firma îl poate opri.",
         "Site-ul public numără vizitele fără cookie-uri și fără să păstreze adresa IP.",
         "Export: pontajul și registrul fișelor de gaze, în CSV. Exportul sau ștergerea tuturor datelor le ceri, cum scrie în termeni.",
       ],

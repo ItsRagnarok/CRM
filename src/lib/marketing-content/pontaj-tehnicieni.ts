@@ -101,7 +101,7 @@ const page: MarketingPage = {
           head: ["Din ce", "Ce iese", "Unde îl vezi"],
           rows: [
             ["„Plec spre locație” → „Am ajuns la locație”", "Orele de deplasare", "Pontajul și exportul CSV"],
-            ["„Pornește lucrul” → „Închide lucrarea”", "Orele lucrate", "Pontajul și raportul lucrării în PDF"],
+            ["„Pornește lucrul” → „Închide lucrarea”", "Orele lucrate", "Pontajul, exportul CSV și pagina lucrării"],
             ["Ore lucrate × tariful orar al omului", "Costul manoperei", "Pagina lucrării"],
             ["Ore lucrate × tariful tău de facturare", "Rândul de manoperă din factură", "La „De facturat”"],
           ],
@@ -129,11 +129,11 @@ const page: MarketingPage = {
       ],
     },
     {
-      h: "Ce nu face (încă)",
+      h: "Ce nu face pontajul (încă)",
       id: "ce-nu-face",
       list: [
         "Nu face salarizare: state de plată, contribuții sau sporuri.",
-        "Nu are vedere și export pe lună, iar exportul e CSV, nu PDF.",
+        "Nu are încă afișare și export pe lună; exportul e în CSV, nu în PDF.",
         "Nu are pontaj de prezență în afara lucrărilor programate.",
         "Nu are buton de pauză: timpul dintre pornire și închidere intră întreg la ore lucrate.",
         "Nu salvează locația la pornirea și la închiderea lucrului, doar la sosire.",

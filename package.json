@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "jiti scripts/middleware-routes.test.mts && next build",
     "start": "next start",
     "lint": "eslint",
     "check:android": "node scripts/check-android-version.mjs",

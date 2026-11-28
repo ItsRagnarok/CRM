@@ -9,7 +9,7 @@ const MODULES = [
   { icon: Briefcase, label: "Lucrări", desc: "De la cerere la finalizare, cu poze, checklist și semnătura clientului.", href: "/aplicatie-tehnician" },
   { icon: CalendarDays, label: "Calendar și echipe", desc: "Programezi pe echipe și zile, cu avertismente pentru autorizații, concedii și materiale.", href: "/software-management-echipe-teren" },
   { icon: Users, label: "Clienți", desc: "Adrese, contacte și istoricul lucrărilor fiecărui client.", href: "" },
-  { icon: Clock, label: "Pontaj", desc: "Orele din teren în două atingeri, corecții aprobate de birou.", href: "/pontaj-tehnicieni" },
+  { icon: Clock, label: "Pontaj", desc: "Orele din teren, din butoanele lucrării, cu corecții aprobate de birou.", href: "/pontaj-tehnicieni" },
   { icon: Package, label: "Stoc pe mașini", desc: "Ce are fiecare mașină, consum pe lucrare, reaprovizionare.", href: "/stoc-materiale-pe-masini" },
   { icon: Wallet, label: "Facturare", desc: "Factura din ore și materiale, prin SmartBill sau Oblio.", href: "/facturare-smartbill-oblio" },
   { icon: FileText, label: "Documente", desc: "Fișa de gaze, procesul-verbal de lucrări ascunse și raportul lucrării în PDF, din datele de pe teren.", href: "/firme-instalatii-electrice" },

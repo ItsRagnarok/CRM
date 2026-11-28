@@ -64,24 +64,39 @@ export function underPrefix(pathname: string, base: string): boolean {
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
-/**
- * Forma „cea mai largă” a adresei, folosită doar ca rutele private să nu poată fi ocolite:
- * decodată, cu bare oblice normalizate, cu litere mici și fără segmente de tip „(grup)”.
- */
-function normalizedForPrivateCheck(pathname: string): string {
-  let p = pathname;
-  try {
-    p = decodeURIComponent(p);
-  } catch {
-    // Codare invalidă: se verifică forma brută.
-  }
+/** Decodată, cu bare oblice normalizate, cu litere mici și fără segmente de tip „(grup)”. */
+function tidyForPrivateCheck(p: string): string {
   p = p.replace(/\\/g, "/").replace(/\/{2,}/g, "/").toLowerCase();
   p = p.split("/").filter((segment) => !/^\(.*\)$/.test(segment)).join("/");
   return p.startsWith("/") ? p : `/${p}`;
 }
 
+/**
+ * Formele „cele mai largi” ale adresei, folosite doar ca rutele private să nu poată fi ocolite:
+ * forma decodată (vezi tidyForPrivateCheck) și aceeași formă cu segmentele „.” și „..” rezolvate
+ * după decodare, ca /x%2F..%2Flucrari să ajungă /lucrari. Se verifică ambele: /lucrari%2F..%2Fx
+ * rămâne privată prin forma nerezolvată, chiar dacă cea rezolvată e /x.
+ */
+function normalizedForPrivateCheck(pathname: string): string[] {
+  let decoded = pathname;
+  try {
+    decoded = decodeURIComponent(decoded);
+  } catch {
+    // Codare invalidă: se verifică forma brută.
+  }
+  const tidy = tidyForPrivateCheck(decoded);
+  let resolved = tidy;
+  try {
+    // URL rezolvă „.” și „..” (și formele codate %2e); rezultatul e recodat, deci se decodează iar.
+    resolved = tidyForPrivateCheck(decodeURIComponent(new URL(tidy, "http://n").pathname));
+  } catch {
+    // Adresă pe care URL n-o poate citi: rămâne forma nerezolvată.
+  }
+  return resolved === tidy ? [tidy] : [tidy, resolved];
+}
+
 function isPrivate(pathname: string): boolean {
-  const candidates = [pathname, normalizedForPrivateCheck(pathname)];
+  const candidates = [pathname, ...normalizedForPrivateCheck(pathname)];
   return candidates.some((p) => PRIVATE_PREFIXES.some((base) => underPrefix(p, base)));
 }
 
@@ -101,8 +116,7 @@ export function classifyPath(pathname: string): RouteAccess {
 
 /** Unde ajunge un vizitator fără sesiune pe o rută privată: aplicația de telefon are login-ul ei. */
 export function loginPathFor(pathname: string): "/login" | "/mobil-login" {
-  const p = normalizedForPrivateCheck(pathname);
-  return underPrefix(p, "/mobil") ? "/mobil-login" : "/login";
+  return normalizedForPrivateCheck(pathname).some((p) => underPrefix(p, "/mobil")) ? "/mobil-login" : "/login";
 }
 
 /** Fișier public servit fără sesiune (potrivire exactă). */

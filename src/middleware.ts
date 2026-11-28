@@ -67,6 +67,14 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
+// Imaginile și fonturile sar peste middleware doar acolo unde stau cu adevărat fișierele publice:
+// în rădăcină (/icon-192.png, /logo-mark.png) și în public/og, public/blog, public/marketing,
+// public/fonts. Orice altă adresă cu sufix de imagine (de exemplu /lucrari/abc.png sau
+// /api/x.png) trece prin verificarea de sesiune, ca rutele private să aibă tot middleware-ul ca
+// prim filtru. Adresele cu „%” (căi codate) nu sunt scutite. Dacă adaugi un folder nou cu imagini
+// în public/, adaugă-l și aici, altfel imaginile lui trec degeaba prin middleware.
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|(?:og|blog|marketing|fonts)/[^%]*\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$|[^/%]+\\.(?:svg|png|jpg|jpeg|webp|woff2|ico)$).*)",
+  ],
 };
