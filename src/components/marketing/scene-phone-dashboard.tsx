@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { PhoneFrame } from "./phone-frame";
 import s from "./marketing.module.css";
 
 // Aplicația tehnicianului, din capturi reale (cont de test Electrogaze). Fără animații legate de derulare.
@@ -30,12 +30,12 @@ export function ScenePhoneDashboard() {
           </ul>
         </div>
         <div className={s.appPhones}>
-          <figure className={s.realPhone}>
-            <Image src="/marketing/phone-lucrari.webp" alt="Lista de lucrări a săptămânii în aplicația tehnicianului" width={640} height={1090} sizes="(min-width: 1040px) 280px, 45vw" />
+          <figure className={s.appPhone}>
+            <PhoneFrame src="/marketing/phone-lucrari.webp" alt="Lista de lucrări a săptămânii în aplicația tehnicianului" sizes="(min-width: 1040px) 260px, 45vw" />
             <figcaption>Lucrările săptămânii</figcaption>
           </figure>
-          <figure className={s.realPhone}>
-            <Image src="/marketing/phone-lucrare.webp" alt="Fișa unei lucrări în aplicație: progresul pe pași, clientul, adresa și ce trebuie făcut" width={640} height={1090} sizes="(min-width: 1040px) 280px, 45vw" />
+          <figure className={s.appPhone}>
+            <PhoneFrame src="/marketing/phone-lucrare.webp" alt="Fișa unei lucrări în aplicație: progresul pe pași, clientul, adresa și ce trebuie făcut" sizes="(min-width: 1040px) 260px, 45vw" />
             <figcaption>Fișa unei lucrări</figcaption>
           </figure>
         </div>

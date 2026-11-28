@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import Image from "next/image";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import gsap from "gsap";
+import { PhoneFrame } from "./phone-frame";
 import s from "./marketing.module.css";
 
 export function Hero() {
@@ -70,9 +71,9 @@ export function Hero() {
           </div>
         </div>
 
-        <figure className={s.realPhone}>
-          <Image src="/marketing/phone-lucrari.webp" alt="Aplicația ElectroField pe telefonul tehnicianului: lucrările săptămânii cu ora, clientul, adresa și starea" width={640} height={1090} priority sizes="(min-width: 1040px) 320px, 70vw" />
-        </figure>
+        <div className={s.heroPhone}>
+          <PhoneFrame src="/marketing/phone-lucrari.webp" alt="Aplicația ElectroField pe telefonul tehnicianului: lucrările săptămânii cu ora, clientul, adresa și starea" priority sizes="(min-width: 1040px) 300px, 70vw" />
+        </div>
       </div>
 
     </section>

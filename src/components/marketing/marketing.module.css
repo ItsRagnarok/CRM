@@ -549,3 +549,17 @@ p.heroTitle { margin: 0; }
 .appPhones { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
 .appPhones .realPhone { width: 100%; max-width: 280px; }
 .appPhones .realPhone:nth-child(2) { margin-top: 40px; }
+
+/* Ramă de iPhone pentru capturile reale: proporții 390×844, bara de stare albă, decupajul camerei. */
+.pf { width: 100%; padding: 3.2%; border-radius: 15% / 7%; background: #121414; box-shadow: 0 0 0 1px #2c302e, 0 30px 60px -30px rgba(0,0,0,.8); }
+.pfScreen { position: relative; border-radius: 12.5% / 5.8%; overflow: hidden; background: #f4f5f7; }
+.pfStatus { position: relative; aspect-ratio: 390 / 47; display: flex; align-items: center; justify-content: space-between; padding: 0 9% 0 11%; color: #101828; background: #f4f5f7; }
+.pfTime { font-family: var(--font-inter), system-ui, sans-serif; font-weight: 600; font-size: clamp(10px, 1.1vw, 14px); letter-spacing: -.01em; }
+.pfIsland { position: absolute; left: 50%; top: 22%; transform: translateX(-50%); width: 32%; height: 62%; border-radius: 100px; background: #000; }
+.pfIcons { display: inline-flex; gap: 5px; align-items: center; }
+.pfIcons svg { fill: currentColor; height: auto; width: clamp(12px, 1.3vw, 18px); }
+.pfImg { display: block; width: 100%; height: auto; }
+.heroPhone { justify-self: center; width: min(78vw, 300px); }
+.appPhone { margin: 0; width: 100%; max-width: 260px; justify-self: center; }
+.appPhone figcaption { margin-top: 10px; text-align: center; font-size: 12.5px; color: var(--fg-mute); }
+.appPhones .appPhone:nth-child(2) { margin-top: 48px; }
