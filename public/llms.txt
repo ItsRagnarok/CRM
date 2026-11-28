@@ -1,0 +1,67 @@
+# ElectroField
+
+> ElectroField is a web platform for Romanian installation firms (electrical, gas and photovoltaic) that work with field teams. The office plans jobs, teams and stock in the browser; technicians see their jobs and record the work on their phone. The product and the site are in Romanian.
+
+Pe scurt (română): ElectroField este o platformă pentru firmele de instalații electrice, gaze și fotovoltaice cu echipe în teren. Biroul programează lucrările din browser, iar tehnicianul le vede în telefon și trimite de acolo pozele, semnătura clientului, pontajul și măsurătorile.
+
+## Facts
+
+- Name: ElectroField
+- Website: https://www.electrofield.ro
+- Category: field service management software (software de management pentru echipe de teren) for installation firms
+- Market and language: Romania, Romanian interface
+- Office access: web browser
+- Technician access: the Android app (APK, downloaded from the site) or, on iPhone, from the browser
+- Price: not published on the site
+- Demo: a 15-minute phone call or a 30-minute Google Meet presentation, booked at https://www.electrofield.ro/programare
+- Provider: persoană fizică autorizată registered in Romania, CUI 55851462, Reg. Com. F2026050162004, București, Sector 1
+- Contact: contact@electrofield.ro, +40 750 425 670
+
+## Features
+
+- Jobs, clients, locations and contacts, a week/day calendar, teams and technician assignment, with schedule warnings (expired authorization, ITP/RCA/rovinietă, leave, overlaps, overload, missing stock, tool calibration, SSM).
+- Technician app: today's jobs, job steps (depot pick-up, travel, arrival, work, finish), labelled photos, checklists, forms with measurements, client signature on screen, material requests, expenses with a receipt photo, leave requests, SSM checks and incidents, barcode and plate scan, navigation link to the address.
+- Offline: photos, signature, arrival, work start, finish, forms, gas records (fișe) and gas visits, and SSM incidents are saved on the phone and sent when the signal returns. Departure, expenses, leave and material use need signal.
+- Timesheet (pontaj) per job, with location at arrival; corrections with a reason, approved by the office; leave with approval; CSV export.
+- Live map for the office: active jobs, teams, depots, last known positions. Continuous GPS only when the firm enables it and the employee consents; background GPS only in the Android app.
+- Gas: schedule by building, staircase and apartment (scadențar), apartment import by pasting from Excel/CSV, fișă on the phone with signatures and a printable page, deadline clocks, annual register export (CSV).
+- Electrical: circuit measurement form on the phone (insulation, loop impedance, PE continuity, RCD trip time), measurements table in the office, hidden-works list with photos and a printable proces-verbal.
+- Photovoltaic: project file with stages (contract and advance, installation, ATR and approvals, commissioning, AFM and warranty), operator deadline clocks, commissioning (PIF) form on the phone with per-string values.
+- Compliance (Conformitate): authorizations and ID cards, vehicles (ITP, RCA), devices with calibration, alerts at 60, 30 and 7 days.
+- Stock: warehouses, materials, import of a standard material catalog, stock per vehicle with a target list and minimum, restock requests, printable order list, tool register with handover and calibration.
+- Electronic trip log (foaie de parcurs): monthly per vehicle, from the team's finished jobs (date, address, purpose, km, estimated fuel cost). The fiscal format is to be confirmed with the accountant.
+- Invoicing: invoices and proformas from finished jobs (hours × firm rate, materials), ANAF CUI lookup, collections, cancel/storno, PDF. Through SmartBill (the invoice is issued in SmartBill) or Oblio (including sending to e-Factura/SPV), or as internal records only.
+- Client link without login: job status, arrival window, who is coming, before/after photos, documents.
+- Reports: job report PDF (hours, expenses, photos, signature), profit per job after invoicing, a Monday-morning owner screen (overdue invoices, margin by job type and team).
+- AI assistance, always confirmed by a person: receipt to expense, data plate to make/model/serial number. The firm can switch it off.
+- Push notifications: in the Android app only.
+
+## Not included
+
+- No quotes or estimates (devize) module.
+- No file import for clients or materials (only the gas apartment import and the standard material catalog).
+- No automatic "team on the way" SMS: the technician sends the message with one tap.
+- Measurements are recorded, but PRAM test reports (buletine) and PIF reports are not generated as PDF documents.
+- No direct e-Factura connection to ANAF: e-Factura/SPV only through Oblio; with SmartBill the SPV upload is not done from the platform.
+
+## Pages (Romanian)
+
+- [Prima pagină](https://www.electrofield.ro/): ce face platforma, de la birou la teren
+- [Software de management pentru echipe de teren](https://www.electrofield.ro/software-management-echipe-teren): lucrări, echipe, pontaj, stoc și facturare într-un singur loc
+- [Program pentru firme de instalații electrice](https://www.electrofield.ro/firme-instalatii-electrice): măsurători pe circuit, lucrări ascunse, autorizații ANRE
+- [Program pentru verificări și revizii gaze](https://www.electrofield.ro/firme-gaze-verificari-revizii): scadențar pe bloc și apartament, fișe pe telefon, registru anual
+- [Program pentru firme de montaj fotovoltaic](https://www.electrofield.ro/firme-fotovoltaice): dosarul proiectului pe etape, termene la operator, formular PIF
+- [Pontaj pentru tehnicieni](https://www.electrofield.ro/pontaj-tehnicieni): pontaj pe lucrare din telefon, corecții aprobate, export
+- [Foaie de parcurs electronică](https://www.electrofield.ro/foaie-de-parcurs-electronica): lunar, pe mașină, din lucrările terminate
+- [Aplicația pentru tehnicieni](https://www.electrofield.ro/aplicatie-tehnician): lucrările zilei, poze, semnătură, formulare
+- [Facturare prin SmartBill sau Oblio](https://www.electrofield.ro/facturare-smartbill-oblio): facturi din lucrări, încasări, restanțe
+- [Stoc de materiale pe mașini](https://www.electrofield.ro/stoc-materiale-pe-masini): stoc pe depozit și pe mașină, registru de scule
+- [Despre ElectroField](https://www.electrofield.ro/despre): cine furnizează platforma și datele de identificare
+- [Blog](https://www.electrofield.ro/blog): ghiduri pentru firme de instalații (autorizații, verificări gaze, PRAM, fotovoltaic, pontaj, facturare)
+- [Programează un demo](https://www.electrofield.ro/programare): o discuție la telefon sau pe Google Meet
+
+## Optional
+
+- [Termeni și condiții](https://www.electrofield.ro/termeni)
+- [Confidențialitate](https://www.electrofield.ro/confidentialitate)
+- [Sitemap](https://www.electrofield.ro/sitemap.xml)

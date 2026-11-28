@@ -12,13 +12,14 @@ export function Hero() {
   const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Titlul (h1) nu se animă: e vizibil din prima, ca Google și cititorul să-l vadă imediat (LCP).
+    // Titlul (h1), titlul mare și textul de sub el nu se animă: sunt vizibile din prima, fără întârziere
+    // la randare (LCP). Se animă doar butoanele și telefonul.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        [".mk-reveal-1", ".mk-reveal-3"],
+        ".mk-reveal-cta",
         { opacity: 0, y: 26 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out", stagger: 0.12, delay: 0.15 }
+        { opacity: 1, y: 0, duration: 1, ease: "power3.out", delay: 0.15 }
       );
       gsap.fromTo(
         phoneRef.current,
@@ -56,25 +57,26 @@ export function Hero() {
 
       <div className={`${s.wrap} ${s.heroGrid}`}>
         <div>
-          <h1 className={`${s.heroKicker} mk-reveal-1`}>
-            <span className={s.dot} />
+          <h1 className={s.heroKicker}>
+            <span className={s.dot} aria-hidden="true" />
             Software de management pentru electricieni și echipe de teren
           </h1>
-          <p className={`${s.heroTitle} ${s.disp} mk-reveal-2`}>
+          <p className={`${s.heroTitle} ${s.disp}`}>
             Din birou.
             <br />
             <span className={s.lime}>Direct în teren.</span>
           </p>
-          <p className={`${s.heroSub} mk-reveal-3`}>
-            ElectroField e programul prin care firmele de instalații electrice, gaze și fotovoltaice își programează lucrările,
-            își urmăresc echipele mobile și facturează. Tehnicienii lucrează din aplicația de pe telefon: poze, pontaj, semnătura clientului.
+          <p className={s.heroSub}>
+            ElectroField este un software de management pentru firmele de instalații electrice, gaze și fotovoltaice care lucrează cu echipe mobile.
+            Biroul programează lucrările din browser, tehnicienii le fac din telefon, cu poze, măsurători și semnătura clientului,
+            iar pontajul, materialele și factura prin SmartBill sau Oblio pornesc din aceleași date.
           </p>
-          <div className={`${s.heroCtas} mk-reveal-3`}>
+          <div className={`${s.heroCtas} mk-reveal-cta`}>
             <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
-              Programează un demo <ArrowRight size={17} />
+              Programează o discuție <ArrowRight size={17} aria-hidden="true" />
             </StaticLink>
             <a href="#cum-functioneaza" className={`${s.btn} ${s.btnOutline}`}>
-              <PlayCircle size={17} />
+              <PlayCircle size={17} aria-hidden="true" />
               Vezi cum funcționează
             </a>
           </div>
@@ -86,7 +88,7 @@ export function Hero() {
             <div className={s.phoneScreen}>
               <div className={s.phoneStatusBar}>
                 <span>9:41</span>
-                <span>●●●</span>
+                <span aria-hidden="true">●●●</span>
               </div>
               <div className={s.phoneTitle}>Lucrările mele</div>
               <div className={s.phoneList}>
@@ -118,10 +120,11 @@ export function Hero() {
               </div>
             </div>
           </div>
+          <p className={s.mockNote}>Ecran ilustrativ, cu date de exemplu</p>
         </div>
       </div>
 
-      <div className={s.heroScrollCue}>
+      <div className={s.heroScrollCue} aria-hidden="true">
         <span className={s.ring} />
         <span className={s.lbl}>Scroll</span>
       </div>

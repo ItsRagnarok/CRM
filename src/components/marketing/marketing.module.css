@@ -9,7 +9,8 @@
   --line-bright: rgba(255, 255, 255, 0.16);
   --fg: #f4f7f4;
   --fg-dim: #aab3ac;
-  --fg-mute: #656f68;
+  /* Text secundar: contrast ≥ 4,5:1 pe toate fundalurile din pagină (WCAG AA, inclusiv în machetele de telefon). */
+  --fg-mute: #848f87;
   --lime: #c6ff4a;
   --lime-soft: #e3ffa8;
   --cyan: #5fe0e8;
@@ -178,7 +179,7 @@
 @keyframes pulse { 0%, 100% { opacity: 1 } 50% { opacity: .35 } }
 .heroTitle { font-size: clamp(38px, 6.2vw, 78px); font-weight: 700; }
 .heroTitle .lime { color: var(--lime); }
-.heroSub { margin-top: 26px; max-width: 46ch; font-size: clamp(15px, 1.6vw, 18px); line-height: 1.65; color: var(--fg-dim); }
+.heroSub { margin-top: 26px; max-width: 54ch; font-size: clamp(15px, 1.6vw, 18px); line-height: 1.65; color: var(--fg-dim); }
 .heroCtas { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 38px; }
 .btn {
   display: inline-flex; align-items: center; gap: 9px; font-size: 14.5px; font-weight: 700;
@@ -202,7 +203,9 @@
 .heroScrollCue .lbl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-mute); }
 
 /* ---------- hero 3D phone ---------- */
-.phoneStage { position: relative; perspective: 1400px; display: flex; justify-content: center; }
+.phoneStage { position: relative; perspective: 1400px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+/* Eticheta machetelor: datele din ecranele desenate sunt de exemplu, nu date reale. */
+.mockNote { margin: 0; padding: 4px 12px; border-radius: 100px; background: rgba(7,9,10,.72); color: var(--fg-dim); font-size: 12px; line-height: 1.5; }
 .phone3d {
   position: relative; width: min(290px, 78vw); aspect-ratio: 9 / 19.5; border-radius: 42px;
   background: linear-gradient(160deg, #1a1f1c, #0c0f0d);
@@ -311,7 +314,8 @@
 .pdCaption .lime { color: var(--lime); }
 .pdCaption p { margin-top: 10px; font-size: 14px; color: var(--fg-dim); }
 .pdIdx { position: absolute; top: 100px; left: 24px; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: .1em; color: var(--fg-mute); z-index: 10; }
-@media (min-width: 900px) { .pdIdx { left: 56px; } }
+.pdNote { position: absolute; top: 124px; left: 24px; font-size: 12px; color: var(--fg-dim); z-index: 10; }
+@media (min-width: 900px) { .pdIdx, .pdNote { left: 56px; } }
 
 .pdPhoneWrap { position: relative; perspective: 1600px; }
 .pdPhone {
@@ -463,13 +467,18 @@
 .ctaStat .l { margin-top: 6px; font-size: 11.5px; color: var(--fg-mute); text-transform: uppercase; letter-spacing: .05em; }
 
 /* ---------- footer ---------- */
-.footer { border-top: 1px solid var(--line); padding: 56px 24px 70px; }
-@media (min-width: 900px) { .footer { padding-inline: 56px; } }
-.footRow { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 24px; align-items: center; }
-.footLinks { display: flex; gap: 24px; font-size: 12.5px; color: var(--fg-mute); flex-wrap: wrap; }
-.footLinks a { text-decoration: none; }
-.footLinks a:hover { color: var(--fg-dim); }
-.footCopy { font-size: 11.5px; color: var(--fg-mute); font-family: var(--font-mono); }
+.footer { border-top: 1px solid var(--line); padding: 56px 0 70px; }
+.footGrid { display: grid; gap: 32px; grid-template-columns: 1fr; }
+@media (min-width: 700px) { .footGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1040px) { .footGrid { grid-template-columns: 1.1fr 1.4fr 1.2fr 1fr; } }
+.footBrand p { margin: 14px 0 0; max-width: 34ch; font-size: 13.5px; line-height: 1.6; color: var(--fg-dim); }
+.footHead { margin: 0 0 12px; font-family: var(--font-mono); font-size: 11.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--fg); }
+.footCol ul { list-style: none; margin: 0 0 24px; padding: 0; display: grid; gap: 6px; }
+.footCol ul:last-child { margin-bottom: 0; }
+.footCol a { display: inline-block; padding: 3px 0; font-size: 13.5px; line-height: 1.45; color: var(--fg-dim); text-decoration: none; }
+.footCol a:hover { color: var(--fg); }
+.footCopy { margin-top: 40px; font-size: 11.5px; color: var(--fg-mute); font-family: var(--font-mono); }
+@media (min-width: 1100px) { .footer .wrap { padding-left: 96px; } }
 
 .reveal { opacity: 0; transform: translateY(30px); }
 
@@ -494,6 +503,7 @@
 .seoFaq details { border-top: 1px solid var(--line); padding: 16px 0; }
 .seoFaq summary { cursor: pointer; font-weight: 600; color: var(--fg); font-size: 16.5px; }
 .seoFaq p { margin: 10px 0 0; color: var(--fg-dim); line-height: 1.65; }
+.seoFaq p a, .introMore a { color: var(--lime); text-decoration: underline; text-underline-offset: 3px; }
 @media (min-width: 1100px) { .seo .wrap { padding-left: 96px; } }
 
 /* Drumul unei lucrări: listă simplă. Telefon: pașii unul sub altul, cu linie verticală. Calculator: un rând. */
@@ -535,3 +545,17 @@ div.modCard:hover { border-color: var(--line); }
 
 h1.heroKicker { margin-top: 0; line-height: 1.4; }
 p.heroTitle { margin: 0; }
+
+/* Imediat sub hero: pentru cine e programul (text vizibil fără JavaScript). */
+.intro { padding: 88px 0 80px; border-top: 1px solid var(--line); background: var(--bg); }
+@media (max-width: 760px) { .intro { padding: 64px 0; } }
+.intro h2 { font-size: clamp(26px, 3.6vw, 42px); margin: 0 0 18px; color: var(--fg); max-width: 26ch; }
+.introMore { margin: 28px 0 0; max-width: 68ch; color: var(--fg-dim); font-size: 16px; line-height: 1.65; }
+@media (min-width: 1100px) { .intro .wrap { padding-left: 96px; } }
+
+/* Butonul din meniu: eticheta scurtă pe ecrane înguste, ca să încapă lângă siglă. */
+.ctaShort { display: none; }
+@media (max-width: 479px) {
+  .ctaFull { display: none; }
+  .ctaShort { display: inline; }
+}

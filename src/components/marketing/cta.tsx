@@ -13,15 +13,15 @@ export function CtaSection() {
       <div className={s.ctaScrim} />
       <div className={`${s.wrap} ${s.ctaContent}`}>
         <h2 className={s.disp}>
-          Ești gata să ai control <span className={s.lime}>asupra întregii echipe?</span>
+          Vezi cum arată platforma <span className={s.lime}>pe firma ta.</span>
         </h2>
-        <p>ElectroField — platforma pentru firmele care lucrează în teren.</p>
+        <p>Îți arătăm platforma pe lucrările și echipele tale, într-un apel de 15 minute sau o prezentare de 30 de minute pe Google Meet.</p>
         <div className={s.heroCtas} style={{ justifyContent: "center" }}>
           <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>
-            Programează un demo <ArrowRight size={17} />
+            Programează o discuție <ArrowRight size={17} aria-hidden="true" />
           </StaticLink>
           <StaticLink href="/blog" className={`${s.btn} ${s.btnOutline}`}>
-            Citește ghidurile
+            Citește ghidurile pentru firme de instalații
           </StaticLink>
         </div>
         <p className={s.ctaMail}>

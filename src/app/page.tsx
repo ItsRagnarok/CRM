@@ -1,49 +1,62 @@
 import { MarketingLanding } from "@/components/marketing/marketing-landing";
-import { publicPageMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
 import { HOME_FAQ } from "@/components/marketing/home-faq";
+import { stripInlineLinks } from "@/lib/inline-links";
+import {
+  DEFAULT_OG_IMAGE,
+  absoluteUrl,
+  ORGANIZATION_ID,
+  organizationJsonLd,
+  publicPageMetadata,
+  serializeJsonLd,
+  SITE_URL,
+  SOFTWARE_ID,
+  softwareJsonLd,
+  WEBSITE_ID,
+  websiteJsonLd,
+} from "@/lib/seo";
 
-export const metadata = publicPageMetadata(
-  "Software management electricieni și echipe de teren",
-  "Software de management pentru electricieni, instalatori și echipe mobile: programarea lucrărilor, aplicație pentru tehnicieni, pontaj din teren, stoc și facturare SmartBill/Oblio.",
-  "/",
-);
+// Pagina principală deține interogarea „software de management pentru electricieni și echipe de teren / echipe
+// mobile”, brandul și „program pentru firme de instalații”. Titlu ≤ 60 de caractere, descriere 140–155.
+const TITLE = "Software management pentru electricieni și echipe de teren";
+const DESCRIPTION =
+  "Software de management pentru electricieni, instalatori și echipe mobile: lucrări pe echipe, aplicația tehnicianului, pontaj, stoc pe mașini și facturare.";
+/** Data ultimei modificări reale a textului paginii principale (AAAA-LL-ZZ). */
+const UPDATED = "2026-11-28";
+
+export const metadata = publicPageMetadata(TITLE, DESCRIPTION, "/");
+
+const HOME_URL = `${SITE_URL}/`;
+const ogImage = absoluteUrl(DEFAULT_OG_IMAGE);
 
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "WebSite",
-      "@id": `${SITE_URL}/#website`,
-      url: SITE_URL,
-      name: "ElectroField",
+      "@type": "WebPage",
+      "@id": `${HOME_URL}#webpage`,
+      url: HOME_URL,
+      name: TITLE,
+      description: DESCRIPTION,
       inLanguage: "ro-RO",
-      publisher: { "@id": `${SITE_URL}/#organization` },
+      dateModified: UPDATED,
+      isPartOf: { "@id": WEBSITE_ID },
+      about: { "@id": SOFTWARE_ID },
+      publisher: { "@id": ORGANIZATION_ID },
+      primaryImageOfPage: { "@type": "ImageObject", url: ogImage, contentUrl: ogImage, width: 1200, height: 630 },
     },
-    {
-      "@type": "Organization",
-      "@id": `${SITE_URL}/#organization`,
-      name: "ElectroField",
-      url: SITE_URL,
-      logo: `${SITE_URL}/icon-512.png`,
-      email: "contact@electrofield.ro",
-      telephone: "+40750425670",
-      areaServed: { "@type": "Country", name: "Romania" },
-    },
-    {
-      "@type": "SoftwareApplication",
-      "@id": `${SITE_URL}/#software`,
-      name: "ElectroField",
-      url: SITE_URL,
-      description: SITE_DESCRIPTION,
-      applicationCategory: "BusinessApplication",
-      operatingSystem: "Web, Android",
-      inLanguage: "ro-RO",
-      publisher: { "@id": `${SITE_URL}/#organization` },
-      featureList: ["Programarea lucrărilor pe echipe", "Aplicație mobilă pentru tehnicieni (Android, iPhone)", "Pontaj din teren", "Foaie de parcurs", "Stoc pe mașini și registru de scule", "Buletine PRAM și de izolație", "Scadențar verificări și revizii gaze", "Dosar fotovoltaic pe etape", "Facturare prin SmartBill și Oblio"],
-    },
+    websiteJsonLd(),
+    organizationJsonLd(),
+    softwareJsonLd(),
     {
       "@type": "FAQPage",
-      mainEntity: HOME_FAQ.map((f) => ({ "@type": "Question", name: f.q, acceptedAnswer: { "@type": "Answer", text: f.a } })),
+      "@id": `${HOME_URL}#faq`,
+      isPartOf: { "@id": `${HOME_URL}#webpage` },
+      inLanguage: "ro-RO",
+      mainEntity: HOME_FAQ.map((f) => ({
+        "@type": "Question",
+        name: stripInlineLinks(f.q),
+        acceptedAnswer: { "@type": "Answer", text: stripInlineLinks(f.a) },
+      })),
     },
   ],
 };
@@ -53,7 +66,7 @@ const structuredData = {
 export default function RootPage() {
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(structuredData) }} />
       <MarketingLanding />
     </>
   );

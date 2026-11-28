@@ -13,8 +13,9 @@ const smooth = (edge0: number, edge1: number, x: number) => {
   const t = clamp((x - edge0) / (edge1 - edge0));
   return t * t * (3 - 2 * t);
 };
+// Primul ecran (start 0) e vizibil din prima, înainte de orice derulare.
 const windowOpacity = (p: number, start: number, end: number, fade = 0.035) =>
-  smooth(start, start + fade, p) * (1 - smooth(end - fade, end, p));
+  (start <= 0 ? 1 : smooth(start, start + fade, p)) * (1 - smooth(end - fade, end, p));
 
 const SCREENS = [
   { key: "lista", label: "Listă lucrări", win: [0, 0.17] as [number, number] },
@@ -24,11 +25,11 @@ const SCREENS = [
 ];
 
 const CAPTIONS = [
-  { win: [0, 0.17], title: "Tehnicianul vede exact ce are de făcut.", sub: "Lucrările zilei, prioritizate, cu toate detaliile necesare." },
-  { win: [0.15, 0.32], title: "Clientul și locația, dintr-o privire.", sub: "Adresă, contact, istoric — fără telefoane către birou." },
+  { win: [0, 0.17], title: "Tehnicianul vede exact ce are de făcut.", sub: "Lucrările zilei, cu adresa, pașii și ce are de luat pentru fiecare." },
+  { win: [0.15, 0.32], title: "Clientul și locația, dintr-o privire.", sub: "Adresa, contactul și istoricul clientului, fără telefoane la birou." },
   { win: [0.3, 0.47], title: "Materiale verificate înainte de drum.", sub: "Dacă lipsește ceva, tehnicianul merge la depozit, nu la fața locului." },
   { win: [0.45, 0.64], title: "Checklist, fotografii, semnătură client.", sub: "Lucrarea se finalizează complet, din teren." },
-  { win: [0.68, 1], title: "Totul ajunge automat în platformă.", sub: "Firma vede, în timp real, tot ce se întâmplă pe teren." },
+  { win: [0.68, 1], title: "Ce face tehnicianul ajunge în platformă.", sub: "Biroul vede lucrarea la zi imediat ce telefonul are semnal." },
 ];
 
 export function ScenePhoneDashboard() {
@@ -53,7 +54,8 @@ export function ScenePhoneDashboard() {
   return (
     <section id="aplicatie-dashboard" className={s.pdStage} ref={stageRef}>
       <div className={s.pdViewport}>
-        <div className={s.pdIdx}>03 / APLICAȚIA TEHNICIANULUI → DASHBOARD</div>
+        <div className={s.pdIdx}>03 / APLICAȚIA TEHNICIANULUI → PANOU</div>
+        <div className={s.pdNote}>Ecrane ilustrative, cu date de exemplu</div>
 
         <div className={s.pdLayer}>
           <div
@@ -206,7 +208,7 @@ function Dashboard() {
     ["12", "Echipe active"],
     ["8", "Lucrări în desfășurare"],
     ["15", "Clienți astăzi"],
-    ["24.800 lei", "Venituri lunare"],
+    ["6", "De facturat"],
   ];
   const jobs = [
     ["#2487", "Instalație electrică - Casa Popescu", "În curs"],
@@ -214,14 +216,14 @@ function Dashboard() {
     ["#2475", "Mentenanță - Hală industrială", "Finalizat"],
   ];
   const team = [
-    ["Andrei Popescu", "Instalator", "On locație"],
-    ["Mihai Ionescu", "Electrician", "On locație"],
-    ["Vlad Georgescu", "Tehnician", "On locație"],
+    ["Andrei Popescu", "Instalator", "La lucrare"],
+    ["Mihai Ionescu", "Electrician", "În drum"],
+    ["Vlad Georgescu", "Tehnician", "La lucrare"],
   ];
   return (
     <div className={s.pdDash}>
       <div className={s.pdDashTop}>
-        <strong style={{ fontSize: 13 }}>ElectroField — Dashboard</strong>
+        <strong style={{ fontSize: 13 }}>ElectroField · Panou (exemplu)</strong>
         <span style={{ fontSize: 10.5, color: "var(--fg-mute)", fontFamily: "var(--font-mono)" }}>Astăzi, 09:42</span>
       </div>
       <div className={s.pdDashStats}>

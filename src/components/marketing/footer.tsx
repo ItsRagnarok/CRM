@@ -1,35 +1,70 @@
 import { StaticLink } from "@/components/static-link";
 import Link from "next/link";
-import { Logo } from "@/components/logo";
-import { LEGAL_SHORT } from "@/lib/contact";
+import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL, LEGAL_SHORT } from "@/lib/contact";
+import { BrandLogo } from "./brand";
 import s from "./marketing.module.css";
+
+// Subsolul paginii principale: toate paginile publice, pe grupe, plus ghidurile principale.
+// /blog… și /programare sunt fișiere statice (StaticLink); restul sunt pagini Next (Link).
+const PLATFORM = [
+  { href: "/software-management-echipe-teren", label: "Software de management pentru echipe de teren" },
+  { href: "/aplicatie-tehnician", label: "Aplicația pentru tehnicieni" },
+  { href: "/pontaj-tehnicieni", label: "Pontaj online pentru tehnicieni" },
+  { href: "/foaie-de-parcurs-electronica", label: "Foaie de parcurs electronică" },
+  { href: "/stoc-materiale-pe-masini", label: "Stoc de materiale pe mașini" },
+  { href: "/facturare-smartbill-oblio", label: "Facturare prin SmartBill și Oblio" },
+];
+const TRADES = [
+  { href: "/firme-instalatii-electrice", label: "Firme de instalații electrice" },
+  { href: "/firme-gaze-verificari-revizii", label: "Verificări și revizii gaze" },
+  { href: "/firme-fotovoltaice", label: "Firme de montaj fotovoltaic" },
+];
+const GUIDES = [
+  { href: "/blog/model-foaie-de-parcurs", label: "Model de foaie de parcurs" },
+  { href: "/blog/verificare-pram-rezistenta-priza-de-pamant-periodicitate", label: "Verificarea PRAM: cât de des" },
+  { href: "/blog/verificare-revizie-instalatie-gaze-cand-si-ce-pregatesti", label: "Verificare și revizie gaze" },
+  { href: "/blog", label: "Toate ghidurile" },
+];
 
 export function MarketingFooter() {
   return (
     <footer className={s.footer}>
-      <div className={`${s.wrap} ${s.footRow}`}>
-        <div className={s.brand}>
-          <Logo size={26} />
-        </div>
-        <div className={s.footLinks}>
-          <a href="#platforma">Platformă</a>
-          <a href="#functionalitati">Funcționalități</a>
-          <a href="#cum-functioneaza">Cum funcționează</a>
-          <Link href="/software-management-echipe-teren">Software pentru echipe de teren</Link>
-          <Link href="/firme-instalatii-electrice">Firme de instalații electrice</Link>
-          <Link href="/firme-gaze-verificari-revizii">Verificări și revizii gaze</Link>
-          <Link href="/firme-fotovoltaice">Firme fotovoltaice</Link>
-          <Link href="/aplicatie-tehnician">Aplicația tehnicianului</Link>
-          <Link href="/pontaj-tehnicieni">Pontaj tehnicieni</Link>
-          <Link href="/foaie-de-parcurs-electronica">Foaie de parcurs</Link>
-          <Link href="/stoc-materiale-pe-masini">Stoc pe mașini</Link>
-          <Link href="/facturare-smartbill-oblio">Facturare SmartBill și Oblio</Link>
-          <StaticLink href="/blog">Ghiduri pentru firme de instalații</StaticLink>
-          <StaticLink href="/programare">Programează o discuție</StaticLink>
-          <a href="https://wa.me/40750425670" target="_blank" rel="noopener noreferrer">WhatsApp 0750 425 670</a>
-          <Link href="/termeni">Termeni și condiții</Link>
-          <Link href="/confidentialitate">Confidențialitate</Link>
-          <Link href="/login">Conectează-te</Link>
+      <div className={s.wrap}>
+        <div className={s.footGrid}>
+          <div className={s.footBrand}>
+            <Link href="/" className={s.brand}>
+              <BrandLogo size={26} />
+            </Link>
+            <p>Program pentru firme de instalații electrice, gaze și fotovoltaice cu echipe în teren.</p>
+          </div>
+          <nav className={s.footCol} aria-label="Platforma">
+            <p className={s.footHead}>Platforma</p>
+            <ul>
+              {PLATFORM.map((l) => <li key={l.href}><Link href={l.href}>{l.label}</Link></li>)}
+            </ul>
+          </nav>
+          <nav className={s.footCol} aria-label="Pe meserii">
+            <p className={s.footHead}>Pe meserii</p>
+            <ul>
+              {TRADES.map((l) => <li key={l.href}><Link href={l.href}>{l.label}</Link></li>)}
+            </ul>
+            <p className={s.footHead}>Ghiduri</p>
+            <ul>
+              {GUIDES.map((l) => <li key={l.href}><StaticLink href={l.href}>{l.label}</StaticLink></li>)}
+            </ul>
+          </nav>
+          <nav className={s.footCol} aria-label="ElectroField">
+            <p className={s.footHead}>ElectroField</p>
+            <ul>
+              <li><Link href="/despre">Despre ElectroField</Link></li>
+              <li><StaticLink href="/programare">Programează o discuție</StaticLink></li>
+              <li><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+              <li><a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp {CONTACT_PHONE_DISPLAY}</a></li>
+              <li><Link href="/termeni">Termeni și condiții</Link></li>
+              <li><Link href="/confidentialitate">Confidențialitate</Link></li>
+              <li><Link href="/login">Conectează-te</Link></li>
+            </ul>
+          </nav>
         </div>
         <div className={s.footCopy}>© {new Date().getFullYear()} ElectroField · {LEGAL_SHORT}</div>
       </div>
