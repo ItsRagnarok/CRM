@@ -21,7 +21,7 @@ const CAPTIONS = [
   { from: 0, to: 0.22, title: "Tehnicianul vede exact", lime: "ce are de făcut.", sub: "Lucrările zilei, în ordine: ora, clientul, adresa și starea fiecăreia." },
   { from: 0.22, to: 0.44, title: "Clientul și locația,", lime: "dintr-o privire.", sub: "Telefonul clientului și navigarea spre adresă, fără apeluri la birou." },
   { from: 0.44, to: 0.68, title: "Pașii lucrării,", lime: "bifați pe loc.", sub: "Pregătire, drum, pe loc, închidere: checklist, poze înainte și după, semnătura clientului." },
-  { from: 0.68, to: 1.01, title: "Totul ajunge", lime: "la birou.", sub: "Ce face tehnicianul apare imediat în platformă, gata de facturat." },
+  { from: 0.68, to: 1.01, title: "Totul ajunge", lime: "la birou.", sub: "Ce face tehnicianul apare în platformă imediat ce telefonul are semnal, gata de facturat." },
 ];
 
 export function ScenePhoneDashboard() {

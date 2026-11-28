@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { publicPageMetadata } from "@/lib/seo";
 import { LegalIdentity } from "@/components/legal-identity";
 
-export const metadata = publicPageMetadata("Politica de confidențialitate — ElectroField", "Află cum sunt prelucrate datele personale în platforma ElectroField și cum poți contacta echipa pentru întrebări despre confidențialitate.", "/confidentialitate");
+export const metadata = publicPageMetadata("Politica de confidențialitate — ElectroField", "Cum prelucrează ElectroField datele personale: ce date colectăm, de ce, cât timp le păstrăm, ce se întâmplă cu locația GPS și ce drepturi ai.", "/confidentialitate");
 
 export default function PrivacyPolicyPage() {
   return (
