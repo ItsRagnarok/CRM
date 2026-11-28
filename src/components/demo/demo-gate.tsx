@@ -37,7 +37,7 @@ function LockedWeb({ feature, label, why, expired, canRequest }: { feature: stri
         <section className="w-full max-w-[520px] rounded-xl border border-border bg-white p-6" aria-labelledby="demo-lock-title">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#101828] text-electric"><Lock className="h-5 w-5" /></div>
           <h1 id="demo-lock-title" className="mt-4 text-[21px] font-extrabold leading-tight tracking-tight">
-            {expired ? "Perioada demo s-a încheiat" : `${label} se configurează pe firma ta`}
+            {expired ? "Perioada demo s-a încheiat" : `„${label}” se configurează pe firma ta`}
           </h1>
           <p className="mt-2 text-[14px] leading-relaxed text-[#344054]">
             {expired
