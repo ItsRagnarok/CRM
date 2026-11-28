@@ -1,7 +1,7 @@
 import { StaticLink } from "@/components/static-link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
-import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_WHATSAPP_URL } from "@/lib/contact";
+import { ArrowRight, Mail, MessageCircle, Phone } from "lucide-react";
+import { CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_TEL, CONTACT_WHATSAPP_URL } from "@/lib/contact";
 import s from "./marketing.module.css";
 
 export function CtaSection() {
@@ -24,11 +24,14 @@ export function CtaSection() {
             Citește ghidurile
           </StaticLink>
         </div>
-        <p className={s.ctaMail}>
-          Preferi email sau WhatsApp?{" "}
-          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> ·{" "}
-          <a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">WhatsApp {CONTACT_PHONE_DISPLAY}</a>
-        </p>
+        <div className={s.ctaContact}>
+          <p>Preferi e-mail sau WhatsApp?</p>
+          <ul>
+            <li><Mail size={16} aria-hidden="true" /><span>E-mail</span><a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a></li>
+            <li><MessageCircle size={16} aria-hidden="true" /><span>WhatsApp</span><a href={CONTACT_WHATSAPP_URL} target="_blank" rel="noopener noreferrer">{CONTACT_PHONE_DISPLAY}</a></li>
+            <li><Phone size={16} aria-hidden="true" /><span>Telefon</span><a href={`tel:${CONTACT_PHONE_TEL}`}>{CONTACT_PHONE_DISPLAY}</a></li>
+          </ul>
+        </div>
       </div>
     </section>
   );
