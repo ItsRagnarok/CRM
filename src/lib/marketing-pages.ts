@@ -24,10 +24,10 @@ export type MarketingPage = {
 export const MARKETING_PAGES: MarketingPage[] = [
   {
     slug: "software-management-echipe-teren",
-    title: "Field service management: software pentru echipe de teren",
+    title: "Software de management pentru echipe de teren",
     description: "Software de management pentru electricieni, instalatori și echipe mobile: programezi lucrările, urmărești echipele pe hartă, pontaj din telefon, documente și facturare.",
     kicker: "Software pentru echipe mobile",
-    h1: "Software de management pentru echipe de teren (field service management)",
+    h1: "Software de management pentru electricieni și echipe de teren",
     lead: "Un software de management pentru echipe de teren (în engleză, field service management) ține într-un singur loc tot ce se întâmplă între birou și oamenii de pe teren: ce lucrări sunt, cine le face, când, cu ce materiale, cât a durat și ce e de facturat. ElectroField e construit pentru firmele de instalații electrice, gaze și fotovoltaice din România.",
     sections: [
       { h: "Ce face un software pentru echipe de teren", list: [
@@ -146,7 +146,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
   {
     slug: "firme-fotovoltaice",
     title: "Program pentru firme de montaj fotovoltaic",
-    description: "Dosar pe etape pentru fiecare proiect fotovoltaic, termenele operatorului cu ceas, măsurători pe string, PV de punere în funcțiune și echipele de montaj.",
+    description: "Dosar pe etape pentru fiecare proiect fotovoltaic, termenele operatorului cu ceas, PIF pe string, proces-verbal de punere în funcțiune și echipele de montaj, într-un singur loc.",
     kicker: "Pentru firme de fotovoltaice",
     h1: "Program pentru firme de montaj fotovoltaic",
     lead: "Fiecare proiect are dosarul lui, de la ofertă și ATR la punerea în funcțiune: ce document lipsește, la ce etapă e și cât mai are operatorul până la termen.",
@@ -175,10 +175,10 @@ export const MARKETING_PAGES: MarketingPage[] = [
   },
   {
     slug: "pontaj-tehnicieni",
-    title: "Aplicație de pontaj pe telefon pentru tehnicieni",
-    description: "Aplicație de pontaj pentru angajații din teren: plecare, sosire, început și final de lucrare din telefon, cu locația la sosire, corecții aprobate, export lunar.",
+    title: "Pontaj pentru tehnicieni în teren, din telefon",
+    description: "Pontaj pe lucrare în două atingeri: plecare, sosire, început și final, cu locația la sosire. Corecții motivate aprobate de birou, concedii și export lunar.",
     kicker: "Funcționalitate",
-    h1: "Aplicație de pontaj pentru tehnicienii din teren",
+    h1: "Pontaj pentru tehnicienii din teren",
     lead: "Orele se pontează pe lucrare, din telefon, în momentul în care se întâmplă. Biroul nu mai adună foi și mesaje la final de lună.",
     sections: [
       { h: "Cum se pontează", list: [
@@ -205,7 +205,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
   {
     slug: "foaie-de-parcurs-electronica",
     title: "Foaie de parcurs electronică pentru mașinile firmei",
-    description: "Foaia de parcurs lunară pe fiecare mașină, generată din lucrările terminate ale echipei: zi, client, adresă, kilometri și costul drumurilor. Plus ITP și RCA.",
+    description: "Foaia de parcurs lunară pe fiecare mașină, generată din lucrările terminate ale echipei: zi, client, adresă, kilometri și costul drumurilor. Plus ITP, RCA și stocul din mașină.",
     kicker: "Funcționalitate",
     h1: "Foaie de parcurs electronică",
     lead: "Foaia de parcurs se face din lucrările pe care echipa mașinii le-a terminat în luna respectivă. Nimeni nu mai scrie de mână la final de lună și nu introduce nimic în plus.",
@@ -298,7 +298,7 @@ export const MARKETING_PAGES: MarketingPage[] = [
   },
   {
     slug: "stoc-materiale-pe-masini",
-    title: "Gestiune stoc de materiale pe mașini și registru de scule",
+    title: "Stoc de materiale pe mașini și registru de scule",
     description: "Stocul din fiecare mașină, cu listă țintă și prag minim, consumul pe lucrare, reaprovizionare și achiziții urgente. Plus registrul de scule cu predare-primire și calibrare.",
     kicker: "Funcționalitate",
     h1: "Stoc de materiale pe mașini și registru de scule",
