@@ -40,6 +40,11 @@ const nextConfig: NextConfig = {
     "/api/facturi/[id]/pdf": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
     "/status/[token]/raport": ["./src/app/api/rapoarte-lucrare/[id]/fonts/**"],
   },
+  // pdf.js (vizualizatorul de PDF din aplicație) cere opțional modulul „canvas” de Node; în browser nu e nevoie de el.
+  webpack: (config) => {
+    config.resolve.alias = { ...(config.resolve.alias ?? {}), canvas: false };
+    return config;
+  },
   // Blog static: /blog arată public/blog/index.html,
   // /blog/un-articol arată public/blog/un-articol.html
   async rewrites() {

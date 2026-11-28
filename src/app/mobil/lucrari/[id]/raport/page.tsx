@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, FileText } from "lucide-react";
+import { ChevronRight, Eye, FileText } from "lucide-react";
 import { requireSessionContext } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { SITE_URL } from "@/lib/seo";
@@ -54,6 +54,7 @@ export default async function MobileJobReportPage({ params, searchParams }: { pa
       </header>
 
       <div className="m-bd">
+        <Link href={`/mobil/lucrari/${id}/raport/pdf${from === "gata" ? "?from=gata" : ""}`} className="m-btn" style={{ flexShrink: 0 }}><Eye className="m-i" /> Deschide PDF-ul</Link>
         <div className="m-cd m-col" style={{ gap: 12 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 800 }}>Trimite raportul clientului</div>
