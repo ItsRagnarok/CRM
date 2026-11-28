@@ -133,7 +133,7 @@ export function extractCuis(text: string): string[] {
 
 // ---------- E-mail și telefon ----------
 
-const JUNK_EMAIL = /\.(png|jpe?g|gif|webp|svg|css|js)$|@(example|domain|sentry|wixpress|sentry-next)\.|^(no-?reply|noreply|mailer-daemon|postmaster|abuse|webmaster|wordpress|admin@wordpress)@|@[\w.-]*\.(local|test|invalid)$|u00[0-9a-f]{2}/i;
+const JUNK_EMAIL = /\.(png|jpe?g|gif|webp|svg|css|js)$|@(example|domain|sentry|wixpress|sentry-next|dataprotection|anpc|anaf|anre|ancom|anspdcp)\.|^(no-?reply|noreply|mailer-daemon|postmaster|abuse|webmaster|wordpress|admin@wordpress)@|@[\w.-]*\.(local|test|invalid)$|u00[0-9a-f]{2}/i;
 const GENERIC_WORD = "office|contact|info|oferte?|ofertare|vanzari|sales|comercial|secretariat|receptie|suport|support|service|hello|hr|cariere|jobs|achizitii|tehnic|dispecerat|programari|comenzi|financiar|contabilitate|facturare|marketing|admin|firma|mail|email|general|management|depozit|gdpr|dpo|privacy|magazin|showroom|proiectare|executie";
 /** Adresă de firmă, nu de om: „office@”, „instal.office@”, „depozit.cluj@”, „info2@”. */
 const GENERIC_LOCAL = new RegExp(`^(?:[a-z]+[._-])?(?:${GENERIC_WORD})(?:[._-][a-z]+)?\\d*$`, "i");
