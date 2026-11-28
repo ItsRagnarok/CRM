@@ -204,7 +204,7 @@ async function anafGeneral(cuis: string[]): Promise<Record<string, AnafCompany>>
 /** ANAF + filtrele dure: din CUI-urile primite rămân firmele noi pentru campanie, care trec mărimea, CAEN-ul și județul. */
 type ScreenCampaign = { caen_codes: string[] | null; min_employees: number | null; max_employees: number | null; counties: string[] | null; min_turnover: number | null; knownCuis?: string[] };
 
-async function screen(file: string, cuis: string[]) {
+async function screen(file: string, cuis: string[], known: Record<string, AnafFinancials> = {}) {
   const { readFile } = await import("node:fs/promises");
   const c = JSON.parse(await readFile(file, "utf8")) as ScreenCampaign;
   const known = new Set((c.knownCuis ?? []).map(String));
@@ -217,9 +217,10 @@ async function screen(file: string, cuis: string[]) {
     // Întâi filtrele ieftine (stare, CAEN din registru, județ), abia apoi bilanțul (o cerere pe firmă).
     const pre = hardFilterReasons({ active: g.active, caen: g.caen, employees: null, county: g.county, turnover: null }, c);
     if (pre.length) { const k = pre[0].replace(/\d+/g, "N"); dropped[k] = (dropped[k] ?? 0) + 1; continue; }
-    let fin: AnafFinancials | null = null;
+    // Bilanțul vine din situațiile financiare importate (ro_firms) când îl avem; altfel îl cerem la ANAF.
+    let fin: AnafFinancials | null = known[cui] ?? null;
     const y = new Date().getFullYear();
-    for (const year of [y - 1, y - 2]) {
+    for (const year of fin ? [] : [y - 1, y - 2]) {
       try {
         const r = await fetch(`https://webservicesp.anaf.ro/bilant?an=${year}&cui=${cui}`, { signal: AbortSignal.timeout(20000) });
         fin = parseAnafBilant(await r.json());
@@ -291,7 +292,12 @@ async function pool<T, R>(items: T[], n: number, fn: (x: T) => Promise<R>): Prom
  */
 async function pipeline(campaignFile: string, candidatesFile: string) {
   const { readFile } = await import("node:fs/promises");
-  const cand = JSON.parse(await readFile(candidatesFile, "utf8")) as { cuis?: string[]; sites?: { domain: string; name?: string; city?: string }[] };
+  const cand = JSON.parse(await readFile(candidatesFile, "utf8")) as {
+    cuis?: string[]; sites?: { domain: string; name?: string; city?: string }[];
+    firms?: { cui: string; caen: string; employees: number; turnover: number | null; profit: number | null; year: number }[];
+  };
+  const known: Record<string, AnafFinancials> = {};
+  for (const f of cand.firms ?? []) known[f.cui] = { year: f.year, employees: f.employees, turnover: f.turnover, profit: f.profit, caen: f.caen };
   const bySite = new Map<string, SiteResult>();
   const sitesWithoutCui: { domain: string; name?: string; city?: string; title: string | null }[] = [];
   const domains = [...new Map((cand.sites ?? []).filter((x) => x?.domain && !isDirectoryHost(hostKey(x.domain))).map((x) => [hostKey(x.domain), x])).values()];
@@ -301,9 +307,9 @@ async function pipeline(campaignFile: string, candidatesFile: string) {
     if (r.cuis.length === 1) bySite.set(r.cuis[0], r);
     else sitesWithoutCui.push({ ...domains[k], title: r.title });
   });
-  const cuis = [...new Set([...(cand.cuis ?? []), ...bySite.keys()])];
-  const screened = await screen(campaignFile, cuis);
-  const dossiers = await pool(screened.passed, 5, async (p) => {
+  const cuis = [...new Set([...(cand.cuis ?? []), ...Object.keys(known), ...bySite.keys()])];
+  const screened = await screen(campaignFile, cuis, known);
+  const dossiers = await pool(screened.passed, 8, async (p) => {
     let s = bySite.get(p.cui) ?? null;
     if (s) s = { ...(await site(s.url!, p.cui)), match: "sigur" };
     else s = await findSite(p);
