@@ -14,6 +14,106 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_project_notes: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          project_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          project_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          project_id?: string
+        }
+        Relationships: [
+          { foreignKeyName: "admin_project_notes_project_id_fkey"; columns: ["project_id"]; isOneToOne: false; referencedRelation: "admin_projects"; referencedColumns: ["id"] },
+        ]
+      }
+      admin_projects: {
+        Row: {
+          about: string | null
+          contact_name: string | null
+          created_at: string
+          email: string | null
+          id: string
+          kind: string
+          name: string
+          phone: string | null
+          status: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          about?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          about?: string | null
+          contact_name?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          kind?: string
+          name?: string
+          phone?: string | null
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
+      admin_tasks: {
+        Row: {
+          created_at: string
+          details: string | null
+          done_at: string | null
+          due_on: string | null
+          id: string
+          project_id: string | null
+          title: string
+          urgent: boolean
+        }
+        Insert: {
+          created_at?: string
+          details?: string | null
+          done_at?: string | null
+          due_on?: string | null
+          id?: string
+          project_id?: string | null
+          title: string
+          urgent?: boolean
+        }
+        Update: {
+          created_at?: string
+          details?: string | null
+          done_at?: string | null
+          due_on?: string | null
+          id?: string
+          project_id?: string | null
+          title?: string
+          urgent?: boolean
+        }
+        Relationships: [
+          { foreignKeyName: "admin_tasks_project_id_fkey"; columns: ["project_id"]; isOneToOne: false; referencedRelation: "admin_projects"; referencedColumns: ["id"] },
+        ]
+      }
       service_requests: {
         Row: {
           address: string | null

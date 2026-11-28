@@ -23,10 +23,11 @@ export default async function AdminLayout({
   const { count: openRequests } = await adminDb.from("subscription_requests").select("id", { count: "exact", head: true }).is("resolved_at", null);
   const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Europe/Bucharest" });
   const { count: dueLeads } = await adminDb.from("platform_leads").select("id", { count: "exact", head: true }).lte("next_follow_up", today).in("stage", ["nou", "contactat", "discutie", "oferta", "negociere"]);
+  const { count: dueTasks } = await adminDb.from("admin_tasks").select("id", { count: "exact", head: true }).is("done_at", null).lte("due_on", today);
   const preview = parsePreview((await cookies()).get(PREVIEW_COOKIE)?.value);
 
   return (
-    <AdminViewport topbar={<AdminTopbar fullName={fullName} upcomingBookings={upcomingBookings ?? 0} openRequests={openRequests ?? 0} dueLeads={dueLeads ?? 0} />} banner={preview && <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 bg-amber-soft px-6 py-3 text-sm"><span>Vizualizarea doar în citire este activă în acest browser. Închide-o înainte de a administra companiile sau programările.</span><form action="/api/admin/preview-exit" method="post"><button className="rounded-lg border border-border px-3 py-1 font-semibold">Închide vizualizarea</button></form></div>}>
+    <AdminViewport topbar={<AdminTopbar fullName={fullName} upcomingBookings={upcomingBookings ?? 0} openRequests={openRequests ?? 0} dueLeads={dueLeads ?? 0} dueTasks={dueTasks ?? 0} />} banner={preview && <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 bg-amber-soft px-6 py-3 text-sm"><span>Vizualizarea doar în citire este activă în acest browser. Închide-o înainte de a administra companiile sau programările.</span><form action="/api/admin/preview-exit" method="post"><button className="rounded-lg border border-border px-3 py-1 font-semibold">Închide vizualizarea</button></form></div>}>
       {children}
     </AdminViewport>
   );

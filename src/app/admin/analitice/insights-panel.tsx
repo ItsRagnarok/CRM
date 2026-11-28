@@ -139,7 +139,7 @@ export function InsightsPanel({ history: initial }: { history: InsightRow[] }) {
             <span><b className="text-foreground">{s.leads ?? 0}</b> programări{s.conversion != null ? ` (${s.conversion}%)` : ""}</span>
             {recs.length > 0 && <span className="flex items-center gap-1"><ListChecks className="h-3.5 w-3.5" /> {applied.size}/{recs.length} aplicate</span>}
           </div>
-          {s.aiSummary && <p className="rounded-xl bg-[#f6f4ff] p-3 text-[13.5px] text-foreground">{s.aiSummary}</p>}
+          {s.aiSummary && <p className="rounded-xl border border-[#7c5cfc]/30 bg-[#7c5cfc]/10 p-3 text-[13.5px] text-foreground">{s.aiSummary}</p>}
           {Array.isArray(s.aiRejected) && s.aiRejected.length > 0 && (
             <details className="rounded-xl border border-border p-3 text-[12.5px] text-muted">
               <summary className="cursor-pointer font-semibold">{s.aiRejected.length === 1 ? "1 recomandare AI aruncată" : `${s.aiRejected.length} recomandări AI aruncate`}: nu se bazau pe datele tale sau cereau ceva ce nu ai</summary>

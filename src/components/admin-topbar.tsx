@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/companii", label: "Companii" },
   { href: "/admin/programari", label: "Programări" },
   { href: "/admin/leads", label: "Leads" },
+  { href: "/admin/proiecte", label: "Proiecte" },
   { href: "/admin/analitice", label: "Analitice" },
   { href: "/admin/activitate", label: "Activitate" },
   { href: "/admin/mail", label: "Mail" },
@@ -22,7 +23,7 @@ const NAV = [
 
 const isActive = (pathname: string, href: string) => (href === "/admin" ? pathname === "/admin" : pathname === href || pathname.startsWith(`${href}/`));
 
-export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0, dueLeads = 0 }: { fullName: string; upcomingBookings?: number; openRequests?: number; dueLeads?: number }) {
+export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0, dueLeads = 0, dueTasks = 0 }: { fullName: string; upcomingBookings?: number; openRequests?: number; dueLeads?: number; dueTasks?: number }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -38,14 +39,14 @@ export function AdminTopbar({ fullName, upcomingBookings = 0, openRequests = 0, 
   }, [open]);
 
   const badge = (href: string) => {
-    const n = href === "/admin/programari" ? upcomingBookings : href === "/admin/leads" ? dueLeads : href === "/admin/solicitari" ? openRequests : 0;
+    const n = href === "/admin/programari" ? upcomingBookings : href === "/admin/leads" ? dueLeads : href === "/admin/solicitari" ? openRequests : href === "/admin/proiecte" ? dueTasks : 0;
     if (!n) return null;
-    const title = href === "/admin/leads" ? `${n} leaduri de reluat azi sau întârziate` : href === "/admin/solicitari" ? `${n} solicitări neprocesate` : `${n} programări viitoare`;
+    const title = href === "/admin/leads" ? `${n} leaduri de reluat azi sau întârziate` : href === "/admin/solicitari" ? `${n} solicitări neprocesate` : href === "/admin/proiecte" ? `${n} sarcini de azi sau întârziate` : `${n} programări viitoare`;
     const tone = href === "/admin/programari" ? "bg-[#e5e5e5] text-[#0a0a0a]" : "bg-[#c6ff4a] text-[#0a0d0a]";
     return <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10.5px] font-bold ${tone}`} title={title}>{n}</span>;
   };
 
-  const alerts = dueLeads + openRequests;
+  const alerts = dueLeads + openRequests + dueTasks;
 
   return (
     <header className="shrink-0 border-b border-graphite-border bg-graphite pt-[env(safe-area-inset-top)]">
