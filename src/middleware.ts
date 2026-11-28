@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   }
   // Public site assets do not need a session lookup (incl. the IndexNow key file).
   if (request.nextUrl.pathname === "/d40280e4de21e42ba69e38e8aaa74cdc.txt" || request.nextUrl.pathname.startsWith("/pdfjs/")) return NextResponse.next({ request });
-  if (["/robots.txt", "/sitemap.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html", "/api/version"].includes(request.nextUrl.pathname)) {
+  if (["/robots.txt", "/sitemap.xml", "/blog-style.css", "/public-web-analytics.js", "/ef-analytics.js", "/manifest.json", "/sw.js", "/mobil-offline.html", "/api/version", "/api/prospect-probe"].includes(request.nextUrl.pathname)) {
     return NextResponse.next({ request });
   }
   let response = NextResponse.next({ request });
