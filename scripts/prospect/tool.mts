@@ -8,6 +8,7 @@
  *   enrich <cui...>             anaf + find-site + site, câte un JSON pe firmă
  *   cuis                        CUI-urile valide din textul de pe stdin (rezultate de căutare, linkuri termene.ro)
  *   screen <campanie.json> <cui...>  ANAF + filtrele dure ale campaniei; scoate doar firmele noi care trec
+ *   pipeline <campanie.json> <candidati.json>  tot drumul: CUI din site-uri, ANAF, site-uri, fișe pentru calificare (JSON pe stdout)
  *   save-sql <runId>            din JSON-ul de pe stdin ({campaign_id, companies:[...]}) scrie SQL-ul de salvare (îl rulează agentul)
  *   finish-sql <runId>          din JSON-ul de pe stdin ({summary, stats, queries}) scrie SQL-ul care închide rularea
  *   sql                         rulează SQL-ul de pe stdin prin api.supabase.com (doar unde tokenul de acolo e valid)
@@ -271,6 +272,56 @@ function saveSql(runId: string, body: { campaign_id: string; companies: SaveComp
   select (select count(*) from ins) as firme_salvate, (select count(*) from src) - (select count(*) from ins) as dubluri_sarite, (select count(*) from pins) as oameni;`;
 }
 
+/** Rulează `fn` pe toate elementele, câte `n` deodată. */
+async function pool<T, R>(items: T[], n: number, fn: (x: T) => Promise<R>): Promise<R[]> {
+  const out: R[] = new Array(items.length);
+  let i = 0;
+  await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => {
+    while (i < items.length) { const k = i++; out[k] = await fn(items[k]); }
+  }));
+  return out;
+}
+
+/**
+ * Drumul complet pentru o campanie, fără judecata agentului:
+ * 1. site-urile candidate se citesc și dau CUI-ul (când e scris pe site);
+ * 2. toate CUI-urile trec prin ANAF și filtrele campaniei (screen);
+ * 3. firmele rămase fără site primesc unul ghicit și verificat (findSite);
+ * 4. iese câte o fișă pe firmă, gata de calificat de agent.
+ */
+async function pipeline(campaignFile: string, candidatesFile: string) {
+  const { readFile } = await import("node:fs/promises");
+  const cand = JSON.parse(await readFile(candidatesFile, "utf8")) as { cuis?: string[]; sites?: { domain: string; name?: string; city?: string }[] };
+  const bySite = new Map<string, SiteResult>();
+  const sitesWithoutCui: { domain: string; name?: string; city?: string; title: string | null }[] = [];
+  const domains = [...new Map((cand.sites ?? []).filter((x) => x?.domain && !isDirectoryHost(hostKey(x.domain))).map((x) => [hostKey(x.domain), x])).values()];
+  const read = await pool(domains, 5, (d) => site(d.domain, undefined, 5));
+  read.forEach((r, k) => {
+    if (!r.reachable) return;
+    if (r.cuis.length === 1) bySite.set(r.cuis[0], r);
+    else sitesWithoutCui.push({ ...domains[k], title: r.title });
+  });
+  const cuis = [...new Set([...(cand.cuis ?? []), ...bySite.keys()])];
+  const screened = await screen(campaignFile, cuis);
+  const dossiers = await pool(screened.passed, 5, async (p) => {
+    let s = bySite.get(p.cui) ?? null;
+    if (s) s = { ...(await site(s.url!, p.cui)), match: "sigur" };
+    else s = await findSite(p);
+    const f = p.financials;
+    return {
+      cui: p.cui, name: p.name, county: p.county, city: p.city, address: p.address, phone: s?.phones[0] ?? p.phone, caen: f?.caen ?? p.caen,
+      employees: f?.employees ?? null, turnover: f?.turnover ?? null, profit: f?.profit ?? null, fin_year: f?.year ?? null, reg_date: p.regDate,
+      website: s?.url ?? null, site_match: s?.match ?? null, mx: s?.mx ?? null,
+      emails: (s?.emails ?? []).filter((e) => e.onDomain || /gmail|yahoo/.test(e.email)).map((e) => ({ email: e.email, kind: e.kind, page: e.page })),
+      site_text: s ? s.text.replace(/\s+/g, " ").slice(0, 3200) : null,
+    };
+  });
+  return {
+    stats: { candidati: cuis.length, site_uri_citite: domains.length, verificate_anaf: screened.checked, trecute_anaf: screened.passed.length, cu_site: dossiers.filter((d) => d.website).length, cazute: screened.dropped },
+    dossiers, sitesWithoutCui,
+  };
+}
+
 async function sql(query: string) {
   const r = await fetch(`https://api.supabase.com/v1/projects/${PROJECT}/database/query`, {
     method: "POST", headers: { "Content-Type": "application/json" },
@@ -301,6 +352,7 @@ async function main() {
   }
   if (cmd === "cuis") return print(cuisFromSearchText(await stdin()));
   if (cmd === "screen") return print(await screen(args[0], args.slice(1)));
+  if (cmd === "pipeline") return print(await pipeline(args[0], args[1]));
   if (cmd === "save-sql") return void process.stdout.write(saveSql(args[0], JSON.parse(await stdin())) + "\n");
   if (cmd === "finish-sql") {
     if (!UUID.test(args[0] ?? "")) throw new Error("finish-sql <runId>");

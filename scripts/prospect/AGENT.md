@@ -50,6 +50,14 @@ Caută și site-uri de firme direct („verificări revizii gaze Cluj”, „mon
 
 Strânge de 5–10 ori mai multe CUI-uri decât `daily_target`: majoritatea firmelor din registru sunt prea mici.
 
+Pe lângă căutarea în registru, caută și firme care angajează oameni pe teren („angajăm electricieni <oraș>”,
+„instalator gaze loc de muncă <oraș>”): o firmă care angajează are echipe reale. Numele angajatorului îl transformi în CUI
+cu o căutare „<NUME> termene.ro”.
+
+Scurtătură: `tool.mts pipeline /tmp/campanie.json /tmp/candidati.json` face pașii 3 și 4 dintr-o dată
+(`candidati.json` = `{"cuis": [...], "sites": [{"domain": "...", "name": "...", "city": "..."}]}`) și scoate câte o fișă
+pe firmă, gata pentru pasul 5. Rulează un singur pipeline o dată: ANAF primește cam o cerere pe secundă.
+
 ### 3. Trierea dură (gratuită, oficială)
 
 Scrie campania într-un fișier JSON: `{caen_codes, min_employees, max_employees, counties, min_turnover, knownCuis}`
