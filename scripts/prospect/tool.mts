@@ -9,6 +9,7 @@
  *   cuis                        CUI-urile valide din textul de pe stdin (rezultate de căutare, linkuri termene.ro)
  *   screen <campanie.json> <cui...>  ANAF + filtrele dure ale campaniei; scoate doar firmele noi care trec
  *   pipeline <campanie.json> <candidati.json>  tot drumul: CUI din site-uri, ANAF, site-uri, fișe pentru calificare (JSON pe stdout)
+ *   save <campaignId> <runId>   salvează direct firmele din JSON-ul de pe stdin ({companies:[...]}); cere PROSPECT_TOKEN
  *   save-sql <runId>            din JSON-ul de pe stdin ({campaign_id, companies:[...]}) scrie SQL-ul de salvare (îl rulează agentul)
  *   finish-sql <runId>          din JSON-ul de pe stdin ({summary, stats, queries}) scrie SQL-ul care închide rularea
  *   sql                         rulează SQL-ul de pe stdin prin api.supabase.com (doar unde tokenul de acolo e valid)
@@ -23,6 +24,8 @@ import {
 } from "../../src/lib/prospect";
 
 const PROJECT = process.env.SUPABASE_PROJECT_REF ?? "hrzpowmmbuqihtbkisyu";
+// Cheia publică a proiectului (aceeași ca în aplicație). Scrierea trece doar cu jetonul de import din PROSPECT_TOKEN.
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_rFWXCnGAaTYEPJHQf8bvtA_zmYsqYCo";
 const UA = "Mozilla/5.0 (compatible; ElectroFieldProspect/1.0; +https://www.electrofield.ro)";
 const CHALLENGE = /Un moment, v[ăa] rog|Just a moment|Enable JavaScript and cookies|cf-browser-verification|Checking your browser/i;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -207,8 +210,8 @@ type ScreenCampaign = { caen_codes: string[] | null; min_employees: number | nul
 async function screen(file: string, cuis: string[], known: Record<string, AnafFinancials> = {}) {
   const { readFile } = await import("node:fs/promises");
   const c = JSON.parse(await readFile(file, "utf8")) as ScreenCampaign;
-  const known = new Set((c.knownCuis ?? []).map(String));
-  const fresh = [...new Set(cuis.map((x) => x.replace(/^RO/i, "")))].filter((x) => isValidCui(x) && !known.has(x));
+  const already = new Set((c.knownCuis ?? []).map(String));
+  const fresh = [...new Set(cuis.map((x) => x.replace(/^RO/i, "")))].filter((x) => isValidCui(x) && !already.has(x));
   const general = await anafGeneral(fresh);
   const passed = [], dropped: Record<string, number> = {};
   for (const cui of fresh) {
@@ -359,6 +362,20 @@ async function main() {
   if (cmd === "cuis") return print(cuisFromSearchText(await stdin()));
   if (cmd === "screen") return print(await screen(args[0], args.slice(1)));
   if (cmd === "pipeline") return print(await pipeline(args[0], args[1]));
+  if (cmd === "save") {
+    if (!UUID.test(args[0] ?? "") || !UUID.test(args[1] ?? "")) throw new Error("save <campaignId> <runId>");
+    const token = process.env.PROSPECT_TOKEN ?? "";
+    if (!token) throw new Error("Lipsește PROSPECT_TOKEN (jetonul de import din private.prospect_import_tokens).");
+    const body = JSON.parse(await stdin()) as { companies: SaveCompany[] };
+    const companies = (body.companies ?? []).map((c) => ({ ...c, host: c.website ? hostKey(c.website) : null }));
+    const r = await fetch(`https://${PROJECT}.supabase.co/rest/v1/rpc/prospect_save_companies`, {
+      method: "POST", headers: { apikey: PUBLISHABLE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_token: token, p_campaign: args[0], p_run: args[1], p_companies: companies }), signal: AbortSignal.timeout(60000),
+    });
+    const text = await r.text();
+    if (!r.ok) throw new Error(`Salvare ${r.status}: ${text.slice(0, 400)}`);
+    return print(JSON.parse(text));
+  }
   if (cmd === "save-sql") return void process.stdout.write(saveSql(args[0], JSON.parse(await stdin())) + "\n");
   if (cmd === "finish-sql") {
     if (!UUID.test(args[0] ?? "")) throw new Error("finish-sql <runId>");
