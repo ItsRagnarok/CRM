@@ -162,7 +162,7 @@ APLICATIE = [
     "Ce ai de bifat și formularul tehnic pe domeniu: fișa de gaze, PIF fotovoltaic, verificări electrice.",
     ["Bifezi pe rând ce ai făcut.", "Completezi formularul; câmpurile obligatorii sunt marcate."],
     ["La echipamente: „Citește plăcuța (AI)” completează marca, modelul și seria din poză; tu verifici."],
-    [("m_checklist", "Checklistul lucrării")]),
+    []),
   E("m_semnatura", "Semnătura și finalizarea", "Lucrare → Semnătura, apoi Finalizează",
     "Clientul semnează pe ecran. La final scrii ce s-a încasat, iar biroul primește cererea de facturare.",
     ["Clientul scrie numele și semnează cu degetul.", "„Finalizează”: observații și ce s-a încasat (numerar, card, transfer)."],
