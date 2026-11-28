@@ -47,6 +47,7 @@ export const PUBLIC_PREFIXES = [
 export const SESSIONLESS_PATHS: ReadonlySet<string> = new Set([
   "/robots.txt", "/sitemap.xml", "/llms.txt",
   "/d40280e4de21e42ba69e38e8aaa74cdc.txt", // cheia IndexNow
+  "/BingSiteAuth.xml", // verificarea site-ului în Bing Webmaster Tools
   "/blog-style.css", "/blog-tools.css", "/blog-guides.css", "/blog-guides.js",
   "/public-web-analytics.js", "/ef-analytics.js",
   "/manifest.json", "/sw.js", "/mobil-offline.html",
