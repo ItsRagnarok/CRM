@@ -1,12 +1,12 @@
 import Image from "next/image";
 import s from "./marketing.module.css";
 
-// Harta live, așa cum arată în platformă (captură din contul demo), cu textul alături. Fără animații.
+// Harta live, așa cum arată în platformă (captură din contul demo), cu textul alături.
 export function SceneLiveMap() {
   return (
     <section id="platforma" className={s.section}>
       <div className={`${s.wrap} ${s.shotRow}`}>
-        <div className={s.shotCopy}>
+        <div className={s.shotCopy} data-reveal>
           <div className={s.eyebrow}>Echipa în timp real</div>
           <h2 className={s.disp}>
             Știi unde este echipa ta.
@@ -22,7 +22,7 @@ export function SceneLiveMap() {
             <li>Urmărirea continuă pornește doar cu acordul angajatului.</li>
           </ul>
         </div>
-        <figure className={s.shotFrame}>
+        <figure className={s.shotFrame} data-tilt>
           <Image src="/marketing/screen-harta.webp" alt="Harta live din ElectroField: echipele pe hartă și lista lor, cu starea fiecăreia" width={1400} height={923} sizes="(min-width: 1040px) 60vw, 100vw" />
           <figcaption>Harta live, din platformă</figcaption>
         </figure>

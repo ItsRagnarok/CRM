@@ -1,8 +1,8 @@
 import Image from "next/image";
 import s from "./marketing.module.css";
 
-// Drumul unei lucrări, pe pași reali din platformă. Fără animație legată de derulare: pe telefon pașii
-// stau unul sub altul, pe calculator pe un rând.
+// Drumul unei lucrări, pe pași reali din platformă: pe telefon pașii stau unul sub altul, pe calculator
+// pe un rând; apar pe rând la derulare.
 const STEPS = [
   { h: "Programare", p: "Biroul pune lucrarea în calendar, cu clientul, adresa și echipa." },
   { h: "Tehnician alocat", p: "Echipa o vede pe telefon, cu ce are de luat din depozit." },
@@ -22,7 +22,7 @@ export function SceneJobJourney() {
       <div className={s.journeyBgScrim} />
       <div className={s.wrap}>
         <div className={s.eyebrow}>O lucrare, de la A la Z</div>
-        <div className={s.secHead}>
+        <div className={s.secHead} data-reveal>
           <h2 className={s.disp}>
             De la prima programare
             <br />
@@ -32,7 +32,7 @@ export function SceneJobJourney() {
         </div>
         <ol className={s.journeyList}>
           {STEPS.map((step, i) => (
-            <li key={step.h} className={s.journeyItem}>
+            <li key={step.h} className={s.journeyItem} data-reveal>
               <span className={s.journeyNum}>{String(i + 1).padStart(2, "0")}</span>
               <div>
                 <h3 className={s.journeyH}>{step.h}</h3>

@@ -10,20 +10,29 @@ import s from "./marketing.module.css";
 
 export function Hero() {
   const bgRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Titlul (h1) nu se animă: e vizibil din prima, ca Google și cititorul să-l vadă imediat (LCP).
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const ctx = gsap.context(() => {
       gsap.fromTo(
-        [".mk-reveal-3"],
+        [".mk-reveal-1", ".mk-reveal-2", ".mk-reveal-3"],
         { opacity: 0, y: 26 },
-        { opacity: 1, y: 0, duration: 1, ease: "power3.out", stagger: 0.12, delay: 0.15 }
+        { opacity: 1, y: 0, duration: 0.9, ease: "power3.out", stagger: 0.1, delay: 0.05 }
+      );
+      gsap.fromTo(
+        phoneRef.current,
+        { opacity: 0, y: 40, rotateY: -28 },
+        { opacity: 1, y: 0, rotateY: -16, duration: 1.3, ease: "power3.out", delay: 0.3 }
       );
 
       const onScroll = () => {
         const y = window.scrollY;
         if (bgRef.current) bgRef.current.style.transform = `translateY(${y * 0.18}px) scale(1.04)`;
+        if (phoneRef.current) {
+          const rot = -16 + Math.min(y * 0.02, 10);
+          phoneRef.current.style.transform = `rotateY(${rot}deg) rotateX(4deg) translateY(${Math.min(y * 0.08, 60)}px)`;
+        }
       };
       window.addEventListener("scroll", onScroll, { passive: true });
       return () => window.removeEventListener("scroll", onScroll);
@@ -71,9 +80,16 @@ export function Hero() {
           </div>
         </div>
 
-        <div className={s.heroPhone}>
-          <PhoneFrame src="/marketing/phone-lucrari.webp" alt="Aplicația ElectroField pe telefonul tehnicianului: lucrările săptămânii cu ora, clientul, adresa și starea" priority sizes="(min-width: 1040px) 300px, 70vw" />
+        <div className={s.phoneStage}>
+          <div className={s.heroPhone} ref={phoneRef}>
+            <PhoneFrame src="/marketing/phone-lucrari.webp" alt="Aplicația ElectroField pe telefonul tehnicianului: lucrările săptămânii cu ora, clientul, adresa și starea" priority sizes="(min-width: 1040px) 300px, 70vw" />
+          </div>
         </div>
+      </div>
+
+      <div className={s.heroScrollCue} aria-hidden="true">
+        <span className={s.ring} />
+        <span className={s.lbl}>Scroll</span>
       </div>
 
     </section>

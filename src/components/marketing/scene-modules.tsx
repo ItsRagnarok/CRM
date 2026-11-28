@@ -19,7 +19,7 @@ export function SceneModules() {
     <section id="functionalitati" className={s.section}>
       <div className={s.wrap}>
         <div className={s.eyebrow}>Totul într-un singur loc</div>
-        <div className={s.secHead}>
+        <div className={s.secHead} data-reveal>
           <h2 className={s.disp}>
             Un singur sistem.
             <br />
@@ -31,7 +31,7 @@ export function SceneModules() {
           {MODULES.map((m) => {
             const Icon = m.icon;
             return (
-              <li key={m.label}>
+              <li key={m.label} data-reveal>
                 {m.href ? (
                   <a href={m.href} className={s.modCard}>
                     <Icon size={18} aria-hidden="true" />
@@ -49,7 +49,7 @@ export function SceneModules() {
             );
           })}
         </ul>
-        <figure className={`${s.shotFrame} ${s.shotWide}`}>
+        <figure className={`${s.shotFrame} ${s.shotWide}`} data-tilt>
           <Image src="/marketing/screen-panou.webp" alt="Panoul din ElectroField: lucrările zilei, facturi restante, bani de recuperat și ce cere atenția acum" width={1400} height={640} sizes="(min-width: 1320px) 1272px, 100vw" />
           <figcaption>Panoul de dimineață, din platformă</figcaption>
         </figure>
