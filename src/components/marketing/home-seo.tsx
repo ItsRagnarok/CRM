@@ -9,6 +9,7 @@ const TRADES = [
   { href: "/firme-fotovoltaice", h: "Montaj fotovoltaic", p: "Dosar pe etape, termenele operatorului cu ceas, PIF pe string și proces-verbal de punere în funcțiune." },
 ];
 const FEATURES = [
+  { href: "/software-management-echipe-teren", h: "Software pentru echipe de teren" },
   { href: "/aplicatie-tehnician", h: "Aplicația tehnicianului" },
   { href: "/pontaj-tehnicieni", h: "Pontaj din teren" },
   { href: "/foaie-de-parcurs-electronica", h: "Foaie de parcurs" },

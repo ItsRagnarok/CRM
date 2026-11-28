@@ -15,6 +15,7 @@ export function MarketingFooter() {
           <a href="#platforma">Platformă</a>
           <a href="#functionalitati">Funcționalități</a>
           <a href="#cum-functioneaza">Cum funcționează</a>
+          <Link href="/software-management-echipe-teren">Software pentru echipe de teren</Link>
           <Link href="/firme-instalatii-electrice">Firme de instalații electrice</Link>
           <Link href="/firme-gaze-verificari-revizii">Verificări și revizii gaze</Link>
           <Link href="/firme-fotovoltaice">Firme fotovoltaice</Link>

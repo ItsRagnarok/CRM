@@ -56,18 +56,18 @@ export function Hero() {
 
       <div className={`${s.wrap} ${s.heroGrid}`}>
         <div>
-          <span className={`${s.heroKicker} mk-reveal-1`}>
+          <h1 className={`${s.heroKicker} mk-reveal-1`}>
             <span className={s.dot} />
-            Platformă pentru firme de instalații
-          </span>
-          <h1 className={`${s.heroTitle} ${s.disp} mk-reveal-2`}>
+            Software de management pentru electricieni și echipe de teren
+          </h1>
+          <p className={`${s.heroTitle} ${s.disp} mk-reveal-2`}>
             Din birou.
             <br />
             <span className={s.lime}>Direct în teren.</span>
-          </h1>
+          </p>
           <p className={`${s.heroSub} mk-reveal-3`}>
-            Administratorii și dispecerii planifică lucrările, le repartizează și urmăresc progresul în platforma web.
-            Tehnicienii văd lucrările alocate și trimit actualizări și rapoarte din aplicația mobilă dedicată.
+            ElectroField e programul prin care firmele de instalații electrice, gaze și fotovoltaice își programează lucrările,
+            își urmăresc echipele mobile și facturează. Tehnicienii lucrează din aplicația de pe telefon: poze, pontaj, semnătura clientului.
           </p>
           <div className={`${s.heroCtas} mk-reveal-3`}>
             <StaticLink href="/programare" className={`${s.btn} ${s.btnPrimary}`}>

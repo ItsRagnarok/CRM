@@ -23,6 +23,53 @@ export type MarketingPage = {
 
 export const MARKETING_PAGES: MarketingPage[] = [
   {
+    slug: "software-management-echipe-teren",
+    title: "Software de management pentru echipe de teren",
+    description: "Software de management pentru electricieni, instalatori și echipe mobile: programezi lucrările, urmărești echipele pe hartă, pontaj din telefon, documente și facturare.",
+    kicker: "Software pentru echipe mobile",
+    h1: "Software de management pentru electricieni și echipe de teren",
+    lead: "Un software de management pentru echipe de teren (în engleză, field service management) ține într-un singur loc tot ce se întâmplă între birou și oamenii de pe teren: ce lucrări sunt, cine le face, când, cu ce materiale, cât a durat și ce e de facturat. ElectroField e construit pentru firmele de instalații electrice, gaze și fotovoltaice din România.",
+    sections: [
+      { h: "Ce face un software pentru echipe de teren", list: [
+        "Programarea lucrărilor pe echipe și zile, cu calendar și hartă.",
+        "Aplicație pe telefon pentru tehnicieni: lucrările zilei, adresa, pașii, pozele, checklistul și semnătura clientului.",
+        "Pontaj din teren: plecare, sosire, început și final, cu locația la sosire.",
+        "Evidența materialelor: ce are fiecare mașină, ce s-a consumat pe lucrare, ce trebuie cumpărat.",
+        "Documentele lucrării generate din datele de pe teren, nu recopiate din caiet.",
+        "Facturarea lucrării din ore și materiale, prin SmartBill sau Oblio.",
+      ] },
+      { h: "De ce nu mai ajung Excelul și WhatsApp-ul", p: [
+        "Cu 2–3 oameni, un Excel și un grup de WhatsApp țin. De la 4–5 oameni în teren încep pierderile: lucrări uitate la facturare, ore estimate din memorie, poze care stau pe telefonul tehnicianului, materiale cumpărate de două ori și clienți care sună să afle când vine echipa.",
+        "Un software de management pentru echipe de teren nu adaugă muncă: tehnicianul apasă un buton când pleacă, când ajunge și când termină, iar restul se completează singur.",
+      ] },
+      { h: "Ce are ElectroField în plus pentru instalații", list: [
+        "Electrice: buletine PRAM și de izolație cu valorile din teren, semnate doar de cine are autorizație ANRE valabilă, lucrări ascunse documentate cu poze.",
+        "Gaze: scadențar pe bloc, scară și apartament, verificarea la 2 ani și revizia la 10 ani calculate automat, fișa de evidență din telefon.",
+        "Fotovoltaice: dosar pe etape, termenele operatorului cu ceas, măsurători pe string și proces-verbal de punere în funcțiune.",
+        "Conformitate: autorizațiile oamenilor, ITP-ul mașinilor și calibrarea aparatelor, cu alertă înainte de expirare.",
+      ] },
+      { h: "Cum alegi un software pentru echipele tale", list: [
+        "Îl folosesc tehnicienii fără instruire? Testează aplicația pe telefonul unui om din teren, nu doar pe calculatorul din birou.",
+        "Merge fără semnal? În subsoluri și pe șantiere, datele trebuie să se salveze pe telefon și să plece singure când revine semnalul.",
+        "Știe documentele meseriei tale? Un program general nu știe ce e un buletin PRAM sau o fișă de evidență gaze.",
+        "Se leagă de facturare? Dacă factura se scrie de mână după lucrare, jumătate din câștig se pierde.",
+        "Cât costă și ce primești la început? Cere o demonstrație pe lucrările și echipele tale, nu o prezentare generală.",
+      ] },
+      { h: "Pentru cine e ElectroField", p: [
+        "Pentru firmele de instalații electrice, gaze, fotovoltaice, climatizare și securitate cu una până la câteva zeci de echipe în teren. Platforma de birou merge în browser, iar aplicația tehnicianului pe Android și iPhone.",
+      ] },
+    ],
+    faq: [
+      { q: "Ce înseamnă software de management pentru echipe de teren?", a: "Un program care leagă biroul de oamenii de pe teren: programarea lucrărilor, aplicația de pe telefon a tehnicianului, pontajul, materialele, documentele și facturarea, toate în același loc. În engleză se numește field service management (FSM)." },
+      { q: "Merge pe telefoanele tehnicienilor?", a: "Da, pe Android și pe iPhone. Aplicația arată lucrările zilei și pașii lor și merge și fără semnal." },
+      { q: "Pot vedea pe hartă unde sunt echipele?", a: "Da. Harta live arată echipele cu starea lor (în drum, la lucrare, disponibilă). Urmărirea continuă pornește doar cu acordul angajatului." },
+      { q: "Se leagă de SmartBill sau Oblio?", a: "Da. Factura se completează din lucrare și se emite în contul tău SmartBill sau Oblio, cu datele clientului luate de la ANAF." },
+      { q: "Cum văd programul înainte să mă decid?", a: "Programezi o discuție: un apel de 15 minute sau o prezentare de 30 de minute pe Google Meet, pe lucrările și echipele firmei tale." },
+    ],
+    related: ["excel-sau-aplicatie-gestionare-lucrari", "program-management-firma-instalatii", "gestionare-echipe-de-teren", "evidenta-orelor-tehnicieni-teren-pontaj"],
+    updated: "2026-11-28",
+  },
+  {
     slug: "firme-instalatii-electrice",
     title: "Program pentru firme de instalații electrice",
     description: "Lucrări, echipe, buletine PRAM și izolație, lucrări ascunse cu poze, autorizații ANRE și marjă pe lucrare, într-o platformă pentru firme de instalații electrice.",

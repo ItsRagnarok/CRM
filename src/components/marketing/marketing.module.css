@@ -532,3 +532,6 @@
 .modCard h3 { margin: 4px 0 0; font-size: 16px; font-weight: 700; }
 .modCard p { margin: 0; font-size: 14px; line-height: 1.55; color: var(--fg-dim); }
 div.modCard:hover { border-color: var(--line); }
+
+h1.heroKicker { margin-top: 0; line-height: 1.4; }
+p.heroTitle { margin: 0; }

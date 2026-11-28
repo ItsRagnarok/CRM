@@ -3,8 +3,8 @@ import { publicPageMetadata, SITE_DESCRIPTION, SITE_URL } from "@/lib/seo";
 import { HOME_FAQ } from "@/components/marketing/home-faq";
 
 export const metadata = publicPageMetadata(
-  "Program pentru firme de instalații electrice, gaze și PV",
-  "ElectroField: lucrări, echipe, pontaj, foaie de parcurs, stoc pe mașini, documente ANRE și facturare SmartBill/Oblio pentru firme de instalații electrice, gaze și fotovoltaice.",
+  "Software management electricieni și echipe de teren",
+  "Software de management pentru electricieni, instalatori și echipe mobile: programarea lucrărilor, aplicație pentru tehnicieni, pontaj din teren, stoc și facturare SmartBill/Oblio.",
   "/",
 );
 
